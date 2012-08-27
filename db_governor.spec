@@ -1,6 +1,6 @@
 Name: governor-mysql
 Version: 0.8
-Release: 1%{?dist}.cloudlinux
+Release: 2%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -117,6 +117,11 @@ echo "Run script: /usr/share/lve/dbgovernor/install-mysql.py --install"
 /usr/share/lve/dbgovernor/*
 
 %changelog
+* Thu Aug 23 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-2
+- Fixed mysql - governor deadlock
+- Changed output format of dbtop
+- Changed default limits for cpu and periods
+
 * Fri Aug 17 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-1
 - Changed package name
 - Changed analytic algorithm
