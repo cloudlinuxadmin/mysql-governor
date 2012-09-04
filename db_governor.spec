@@ -1,6 +1,6 @@
 Name: governor-mysql
 Version: 0.8
-Release: 3%{?dist}.cloudlinux
+Release: 4%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -117,11 +117,17 @@ echo "Run script: /usr/share/lve/dbgovernor/install-mysql.py --install"
 /usr/share/lve/dbgovernor/*
 
 %changelog
+* Tue Sep 04 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-4
+- Fixed bug in DA installator
+- Fixed segfault bug on i686 arch
+
 * Fri Aug 31 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-3
 - Fixed memory leak
 - Optimized algorithm of TID saving
-- Added support 5.0 mysql
-- Fixed calculation of RU once a second
+- Added support 5.0 mysql for cPanel
+- Fixed calculation of Resource Usage once a second
+- Added commands clean-mysql and clean-mysql-delete
+- Added DA mysql (5.1 and 5.0) support
 
 * Thu Aug 23 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-2
 - Fixed mysql - governor deadlock
