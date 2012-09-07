@@ -1,6 +1,6 @@
 Name: governor-mysql
 Version: 0.8
-Release: 4%{?dist}.cloudlinux
+Release: 5%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -72,6 +72,7 @@ install -D -m 755 install/da/install-db-governor.sh $RPM_BUILD_ROOT/usr/share/lv
 install -D -m 755 install/plesk/install-db-governor.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/plesk/install-db-governor.sh
 install -D -m 755 install/iworx/install-db-governor.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/iworx/install-db-governor.sh
 install -D -m 755 install/ispmanager/install-db-governor.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/ispmanager/install-db-governor.sh
+install -D -m 755 install/other/install-db-governor.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/other/install-db-governor.sh
 touch $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/tmp/INFO                                                                                                                                                                                     
 echo "CloudLinux" > $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/tmp/INFO
 
@@ -102,7 +103,7 @@ ln -s /%{_libdir}/liblve.so.0.9.0 /%{_libdir}/liblve.so.1
 
 
 ldconfig
-echo "Run script: /usr/share/lve/dbgovernor/install-mysql.py --install"
+echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
 
 %files
 %defattr(-,root,root)
@@ -117,6 +118,11 @@ echo "Run script: /usr/share/lve/dbgovernor/install-mysql.py --install"
 /usr/share/lve/dbgovernor/*
 
 %changelog
+* Thu Sep 06 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-5
+- Added MySQL 5.5 support
+- Added support of ISPManager, Plesk, IWorx
+- Renamed install-mysql.py to mysqlgovernor.py
+
 * Tue Sep 04 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-4
 - Fixed bug in DA installator
 - Fixed segfault bug on i686 arch
