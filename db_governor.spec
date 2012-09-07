@@ -1,6 +1,6 @@
 Name: governor-mysql
 Version: 0.8
-Release: 5%{?dist}.cloudlinux
+Release: 6%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -118,6 +118,9 @@ echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
 /usr/share/lve/dbgovernor/*
 
 %changelog
+* Fri Sep 07 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-6
+- Fixed error in DA, Plesk installation processes
+
 * Thu Sep 06 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-5
 - Added MySQL 5.5 support
 - Added support of ISPManager, Plesk, IWorx
