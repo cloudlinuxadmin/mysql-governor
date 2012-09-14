@@ -1,6 +1,6 @@
 Name: governor-mysql
 Version: 0.8
-Release: 6%{?dist}.cloudlinux
+Release: 7%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -8,6 +8,7 @@ Group: System Environment/Base
 Source0: %{name}-%{version}.tar.bz2
 Requires: glib2
 Requires: ncurses
+Requires: lve-utils >= 1.1-3
 Requires(preun): /sbin/chkconfig
 BuildRequires: cmake
 BuildRequires: ncurses-devel
@@ -118,6 +119,15 @@ echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
 /usr/share/lve/dbgovernor/*
 
 %changelog
+* Thu Sep 13 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-7
+- Optimization of work
+- Added LVE support
+- Added two mode of unrestrict mode for mysql_unfreeze (old and new), added option - help
+- Added new mysql 5.1, 5.0, 5.5 support (with LVE patches)
+- Added new mode of dbtop sorting (by time to end restrict, and by restrict level)
+- Changed dafault config limits
+- Added usage save-all-parameters on VE container creation
+
 * Fri Sep 07 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-6
 - Fixed error in DA, Plesk installation processes
 
