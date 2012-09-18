@@ -1,6 +1,6 @@
 Name: governor-mysql
 Version: 0.8
-Release: 8%{?dist}.cloudlinux
+Release: 9%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -119,6 +119,11 @@ echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
 /usr/share/lve/dbgovernor/*
 
 %changelog
+* Mon Sep 17 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-9
+- Move calculation to separate thread
+- Close semaphore on error
+- Added limiting connection per user on restrict
+
 * Fri Sep 14 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-8
 - Fixed bug in LVE setting creation(on install)
 
