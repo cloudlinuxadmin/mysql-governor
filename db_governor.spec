@@ -1,6 +1,6 @@
 Name: governor-mysql
 Version: 0.8
-Release: 11%{?dist}.cloudlinux
+Release: 12%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -119,6 +119,9 @@ echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
 /usr/share/lve/dbgovernor/*
 
 %changelog
+* Mon Sep 24 2012 Alexey Berezhok <alexey_com@ukr.net>,  Pavel Shkatula <shpp@cloudlinux.com> 0.8-12
+- Added kill_connection on unrestrict
+
 * Mon Sep 24 2012 Alexey Berezhok <alexey_com@ukr.net>,  Pavel Shkatula <shpp@cloudlinux.com> 0.8-11
 - Changed algorithm of thread locking (MySQL part)
 - Fixed error with lost TID cleaning
