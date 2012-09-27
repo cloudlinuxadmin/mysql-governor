@@ -1,6 +1,6 @@
 Name: governor-mysql
 Version: 0.8
-Release: 13%{?dist}.cloudlinux
+Release: 14%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -119,6 +119,9 @@ echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
 /usr/share/lve/dbgovernor/*
 
 %changelog
+* Thu Sep 27 2012 Alexey Berezhok <alexey_com@ukr.net>,  Pavel Shkatula <shpp@cloudlinux.com> 0.8-14
+- Decreased time of lock in MySQL
+
 * Wed Sep 26 2012 Alexey Berezhok <alexey_com@ukr.net>,  Pavel Shkatula <shpp@cloudlinux.com> 0.8-13
 - Removed kill_connection on unrestrict
 - Changed mysql+LVE algorithm
