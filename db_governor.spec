@@ -1,6 +1,6 @@
 Name: governor-mysql
 Version: 0.8
-Release: 16%{?dist}.cloudlinux
+Release: 17%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -119,6 +119,9 @@ echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
 /usr/share/lve/dbgovernor/*
 
 %changelog
+* Mon Oct 04 2012 Alexey Berezhok <alexey_com@ukr.net>,  Pavel Shkatula <shpp@cloudlinux.com> 0.8-17
+- Added new MySQL installation(5.1.63-11)
+
 * Mon Oct 03 2012 Alexey Berezhok <alexey_com@ukr.net>,  Pavel Shkatula <shpp@cloudlinux.com> 0.8-16
 - Decreased mutex lock on info send(to daemon)
 - Added new MySQL installation(5.1.63-10)
