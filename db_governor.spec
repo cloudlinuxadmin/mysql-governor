@@ -1,6 +1,6 @@
 Name: governor-mysql
 Version: 0.8
-Release: 18%{?dist}.cloudlinux
+Release: 19%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -119,6 +119,9 @@ echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
 /usr/share/lve/dbgovernor/*
 
 %changelog
+* Mon Oct 08 2012 Alexey Berezhok <alexey_com@ukr.net>,  Pavel Shkatula <shpp@cloudlinux.com> 0.8-19
+- Error on Inside LVE
+
 * Mon Oct 04 2012 Alexey Berezhok <alexey_com@ukr.net>,  Pavel Shkatula <shpp@cloudlinux.com> 0.8-18
 - Change liblve.so to liblve.so.0
 
