@@ -1,6 +1,6 @@
 Name: governor-mysql
 Version: 0.8
-Release: 24%{?dist}.cloudlinux
+Release: 25%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -119,6 +119,9 @@ echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
 /usr/share/lve/dbgovernor/*
 
 %changelog
+* Mon Oct 29 2012 Alexey Berezhok <alexey_com@ukr.net>,  Pavel Shkatula <shpp@cloudlinux.com> 0.8-25
+- Fixed governors resource usage calculation
+
 * Fri Oct 26 2012 Alexey Berezhok <alexey_com@ukr.net>,  Pavel Shkatula <shpp@cloudlinux.com> 0.8-24
 - Fixed governors statistics calculation
 - Show user load even when user is restricted
