@@ -1,6 +1,6 @@
 Name: governor-mysql
 Version: 0.8
-Release: 27%{?dist}.cloudlinux
+Release: 28%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -119,6 +119,9 @@ echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
 /usr/share/lve/dbgovernor/*
 
 %changelog
+* Thu Nov 01 2012 Alexey Berezhok <alexey_com@ukr.net>,  Pavel Shkatula <shpp@cloudlinux.com> 0.8-28
+- Fixed is_in_lve in mysql
+
 * Tue Oct 30 2012 Alexey Berezhok <alexey_com@ukr.net>,  Pavel Shkatula <shpp@cloudlinux.com> 0.8-27
 - Added check cpu, read, write before adding to counter
 
