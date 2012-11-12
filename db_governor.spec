@@ -1,6 +1,6 @@
 Name: governor-mysql
 Version: 0.8
-Release: 28%{?dist}.cloudlinux
+Release: 29%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -63,6 +63,7 @@ install -D -m 755 script/db_governor $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/
 install -D -m 755 bin/db_governor $RPM_BUILD_ROOT%{_sbindir}/
 install -D -m 755 bin/dbtop $RPM_BUILD_ROOT%{_sbindir}/
 install -D -m 755 bin/mysql_unfreeze $RPM_BUILD_ROOT%{_sbindir}/
+install -D -m 755 bin/dbctl $RPM_BUILD_ROOT%{_sbindir}/
 install -D -m 644 db-governor.xml $RPM_BUILD_ROOT%{_sysconfdir}/container/mysql-governor.xml
 install -D -m 755 lib/libgovernor.so $RPM_BUILD_ROOT%{_libdir}/
 #install utility
@@ -113,66 +114,73 @@ echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
 %{_sbindir}/db_governor
 %{_sbindir}/dbtop
 %{_sbindir}/mysql_unfreeze
+%{_sbindir}/dbctl
 %{_libdir}/libgovernor.so
 %config(noreplace) %{_sysconfdir}/container/mysql-governor.xml
 %{_sysconfdir}/rc.d/init.d/*
 /usr/share/lve/dbgovernor/*
 
 %changelog
-* Thu Nov 01 2012 Alexey Berezhok <alexey_com@ukr.net>,  Pavel Shkatula <shpp@cloudlinux.com> 0.8-28
+* Mon Nov 12 2012 Alexey Berezhok <alexey_com@ukr.net>,  Pavel Shkatula <shpp@cloudlinux.com> 0.8-29
+- Added dbctl utility
+- Added dbtop -c mode
+- Added dbtop crash dump tracing
+- Added killuser config flag 
+
+* Thu Nov 01 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-28
 - Fixed is_in_lve in mysql
 
-* Tue Oct 30 2012 Alexey Berezhok <alexey_com@ukr.net>,  Pavel Shkatula <shpp@cloudlinux.com> 0.8-27
+* Tue Oct 30 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-27
 - Added check cpu, read, write before adding to counter
 
-* Mon Oct 29 2012 Alexey Berezhok <alexey_com@ukr.net>,  Pavel Shkatula <shpp@cloudlinux.com> 0.8-26
+* Mon Oct 29 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-26
 - Fixed governors resource usage calculation(end of request)
 
-* Mon Oct 29 2012 Alexey Berezhok <alexey_com@ukr.net>,  Pavel Shkatula <shpp@cloudlinux.com> 0.8-25
+* Mon Oct 29 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-25
 - Fixed governors resource usage calculation
 
-* Fri Oct 26 2012 Alexey Berezhok <alexey_com@ukr.net>,  Pavel Shkatula <shpp@cloudlinux.com> 0.8-24
+* Fri Oct 26 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-24
 - Fixed governors statistics calculation
 - Show user load even when user is restricted
 - Fixed dbtop header
 
-* Thu Oct 25 2012 Alexey Berezhok <alexey_com@ukr.net>,  Pavel Shkatula <shpp@cloudlinux.com> 0.8-23
+* Thu Oct 25 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-23
 - Added support fixed MySQL (5.5.27, 5.0.95, 5.1.61, 5.0.92, 5.1.63)
 
-* Fri Oct 19 2012 Alexey Berezhok <alexey_com@ukr.net>,  Pavel Shkatula <shpp@cloudlinux.com> 0.8-22
+* Fri Oct 19 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-22
 - Added support MySQL (5.5.27, 5.0.95, 5.1.61, 5.0.92)
 - Fixed "Unrecognized option" under CL5
 
-* Thu Oct 11 2012 Alexey Berezhok <alexey_com@ukr.net>,  Pavel Shkatula <shpp@cloudlinux.com> 0.8-21
+* Thu Oct 11 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-21
 - Added new MySQL installation (5.1.63-14)
 
-* Mon Oct 08 2012 Alexey Berezhok <alexey_com@ukr.net>,  Pavel Shkatula <shpp@cloudlinux.com> 0.8-20
+* Mon Oct 08 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-20
 - Added new MySQL installation (5.1.63-12)
 
-* Mon Oct 08 2012 Alexey Berezhok <alexey_com@ukr.net>,  Pavel Shkatula <shpp@cloudlinux.com> 0.8-19
+* Mon Oct 08 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-19
 - Error on Inside LVE
 
-* Mon Oct 04 2012 Alexey Berezhok <alexey_com@ukr.net>,  Pavel Shkatula <shpp@cloudlinux.com> 0.8-18
+* Mon Oct 04 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-18
 - Change liblve.so to liblve.so.0
 
-* Mon Oct 04 2012 Alexey Berezhok <alexey_com@ukr.net>,  Pavel Shkatula <shpp@cloudlinux.com> 0.8-17
+* Mon Oct 04 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-17
 - Added new MySQL installation(5.1.63-11)
 
-* Mon Oct 03 2012 Alexey Berezhok <alexey_com@ukr.net>,  Pavel Shkatula <shpp@cloudlinux.com> 0.8-16
+* Mon Oct 03 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-16
 - Decreased mutex lock on info send(to daemon)
 - Added new MySQL installation(5.1.63-10)
 
-* Mon Oct 01 2012 Alexey Berezhok <alexey_com@ukr.net>,  Pavel Shkatula <shpp@cloudlinux.com> 0.8-15
+* Mon Oct 01 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-15
 - Added new MySQL installation(5.1.63-9)
 
-* Thu Sep 27 2012 Alexey Berezhok <alexey_com@ukr.net>,  Pavel Shkatula <shpp@cloudlinux.com> 0.8-14
+* Thu Sep 27 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-14
 - Decreased time of lock in MySQL
 
-* Wed Sep 26 2012 Alexey Berezhok <alexey_com@ukr.net>,  Pavel Shkatula <shpp@cloudlinux.com> 0.8-13
+* Wed Sep 26 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-13
 - Removed kill_connection on unrestrict
 - Changed mysql+LVE algorithm
 
-* Mon Sep 24 2012 Alexey Berezhok <alexey_com@ukr.net>,  Pavel Shkatula <shpp@cloudlinux.com> 0.8-12
+* Mon Sep 24 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-12
 - Added kill_connection on unrestrict
 
 * Mon Sep 24 2012 Alexey Berezhok <alexey_com@ukr.net>,  Pavel Shkatula <shpp@cloudlinux.com> 0.8-11
