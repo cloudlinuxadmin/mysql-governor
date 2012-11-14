@@ -1,6 +1,6 @@
 Name: governor-mysql
 Version: 0.8
-Release: 29%{?dist}.cloudlinux
+Release: 30%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -121,6 +121,11 @@ echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
 /usr/share/lve/dbgovernor/*
 
 %changelog
+* Mon Nov 14 2012 Alexey Berezhok <alexey_com@ukr.net>,  Pavel Shkatula <shpp@cloudlinux.com> 0.8-30
+- Added unresrict user on ignore
+- Added dbctl watch command for disable ignoring
+- Fixed level format error
+
 * Mon Nov 12 2012 Alexey Berezhok <alexey_com@ukr.net>,  Pavel Shkatula <shpp@cloudlinux.com> 0.8-29
 - Added dbctl utility
 - Added dbtop -c mode
