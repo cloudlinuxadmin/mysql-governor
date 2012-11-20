@@ -1,6 +1,6 @@
 Name: governor-mysql
 Version: 0.8
-Release: 31%{?dist}.cloudlinux
+Release: 32%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -124,6 +124,9 @@ echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
 /var/dbgovernor/history
 
 %changelog
+* Tue Nov 19 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-32
+- Rename "watch" command to "monitor"
+
 * Mon Nov 19 2012 Alexey Berezhok <alexey_com@ukr.net>,  Pavel Shkatula <shpp@cloudlinux.com> 0.8-31
 - Added statistics collection(governor part)
 - Added restore screen and exit on CTRL-C - dbtop
