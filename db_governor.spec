@@ -1,6 +1,6 @@
 Name: governor-mysql
 Version: 0.8
-Release: 30%{?dist}.cloudlinux
+Release: 31%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -47,7 +47,9 @@ fi
 cd install                                                                                                                                                                                                                                             
 make DESTDIR=$RPM_BUILD_ROOT install
 cd -
-
+mkdir -p $RPM_BUILD_ROOT/var/dbgovernor/
+echo "DBGovernor's history storage directory" > $RPM_BUILD_ROOT/var/dbgovernor/history
+chmod 644 $RPM_BUILD_ROOT/var/dbgovernor/history
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/
 mkdir -p $RPM_BUILD_ROOT%{_sbindir}/
 mkdir -p $RPM_BUILD_ROOT%{_libdir}/
@@ -119,8 +121,15 @@ echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
 %config(noreplace) %{_sysconfdir}/container/mysql-governor.xml
 %{_sysconfdir}/rc.d/init.d/*
 /usr/share/lve/dbgovernor/*
+/var/dbgovernor/history
 
 %changelog
+* Mon Nov 19 2012 Alexey Berezhok <alexey_com@ukr.net>,  Pavel Shkatula <shpp@cloudlinux.com> 0.8-31
+- Added statistics collection(governor part)
+- Added restore screen and exit on CTRL-C - dbtop
+- Added coredump creation on governor crash
+- Added directory for future statistics storage
+
 * Mon Nov 14 2012 Alexey Berezhok <alexey_com@ukr.net>,  Pavel Shkatula <shpp@cloudlinux.com> 0.8-30
 - Added unresrict user on ignore
 - Added dbctl watch command for disable ignoring
