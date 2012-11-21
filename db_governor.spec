@@ -1,6 +1,6 @@
 Name: governor-mysql
 Version: 0.8
-Release: 33%{?dist}.cloudlinux
+Release: 34%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -124,6 +124,9 @@ echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
 /var/dbgovernor/history
 
 %changelog
+* Wed Nov 21 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-34
+- Fixed error on mysql 5.5 installtion on i386 
+
 * Wed Nov 21 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-33
 - Change mysql-governor.xml access mask to 600
 
