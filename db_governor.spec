@@ -1,6 +1,6 @@
 Name: governor-mysql
 Version: 0.8
-Release: 32%{?dist}.cloudlinux
+Release: 33%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -66,7 +66,7 @@ install -D -m 755 bin/db_governor $RPM_BUILD_ROOT%{_sbindir}/
 install -D -m 755 bin/dbtop $RPM_BUILD_ROOT%{_sbindir}/
 install -D -m 755 bin/mysql_unfreeze $RPM_BUILD_ROOT%{_sbindir}/
 install -D -m 755 bin/dbctl $RPM_BUILD_ROOT%{_sbindir}/
-install -D -m 644 db-governor.xml $RPM_BUILD_ROOT%{_sysconfdir}/container/mysql-governor.xml
+install -D -m 600 db-governor.xml $RPM_BUILD_ROOT%{_sysconfdir}/container/mysql-governor.xml
 install -D -m 755 lib/libgovernor.so $RPM_BUILD_ROOT%{_libdir}/
 #install utility
 install -D -m 755 install/cpanel/db_governor-clear-old-hook $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/db_governor-clear-old-hook
@@ -124,6 +124,9 @@ echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
 /var/dbgovernor/history
 
 %changelog
+* Wed Nov 21 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-33
+- Change mysql-governor.xml access mask to 600
+
 * Tue Nov 19 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-32
 - Rename "watch" command to "monitor"
 
