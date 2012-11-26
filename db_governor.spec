@@ -1,6 +1,6 @@
 Name: governor-mysql
 Version: 0.8
-Release: 34%{?dist}.cloudlinux
+Release: 35%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -9,6 +9,7 @@ Source0: %{name}-%{version}.tar.bz2
 Requires: glib2
 Requires: ncurses
 Requires: lve-utils >= 1.1-3
+Requires: lve-stats >= 0.9-11
 Requires(preun): /sbin/chkconfig
 BuildRequires: cmake
 BuildRequires: ncurses-devel
@@ -124,6 +125,9 @@ echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
 /var/dbgovernor/history
 
 %changelog
+* Mon Nov 26 2012 Alexey Berezhok <alexey_com@ukr.net>, Pavel Shkatula <shpp@cloudlinux.com> 0.8-35
+- Added statistics collection(lve-stats part)
+
 * Wed Nov 21 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-34
 - Fixed error on mysql 5.5 installtion on i386 
 
@@ -133,18 +137,18 @@ echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
 * Tue Nov 19 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-32
 - Rename "watch" command to "monitor"
 
-* Mon Nov 19 2012 Alexey Berezhok <alexey_com@ukr.net>,  Pavel Shkatula <shpp@cloudlinux.com> 0.8-31
+* Mon Nov 19 2012 Alexey Berezhok <alexey_com@ukr.net>, Pavel Shkatula <shpp@cloudlinux.com> 0.8-31
 - Added statistics collection(governor part)
 - Added restore screen and exit on CTRL-C - dbtop
 - Added coredump creation on governor crash
 - Added directory for future statistics storage
 
-* Mon Nov 14 2012 Alexey Berezhok <alexey_com@ukr.net>,  Pavel Shkatula <shpp@cloudlinux.com> 0.8-30
+* Mon Nov 14 2012 Alexey Berezhok <alexey_com@ukr.net>, Pavel Shkatula <shpp@cloudlinux.com> 0.8-30
 - Added unresrict user on ignore
 - Added dbctl watch command for disable ignoring
 - Fixed level format error
 
-* Mon Nov 12 2012 Alexey Berezhok <alexey_com@ukr.net>,  Pavel Shkatula <shpp@cloudlinux.com> 0.8-29
+* Mon Nov 12 2012 Alexey Berezhok <alexey_com@ukr.net>, Pavel Shkatula <shpp@cloudlinux.com> 0.8-29
 - Added dbctl utility
 - Added dbtop -c mode
 - Added dbtop crash dump tracing
