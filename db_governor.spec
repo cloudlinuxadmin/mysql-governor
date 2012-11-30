@@ -1,6 +1,6 @@
 Name: governor-mysql
 Version: 0.8
-Release: 35%{?dist}.cloudlinux
+Release: 36%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -125,6 +125,15 @@ echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
 /var/dbgovernor/history
 
 %changelog
+* Fri Nov 30 2012 Alexey Berezhok <alexey_com@ukr.net>, Pavel Shkatula <shpp@cloudlinux.com> 0.8-36
+- Added CAUSE history field saving
+- Enabled statistics by default
+- Disabled killuser by default
+- Disabled mysql-debuginfo installation(for cPanel)
+- Enabled force mysql installation(for cPanel)
+- Fixed segfault in dbctl
+- Fixed trouble with g_hash_table_remove_all
+
 * Mon Nov 26 2012 Alexey Berezhok <alexey_com@ukr.net>, Pavel Shkatula <shpp@cloudlinux.com> 0.8-35
 - Added statistics collection(lve-stats part)
 
