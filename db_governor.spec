@@ -1,6 +1,6 @@
 Name: governor-mysql
 Version: 0.8
-Release: 36%{?dist}.cloudlinux
+Release: 37%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -48,9 +48,9 @@ fi
 cd install                                                                                                                                                                                                                                             
 make DESTDIR=$RPM_BUILD_ROOT install
 cd -
-mkdir -p $RPM_BUILD_ROOT/var/dbgovernor/
-echo "DBGovernor's history storage directory" > $RPM_BUILD_ROOT/var/dbgovernor/history
-chmod 644 $RPM_BUILD_ROOT/var/dbgovernor/history
+mkdir -p $RPM_BUILD_ROOT/var/lve/dbgovernor/
+echo "DBGovernor's history storage directory" > $RPM_BUILD_ROOT/var/lve/dbgovernor/history
+chmod 644 $RPM_BUILD_ROOT/var/lve/dbgovernor/history
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/
 mkdir -p $RPM_BUILD_ROOT%{_sbindir}/
 mkdir -p $RPM_BUILD_ROOT%{_libdir}/
@@ -125,6 +125,9 @@ echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
 /var/dbgovernor/history
 
 %changelog
+* Mon Dec 03 2012 Alexey Berezhok <alexey_com@ukr.net>, Pavel Shkatula <shpp@cloudlinux.com> 0.8-37
+- Added /vr/lve/dbgovernor directory creation
+
 * Fri Nov 30 2012 Alexey Berezhok <alexey_com@ukr.net>, Pavel Shkatula <shpp@cloudlinux.com> 0.8-36
 - Added CAUSE history field saving
 - Enabled statistics by default
