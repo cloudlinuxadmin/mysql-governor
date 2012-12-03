@@ -122,7 +122,7 @@ echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
 %config(noreplace) %{_sysconfdir}/container/mysql-governor.xml
 %{_sysconfdir}/rc.d/init.d/*
 /usr/share/lve/dbgovernor/*
-/var/dbgovernor/history
+/var/lve/dbgovernor/history
 
 %changelog
 * Mon Dec 03 2012 Alexey Berezhok <alexey_com@ukr.net>, Pavel Shkatula <shpp@cloudlinux.com> 0.8-37
