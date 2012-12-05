@@ -1,6 +1,6 @@
 Name: governor-mysql
 Version: 0.8
-Release: 37%{?dist}.cloudlinux
+Release: 38%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -125,6 +125,9 @@ echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
 /var/lve/dbgovernor/history
 
 %changelog
+* Tue Dec 04 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-38
+- Changed max_sim_connections to average_connections
+
 * Mon Dec 03 2012 Alexey Berezhok <alexey_com@ukr.net>, Pavel Shkatula <shpp@cloudlinux.com> 0.8-37
 - Added /vr/lve/dbgovernor directory creation
 
