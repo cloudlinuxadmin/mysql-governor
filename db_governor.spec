@@ -1,6 +1,6 @@
 Name: governor-mysql
 Version: 0.8
-Release: 38%{?dist}.cloudlinux
+Release: 39%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -9,7 +9,7 @@ Source0: %{name}-%{version}.tar.bz2
 Requires: glib2
 Requires: ncurses
 Requires: lve-utils >= 1.1-3
-Requires: lve-stats >= 0.9-12
+Requires: lve-stats >= 0.9-13
 Requires(preun): /sbin/chkconfig
 BuildRequires: cmake
 BuildRequires: ncurses-devel
@@ -125,6 +125,9 @@ echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
 /var/lve/dbgovernor/history
 
 %changelog
+* Wed Dec 05 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-39
+- Added lve-stats 0.9-13 require
+
 * Tue Dec 04 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-38
 - Changed max_sim_connections to average_connections
 
