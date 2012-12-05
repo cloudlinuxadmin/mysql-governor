@@ -9,7 +9,7 @@ Source0: %{name}-%{version}.tar.bz2
 Requires: glib2
 Requires: ncurses
 Requires: lve-utils >= 1.1-3
-Requires: lve-stats >= 0.9-11
+Requires: lve-stats >= 0.9-12
 Requires(preun): /sbin/chkconfig
 BuildRequires: cmake
 BuildRequires: ncurses-devel
