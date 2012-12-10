@@ -1,6 +1,6 @@
 Name: governor-mysql
 Version: 0.8
-Release: 39%{?dist}.cloudlinux
+Release: 40%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -125,6 +125,9 @@ echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
 /var/lve/dbgovernor/history
 
 %changelog
+* Mon Dec 10 2012 Alexey Berezhok <alexey_com@ukr.net>, Pavel Shkatula <shpp@cloudlinux.com> 0.8-40
+- Fixed dbctl negative read/write limits
+
 * Wed Dec 05 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-39
 - Added lve-stats 0.9-13 require
 
