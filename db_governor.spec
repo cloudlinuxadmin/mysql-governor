@@ -1,6 +1,6 @@
 Name: governor-mysql
-Version: 0.8
-Release: 40%{?dist}.cloudlinux
+Version: 0.9
+Release: 1%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -125,6 +125,11 @@ echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
 /var/lve/dbgovernor/history
 
 %changelog
+* Mon Jan 14 2013 Alexey Berezhok <alexey_com@ukr.net>, Pavel Shkatula <shpp@cloudlinux.com> 0.9-1
+- Added new put in lve algorithm
+- Added lve_enter_pid wrapper
+- Added support of new MySQL with new algorithm of work (cPanel 5.5, 5.1, 5.0 and standart CL5 & CL6 mysql 5.0 and 5.1)
+
 * Mon Dec 10 2012 Alexey Berezhok <alexey_com@ukr.net>, Pavel Shkatula <shpp@cloudlinux.com> 0.8-40
 - Fixed dbctl negative read/write limits
 
