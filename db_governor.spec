@@ -1,6 +1,6 @@
 Name: governor-mysql
 Version: 0.9
-Release: 1%{?dist}.cloudlinux
+Release: 2%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -9,7 +9,8 @@ Source0: %{name}-%{version}.tar.bz2
 Requires: glib2
 Requires: ncurses
 Requires: lve-utils >= 1.1-3
-Requires: lve-stats >= 0.9-13
+Requires: lve-stats >= 0.9-18
+Requires: tmpwatch
 Requires(preun): /sbin/chkconfig
 BuildRequires: cmake
 BuildRequires: ncurses-devel
@@ -49,8 +50,7 @@ cd install
 make DESTDIR=$RPM_BUILD_ROOT install
 cd -
 mkdir -p $RPM_BUILD_ROOT/var/lve/dbgovernor/
-echo "DBGovernor's history storage directory" > $RPM_BUILD_ROOT/var/lve/dbgovernor/history
-chmod 644 $RPM_BUILD_ROOT/var/lve/dbgovernor/history
+mkdir -p $RPM_BUILD_ROOT/var/lve/dbgovernor-store/
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/
 mkdir -p $RPM_BUILD_ROOT%{_sbindir}/
 mkdir -p $RPM_BUILD_ROOT%{_libdir}/
@@ -78,6 +78,10 @@ install -D -m 755 install/plesk/install-db-governor.sh $RPM_BUILD_ROOT/usr/share
 install -D -m 755 install/iworx/install-db-governor.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/iworx/install-db-governor.sh
 install -D -m 755 install/ispmanager/install-db-governor.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/ispmanager/install-db-governor.sh
 install -D -m 755 install/other/install-db-governor.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/other/install-db-governor.sh
+#install cron utility
+mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/cron.d/
+install -D -m 644 cron/lvedbgovernor-utils-cron $RPM_BUILD_ROOT%{_sysconfdir}/cron.d/
+
 touch $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/tmp/INFO                                                                                                                                                                                     
 echo "CloudLinux" > $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/tmp/INFO
 
@@ -122,9 +126,15 @@ echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
 %config(noreplace) %{_sysconfdir}/container/mysql-governor.xml
 %{_sysconfdir}/rc.d/init.d/*
 /usr/share/lve/dbgovernor/*
-/var/lve/dbgovernor/history
+%{_sysconfdir}/cron.d/lvedbgovernor-utils-cron
+/var/lve/dbgovernor
+/var/lve/dbgovernor-store
 
 %changelog
+* Fri Jan 18 2013 Alexey Berezhok <alexey_com@ukr.net>, Pavel Shkatula <shpp@cloudlinux.com> 0.9-2
+- Added logging queries on restrict
+- Update MySQL vesrion 5.1.66, 5.5.28
+
 * Mon Jan 14 2013 Alexey Berezhok <alexey_com@ukr.net>, Pavel Shkatula <shpp@cloudlinux.com> 0.9-1
 - Added new put in lve algorithm
 - Added lve_enter_pid wrapper
