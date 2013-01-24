@@ -1,6 +1,6 @@
 Name: governor-mysql
 Version: 0.9
-Release: 2%{?dist}.cloudlinux
+Release: 3%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -131,6 +131,10 @@ echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
 /var/lve/dbgovernor-store
 
 %changelog
+* Thu Jan 24 2013 Alexey Berezhok <alexey_com@ukr.net>, Pavel Shkatula <shpp@cloudlinux.com> 0.9-3
+- Fixed header of dbctl list
+- Show values less then 1Mb/s in dbctl list
+
 * Fri Jan 18 2013 Alexey Berezhok <alexey_com@ukr.net>, Pavel Shkatula <shpp@cloudlinux.com> 0.9-2
 - Added logging queries on restrict
 - Update MySQL vesrion 5.1.66, 5.5.28
