@@ -1,6 +1,6 @@
 Name: governor-mysql
 Version: 0.9
-Release: 4%{?dist}.cloudlinux
+Release: 5%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -133,6 +133,9 @@ echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
 /var/lve/dbgovernor-store
 
 %changelog
+* Fri Feb 15 2013 Alexey Berezhok <alexey_com@ukr.net> 0.9-5
+- Added installation on cPanel 11.36 (fix)
+
 * Tue Feb 12 2013 Alexey Berezhok <alexey_com@ukr.net> 0.9-4
 - Added installation on cPanel 11.36
 
