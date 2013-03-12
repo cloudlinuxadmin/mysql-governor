@@ -1,6 +1,6 @@
 Name: governor-mysql
 Version: 0.9
-Release: 6%{?dist}.cloudlinux
+Release: 8%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -9,7 +9,7 @@ Source0: %{name}-%{version}.tar.bz2
 Requires: glib2
 Requires: ncurses
 Requires: lve-utils >= 1.1-3
-Requires: lve-stats >= 0.9-19
+Requires: lve-stats >= 0.9-20
 Requires: tmpwatch
 Requires(preun): /sbin/chkconfig
 BuildRequires: cmake
@@ -73,6 +73,10 @@ install -D -m 755 lib/libgovernor.so $RPM_BUILD_ROOT%{_libdir}/
 install -D -m 755 install/cpanel/db_governor-clear-old-hook $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/db_governor-clear-old-hook
 install -D -m 755 install/cpanel/install-db-governor $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/install-db-governor
 install -D -m 755 install/cpanel/install-db-governor-beta $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/install-db-governor-beta
+install -D -m 755 install/cpanel/cpanel-common-lve $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/cpanel-common-lve
+install -D -m 755 install/cpanel/cpanel-delete-hooks $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/cpanel-delete-hooks
+install -D -m 755 install/cpanel/cpanel-install-hooks $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/cpanel-install-hooks
+install -D -m 755 install/cpanel/upgrade-mysql-disabler.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/upgrade-mysql-disabler.sh
 install -D -m 755 install/da/install-db-governor.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/da/install-db-governor.sh
 install -D -m 644 install/cpanel/cloudlinux.versions $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/cloudlinux.versions
 install -D -m 755 install/cpanel/install-mysql-disabler.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/install-mysql-disabler.sh
@@ -131,8 +135,20 @@ echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
 %{_sysconfdir}/cron.d/lvedbgovernor-utils-cron
 /var/lve/dbgovernor
 /var/lve/dbgovernor-store
+/usr/share/lve/dbgovernor/cpanel/logs
+/usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Tue Mar 12 2013 Alexey Berezhok <alexey_com@ukr.net> 0.9-8
+- Added mysql support 5.5.30, 5.1.68, 5.0.96, 5.1.67
+- Fixed mysql crash (removed lve_exit)
+- Fixed mysql hang up (added own trylock)
+- Fixed rewrite config on the fly crash
+- Fixed "PROCESSLIST" error for mysql 5.0
+
+* Tue Feb 19 2013 Alexey Berezhok <alexey_com@ukr.net> 0.9-7
+- Added postupcp hook for upgrade cPanel from 11.34 to 11.36
+
 * Fri Feb 15 2013 Alexey Berezhok <alexey_com@ukr.net> 0.9-6
 - Fixed bug in mysqldisabler script on cPanel (<11.36)
 
