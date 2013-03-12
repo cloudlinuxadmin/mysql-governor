@@ -62,6 +62,8 @@ mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/plesk
 mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/iworx
 mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/ispmanager
 mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/tmp
+mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/logs
+mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/tmp
 install -D -m 755 script/db_governor $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/
 install -D -m 755 bin/db_governor $RPM_BUILD_ROOT%{_sbindir}/
 install -D -m 755 bin/dbtop $RPM_BUILD_ROOT%{_sbindir}/
