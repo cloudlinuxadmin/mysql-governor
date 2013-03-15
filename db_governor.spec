@@ -1,6 +1,6 @@
 Name: governor-mysql
 Version: 0.9
-Release: 8%{?dist}.cloudlinux
+Release: 9%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -9,7 +9,7 @@ Source0: %{name}-%{version}.tar.bz2
 Requires: glib2
 Requires: ncurses
 Requires: lve-utils >= 1.1-3
-Requires: lve-stats >= 0.9-20
+Requires: lve-stats >= 0.9-22
 Requires: tmpwatch
 Requires(preun): /sbin/chkconfig
 BuildRequires: cmake
@@ -141,6 +141,11 @@ echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Fri Mar 15 2013 Alexey Berezhok <alexey_com@ukr.net>, Pavel Shkatula <shpp@cloudlinux.com> 0.9-9
+- Fixed dbtop last line error
+- Fixed empty password error
+- Fixed new lve-stats dependency
+
 * Tue Mar 12 2013 Alexey Berezhok <alexey_com@ukr.net> 0.9-8
 - Added mysql support 5.5.30, 5.1.68, 5.0.96, 5.1.67
 - Fixed mysql crash (removed lve_exit)
