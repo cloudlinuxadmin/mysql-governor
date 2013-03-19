@@ -1,6 +1,6 @@
 Name: governor-mysql
 Version: 0.9
-Release: 9%{?dist}.cloudlinux
+Release: 10%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -72,6 +72,7 @@ install -D -m 755 bin/dbctl $RPM_BUILD_ROOT%{_sbindir}/
 install -D -m 600 db-governor.xml $RPM_BUILD_ROOT%{_sysconfdir}/container/mysql-governor.xml
 install -D -m 755 lib/libgovernor.so $RPM_BUILD_ROOT%{_libdir}/
 #install utility
+install -D -m 755 install/cpanel/check_mysql_leave_pid.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/check_mysql_leave_pid.sh
 install -D -m 755 install/cpanel/db_governor-clear-old-hook $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/db_governor-clear-old-hook
 install -D -m 755 install/cpanel/install-db-governor $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/install-db-governor
 install -D -m 755 install/cpanel/install-db-governor-beta $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/install-db-governor-beta
@@ -141,6 +142,10 @@ echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Mon Mar 18 2013 Alexey Berezhok <alexey_com@ukr.net>, Pavel Shkatula <shpp@cloudlinux.com> 0.9-10
+- Fixed dbtop garbage
+- Fixed cl-MySQL-server missed on install
+
 * Fri Mar 15 2013 Alexey Berezhok <alexey_com@ukr.net>, Pavel Shkatula <shpp@cloudlinux.com> 0.9-9
 - Fixed dbtop last line error
 - Fixed empty password error
