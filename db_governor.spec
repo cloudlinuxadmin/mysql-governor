@@ -1,6 +1,6 @@
 Name: governor-mysql
 Version: 0.9
-Release: 10%{?dist}.cloudlinux
+Release: 11%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -87,6 +87,7 @@ install -D -m 755 install/plesk/install-db-governor.sh $RPM_BUILD_ROOT/usr/share
 install -D -m 755 install/iworx/install-db-governor.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/iworx/install-db-governor.sh
 install -D -m 755 install/ispmanager/install-db-governor.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/ispmanager/install-db-governor.sh
 install -D -m 755 install/other/install-db-governor.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/other/install-db-governor.sh
+install -D -m 755 install/other/set_fs_suid_dumpable.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/other/set_fs_suid_dumpable.sh
 #install cron utility
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/cron.d/
 install -D -m 644 cron/lvedbgovernor-utils-cron $RPM_BUILD_ROOT%{_sysconfdir}/cron.d/
@@ -142,6 +143,9 @@ echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Mon Mar 18 2013 Alexey Berezhok <alexey_com@ukr.net> 0.9-11
+- Fixed IO calculations
+
 * Mon Mar 18 2013 Alexey Berezhok <alexey_com@ukr.net>, Pavel Shkatula <shpp@cloudlinux.com> 0.9-10
 - Fixed dbtop garbage
 - Fixed cl-MySQL-server missed on install
