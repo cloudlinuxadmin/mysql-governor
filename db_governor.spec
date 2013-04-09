@@ -1,6 +1,6 @@
 Name: governor-mysql
 Version: 0.9
-Release: 11%{?dist}.cloudlinux
+Release: 12%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -8,8 +8,8 @@ Group: System Environment/Base
 Source0: %{name}-%{version}.tar.bz2
 Requires: glib2
 Requires: ncurses
-Requires: lve-utils >= 1.1-3
-Requires: lve-stats >= 0.9-22
+#Requires: lve-utils >= 1.1-3
+#Requires: lve-stats >= 0.9-22
 Requires: tmpwatch
 Requires(preun): /sbin/chkconfig
 BuildRequires: cmake
@@ -143,6 +143,11 @@ echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Fri Apr 05 2013 Alexey Berezhok <alexey_com@ukr.net>, Pavel Shkatula <shpp@cloudlinux.com> 0.9-12
+- Added installation governor on non CL servers
+- Removed lve requires
+- Added MariaDB patch
+
 * Mon Mar 18 2013 Alexey Berezhok <alexey_com@ukr.net> 0.9-11
 - Fixed IO calculations
 
