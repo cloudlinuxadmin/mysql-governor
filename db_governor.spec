@@ -1,6 +1,6 @@
 Name: governor-mysql
 Version: 0.9
-Release: 14%{?dist}.cloudlinux
+Release: 15%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -106,11 +106,16 @@ kill $(pgrep governor)
 fi
 
 %post
+if [ $1 -gt 0 ] ; then
+ if [ -e "/usr/share/lve/dbgovernor/other/set_fs_suid_dumpable.sh" ]; then
+  /usr/share/lve/dbgovernor/other/set_fs_suid_dumpable.sh
+ fi
+fi
 /sbin/chkconfig --add db_governor
 /sbin/chkconfig --level 35 db_governor on
 
 %preun
-if [ $1 = 0 ]; then
+if [ $1 -eq 0 ]; then
     /sbin/service db_governor stop > /dev/null 2>&1
     /sbin/chkconfig --del db_governor
 fi
@@ -143,6 +148,9 @@ echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Tue Apr 15 2013 Alexey Berezhok <alexey_com@ukr.net> 0.9-15
+- Added set fs_suid_dumpable on package install or update
+
 * Tue Apr 15 2013 Alexey Berezhok <alexey_com@ukr.net> 0.9-14
 - Removed empty statistics saving to history (fix)
 
