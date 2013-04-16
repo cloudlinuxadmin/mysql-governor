@@ -1,6 +1,6 @@
 Name: governor-mysql
 Version: 0.9
-Release: 13%{?dist}.cloudlinux
+Release: 14%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -143,6 +143,9 @@ echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Tue Apr 15 2013 Alexey Berezhok <alexey_com@ukr.net> 0.9-14
+- Removed empty statistics saving to history (fix)
+
 * Mon Apr 15 2013 Alexey Berezhok <alexey_com@ukr.net> 0.9-13
 - Removed empty statistics saving to history
 
