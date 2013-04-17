@@ -1,0 +1,25 @@
+#!/bin/bash
+
+###################################################
+# Utils for hooks installation or removing        #
+###################################################
+. /usr/share/lve/dbgovernor/cpanel/cpanel-common-lve
+
+
+####################################################
+# Cpanel hooks                                     #
+####################################################
+
+postupcp="/scripts/postupcp"
+
+####################################################
+# Hooks list                                       #
+####################################################
+
+postupcp_hook="$common_path_of_cpanel/upgrade-mysql-disabler.sh"
+
+createHookHeader "$postupcp"
+checkHookString "$postupcp" "$postupcp_hook" "dbgovernor"
+removeEmptyStringsFromFile "$postupcp"
+
+echo

@@ -1,0 +1,1 @@
+10 01 * * * root /usr/sbin/tmpwatch -umc 10 /var/lve/dbgovernor-store

@@ -1,0 +1,7 @@
+--- 
+file_format: 
+  version: 2
+target_settings: 
+  MySQL50: unmanaged
+  MySQL51: unmanaged
+  MySQL55: unmanaged

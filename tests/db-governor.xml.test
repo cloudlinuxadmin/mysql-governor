@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<governor>
+<connector prefix_separator="_"/>
+<intervals short="5" mid="15" long="30"/>
+<log file="dbgovernor-error.log" mode="DEBUG"/>
+<restrict level1="60s" level2="15m" level3="1h" level4="1d" timeout="1h" log="dbgovernor-restrict.log" format="CHECKTICKS"/>
+<statistic mode="off"/>
+<default>
+  <limit name="cpu" current="-1" short="-1" mid="-1" long="-1"/>
+  <limit name="read" current="-1" short="-1" mid="-1" long="-1"/>
+  <limit name="write" current="-1" short="-1" mid="-1" long="-1"/>
+</default>
+
+<user mysql_name="root" mode="ignore"></user>
+<user mysql_name="mysql" mode="ignore"></user>
+<user mysql_name="#mysql" mode="ignore"></user>
+<user mysql_name="#mysql_system#" mode="ignore"></user>
+<user mysql_name="eximstats" mode="ignore"></user>
+<user mysql_name="dbgovernor" mode="ignore"></user>
+<user mysql_name="leechprotect" mode="ignore"></user>
+<user mysql_name="unauthenticated user" mode="ignore"></user>
+
+</governor>

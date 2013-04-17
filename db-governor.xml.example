@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<governor>
+<version_cfg>2.0</version_cfg>
+<connector login="user" password="pwd" prefix_separator="_"/>
+<intervals short="5" mid="15" long="30"/>
+<log file="/var/log/dbgovernor-error.log" mode="ERROR|DEBUG"/>
+<restrict level1="60s" level2="15m" level3="1h" level4="1d" timeout="1h" log="/var/log/dbgovernor-restrict.log" format="SHORT|MEDIUM|LONG|VERYLONG|CHECKTICKS"/>
+<statistic mode="on|off"/>
+<default>
+  <limit name="slow_queries_timeout" current="30"/>
+  <limit name="cpu" current="-1" short="-1" mid="-1" long="-1"/>
+  <limit name="read" current="-1" short="-1" mid="-1" long="-1"/>
+  <limit name="write" current="-1" short="-1" mid="-1" long="-1"/>
+</default>
+
+<user mysql_name="root" mode="restrict|norestrict|ignore"></user>
+<user name="mysql" mode="restrict|norestrict|ignore"></user>
+
+</governor>

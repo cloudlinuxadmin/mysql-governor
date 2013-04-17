@@ -1,0 +1,116 @@
+#!/bin/bash
+#
+# db_governor        Startup script for the db_governor Server
+#
+# chkconfig: - 99 01
+# description: db_governor - utility for db usage controlling
+# processname: db_governor
+# config: /etc/conatiner/db-governor.xml
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+DAEMON_COREFILE_LIMIT="unlimited"
+ulimit -c unlimited >/dev/null 2>&1
+G_SLICE=always-malloc
+export G_SLICE
+#G_DEBUG=gc-friendly
+#export G_DEBUG
+
+prog=/usr/sbin/db_governor
+prog_connector=/usr/sbin/mysql_connector
+unf_prog=/usr/sbin/mysql_unfreeze
+pidfile=/var/run/db-governor.pid
+RETVAL=0
+export HOME=/root
+
+function checkprog(){
+    rs=$(pgrep governor)                                                                                                                                         
+    if [ ! -z "$rs" ];then                                                                                                                                       
+       killproc $prog                                                                                                                                  
+    fi 
+
+}
+
+kill_connector_if_exists() {
+    killall -9 "$prog_connector" 2>/dev/null
+}
+
+kill_hung_governor_if_exists() {
+    killall -SIGTERM "$prog" 2>/dev/null
+}
+        
+
+current_user=$(whoami | grep root)
+if [ -z "$current_user" ];then
+        echo "Starting $prog: Script must run under root only"
+        failure
+        RETVAL=1
+        echo
+        exit $RETVAL
+fi
+
+start() {
+#		if [ -e "$pidfile" ];then
+#			echo "Service already started. Stop it first "
+#			failure
+#			return 1
+#		fi
+        echo -n $"Starting $prog: "
+        daemon --pidfile=${pidfile} $prog
+        RETVAL=$?
+        echo
+        return $RETVAL
+}
+
+stop() {
+	echo -n $"Stopping $prog: "
+	killproc -p ${pidfile} $prog
+    RETVAL=$?
+    kill_connector_if_exists
+    kill_hung_governor_if_exists
+    echo
+    [ $RETVAL = 0 ] && rm -f ${pidfile}
+}
+unfreeze() {
+        echo -n $"Unfreezing $prog: "
+        $unf_prog
+        RETVAL=$?
+        if [ $RETVAL -eq 0 ]; then
+        	success
+        else
+        	failure
+        fi
+        echo
+}
+version() {
+		echo "DB Governor version 0.2.1"
+}
+
+# See how we were called.
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  restart)
+	stop
+	start
+	;;
+  unfreeze)
+	unfreeze
+	;;
+  version)
+    version
+    ;;
+  status)
+    status -p ${pidfile} $prog
+    RETVAL=$?
+  ;;
+  *)
+	echo $"Usage: $prog {start|stop|restart|unfreeze|version|status}"
+	exit 1
+esac
+
+exit $RETVAL

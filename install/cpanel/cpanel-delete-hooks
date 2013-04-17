@@ -1,0 +1,9 @@
+#!/bin/bash
+
+. /usr/share/lve/dbgovernor/cpanel/cpanel-common-lve
+
+postupcp="/scripts/postupcp"
+
+deleteAllInclude "$postupcp" "postupcp" "/#dbgovernor/d"
+
+echo

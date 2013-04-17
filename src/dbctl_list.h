@@ -1,0 +1,20 @@
+/* Copyright Cloud Linux Inc 2010-2012 All Rights Reserved
+ *
+ * Licensed under CLOUD LINUX LICENSE AGREEMENT
+ * http://cloudlinux.com/docs/LICENSE.TXT
+ *
+ * dbctl_list.h
+ *
+ *  Created on: Oct 23, 2012
+ *      Author: Shkatula Pavel
+ *      E-mail: shpp@cloudlinux.com
+*/
+
+
+#ifndef __DBCTL_LIST__
+#define __DBCTL_LIST__
+
+void list( void );
+void list_restricted( void );
+
+#endif /* __DBCTL_LIST__ */

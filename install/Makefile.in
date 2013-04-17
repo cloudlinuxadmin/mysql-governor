@@ -1,0 +1,77 @@
+INSTALL = @INSTALL@
+PACKAGE = @PACKAGE@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+sbindir = @sbindir@
+datadir = @datadir@
+datarootdir  = @datarootdir@
+sysconfdir = @sysconfdir@
+INIPREFIX = ${sysconfdir}/
+PREFIX = ${prefix}
+PYTHONINTERPRETER = @PYTHONINTERPRETER@
+
+PYLIBDIR=${datadir}/${PACKAGE}
+
+.SUFFIXES:
+.SUFFIXES: .in .py .pyc .pyo
+
+.py.pyc:
+	$(PYTHONINTERPRETER) -c "import py_compile;py_compile.compile('$<')"
+
+.py.pyo:
+	$(PYTHONINTERPRETER) -O -c "import py_compile;py_compile.compile('$<')"
+
+PY_BINS = install-mysql.py
+PY_LIBS = copy_directory.pyc copy_directory.pyo exec_command.pyc \
+	exec_command.pyo file_proceeding.pyc file_proceeding.pyo \
+	lve_diagnostic.pyc lve_diagnostic.pyo mysql_lib.pyc mysql_lib.pyo \
+	create-htaccess.pyc create-htaccess.pyo
+
+plugin: ${PY_BINS} ${PY_LIBS}
+
+all: plugin
+
+install: all
+	${INSTALL} -d -m 755 ${DESTDIR}/usr/share/lve/dbgovernor/
+
+	for file in ${PY_BINS}; do \
+		${INSTALL} -m 0755 $${file} ${DESTDIR}/usr/share/lve/dbgovernor/mysqlgovernor.py ; \
+	done
+	${INSTALL} -d -m 755 ${DESTDIR}${PYLIBDIR}
+	${INSTALL} -m 0755 copy_directory.py ${DESTDIR}/usr/share/lve/dbgovernor/
+	${INSTALL} -m 0644 copy_directory.pyc ${DESTDIR}/usr/share/lve/dbgovernor/
+	${INSTALL} -m 0644 copy_directory.pyo ${DESTDIR}/usr/share/lve/dbgovernor/
+	${INSTALL} -m 0755 exec_command.py ${DESTDIR}/usr/share/lve/dbgovernor/
+	${INSTALL} -m 0644 exec_command.pyc ${DESTDIR}/usr/share/lve/dbgovernor/
+	${INSTALL} -m 0644 exec_command.pyo ${DESTDIR}/usr/share/lve/dbgovernor/
+	${INSTALL} -m 0755 file_proceeding.py ${DESTDIR}/usr/share/lve/dbgovernor/
+	${INSTALL} -m 0644 file_proceeding.pyc ${DESTDIR}/usr/share/lve/dbgovernor/
+	${INSTALL} -m 0644 file_proceeding.pyo ${DESTDIR}/usr/share/lve/dbgovernor/
+	${INSTALL} -m 0755 lve_diagnostic.py ${DESTDIR}/usr/share/lve/dbgovernor/
+	${INSTALL} -m 0644 lve_diagnostic.pyc ${DESTDIR}/usr/share/lve/dbgovernor/
+	${INSTALL} -m 0644 lve_diagnostic.pyo ${DESTDIR}/usr/share/lve/dbgovernor/
+	${INSTALL} -m 0755 mysql_lib.py ${DESTDIR}/usr/share/lve/dbgovernor/
+	${INSTALL} -m 0644 mysql_lib.pyc ${DESTDIR}/usr/share/lve/dbgovernor/
+	${INSTALL} -m 0644 mysql_lib.pyo ${DESTDIR}/usr/share/lve/dbgovernor/
+	${INSTALL} -m 0755 create-htaccess.py ${DESTDIR}/usr/share/lve/dbgovernor/
+	${INSTALL} -m 0644 create-htaccess.pyc ${DESTDIR}/usr/share/lve/dbgovernor/
+	${INSTALL} -m 0644 create-htaccess.pyo ${DESTDIR}/usr/share/lve/dbgovernor/
+
+uninstall:
+	for file in ${PY_BINS}; do \
+		rm -f ${DESTDIR}/usr/share/lve/dbgovernor/$${file} ; \
+	done
+	rm -f ${DESTDIR}/usr/share/lve/dbgovernor/copy_directory.*
+	rm -f ${DESTDIR}/usr/share/lve/dbgovernor/exec_command.*
+	rm -f ${DESTDIR}/usr/share/lve/dbgovernor/file_proceeding.*
+	rm -f ${DESTDIR}/usr/share/lve/dbgovernor/lve_diagnostic.*
+	rm -f ${DESTDIR}/usr/share/lve/dbgovernor/mysql_lib.*
+	rm -f ${DESTDIR}/usr/share/lve/dbgovernor/create-htaccess.*
+	-rmdir --ignore-fail-on-non-empty ${DESTDIR}/usr/share/lve/dbgovernor/
+
+clean:
+	rm -f *~
+	rm -f ${PY_BINS} ${PY_LIBS}
+
+distclean: clean
+	rm -f Makefile

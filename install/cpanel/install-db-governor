@@ -1,0 +1,235 @@
+#!/usr/bin/perl
+
+#BEGIN { unshift @INC, '/scripts'; }
+BEGIN { unshift @INC, '/usr/local/cpanel', '/scripts'; }
+
+my $pckg_name = 'Cpanel';
+use strict;
+
+eval "use " .$pckg_name . "::cPPkgs          ();";
+if ($@){
+    $pckg_name = 'cPScript';
+    eval "use " .$pckg_name . "::cPPkgs       ();";
+}
+
+eval "use " .$pckg_name . "::SysPkgs              ();";
+eval "use  " .$pckg_name . "::Sys 	           ();";
+eval "use  " .$pckg_name . "::OSSys                ();";
+eval "use  " .$pckg_name . "::HttpRequest          ();";
+eval "use  " .$pckg_name . "::Config::LoadCpConf   ();";
+eval "use  " .$pckg_name . "::RpmUtils             ();";
+eval "use  " .$pckg_name . "::FileUtils::TouchFile ();";
+
+my $cPanelVersion=`/usr/local/cpanel/cpanel -V | cut -d'.' -f1`;
+chomp $cPanelVersion;
+my $cPanelsubVersion=`/usr/local/cpanel/cpanel -V | cut -d'.' -f2`;
+chomp $cPanelsubVersion;
+
+
+
+my $force   = 0;                                                                                                                                             
+while ( $#ARGV != -1 ) {                                                                                                                                     
+    if ( $ARGV[0] =~ m/^\-\-/ ) {                                                                                                                            
+        my $arg = shift @ARGV;                                                                                                                               
+        $arg =~ s/^\-\-//g;                                                                                                                                  
+        $arg = lc $arg;                                                                                                                                      
+        if ( $arg eq 'force' )   { $force   = 1; }                                                                                                           
+    }                                                                                                                                                        
+    else {                                                                                                                                                   
+        last;                                                                                                                                                
+    }                                                                                                                                                        
+}   
+
+my $httpClient = eval $pckg_name . "::HttpRequest->new( 'hideOutput' => 0 );";
+my $url = 'http://repo.cloudlinux.com/cloudlinux';
+
+my ( $system, $nodename, $release, $version, $machine ) = eval $pckg_name . "::OSSys::uname();";
+my $system_tp = getSystemType($release);
+if ($system_tp eq "") {
+    print "Unknown system type --".$release.". Installation aborted\n";
+    exit;
+}
+my $arch = $machine;
+if ( $machine =~ /i.86/ ) {
+    $arch = 'i386';
+}
+
+my %CPCONF =  eval $pckg_name . "::Config::LoadCpConf::loadcpconf();";
+
+# Default to 4 if mysql-version is unset
+if (   !exists $CPCONF{'mysql-version'}
+    || !defined $CPCONF{'mysql-version'}
+    || $CPCONF{'mysql-version'} eq ''
+    || $CPCONF{'mysql-version'} eq '3' ) {
+    $CPCONF{'mysql-version'} = '4';
+}
+
+my $updated = 0;
+my $baseurl    = $url . '/sources/cpanel/cl';
+my $cPPkg      =  eval $pckg_name . "::cPPkgs->new( 'MySQL', '$baseurl' );";
+
+my $canusecPPkg = ( $cPPkg->haspkg( $CPCONF{'mysql-version'} ) && $CPCONF{'mysql-version'} >= 4 );
+
+my $sql_version = $CPCONF{'mysql-version'};
+if(!$canusecPPkg){
+    my $is_50=index('5.0',$CPCONF{'mysql-version'});
+    my $is_51=index('5.1',$CPCONF{'mysql-version'});
+    my $is_55=index('5.5',$CPCONF{'mysql-version'});
+    if (($is_50 == -1) && ($is_51 == -1) && ($is_55 == -1)){
+	$sql_version = "5.6";
+    }
+}
+
+if (($cPanelVersion>=11) && ($cPanelsubVersion >=32) && ($sql_version != "5.0") && ($sql_version != "5.1")){
+    print "cPanel ",$cPanelVersion,".",$cPanelsubVersion," is installed. /usr/local/cpanel/scripts/mysqlup --force running now\n";
+    `/usr/local/cpanel/scripts/mysqlup --force`;    
+    print "\nDone\n";
+    print  "db_governor checking: ";
+    if (check_package('db-governor')){
+	print "OK \n";
+	system 'chkconfig', '--level', '35', 'db_governor', 'on';                                                                                                                  
+	system '/sbin/service', 'db_governor', 'restart';
+    } else {
+	print "FAILED \n";
+    }
+
+    exit;
+}
+
+$cPPkg->setupfiles( $sql_version );
+
+my @FILES = cPPkg_getfilelist($cPPkg, $sql_version , 'http://repo.cloudlinux.com/other/'. $system_tp .'/cl-mysql-'. $sql_version. "/". $arch , $system_tp);
+
+#remove old mysql
+#system 'yum', 'erase', '-y', 'MySQL-client', 'MySQL-devel', 'MySQL-bench', 'MySQL-shared', 'MySQL-server';
+
+#check for mysql
+foreach my $url (@FILES){
+    my $rpmfile = eval $pckg_name . "::UrlTools::urltofile('$url');";
+    if ( !(eval $pckg_name . "::RpmUtils::isinstalled( 'rpm' => '$rpmfile', 'stripdot' => 0 );") || $force){
+	system 'rpm', '-Uvh', '--nodeps', '--force', $url;
+	print  $rpmfile . " installed\n";
+    }
+}
+
+get_repo($sql_version, $system_tp);
+
+#disable mysql update
+eval $pckg_name . "::FileUtils::TouchFile::touchfile('/etc/mysqlupdisable');";
+print  "Update disable file created\n";
+
+resmysql();
+
+print  "db_governor checking: ";
+if (check_package('governor-mysql')){
+    print "OK \n";
+    system 'chkconfig', '--level', '35', 'db_governor', 'on';                                                                                                                  
+    system '/sbin/service', 'db_governor', 'restart';
+} else {
+    print "FAILED \n";
+}
+
+sub do_command
+{
+  my($arg) = shift;
+  system("$arg");
+  return $? >> 8;
+}
+
+
+sub get_repo {
+	my $msql_version = $_[0];
+	my $msystem_tp = $_[1];
+	my $murl = 'http://repo.cloudlinux.com/other';
+	my $burl = $murl ."/".  $msystem_tp . "/cl-mysql-". $msql_version . ".repo";
+	if ($msql_version eq "5.0"){
+        	my $res = do_command("wget -O /etc/yum.repos.d/cl-mysql.repo $burl");
+        	if ($res==0){
+                	system 'yum', 'clean', 'metadata';
+			print "Repofile /etc/yum.repos.d/cl-mysql.repo installed for mysql $msql_version\n\n";
+        	} else {
+            		print "\nError on installation. Can't get repo files\n";
+        	}
+
+	}
+	if ($msql_version eq "5.1"){
+        	my $res = do_command("wget -O /etc/yum.repos.d/cl-mysql.repo $burl");
+        	if($res==0){
+                	system 'yum', 'clean', 'metadata';
+			print "Repofile /etc/yum.repos.d/cl-mysql.repo installed for mysql $msql_version\n\n";
+        	} else {
+			print "\nError on installation. Can't get repo files\n";
+        	}
+
+	}
+}
+
+sub check_package {
+    my $pckgname = $_[0];
+    open(READ,'rpm -qa | grep ^'.$pckgname.' |');                                                                                                                  
+    my $res='';
+    while(<READ>){                                                                                                                                               
+	$res = $res . $_;                                                                                                                                                    
+    } 
+    if ($res eq ""){
+	return 0;
+    } else {
+	return 1;
+    }
+}
+
+
+sub cPPkg_getfilelist {
+     my $cPPkg = $_[0];                                                                                                                                     
+     my $majorver   = $_[1];
+     my $url = $_[2];
+     my $mp = $_[3];
+     
+     my @FILES; 
+     foreach my $file ( @{ $cPPkg->{'pkgdata'}{ $cPPkg->{'arch'} }{$majorver}{'files'} } ) { 
+	 if ($mp eq "cl6"){
+	    $file =~ s/%syst%/el6/;
+	 } else {
+	    $file =~ s/%syst%/el5/;
+	 }
+	 print $url . '/' . $file. "\n";
+         push( @FILES, $url . '/' . $file );
+     }
+     return @FILES;
+}
+
+sub resmysql {
+    if ( -e '/var/cpanel/useapt' && -e '/usr/bin/apt-get' ) {
+        system( '/usr/bin/apt-get', '-y', '--fix-broken', 'install' );
+    }
+    system '/scripts/restartsrv_mysql';
+}
+
+sub getSystemType(){
+    my $tp = $_[0];
+    my $tp2 = $_[1];
+    if(index($tp,".el5.")!=-1){
+        return "cl5";
+    }
+    if(index($tp,".el6.")!=-1){
+        return "cl6";
+    }
+    if(-e '/etc/redhat-release'){
+	my $redhat_rel5 = `cat /etc/redhat-release | grep "CloudLinux Server release 5."`;
+	if ($redhat_rel5 ne "" ){
+	    return "cl5";
+	}
+	my $redhat_rel6 = `cat /etc/redhat-release | grep "CloudLinux Server release 6."`;
+	if ($redhat_rel6 ne "" ){
+	    return "cl6";
+    	}
+    }
+    if(index($tp2,".el5.")!=-1){
+        return "cl5";
+    }
+    if(index($tp2,".el6.")!=-1){
+        return "cl6";
+    }
+    return "";
+}
+
