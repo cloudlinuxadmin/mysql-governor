@@ -20,6 +20,7 @@ eval "use  " .$pckg_name . "::Config::LoadCpConf   ();";
 eval "use  " .$pckg_name . "::RpmUtils             ();";
 eval "use  " .$pckg_name . "::FileUtils::TouchFile ();";
 
+my $mysqlTypeFileSet="/usr/share/lve/dbgovernor/mysql.type";
 my $cPanelVersion=`/usr/local/cpanel/cpanel -V | cut -d'.' -f1`;
 chomp $cPanelVersion;
 my $cPanelsubVersion=`/usr/local/cpanel/cpanel -V | cut -d'.' -f2`;
@@ -69,6 +70,7 @@ my $cPPkg      =  eval $pckg_name . "::cPPkgs->new( 'MySQL', '$baseurl' );";
 my $canusecPPkg = ( $cPPkg->haspkg( $CPCONF{'mysql-version'} ) && $CPCONF{'mysql-version'} >= 4 );
 
 my $sql_version = $CPCONF{'mysql-version'};
+my $sql_version_2 = $sql_version;
 if(!$canusecPPkg){
     my $is_50=index('5.0',$CPCONF{'mysql-version'});
     my $is_51=index('5.1',$CPCONF{'mysql-version'});
@@ -76,6 +78,35 @@ if(!$canusecPPkg){
     if (($is_50 == -1) && ($is_51 == -1) && ($is_55 == -1)){
 	$sql_version = "5.6";
     }
+}
+
+if( open( my $mysql_db, "<", $mysqlTypeFileSet ) )
+{
+  my $type_db = <$mysql_db>;
+  if( $type_db ne "auto" )
+  {
+    if( $type_db eq "mysql50" )
+    {
+      $sql_version="5.0";
+      $sql_version_2=$sql_version;
+    }
+    if( $type_db eq "mysql51" )
+    {
+      $sql_version="5.1";
+      $sql_version_2=$sql_version;
+    }
+    if( $type_db eq "mysql55" )
+    {
+      $sql_version="5.5";
+      $sql_version_2=$sql_version;
+    }
+    if( $type_db eq "mariadb55" )
+    {
+      $sql_version="5.5";
+      $sql_version_2="mariadb55";
+    }
+  }
+  close( $mysql_db );
 }
 
 #if(($sql_version!="5.1") && ($sql_version!="5.0")){
@@ -86,17 +117,21 @@ if(!$canusecPPkg){
 $cPPkg->setupfiles( $sql_version );
 
 my @FILES;
-if ($sql_version=="5.1"){
+if ($sql_version_2=="5.1"){
     @FILES = cPPkg_getfilelist($cPPkg, $sql_version , 'http://repo.cloudlinux.com/other/'. $system_tp .'/cl-mysql-beta/'. $arch , $system_tp);
     remove_userstat();
 } 
 
-if ($sql_version=="5.0"){
+if ($sql_version_2=="5.0"){
     @FILES = cPPkg_getfilelist($cPPkg, $sql_version , 'http://repo.cloudlinux.com/other/'. $system_tp .'/cl-mysql-beta-5.0/'. $arch , $system_tp);
 } 
 
-if ($sql_version=="5.5"){
+if ($sql_version_2=="5.5"){
     @FILES = cPPkg_getfilelist($cPPkg, $sql_version , 'http://repo.cloudlinux.com/other/'. $system_tp .'/cl-mysql-beta-5.5/'. $arch , $system_tp);
+} 
+
+if ($sql_version_2=="mariadb55"){
+    @FILES = cPPkg_getfilelist_mariadb55($cPPkg, $sql_version_2 , 'http://repo.cloudlinux.com/other/'. $system_tp .'/cl-mariadb-5.5/'. $arch , $system_tp . ".cloudlinux." . $arch);
 } 
 
 
@@ -105,6 +140,25 @@ if ($sql_version=="5.5"){
 
 #stop mysql beffore reinstall (need for mysql 5.5)
 system '/sbin/service', 'mysql', 'stop';
+
+
+if ($sql_version_2=="5.1"){
+    if ( -e '/usr/libexec/mysqld' ) {
+	rename '/usr/libexec/mysqld', '/usr/libexec/mysqld.bak'
+    }                          
+} 
+
+if ($sql_version_2=="5.0"){
+    if ( -e '/usr/libexec/mysqld' ) {
+	rename '/usr/libexec/mysqld', '/usr/libexec/mysqld.bak'
+    }  
+} 
+
+if ($sql_version_2=="5.5"){
+    if ( -e '/usr/libexec/mysqld' ) {
+	rename '/usr/libexec/mysqld', '/usr/libexec/mysqld.bak'
+    }  
+} 
 
 system '/usr/share/lve/dbgovernor/cpanel/check_mysql_leave_pid.sh';
 #check for mysql
@@ -118,7 +172,7 @@ foreach my $url (@FILES){
     }
 }
 
-get_repo($sql_version, $system_tp);
+get_repo($sql_version_2, $system_tp);
 
 #disable mysql update
 #eval $pckg_name . "::FileUtils::TouchFile::touchfile('/etc/mysqlupdisable');";
@@ -151,10 +205,15 @@ sub get_repo {
 	if ($msql_version=="5.1") {$burl = $murl ."/".  $msystem_tp . "/cl-mysql-beta.repo";}
 	if ($msql_version=="5.0") {$burl = $murl ."/".  $msystem_tp . "/cl-mysql-beta-5.0.repo";}
 	if ($msql_version=="5.5") {$burl = $murl ."/".  $msystem_tp . "/cl-mysql-beta-5.5.repo";}
+	if ($msql_version=="mariadb55") {$burl = $murl ."/".  $msystem_tp . "/cl-mariadb-5.5.repo";}
 	my $res = do_command("wget -O /etc/yum.repos.d/cl-mysql.repo $burl");
         if($res==0){
             	system 'yum', 'clean', 'metadata';
-		print "Repofile /etc/yum.repos.d/cl-mysql.repo installed for mysql $msql_version\n\n";
+            	if ($msql_version=="mariadb55"){
+			print "Repofile /etc/yum.repos.d/cl-mysql.repo installed for $msql_version\n\n";
+		} else {
+			print "Repofile /etc/yum.repos.d/cl-mysql.repo installed for mysql $msql_version\n\n";
+		}
         } else {
 		print "\nError on installation. Can't get repo files\n";
         }
@@ -188,13 +247,31 @@ sub cPPkg_getfilelist {
 	 } else {
 	    $file =~ s/%syst%/el5/;
 	 }
-	 $file =~ s/5\.1\.63-2/5\.1\.68-1/;
+	 $file =~ s/5\.1\.63-2/5\.1\.68-2/;
 	 $file =~ s/\.cloudlinux\.1/\.cloudlinux/;
-         $file =~ s/5\.0\.95-1/5\.0\.96-2/;
-         $file =~ s/5\.5\.25-3/5\.5\.30-2/;
+         $file =~ s/5\.0\.95-1/5\.0\.96-3/;
+         $file =~ s/5\.5\.25-3/5\.5\.30-3/;
          $file =~ s/i386/i686/;
 	 print $url . '/' . $file. "\n";
          push( @FILES, $url . '/' . $file );
+     }
+     return @FILES;
+}
+
+sub cPPkg_getfilelist_mariadb55 {
+     my $cPPkg = $_[0];                                                                                                                                     
+     my $majorver   = $_[1];
+     my $url = $_[2];
+     my $mp = $_[3];
+     my @fls = ("cl-mariadb-5.5.30-14", "cl-mariadb-bench-5.5.30-14", "cl-mariadb-devel-5.5.30-14", "cl-mariadb-libs-5.5.30-14", "cl-mariadb-server-5.5.30-14");
+     
+     my @FILES; 
+     foreach my $file ( @fls ) { 
+	 $mp =~ s/cl5/el5/;
+	 $mp =~ s/cl6/el6/;
+         $mp =~ s/i386/i686/;
+	 print $url . '/' . $file. ".". $mp. ".rpm". "\n";
+         push( @FILES, $url . '/' . $file. ".". $mp. ".rpm" );
      }
      return @FILES;
 }

@@ -1,15 +1,15 @@
 Name: governor-mysql
-Version: 0.9
-Release: 15%{?dist}.cloudlinux
+Version: 1.0
+Release: 2%{?dist}.cloudlinux
 Summary: DB control utilities
-License: GPLv2
+License: CloudLinux Commercial License
 URL: http://cloudlinux.com
 Group: System Environment/Base
 Source0: %{name}-%{version}.tar.bz2
 Requires: glib2
 Requires: ncurses
-#Requires: lve-utils >= 1.1-3
-#Requires: lve-stats >= 0.9-22
+Requires: lve-utils >= 1.1-3
+Requires: lve-stats >= 0.9-22
 Requires: tmpwatch
 Requires(preun): /sbin/chkconfig
 BuildRequires: cmake
@@ -88,6 +88,10 @@ install -D -m 755 install/iworx/install-db-governor.sh $RPM_BUILD_ROOT/usr/share
 install -D -m 755 install/ispmanager/install-db-governor.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/ispmanager/install-db-governor.sh
 install -D -m 755 install/other/install-db-governor.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/other/install-db-governor.sh
 install -D -m 755 install/other/set_fs_suid_dumpable.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/other/set_fs_suid_dumpable.sh
+
+install -D -m 755 install/chk-mysqlclient $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/chk-mysqlclient
+install -D -m 755 install/db-select-mysql $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/db-select-mysql
+install -D -m 755 install/remove-mysqlclient $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/remove-mysqlclient
 #install cron utility
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/cron.d/
 install -D -m 644 cron/lvedbgovernor-utils-cron $RPM_BUILD_ROOT%{_sysconfdir}/cron.d/
@@ -148,6 +152,13 @@ echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Fri May 17 2013 Alexey Berezhok <alexey_com@ukr.net>, Pavel Shkatula <shpp@cloudlinux.com> 1.0-2
+- Fixed cPanel install script (changing from MariaDB to MySQL)
+
+* Fri May 17 2013 Alexey Berezhok <alexey_com@ukr.net>, Pavel Shkatula <shpp@cloudlinux.com> 1.0-1
+- Added MariaDB instalation
+- Added select MySQL server script
+
 * Tue Apr 15 2013 Alexey Berezhok <alexey_com@ukr.net> 0.9-15
 - Added set fs_suid_dumpable on package install or update
 

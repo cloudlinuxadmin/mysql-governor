@@ -101,6 +101,7 @@ def usage():
 	print "    | --install-beta        : install MySQL 5.1.63 beta   "
 	print " -c | --clean-mysql         : clean MySQL packages list (after governor installation)"
 	print " -m | --clean-mysql-delete  : clean cl-MySQL packages list (after governor deletion)"
+	print " -u | --upgrade             : install MySQL with mysql_upgrade_command"
 
 def install_mysql():
 	if cp.name == "Plesk" and verCompare (cp.version, "10") >= 0:
@@ -179,7 +180,7 @@ def cp_supported():
 def remove_specific_package(pname, yb):
         print "Looking for " + pname
 	if yb.rpmdb.searchNevra(name=pname):
-	    exec_command_out("rpm -e --justdb " + pname)
+	    exec_command_out("rpm -e --justdb --nodeps " + pname)
 	else:
 	    print pname + " not installed"
 
@@ -190,6 +191,9 @@ def remove_sepcific_mysql(mname, yb):
         remove_specific_package(mname + "-bench", yb)
         remove_specific_package(mname + "-test", yb)
         remove_specific_package(mname + "-client", yb)
+	remove_specific_package(mname + "-libs", yb)
+	remove_specific_package(mname + "-compat", yb)
+	remove_specific_package(mname + "", yb)
 
 def remove_mysql_justdb():
 	yb = yum.YumBase()
@@ -198,11 +202,15 @@ def remove_mysql_justdb():
         remove_sepcific_mysql('MySQL50', yb)
         remove_sepcific_mysql('MySQL51', yb)
         remove_sepcific_mysql('MySQL55', yb)
+	remove_sepcific_mysql('MariaDB', yb)
+	remove_sepcific_mysql('mariadb', yb)
 	print "Cleaning of MySQL packages completed"
 
 def remove_mysql_justdb_cl():
 	yb = yum.YumBase()
         remove_sepcific_mysql('cl-MySQL', yb)
+	remove_sepcific_mysql('cl-mariadb', yb)
+	remove_sepcific_mysql('mysql', yb)
 	print "Cleaning of cl-MySQL packages completed"
 
 def delete_governor_rpm():
@@ -230,9 +238,13 @@ def remove_repo_file():
         if os.path.exists("/etc/yum.repos.d/cl-mysql.repo"):
                 os.remove("/etc/yum.repos.d/cl-mysql.repo") 
 
+def remove_mysqlclients():
+	if os.path.exists("/usr/share/lve/dbgovernor/remove-mysqlclient"):
+	    exec_command_out("/usr/share/lve/dbgovernor/remove-mysqlclient")
+                
 cp = get_cp()
 try:
-	opts, args = getopt.getopt(sys.argv[1:], "hidcm", ["help", "install", "delete", "install-beta", "clean-mysql", "clean-mysql-delete"])
+	opts, args = getopt.getopt(sys.argv[1:], "hidcm", ["help", "install", "delete", "install-beta", "clean-mysql", "clean-mysql-delete", "upgrade"])
 except getopt.GetoptError, err:
 	# print help information and exit:
 	print str(err) # will print something like "option -a not recognized"
@@ -247,6 +259,16 @@ for o, a in opts:
 		install_mysql_beta()
 		remove_mysql_justdb()
                 set_bad_lve_container()
+	elif o in ("-u", "--upgrade"):
+		remove_mysqlclients()
+		remove_mysql_justdb_cl()
+		install_mysql_beta()
+		remove_mysql_justdb()
+                set_bad_lve_container()
+		if os.path.exists("/usr/bin/mysql_upgrade"):
+		    exec_command_out("/usr/bin/mysql_upgrade")
+		if os.path.exists("/usr/share/lve/dbgovernor/chk-mysqlclient"):
+		    exec_command_out("/usr/share/lve/dbgovernor/chk-mysqlclient")
 	elif o in ("-d", "--delete"):
                 remove_repo_file()
 		remove_mysql_justdb_cl()
