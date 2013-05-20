@@ -1,6 +1,6 @@
 Name: governor-mysql
 Version: 1.0
-Release: 2%{?dist}.cloudlinux
+Release: 3%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -152,6 +152,9 @@ echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Mon May 20 2013 Pavel Shkatula <shpp@cloudlinux.com> 1.0-3
+- Fixed dbctl list and big numbers issue
+
 * Fri May 17 2013 Alexey Berezhok <alexey_com@ukr.net>, Pavel Shkatula <shpp@cloudlinux.com> 1.0-2
 - Fixed cPanel install script (changing from MariaDB to MySQL)
 

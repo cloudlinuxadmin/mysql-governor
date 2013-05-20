@@ -25,7 +25,18 @@ char *key_ = NULL, *val_ = NULL,
 
 char *get_mb_str( char *s )
 {
-  s[ strlen( s ) - 6 ] = '\0';
+  int _len = strlen( s );
+  if( _len > 6 )
+    s[ _len - 6 ] = '\0';
+  else if( _len > 1 )
+    s[ 0 ] = '\0';
+  else
+  {
+    s = (char*)malloc( sizeof( char ) * 2 );
+    s[ 0 ] = '0';
+    s[ 1 ] = '\0';
+  }
+  
   return s;
 }
 
@@ -200,8 +211,8 @@ char *GetDefault( GArray *tags )
   int cpu_curr = atoi( GetLimitAttr( found_tag_->limit_attr, "cpu", "current" ) ),
       cpu_short = atoi( GetLimitAttr( found_tag_->limit_attr, "cpu", "short" ) ),
       cpu_mid = atoi( GetLimitAttr( found_tag_->limit_attr, "cpu", "mid" ) ),
-      cpu_long = atoi( GetLimitAttr( found_tag_->limit_attr, "cpu", "long" ) ); 
-/*
+      cpu_long = atoi( GetLimitAttr( found_tag_->limit_attr, "cpu", "long" ) );
+
   int read_curr = atoi( get_mb_str( GetLimitAttr( found_tag_->limit_attr, "read", "current" ) ) ),
       read_short = atoi( get_mb_str( GetLimitAttr( found_tag_->limit_attr, "read", "short" ) ) ),
       read_mid = atoi( get_mb_str( GetLimitAttr( found_tag_->limit_attr, "read", "mid" ) ) ),
@@ -211,35 +222,26 @@ char *GetDefault( GArray *tags )
       write_short = atoi( get_mb_str( GetLimitAttr( found_tag_->limit_attr, "write", "short" ) ) ),
       write_mid = atoi( get_mb_str( GetLimitAttr( found_tag_->limit_attr, "write", "mid" ) ) ),
       write_long = atoi( get_mb_str( GetLimitAttr( found_tag_->limit_attr, "write", "long" ) ) );
-*/
 
-  int read_curr = atoi( GetLimitAttr( found_tag_->limit_attr, "read", "current" ) ),
-      read_short = atoi( GetLimitAttr( found_tag_->limit_attr, "read", "short" ) ),
-      read_mid = atoi( GetLimitAttr( found_tag_->limit_attr, "read", "mid" ) ),
-      read_long = atoi( GetLimitAttr( found_tag_->limit_attr, "read", "long" ) );
-
-  int write_curr = atoi( GetLimitAttr( found_tag_->limit_attr, "write", "current" ) ),
-      write_short = atoi( GetLimitAttr( found_tag_->limit_attr, "write", "short" ) ),
-      write_mid = atoi( GetLimitAttr( found_tag_->limit_attr, "write", "mid" ) ),
-      write_long = atoi( GetLimitAttr( found_tag_->limit_attr, "write", "long" ) );
-
-  sprintf( buffer_cpu, "%d/%d/%d/%d",
-                        cpu_curr ,
-                        cpu_short,
-                        cpu_mid,
-                        cpu_long );
+  sprintf( buffer_cpu, "%s/%s/%s/%s",
+                        g_strdup_printf( "%i", cpu_curr ),
+                        g_strdup_printf( "%i", cpu_short ),
+                        g_strdup_printf( "%i", cpu_mid ),
+                        g_strdup_printf( "%i", cpu_long ) 
+         );
   sprintf( buffer_read, "%s/%s/%s/%s",
-                         read_curr < 1000000 ? "<1" : get_mb_str( g_ascii_dtostr( digit_buf_c, sizeof( digit_buf_c ), read_curr ) ),
-                         read_short < 1000000 ? "<1" : get_mb_str( g_ascii_dtostr( digit_buf_s, sizeof( digit_buf_s ), read_short ) ),
-                         read_mid < 1000000 ? "<1" : get_mb_str( g_ascii_dtostr( digit_buf_m, sizeof( digit_buf_m ), read_mid ) ),
-                         read_long < 1000000 ? "<1" : get_mb_str( g_ascii_dtostr( digit_buf_l, sizeof( digit_buf_l ), read_long ) ) );
+                         read_curr < 1 ? "<1" : g_strdup_printf( "%i", read_curr ),
+                         read_short < 1 ? "<1" : g_strdup_printf( "%i", read_short ),
+                         read_mid < 1 ? "<1" : g_strdup_printf( "%i", read_mid ),
+                         read_long < 1 ? "<1" : g_strdup_printf( "%i", read_long ) 
+         );
 
   sprintf( buffer_write, "%s/%s/%s/%s",
-                         write_curr < 1000000 ? "<1" : get_mb_str( g_ascii_dtostr( digit_buf_c, sizeof( digit_buf_c ), write_curr ) ),
-                         write_short < 1000000 ? "<1" : get_mb_str( g_ascii_dtostr( digit_buf_s, sizeof( digit_buf_s ), write_short ) ),
-                         write_mid < 1000000 ? "<1" : get_mb_str( g_ascii_dtostr( digit_buf_m, sizeof( digit_buf_m ), write_mid ) ),
-                         write_long < 1000000 ? "<1" : get_mb_str( g_ascii_dtostr( digit_buf_l, sizeof( digit_buf_l ), write_long ) ) );
-
+                         write_curr < 1 ? "<1" : g_strdup_printf( "%i", write_curr ),
+                         write_short < 1 ? "<1" : g_strdup_printf( "%i", write_short ),
+                         write_mid < 1 ? "<1" : g_strdup_printf( "%i", write_mid ),
+                         write_long < 1 ? "<1" : g_strdup_printf( "%i", write_long )
+        );
   sprintf( buffer, "default           %-18s  %-22s     %-22s", buffer_cpu, buffer_read, buffer_write );
   printf( "%s\n", buffer );
 
@@ -268,53 +270,37 @@ char *GetDefaultForUsers( GArray *tags, DbCtlLimitAttr cpu_def,
     
     if( strcmp( mode, "ignore" ) != 0 )
     {
-      int cpu_curr = atoi( GetLimitAttr( found_tag_->limit_attr, "cpu", "current" ) ) == 0 ? atoi( cpu_def.l_current ) : 
-                                                                                             atoi( GetLimitAttr( found_tag_->limit_attr, "cpu", "current" ) ),
-          cpu_short = atoi( GetLimitAttr( found_tag_->limit_attr, "cpu", "short" ) ) == 0 ? atoi( cpu_def.l_short ) : 
-                                                                                            atoi( GetLimitAttr( found_tag_->limit_attr, "cpu", "short" ) ),
-          cpu_mid = atoi( GetLimitAttr( found_tag_->limit_attr, "cpu", "mid" ) ) == 0 ? atoi( cpu_def.l_mid ) : 
-                                                                                        atoi( GetLimitAttr( found_tag_->limit_attr, "cpu", "mid" ) ),
-          cpu_long = atoi( GetLimitAttr( found_tag_->limit_attr, "cpu", "long" ) ) == 0 ? atoi( cpu_def.l_long ) : 
-                                                                                          atoi( GetLimitAttr( found_tag_->limit_attr, "cpu", "long" ) );
-/*      
-      int read_curr = atoi( GetLimitAttr( found_tag_->limit_attr, "read", "current" ) ) == 0 ? atoi( read_def.l_current ) : 
-                                                                                               atoi( get_mb_str(  GetLimitAttr( found_tag_->limit_attr, "read", "current" ) ) ),
-          read_short = atoi( GetLimitAttr( found_tag_->limit_attr, "read", "short" ) ) == 0 ? atoi( read_def.l_short ) : 
-                                                                                              atoi( get_mb_str(  GetLimitAttr( found_tag_->limit_attr, "read", "short" ) ) ),
-          read_mid = atoi( GetLimitAttr( found_tag_->limit_attr, "read", "mid" ) ) == 0 ? atoi( read_def.l_mid ) : 
-                                                                                          atoi( get_mb_str(  GetLimitAttr( found_tag_->limit_attr, "read", "mid" ) ) ),
-          read_long = atoi( GetLimitAttr( found_tag_->limit_attr, "read", "long" ) ) == 0 ? atoi( read_def.l_long ) : 
-                                                                                            atoi( get_mb_str(  GetLimitAttr( found_tag_->limit_attr, "read", "long" ) ) );
-      
-      int write_curr = atoi( GetLimitAttr( found_tag_->limit_attr, "write", "current" ) ) == 0 ? atoi( write_def.l_current ) : 
-                                                                                                 atoi( get_mb_str(  GetLimitAttr( found_tag_->limit_attr, "write", "current" ) ) ),
-          write_short = atoi( GetLimitAttr( found_tag_->limit_attr, "write", "short" ) ) == 0 ? atoi( write_def.l_short ) : 
-                                                                                                atoi( get_mb_str(  GetLimitAttr( found_tag_->limit_attr, "write", "short" ) ) ),
-          write_mid = atoi( GetLimitAttr( found_tag_->limit_attr, "write", "mid" ) ) == 0 ? atoi( write_def.l_mid ) : 
-                                                                                            atoi( get_mb_str(  GetLimitAttr( found_tag_->limit_attr, "write", "mid" ) ) ),
-          write_long = atoi( GetLimitAttr( found_tag_->limit_attr, "write", "long" ) ) == 0 ? atoi( write_def.l_long ) : 
-                                                                                              atoi( get_mb_str(  GetLimitAttr( found_tag_->limit_attr, "write", "long" ) ) );
-*/    
-      int read_curr = atoi( GetLimitAttr( found_tag_->limit_attr, "read", "current" ) ) == 0 ? atoi( read_def.l_current ) : 
-                                                                                               atoi( GetLimitAttr( found_tag_->limit_attr, "read", "current" ) ),
-          read_short = atoi( GetLimitAttr( found_tag_->limit_attr, "read", "short" ) ) == 0 ? atoi( read_def.l_short ) : 
-                                                                                              atoi( GetLimitAttr( found_tag_->limit_attr, "read", "short" ) ),
-          read_mid = atoi( GetLimitAttr( found_tag_->limit_attr, "read", "mid" ) ) == 0 ? atoi( read_def.l_mid ) : 
-                                                                                          atoi( GetLimitAttr( found_tag_->limit_attr, "read", "mid" ) ),
-          read_long = atoi( GetLimitAttr( found_tag_->limit_attr, "read", "long" ) ) == 0 ? atoi( read_def.l_long ) : 
-                                                                                            atoi( GetLimitAttr( found_tag_->limit_attr, "read", "long" ) );
-      
-      int write_curr = atoi( GetLimitAttr( found_tag_->limit_attr, "write", "current" ) ) == 0 ? atoi( write_def.l_current ) : 
-                                                                                                 atoi( GetLimitAttr( found_tag_->limit_attr, "write", "current" ) ),
-          write_short = atoi( GetLimitAttr( found_tag_->limit_attr, "write", "short" ) ) == 0 ? atoi( write_def.l_short ) : 
-                                                                                                atoi( GetLimitAttr( found_tag_->limit_attr, "write", "short" ) ),
-          write_mid = atoi( GetLimitAttr( found_tag_->limit_attr, "write", "mid" ) ) == 0 ? atoi( write_def.l_mid ) : 
-                                                                                            atoi( GetLimitAttr( found_tag_->limit_attr, "write", "mid" ) ),
-          write_long = atoi( GetLimitAttr( found_tag_->limit_attr, "write", "long" ) ) == 0 ? atoi( write_def.l_long ) : 
-                                                                                              atoi( GetLimitAttr( found_tag_->limit_attr, "write", "long" ) );
+      int cpu_curr = atoi( GetLimitAttr( found_tag_->limit_attr, "cpu", "current" ) ),
+          cpu_short = atoi( GetLimitAttr( found_tag_->limit_attr, "cpu", "short" ) ),
+          cpu_mid = atoi( GetLimitAttr( found_tag_->limit_attr, "cpu", "mid" ) ),
+          cpu_long = atoi( GetLimitAttr( found_tag_->limit_attr, "cpu", "long" ) );
+
+      int read_curr = atoi( get_mb_str( GetLimitAttr( found_tag_->limit_attr, "read", "current" ) ) ),
+          read_short = atoi( get_mb_str( GetLimitAttr( found_tag_->limit_attr, "read", "short" ) ) ),
+          read_mid = atoi( get_mb_str( GetLimitAttr( found_tag_->limit_attr, "read", "mid" ) ) ),
+          read_long = atoi( get_mb_str( GetLimitAttr( found_tag_->limit_attr, "read", "long" ) ) );
+
+      int write_curr = atoi( get_mb_str( GetLimitAttr( found_tag_->limit_attr, "write", "current" ) ) ),
+          write_short = atoi( get_mb_str( GetLimitAttr( found_tag_->limit_attr, "write", "short" ) ) ),
+          write_mid = atoi( get_mb_str( GetLimitAttr( found_tag_->limit_attr, "write", "mid" ) ) ),
+          write_long = atoi( get_mb_str( GetLimitAttr( found_tag_->limit_attr, "write", "long" ) ) );
+
+      if( cpu_curr == 0 ) cpu_curr = atoi( cpu_def.l_current );
+      if( cpu_short == 0 ) cpu_short = atoi( cpu_def.l_short );
+      if( cpu_mid == 0 ) cpu_mid = atoi( cpu_def.l_mid );
+      if( cpu_long == 0 ) cpu_long = atoi( cpu_def.l_long );
+
+      if( read_curr == 0 ) read_curr = atoi( read_def.l_current );
+      if( read_short == 0 ) read_short = atoi( read_def.l_short );
+      if( read_mid == 0 ) read_mid = atoi( read_def.l_mid );
+      if( read_long == 0 ) read_long = atoi( read_def.l_long );
+
+      if( write_curr == 0 ) write_curr = atoi( write_def.l_current );
+      if( write_short == 0 ) write_short = atoi( write_def.l_short );
+      if( write_mid == 0 ) write_mid = atoi( write_def.l_mid );
+      if( write_long == 0 ) write_long = atoi( write_def.l_long );
 
       if( name == NULL ) name = GetUserMysqlName( found_tag_->attr );
-
 
       print_list_t = (DbCtlPrintList*)malloc( sizeof( DbCtlPrintList ) );
       print_list_t->name = (char*)malloc( 16 * sizeof( char ) );
@@ -329,29 +315,17 @@ char *GetDefaultForUsers( GArray *tags, DbCtlLimitAttr cpu_def,
                              cpu_short,
                              cpu_mid,
                              cpu_long );
-/*                             
       sprintf( buffer_read, "%s/%s/%s/%s",
-                             read_curr,                   //read
-                             read_short,
-                             read_mid,
-                             read_long );
-      sprintf( buffer_write, "%s/%s/%s/%s",
-                             write_curr,                  //write
-                             write_short,
-                             write_mid,
-                             write_long );
-*/      
-      sprintf( buffer_read, "%s/%s/%s/%s",
-                            read_curr < 1000000 ? "<1" : get_mb_str( g_ascii_dtostr( digit_buf_c, sizeof( digit_buf_c ), read_curr ) ),
-                            read_short < 1000000 ? "<1" : get_mb_str( g_ascii_dtostr( digit_buf_s, sizeof( digit_buf_s ), read_short ) ),
-                            read_mid < 1000000 ? "<1" : get_mb_str( g_ascii_dtostr( digit_buf_m, sizeof( digit_buf_m ), read_mid ) ),
-                            read_long < 1000000 ? "<1" : get_mb_str( g_ascii_dtostr( digit_buf_l, sizeof( digit_buf_l ), read_long ) ) );
+                            read_curr < 1 ? "<1" : g_strdup_printf( "%i", read_curr ),
+                            read_short < 1 ? "<1" : g_strdup_printf( "%i", read_short ),
+                            read_mid < 1 ? "<1" : g_strdup_printf( "%i", read_mid ),
+                            read_long < 1 ? "<1" : g_strdup_printf( "%i", read_long ) );
 
       sprintf( buffer_write, "%s/%s/%s/%s",
-                             write_curr < 1000000 ? "<1" : get_mb_str( g_ascii_dtostr( digit_buf_c, sizeof( digit_buf_c ), write_curr ) ),
-                             write_short < 1000000 ? "<1" : get_mb_str( g_ascii_dtostr( digit_buf_s, sizeof( digit_buf_s ), write_short ) ),
-                             write_mid < 1000000 ? "<1" : get_mb_str( g_ascii_dtostr( digit_buf_m, sizeof( digit_buf_m ), write_mid ) ),
-                             write_long < 1000000 ? "<1" : get_mb_str( g_ascii_dtostr( digit_buf_l, sizeof( digit_buf_l ), write_long ) ) );
+                             write_curr < 1 ? "<1" : g_strdup_printf( "%i", write_curr ),
+                             write_short < 1 ? "<1" : g_strdup_printf( "%i", write_short ),
+                             write_mid < 1 ? "<1" : g_strdup_printf( "%i", write_mid ),
+                             write_long < 1 ? "<1" : g_strdup_printf( "%i", write_long ) );
 
       sprintf( print_list_t->name, "%-16s", name );
       sprintf( print_list_t->data, "  %-18s  %-22s     %-22s", buffer_cpu, buffer_read, buffer_write );
