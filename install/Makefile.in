@@ -25,7 +25,7 @@ PY_BINS = install-mysql.py
 PY_LIBS = copy_directory.pyc copy_directory.pyo exec_command.pyc \
 	exec_command.pyo file_proceeding.pyc file_proceeding.pyo \
 	lve_diagnostic.pyc lve_diagnostic.pyo mysql_lib.pyc mysql_lib.pyo \
-	create-htaccess.pyc create-htaccess.pyo
+	create-htaccess.pyc create-htaccess.pyo db-update.pyc db-update.pyo
 
 plugin: ${PY_BINS} ${PY_LIBS}
 
@@ -37,6 +37,7 @@ install: all
 	for file in ${PY_BINS}; do \
 		${INSTALL} -m 0755 $${file} ${DESTDIR}/usr/share/lve/dbgovernor/mysqlgovernor.py ; \
 	done
+	${INSTALL} -m 0755 db-update.py ${DESTDIR}/usr/share/lve/dbgovernor/db-update.py
 	${INSTALL} -d -m 755 ${DESTDIR}${PYLIBDIR}
 	${INSTALL} -m 0755 copy_directory.py ${DESTDIR}/usr/share/lve/dbgovernor/
 	${INSTALL} -m 0644 copy_directory.pyc ${DESTDIR}/usr/share/lve/dbgovernor/

@@ -1,6 +1,6 @@
 Name: governor-mysql
 Version: 1.0
-Release: 3%{?dist}.cloudlinux
+Release: 4%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -132,6 +132,7 @@ ln -s /%{_libdir}/liblve.so.0.9.0 /%{_libdir}/liblve.so.1
 
 ldconfig
 echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
+echo "!!!Before making any changing with database make sure that you have reserve copy of users data!!!"
 
 %files
 %defattr(-,root,root)
@@ -152,6 +153,11 @@ echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Fri May 31 2013 Alexey Berezhok <alexey_com@ukr.net> 1.0-4
+- Added db-update script
+- Added al-php mysql update on database type changing
+- Removed killuser mode in governor
+
 * Mon May 20 2013 Pavel Shkatula <shpp@cloudlinux.com> 1.0-3
 - Fixed dbctl list and big numbers issue
 

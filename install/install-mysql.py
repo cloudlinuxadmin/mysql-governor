@@ -10,6 +10,7 @@ import glob
 import grp
 import pwd
 import yum
+import time
 
 import lve_diagnostic
 from lve_diagnostic import *
@@ -241,6 +242,12 @@ def remove_repo_file():
 def remove_mysqlclients():
 	if os.path.exists("/usr/share/lve/dbgovernor/remove-mysqlclient"):
 	    exec_command_out("/usr/share/lve/dbgovernor/remove-mysqlclient")
+
+def warn_message():
+        print "!!!Before making any changing with database make sure that you have reserve copy of users data!!!"
+        print "Ctrl+C for cancellation of installtion"
+        time.sleep(10)
+
                 
 cp = get_cp()
 try:
@@ -256,10 +263,12 @@ for o, a in opts:
 		usage()
 		sys.exit()
 	elif o in ("-i", "--install"):
+                warn_message()
 		install_mysql_beta()
 		remove_mysql_justdb()
                 set_bad_lve_container()
 	elif o in ("-u", "--upgrade"):
+                warn_message()
 		remove_mysqlclients()
 		remove_mysql_justdb_cl()
 		install_mysql_beta()
@@ -269,6 +278,8 @@ for o, a in opts:
 		    exec_command_out("/usr/bin/mysql_upgrade")
 		if os.path.exists("/usr/share/lve/dbgovernor/chk-mysqlclient"):
 		    exec_command_out("/usr/share/lve/dbgovernor/chk-mysqlclient")
+                if os.path.exists("/usr/bin/alt-php-mysql-reconfigure"):                                                                                                                                                                     
+                    exec_command_out("/usr/bin/alt-php-mysql-reconfigure") 
 	elif o in ("-d", "--delete"):
                 remove_repo_file()
 		remove_mysql_justdb_cl()

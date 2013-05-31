@@ -193,8 +193,8 @@ void send_commands(Command * cmd, void *data) {
 			} else
 				update_user_limit(cmd->username, (unsigned int) -1,
 						data_cfg.log_mode);
-			if(data_cfg.killuser==1) kill_connection(cmd->username, data_cfg.log_mode);
-			else lve_connection(cmd->username, data_cfg.log_mode);
+			//if(data_cfg.killuser==1) kill_connection(cmd->username, data_cfg.log_mode);
+			lve_connection(cmd->username, data_cfg.log_mode);
 			if( data_cfg.logqueries_use ) log_user_queries( cmd->username, data_cfg.log_mode );
 			break;
 		case UNFREEZE:
