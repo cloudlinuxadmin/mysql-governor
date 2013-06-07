@@ -28,6 +28,49 @@ clMySQL_list="cl-MySQL-bench cl-MySQL-client cl-MySQL-devel cl-MySQL-server cl-M
 clMariaDB_list="cl-mariadb cl-mariadb-bench cl-mariadb-devel cl-mariadb-libs cl-mariadb-server"
 clCleanMySQL_list="mysql mysql-server mysql-bench mysql-shared mysql-libs"
 
+def getItem(txt1, txt2, op):
+	try:
+    		i1 = int(txt1)
+	except ValueError:
+    		i1 = -1
+	try:
+    		i2 = int(txt2)
+	except ValueError:
+    		i2 = -1
+	if i1 == -1 or i2 == -1:
+		if op == 0:
+			return txt1>txt2
+		else:
+			return txt1<txt2
+	else:
+		if op == 0:
+			return i1>i2
+		else:
+			return i1<i2
+
+#Compare version of types xx.xx.xxx... and yyy.yy.yy.y..
+#if xxx and yyy is numbers, than comapre as numbers
+#else - comapre as strings
+def verCompare (base, test):
+	base = base.split(".")
+	test = test.split(".")
+	if(len(base)>len(test)):
+		ln = len(test)
+	else:
+		ln = len(base)
+	for i in range(ln):
+		if getItem(base[i],test[i],0):
+			return 1
+		if getItem(base[i],test[i],1):
+			return -1
+	if len(base)==len(test):	
+		return 0
+	elif len(base)>len(test):
+		return 1
+	else:
+		return 0
+
+
 def get_cl_num():
     result = exec_command("rpm -q --qf \"%{version}\n\" `rpm -q --whatprovides /etc/redhat-release`")
     return result[0]
