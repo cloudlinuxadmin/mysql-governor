@@ -1,6 +1,6 @@
 Name: governor-mysql
 Version: 1.0
-Release: 4%{?dist}.cloudlinux
+Release: 5%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -153,6 +153,9 @@ echo "!!!Before making any changing with database make sure that you have reserv
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Fri Jun 07 2013 Alexey Berezhok <alexey_com@ukr.net> 1.0-5
+- Fixed db-update for Plesk
+
 * Fri May 31 2013 Alexey Berezhok <alexey_com@ukr.net> 1.0-4
 - Added db-update script
 - Added al-php mysql update on database type changing
