@@ -24,13 +24,13 @@
 %define mysql_vendor_2          Sun Microsystems, Inc.
 %define mysql_vendor            Oracle and/or its affiliates
 
-%define mysql_version   5.5.27
+%define mysql_version   5.5.30
 
 %define mysqld_user     mysql
 %define mysqld_group    mysql
 %define mysqldatadir    /var/lib/mysql
 
-%define release         5%{?dist}.cloudlinux
+%define release         4%{?dist}.cloudlinux
 
 #
 # Macros we use which are not available in all supported versions of RPM
@@ -119,14 +119,11 @@
 # ----------------------------------------------------------------------------
 %define distro_specific 1
 %define distro_description      cPanel Build
-%define distro_releasetag       
 
 # Avoid debuginfo RPMs, leaves binaries unstripped
-#%define debug_package   %{nil}
 
 # Hack to work around bug in RHEL5 __os_install_post macro, wrong inverted
 # test for __debug_package
-%define __strip         /bin/true
 
 # ----------------------------------------------------------------------------
 # Support optional "tcmalloc" library (experimental)
@@ -153,11 +150,11 @@
 # Main spec file section
 ##############################################################################
 
-Name:           cl-MySQL%{product_suffix}
+Name:           cl-MySQL
 Summary:        MySQL: a very fast and reliable SQL database server
 Group:          Applications/Databases
-Version:        5.5.27
-Release:        %{release}%{?distro_releasetag:%{distro_releasetag}}
+Version:        %{mysql_version}
+Release:        %{release}
 Distribution:   %{distro_description}
 License:        Copyright (c) 2000, 2011, %{mysql_vendor}.  All rights reserved.  Use is subject to license terms.  Under %{license_type} license as shown in the Description field.
 Source:         http://www.mysql.com/Downloads/MySQL-5.5/%{src_dir}.tar.gz
@@ -166,14 +163,13 @@ URL:            http://www.mysql.com/
 Packager:       MySQL Build Team <build@mysql.com>
 Vendor:         %{mysql_vendor}
 Provides:       msqlormysql MySQL-server mysql
-BuildRequires: gcc-c++ gperf ncurses-devel perl readline-devel time zlib-devel
+BuildRequires: gcc-c++ gperf ncurses-devel perl readline-devel time zlib-devel bison make
 BuildRequires: libaio-devel
 BuildRequires:  cmake
 AutoReq: 0
 
 Patch1: 0001-Cloud-Linux-userstat.patch
-Patch2: max_connection2_mysql_5_5_25_b202.patch
-#Patch3: 0003-autogen.patch
+Patch2: max_connection2_mysql_5_5_30_b403.patch
 
 # Think about what you use here since the first step is to
 # run a rm -rf
@@ -202,15 +198,18 @@ documentation and the manual for more information.
 # Sub package definition
 ##############################################################################
 
-%package server%{product_suffix}
+%package server
 Summary:        MySQL: a very fast and reliable SQL database server
 Group:          Applications/Databases
 Requires: chkconfig coreutils grep procps shadow-utils
 Provides:       msqlormysql mysql-server mysql MySQL MySQL-server
-Obsoletes:      MySQL mysql mysql-server MySQL-server MySQL-server-community
+Obsoletes:      mysql mysql-server 
+# Needed to give access to mysql client for %post calls.
+Requires(post): %{name}-client
+Requires: %{name}-client
 AutoReq: 0
 
-%description server%{product_suffix}
+%description server
 The MySQL(TM) software delivers a very fast, multi-threaded, multi-user,
 and robust SQL (Structured Query Language) database server. MySQL Server
 is intended for mission-critical, heavy-load production systems as well
@@ -232,57 +231,58 @@ This package includes the MySQL server binary as well as related utilities
 to run and administer a MySQL server.
 
 If you want to access and work with the database, you have to install
-package "cl-MySQL-client%{product_suffix}" as well!
+package "cl-MYSQL-client" as well!
 
 # ----------------------------------------------------------------------------
-%package client%{product_suffix}
+%package client
 Summary:        MySQL - Client
 Group:          Applications/Databases
-Obsoletes:      mysql-client MySQL-client MySQL-client-community
+Obsoletes:      mysql-client
 Provides:       mysql-client MySQL-client
+AutoReq: 0
 
-%description client%{product_suffix}
+%description client
 This package contains the standard MySQL clients and administration tools.
 
 For a description of MySQL see the base MySQL RPM or http://www.mysql.com/
 
 # ----------------------------------------------------------------------------
-%package test%{product_suffix}
-Requires:       MySQL-client%{product_suffix} perl
+%package test
+Requires:       cl-MySQL-client perl
 Summary:        MySQL - Test suite
 Group:          Applications/Databases
 Provides:       mysql-test
-Obsoletes:      mysql-bench mysql-test MySQL-test-community
+Obsoletes:      mysql-bench mysql-test
 AutoReqProv:    no
+AutoReq: 0
 
-%description test%{product_suffix}
+%description test
 This package contains the MySQL regression test suite.
 
 For a description of MySQL see the base MySQL RPM or http://www.mysql.com/
 
 # ----------------------------------------------------------------------------
-%package devel%{product_suffix}
+%package devel
 Summary:        MySQL - Development header files and libraries
 Group:          Applications/Databases
-Provides:       mysql-devel
-Obsoletes:      mysql-devel MySQL-devel-community
+Provides:       mysql-devel MySQL-devel
+Obsoletes:      mysql-devel
 AutoReq: 0
 
-%description devel%{product_suffix}
+%description devel
 This package contains the development header files and libraries necessary
 to develop MySQL client applications.
 
 For a description of MySQL see the base MySQL RPM or http://www.mysql.com/
 
 # ----------------------------------------------------------------------------
-%package shared%{product_suffix}
+%package shared
 Summary:        MySQL - Shared libraries
 Group:          Applications/Databases
-Provides:       mysql-shared
-Obsoletes:      MySQL-shared-community
+Provides:       mysql-shared MySQL-shared
 AutoReq: 0
 
-%description shared%{product_suffix}
+%description shared
 This package contains the shared libraries (*.so*) which certain languages
 and applications need to dynamically load and use MySQL.
 
@@ -296,7 +296,6 @@ cd mysql-%{mysql_version}
 
 %patch1 -p3
 %patch2 -p1
-#%patch3 -p3
 rm -f sql/sql_yacc.cc sql/sql_yacc.h
 
 ##############################################################################
@@ -362,7 +361,7 @@ mkdir debug
            -DCOMPILATION_COMMENT="%{compilation_comment_debug}" \
            -DMYSQL_SERVER_SUFFIX="%{server_suffix}"
   echo BEGIN_DEBUG_CONFIG ; egrep '^#define' include/config.h ; echo END_DEBUG_CONFIG
-  make ${MAKE_JFLAG} VERBOSE=1
+  make -j4 ${MAKE_JFLAG} VERBOSE=1
 )
 # Build full release
 mkdir release
@@ -378,7 +377,7 @@ mkdir release
            -DCOMPILATION_COMMENT="%{compilation_comment_release}" \
            -DMYSQL_SERVER_SUFFIX="%{server_suffix}"
   echo BEGIN_NORMAL_CONFIG ; egrep '^#define' include/config.h ; echo END_NORMAL_CONFIG
-  make ${MAKE_JFLAG} VERBOSE=1
+  make -j4 ${MAKE_JFLAG} VERBOSE=1
 )
 
 # Use the build root for temporary storage of the shared libraries.
@@ -389,22 +388,28 @@ RBR=$RPM_BUILD_ROOT
 
 # For gcc builds, include libgcc.a in the devel subpackage (BUG 4921).  This
 # needs to be during build phase as $CC is not set during install.
-if "$CC" -v 2>&1 | grep '^gcc.version' >/dev/null 2>&1
-then
+#if "$CC" -v 2>&1 | grep '^gcc.version' >/dev/null 2>&1
+#then
   libgcc=`$CC $CFLAGS --print-libgcc-file`
   if [ -f $libgcc ]
   then
     mkdir -p $RBR%{_libdir}/mysql
     install -m 644 $libgcc $RBR%{_libdir}/mysql/libmygcc.a
     echo "%{_libdir}/mysql/libmygcc.a" >>optional-files-devel
+    echo "$libgcc" > libgcc_t.log
   fi
-fi
+#fi
 
 ##############################################################################
 %install
 
 RBR=$RPM_BUILD_ROOT
 MBD=$RPM_BUILD_DIR/%{src_dir}
+
+mkdir -p $RBR%{_libdir}/mysql
+install -m 644 `echo libgcc_t.log` $RBR%{_libdir}/mysql/libmygcc.a
+#install -m 644 $RPM_BUILD_DIR/%{src_dir}/libmygcc.a $RBR%{_libdir}/mysql/libmygcc.a
+echo "%{_libdir}/mysql/libmygcc.a" >>optional-files-devel
 
 # Ensure that needed directories exists
 install -d $RBR%{_sysconfdir}/{logrotate.d,init.d}
@@ -459,7 +464,8 @@ rm -f $RBR%{_mandir}/man1/make_win_bin_dist.1*
 #  Post processing actions, i.e. when installed
 ##############################################################################
 
-%pre server%{product_suffix}
+%pre server
+
 # This is the code running at the beginning of a RPM upgrade action,
 # before replacing the old files with the new ones.
 
@@ -559,11 +565,17 @@ fi
 # (Maybe the "stop" doesn't work then, but we might fix that in itself.)
 if [ -x %{_sysconfdir}/init.d/mysql ] ; then
         %{_sysconfdir}/init.d/mysql stop > /dev/null 2>&1
-        echo "Giving mysqld 5 seconds to exit nicely"
-        sleep 5
+        echo "Giving mysqld 10 seconds to exit nicely"
+        sleep 10
 fi
 
-%post server%{product_suffix}
+%triggerpostun -n %{name}-server%{product_suffix} -- MySQL-server
+# Work around mysqld being stopped when MySQL-server which we replace gets uninstalled.
+/sbin/service mysql start || /bin/true
+
+/sbin/chkconfig --add mysql
+
+%post server
 # This is the code running at the end of a RPM install or upgrade action,
 # after the (new) files have been written.
 
@@ -713,7 +725,14 @@ mv -f  $STATUS_FILE ${STATUS_FILE}-LAST  # for "triggerpostun"
 #scheduled service packs and more.  Visit www.mysql.com/enterprise for more
 #information."
 
-%preun server%{product_suffix}
+if [ -x '/usr/local/cpanel/bin/build_mysql_conf' ]; then
+  /usr/local/cpanel/bin/build_mysql_conf
+fi
+
+# Make sure mysql is started when we're done.
+/sbin/service mysql start
+
+%preun server
 
 # Which '$1' does this refer to?  Fedora docs have info:
 # " ... a count of the number of versions of the package that are installed.
@@ -742,7 +761,7 @@ fi
 # We do not remove the mysql user since it may still own a lot of
 # database files.
 
-%triggerpostun server%{product_suffix} --MySQL-server-community
+%triggerpostun server --MySQL-server-community
 
 # Setup: We renamed this package, so any existing "server-community"
 #   package will be removed when this "server" is installed.
@@ -813,7 +832,7 @@ echo "====="                                     >> $STATUS_HISTORY
 #  Files section
 ##############################################################################
 
-%files server%{product_suffix}
+%files server
 %defattr(-,root,root,0755)
 
 %if %{defined license_files_server}
@@ -884,7 +903,7 @@ echo "====="                                     >> $STATUS_HISTORY
 %attr(755, root, root) %{_bindir}/resolveip
 
 %attr(755, root, root) %{_sbindir}/mysqld
-#%attr(755, root, root) %{_sbindir}/mysqld-debug
+%attr(755, root, root) %{_sbindir}/mysqld-debug
 %attr(755, root, root) %{_sbindir}/rcmysql
 %attr(755, root, root) %{_libdir}/mysql/plugin/daemon_example.ini
 %attr(755, root, root) %{_libdir}/mysql/plugin/adt_null.so
@@ -920,7 +939,7 @@ echo "====="                                     >> $STATUS_HISTORY
 %attr(755, root, root) %{_datadir}/mysql/
 
 # ----------------------------------------------------------------------------
-%files client%{product_suffix}
+%files client
 
 %defattr(-, root, root, 0755)
 %attr(755, root, root) %{_bindir}/msql2mysql
@@ -952,7 +971,7 @@ echo "====="                                     >> $STATUS_HISTORY
 %doc %attr(644, root, man) %{_mandir}/man1/mysqlslap.1*
 
 # ----------------------------------------------------------------------------
-%files devel%{product_suffix} -f optional-files-devel
+%files devel -f optional-files-devel
 %defattr(-, root, root, 0755)
 %doc %attr(644, root, man) %{_mandir}/man1/comp_err.1*
 %doc %attr(644, root, man) %{_mandir}/man1/mysql_config.1*
@@ -966,19 +985,19 @@ echo "====="                                     >> $STATUS_HISTORY
 %{_libdir}/mysql/libmysqlservices.a
 
 # ----------------------------------------------------------------------------
-%files shared%{product_suffix}
+%files shared
 %defattr(-, root, root, 0755)
 # Shared libraries (omit for architectures that don't support them)
 %{_libdir}/libmysql*.so*
 
-%post shared%{product_suffix}
+%post shared
 /sbin/ldconfig
 
-%postun shared%{product_suffix}
+%postun shared
 /sbin/ldconfig
 
 # ----------------------------------------------------------------------------
-%files test%{product_suffix}
+%files test
 %defattr(-, root, root, 0755)
 %attr(-, root, root) %{_datadir}/mysql-test
 %attr(755, root, root) %{_bindir}/mysql_client_test
@@ -995,6 +1014,22 @@ echo "====="                                     >> $STATUS_HISTORY
 # merging BK trees)
 ##############################################################################
 %changelog
+* Mon Feb 4 2013 Nicolas Rochelemagne <nicolas.rochelemagne@cpanel.net> 5.5.30-1.cp1136
+- upstream release
+
+* Tue Dec 11 2012 Nicolas Rochelemagne <nicolas.rochelemagne@cpanel.net> 5.5.28-2.cp1136
+- patch for CVE-2012-5611 mysql: acl_get() stack-based buffer overflow
+
+* Fri Oct 26 2012 Xiaojun Zhou <joe.zhou@cpanel.net> 5.5.28-1.cp1136
+- Rename package from MySQL to MySQL55 to prevent packaging system confusion
+- Obsolete MySQL package names
+- Give mysqld longer time (10 seconds instead of 5) to shut down
+- Patch scripts to use /usr/local/cpanel/3rdparty/bin/perl
+- Add trigger for MySQL-server so mysqld is restarted when MySQL-server is removed
+
+* Mon Oct 15 2012 Nicolas Rochelemagne <nicolas.rochelemagne@cpanel.net> 5.5.28
+- New upstream release
+
 * Mon Aug 6 2012 brian m. carlson <brian.carlson@cpanel.net> 5.5.27-1
 - New upstream release
 

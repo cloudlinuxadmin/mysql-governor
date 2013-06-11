@@ -1678,7 +1678,7 @@ index ac7a9c2..5ac80c2 100644
 +get_limit(){
 +  if [ -e /usr/sbin/lvectl ]; then
 +        LVE_VER=`/usr/sbin/lvectl --lve-version`
-+        if [ "$LVE_VER"=="4" ]; then
++        if [ "$LVE_VER" == "4" ]; then
 +            io_limit=`/usr/sbin/lvectl limits 3 | awk 'NR == 2' | awk '{print $6}'`
 +        else
 +            io_limit=`/usr/sbin/lvectl limits 3 | awk 'NR == 2' | awk '{print $8}'`

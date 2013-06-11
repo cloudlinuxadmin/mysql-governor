@@ -23,8 +23,13 @@ io_limit=
 
 get_limit(){
   if [ -e /usr/sbin/lvectl ]; then
-	io_limit=`/usr/sbin/lvectl limits 3 | awk 'NR == 2' | awk '{print $8}'`
-	cpu_limit=`/usr/sbin/lvectl limits 3 | awk 'NR == 2' | awk '{print $2}'`
+        LVE_VER=`/usr/sbin/lvectl --lve-version`
+        if [ "$LVE_VER" == "4" ]; then
+            io_limit=`/usr/sbin/lvectl limits 3 | awk 'NR == 2' | awk '{print $6}'`
+        else
+            io_limit=`/usr/sbin/lvectl limits 3 | awk 'NR == 2' | awk '{print $8}'`
+        fi
+        cpu_limit=`/usr/sbin/lvectl limits 3 | awk 'NR == 2' | awk '{print $2}'`
   fi
 }
 

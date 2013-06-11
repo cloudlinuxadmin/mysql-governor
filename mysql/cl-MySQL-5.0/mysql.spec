@@ -14,7 +14,7 @@
 # Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston
 # MA  02110-1301  USA.
 
-%define mysql_version   5.0.95
+%define mysql_version   5.0.96
 %define mysql_vendor    MySQL AB
 
 # use "rpmbuild --with static" or "rpm --define '_with_static 1'" (for RPM 3.x)
@@ -27,11 +27,6 @@
 %{?_with_yassl:%define YASSL_BUILD 1}
 %{!?_with_yassl:%define YASSL_BUILD 0}
 
-%if %{STATIC_BUILD}
-%define release 1%{?dist}.cloudlinux
-%else
-%define release 1%{?dist}.cloudlinux
-%endif
 %define license GPL
 %define mysqld_user     mysql
 %define mysqld_group    mysql
@@ -64,20 +59,23 @@
 Name: cl-MySQL
 Summary:	MySQL: a very fast and reliable SQL database server
 Group:		Applications/Databases
-Version:	5.0.95
-Release:	%{release}
+Version:	5.0.96
+Release:	4%{?dist}.cloudlinux
 License:	%{license}4
 Source:		http://downloads.mysql.com/archives/mysql-5.0/mysql-%{mysql_version}.tar.gz
-Patch0:     gcc_296_operator_delete.patch
-Patch1:     CVE-2010-1626.patch
+
+Patch1:     0001-cpanel-perl.patch
 Patch100:   userstats2_5_0_95.patch
-Patch101:   max_connection2_mysql_5_0_95_b13.patch
+Patch101:   max_connection2_mysql_5_0_96_b405.patch
+
 URL:		http://www.mysql.com/
 Packager:	MySQL Production Engineering Team <build@mysql.com>
 Vendor:		%{mysql_vendor}
-Provides:	msqlormysql MySQL-server mysql
+Provides:	msqlormysql MySQL-server mysql MySQL
 BuildRequires: ncurses-devel bison
-Obsoletes:	mysql
+Obsoletes: mysql
+#Requires:       cpanel-perl
+AutoReq: 0
 
 # Think about what you use here since the first step is to
 # run a rm -rf
@@ -103,8 +101,12 @@ documentation and the manual for more information.
 Summary:	MySQL: a very fast and reliable SQL database server
 Group:		Applications/Databases
 Requires: coreutils grep procps /usr/sbin/useradd /usr/sbin/groupadd /sbin/chkconfig
-Provides:	msqlormysql mysql-server mysql MySQL
-Obsoletes:	MySQL mysql mysql-server mysql-Max
+Provides:	msqlormysql mysql-server mysql MySQL MySQL-server
+Obsoletes:	MySQL mysql mysql-server mysql-Max MySQL-server 
+# Needed to give access to mysql client for %post calls.
+Requires(post): %{name}-client
+Requires: %{name}-client
+AutoReq: 0
 
 %description server
 The MySQL(TM) software delivers a very fast, multi-threaded, multi-user,
@@ -130,8 +132,9 @@ the package "MySQL-client" as well!
 %package client
 Summary: MySQL - Client
 Group: Applications/Databases
-Obsoletes: mysql-client
-Provides: mysql-client
+Obsoletes: mysql-client MySQL-client
+Provides: mysql-client MySQL-client
+AutoReq: 0
 
 %description client
 This package contains the standard MySQL clients and administration tools. 
@@ -182,9 +185,10 @@ This package contains the standard MySQL clients and administration tools.
 %package bench
 Summary: MySQL - Benchmarks and test system
 Group: Applications/Databases
-Provides: mysql-bench
-Obsoletes: mysql-bench
+Provides: mysql-bench MySQL-bench
+Obsoletes: mysql-bench MySQL-bench
 AutoReqProv: no
+AutoReq: 0
 
 %description bench
 This package contains MySQL benchmark scripts and data.
@@ -194,8 +198,9 @@ This package contains MySQL benchmark scripts and data.
 %package devel
 Summary: MySQL - Development header files and libraries
 Group: Applications/Databases
-Provides: mysql-devel
-Obsoletes: mysql-devel
+Provides: mysql-devel MySQL-devel
+Obsoletes: mysql-devel MySQL-devel
+AutoReq: 0
 
 %description devel
 This package contains the development header files and libraries
@@ -206,8 +211,9 @@ necessary to develop MySQL client applications.
 %package shared
 Summary: MySQL - Shared libraries
 Group: Applications/Databases
-Provides: mysql-shared
-Obsoletes: mysql-shared
+Provides: mysql-shared MySQL-shared
+Obsoletes: mysql-shared MySQL-shared
+AutoReq: 0
 
 %description shared
 This package contains the shared libraries (*.so*) which certain
@@ -234,12 +240,16 @@ languages and applications need to dynamically load and use MySQL.
 
 %prep
 %setup -q -n mysql-%{mysql_version}
-%patch0 -p1
-%patch1 -p1
+
+%define _default_patch_fuzz 0
+#%patch1 -p3
 %patch100 -p1
 %patch101 -p1
 
+
 %build
+
+export MAKE_JFLAG=${MYSQL_BUILD_MAKE_JFLAG:-}
 
 BuildMySQL() {
 # The --enable-assembler simply does nothing on systems that does not
@@ -279,7 +289,7 @@ sh -c  "PATH=\"${MYSQL_BUILD_PATH:-$PATH}\" \
 	    "
 
  # benchdir does not fit in above model. Maybe a separate bench distribution
- make benchdir_root=/usr/share/
+ make ${MAKE_JFLAG} benchdir_root=/usr/share/
 }
 
 # Use our own copy of glibc
@@ -313,14 +323,6 @@ then
 	export CC="gcc"
 	export CXX="gcc"
 fi
-
-# GCC 2.96 is failing on mandrake 8.2/redhat 9 because it's using -O3 and crashing the compiler. 
-# We think this is a 2.96 bug so we're forcing -O2 on all 2.96 compilers
-%define is_gcc296 %(gcc --version 2>&1|grep -c "2\.96")
-%if %is_gcc296
- RPM_OPT_FLAGS="$RPM_OPT_FLAGS -O2"
- export RPM_OPT_FLAGS
-%endif
 
 #
 # Only link statically on our i386 build host (which has a specially
@@ -356,7 +358,7 @@ do
     ./libtool --mode=execute cp sql/mysqld sql/mysqld-debug
     ./libtool --mode=execute nm --numeric-sort sql/mysqld-debug > sql/mysqld-debug.sym
     echo "# debug"
-    make
+    make  ${MAKE_JFLAG}
     make clean
   fi
 done
@@ -375,7 +377,7 @@ then
 fi
 
 echo "# standard"
-make
+make ${MAKE_JFLAG}
 
 %install
 RBR=$RPM_BUILD_ROOT
@@ -445,7 +447,12 @@ ln -sf ./mysqld_safe $RBR%{_bindir}/safe_mysqld
 touch $RBR%{_sysconfdir}/my.cnf
 touch $RBR%{_sysconfdir}/mysqlmanager.passwd
 
+# Prevent autodeps parsing of perl scripts that ship with MySQL-server and MySQL-client
+chmod 644 $RBR/usr/bin/mysql_convert_table_format $RBR/usr/bin/mysql_explain_log $RBR/usr/bin/mysql_fix_extensions $RBR/usr/bin/mysql_setpermission $RBR/usr/bin/mysql_zap $RBR/usr/bin/mysqld_multi $RBR/usr/bin/mysqldumpslow $RBR/usr/bin/mysqlhotcopy
+chmod 644 $RBR/usr/bin/mysql_find_rows $RBR/usr/bin/mysql_tableinfo $RBR/usr/bin/mysqlaccess
+
 %pre server
+
 # Shut down a previously installed server first
 if test -x %{_sysconfdir}/init.d/mysql
 then
@@ -459,6 +466,11 @@ then
   sleep 5
 fi
 
+%triggerpostun -n %{name}-server -- MySQL-server
+# Work around mysqld being stopped when MySQL-server which we replace gets uninstalled.
+/sbin/service mysql start || /bin/true
+/sbin/chkconfig --add mysql
+
 %post server
 mysql_datadir=%{mysqldatadir}
 
@@ -468,15 +480,7 @@ if test ! -d $mysql_datadir/mysql; then mkdir $mysql_datadir/mysql; fi
 if test ! -d $mysql_datadir/test; then mkdir $mysql_datadir/test; fi
 
 # Make MySQL start/shutdown automatically when the machine does it.
-# use insserv for older SuSE Linux versions
-if test -x /sbin/insserv
-then
-	/sbin/insserv %{_sysconfdir}/init.d/mysql
-# use chkconfig on Red Hat and newer SuSE releases
-elif test -x /sbin/chkconfig
-then
-	/sbin/chkconfig --add mysql
-fi
+/sbin/chkconfig --add mysql
 
 # Create a MySQL user and group. Do not report any problems if it already
 # exists.
@@ -502,7 +506,7 @@ chown -R %{mysqld_user}:%{mysqld_group} $mysql_datadir
 chmod -R og-rw $mysql_datadir/mysql
 
 # Restart in the same way that mysqld will be started normally.
-%{_sysconfdir}/init.d/mysql start
+/sbin/service mysql start
 
 # Allow safe_mysqld to start mysqld and print a message before we exit
 sleep 2
@@ -513,31 +517,17 @@ software, intelligent advisory services, and full production support with
 scheduled service packs and more.  Visit www.mysql.com/enterprise for more
 information." 
 
-#%post ndb-storage
-#mysql_clusterdir=/var/lib/mysql-cluster
-#
-## Create cluster directory if needed
-#if test ! -d $mysql_clusterdir; then mkdir -m 755 $mysql_clusterdir; fi
+if [ -x '/usr/local/cpanel/bin/build_mysql_conf' ]; then
+  /usr/local/cpanel/bin/build_mysql_conf
+fi
+
+# Make sure mysql is up when we're done.
+/sbin/service mysql start
 
 %preun server
-if test $1 = 0
-then
-  # Stop MySQL before uninstalling it
-  if test -x %{_sysconfdir}/init.d/mysql
-  then
-    %{_sysconfdir}/init.d/mysql stop > /dev/null
-
-    # Remove autostart of mysql
-    # for older SuSE Linux versions
-    if test -x /sbin/insserv
-    then
-      /sbin/insserv -r %{_sysconfdir}/init.d/mysql
-    # use chkconfig on Red Hat and newer SuSE releases
-    elif test -x /sbin/chkconfig
-    then
-      /sbin/chkconfig --del mysql
-    fi
-  fi
+if test $1 = 0; then
+  /sbin/service mysql stop
+  /sbin/chkconfig --del mysql
 fi
 
 # We do not remove the mysql user since it may still own a lot of
@@ -760,6 +750,25 @@ fi
 # %attr(644, root, root) %{_libdir}/mysql/libmysqld.a
 
 %changelog
+* Wed Oct 23 2012 Kyle Lafkoff <kyle.lafkoff@cpanel.net> - 5.0.96-2.cp1136
+- remove pre and post hook scripts as we now use Cpanel::Hooks
+- Add trigger for MySQL-server so mysqld is restarted when MySQL-server is removed
+- Simplify service start/stop logic given support range is only CentHat
+
+* Mon Sep 1 2012 Todd Rinaldo <toddr@cpanel.net> 5.0.96-1.cp1136
+- Update release to have cp1136 in it
+- Rename package from MySQL to MySQL50 to prevent packaging system confusion
+- Remove legacy platform support.
+- Remove perl dependencies from the build since they are being detected incorrectly
+- Add pre and post installation steps
+- Patch scripts to use /usr/local/cpanel/3rdparty/bin/perl
+
+* Tue Aug 07 2012 Nicolas Rochelemagne <nicolas.rochelemagne@cpanel.net> 5.0.96-0.cp1130
+- New upstream release
+
+* Wed Feb 22 2012 Todd Rinaldo <toddr@cpanel.net> 5.0.95-0.cp1130
+- New upstream maintenance release mostly to fix CVE-2012-0113
+
 * Fri Feb 18 2011 Todd Rinaldo <toddr@cpanel.net> 5.0.92-0
 - New upstream maintenance release
 - New libraries and man pages added to distro
