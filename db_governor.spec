@@ -1,6 +1,6 @@
 Name: governor-mysql
 Version: 1.0
-Release: 5%{?dist}.cloudlinux
+Release: 6%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -9,7 +9,7 @@ Source0: %{name}-%{version}.tar.bz2
 Requires: glib2
 Requires: ncurses
 Requires: lve-utils >= 1.1-3
-Requires: lve-stats >= 0.9-22
+Requires: lve-stats >= 0.9-26
 Requires: tmpwatch
 Requires(preun): /sbin/chkconfig
 BuildRequires: cmake
@@ -133,6 +133,7 @@ ln -s /%{_libdir}/liblve.so.0.9.0 /%{_libdir}/liblve.so.1
 ldconfig
 echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
 echo "!!!Before making any changing with database make sure that you have reserve copy of users data!!!"
+echo "Instruction: how to create whole database backup - http://docs.cloudlinux.com/index.html?backing_up_mysql.html"
 
 %files
 %defattr(-,root,root)
@@ -153,6 +154,10 @@ echo "!!!Before making any changing with database make sure that you have reserv
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Tue Jun 11 2013 Alexey Berezhok <alexey_com@ukr.net> 1.0-6
+- Fixed version MySQL for cPanel
+- Added "Database backup" instruction
+
 * Fri Jun 07 2013 Alexey Berezhok <alexey_com@ukr.net> 1.0-5
 - Fixed db-update for Plesk
 

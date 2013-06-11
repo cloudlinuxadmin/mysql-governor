@@ -247,10 +247,10 @@ sub cPPkg_getfilelist {
 	 } else {
 	    $file =~ s/%syst%/el5/;
 	 }
-	 $file =~ s/5\.1\.63-2/5\.1\.68-2/;
+	 $file =~ s/5\.1\.63-2/5\.1\.68-3/;
 	 $file =~ s/\.cloudlinux\.1/\.cloudlinux/;
-         $file =~ s/5\.0\.95-1/5\.0\.96-3/;
-         $file =~ s/5\.5\.25-3/5\.5\.30-3/;
+         $file =~ s/5\.0\.95-1/5\.0\.96-4/;
+         $file =~ s/5\.5\.25-3/5\.5\.30-4/;
          $file =~ s/i386/i686/;
 	 print $url . '/' . $file. "\n";
          push( @FILES, $url . '/' . $file );
@@ -263,7 +263,7 @@ sub cPPkg_getfilelist_mariadb55 {
      my $majorver   = $_[1];
      my $url = $_[2];
      my $mp = $_[3];
-     my @fls = ("cl-mariadb-5.5.30-14", "cl-mariadb-bench-5.5.30-14", "cl-mariadb-devel-5.5.30-14", "cl-mariadb-libs-5.5.30-14", "cl-mariadb-server-5.5.30-14");
+     my @fls = ("cl-mariadb-5.5.30-15", "cl-mariadb-bench-5.5.30-15", "cl-mariadb-devel-5.5.30-15", "cl-mariadb-libs-5.5.30-15", "cl-mariadb-server-5.5.30-15");
      
      my @FILES; 
      foreach my $file ( @fls ) { 
