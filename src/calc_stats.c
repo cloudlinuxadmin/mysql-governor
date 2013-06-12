@@ -742,9 +742,7 @@ void dbctl_restrict_set( gpointer key, Account * ac, void *data )
   User_stats *us = (User_stats *)g_hash_table_lookup( users, command->options.username );
   if( !us ) us = add_user_stats( command->options.username, accounts, users );
 
-  while( i <= ac->users->len ) 
-  {
-    if( strcmp( ac->id, command->options.username ) == 0 )
+  if( strcmp( ac->id, command->options.username ) == 0 )
     {
       stats_limit_cfg cfg_buf;
 	  stats_limit_cfg *sl = config_get_account_limit( ac->id , &cfg_buf);
@@ -782,9 +780,8 @@ void dbctl_restrict_set( gpointer key, Account * ac, void *data )
 			  	   tmp_buf, data_cfg.log_mode
 				 );
 	  }
-    }
-    i++;
-  }
+   }
+
 }
 
 void dbctl_unrestrict_set( gpointer key, Account * ac, void *data ) 
@@ -798,8 +795,6 @@ void dbctl_unrestrict_set( gpointer key, Account * ac, void *data )
 //  User_stats *us = (User_stats *)g_hash_table_lookup( users, command->options.username );
 //  if( !us ) us = add_user_stats( command->options.username, accounts, users );
 
-  while( i <= ac->users->len ) 
-  {
     if( strcmp( ac->id, command->options.username ) == 0 )
     {
  	  ac->timeout = 0;
@@ -838,8 +833,7 @@ void dbctl_unrestrict_set( gpointer key, Account * ac, void *data )
                  );
       }
     }
-    i++;
-  }
+
 }
 
 void dbctl_unrestrict_all_set( gpointer key, Account * ac, void *data ) 
@@ -849,8 +843,9 @@ void dbctl_unrestrict_all_set( gpointer key, Account * ac, void *data )
   struct governor_config data_cfg;
   get_config_data( &data_cfg );
   
-  while( i <= ac->users->len ) 
-  {
+  if( ac->timeout )
+        account_unrestrict( ac );
+
 	ac->timeout = 0;
 	ac->start_count = 0;
 	ac->restricted = 0;
@@ -874,17 +869,4 @@ void dbctl_unrestrict_all_set( gpointer key, Account * ac, void *data )
 	ac->info.field_restrict = 0;
 	ac->info.field_level_restrict = 0;
 
-	if( !check_restrict( ac ) )
-      account_unrestrict( ac );
-    else 
-    {
-	  sprintf( tmp_buf, "No unrestrict yet for %s %d %d\n",
-                        ac->id, ac->timeout, ac->start_count
-             );
-      WRITE_LOG( NULL, 1, tmp_buf, _DBGOVERNOR_BUFFER_8192,
-                 tmp_buf, data_cfg.log_mode
-               );
-    }
-    i++;
-  }
 }

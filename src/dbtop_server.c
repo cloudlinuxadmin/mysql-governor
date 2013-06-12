@@ -188,18 +188,27 @@ void *run_dbctl_command( void *data )
   }
   else if( command.command == RESTRICT )
   {
-    if( !data_cfg.is_gpl )
+    if( !data_cfg.is_gpl ){
+      lock_acc();
       g_hash_table_foreach( (GHashTable *)get_accounts(), (GHFunc)dbctl_restrict_set, &command );
+      unlock_acc();
+    }
   }
   else if( command.command == UNRESTRICT )
   {
-    if( !data_cfg.is_gpl )
+    if( !data_cfg.is_gpl ) {
+      lock_acc();
       g_hash_table_foreach( (GHashTable *)get_accounts(), (GHFunc)dbctl_unrestrict_set, &command );
+      unlock_acc();
+    }
   }
   else if( command.command == UNRESTRICT_A )
   {
-    if( !data_cfg.is_gpl )
+    if( !data_cfg.is_gpl ) {
+      lock_acc();
       g_hash_table_foreach( (GHashTable *)get_accounts(), (GHFunc)dbctl_unrestrict_all_set, NULL );
+      unlock_acc();
+    }
   }
   else if( command.command == LIST || command.command == LIST_R )
   {

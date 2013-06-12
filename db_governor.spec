@@ -1,6 +1,6 @@
 Name: governor-mysql
 Version: 1.0
-Release: 6%{?dist}.cloudlinux
+Release: 7%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -154,6 +154,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Wed Jun 12 2013 Alexey Berezhok <alexey_com@ukr.net> 1.0-7
+- Fixed dbctl unrestricted-all command
+
 * Tue Jun 11 2013 Alexey Berezhok <alexey_com@ukr.net> 1.0-6
 - Fixed version MySQL for cPanel
 - Added "Database backup" instruction
