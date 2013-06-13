@@ -195,12 +195,12 @@ void *get_data_from_client(void *data) {
         
 		int i;
 #ifdef TEST
-        print_tid_data();
+        //print_tid_data();
 #endif
 		//Wait max 1 second
 		ret = poll(fds, nfds, timeout);
 #ifdef TEST
-		printf("Get count of events %d\n", ret);
+		//printf("Get count of events %d\n", ret);
 #endif
 		if (ret == -1) {
 			//Try to recreate socket
@@ -219,7 +219,7 @@ void *get_data_from_client(void *data) {
 		}
 		for (i = 0; (i < nfds) && (ret); i++) {
 #ifdef TEST
-			printf("Check index %d revents %d nfds %d\n", i, (fds + i)->revents, nfds);
+			//printf("Check index %d revents %d nfds %d\n", i, (fds + i)->revents, nfds);
 #endif
 			if (!(fds + i)->revents)
 				continue;
@@ -236,7 +236,7 @@ void *get_data_from_client(void *data) {
 				(fds + nfds)->fd = accept(global_socket,
 						(struct sockaddr *) &fsaun, &fromlen);
 #ifdef TEST
-				printf("Get accept descriptor %d\n", i, (fds + nfds)->fd);
+				//printf("Get accept descriptor %d\n", i, (fds + nfds)->fd);
 #endif
 				if ((fds + nfds)->fd == -1) {
 					WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
@@ -258,7 +258,7 @@ void *get_data_from_client(void *data) {
 			//Descriptor is not open. Just remove it from array
 			if ((fds + i)->revents & POLLNVAL) {
 #ifdef TEST
-				printf("Empty descriptor %d\n", (fds + i)->fd);
+				//printf("Empty descriptor %d\n", (fds + i)->fd);
 #endif
 				remove_tid_data_by_fd((fds + i)->fd);
 				nfds--;
@@ -270,7 +270,7 @@ void *get_data_from_client(void *data) {
 			//Disconnect
 			if ((fds + i)->revents & POLLHUP) {
 #ifdef TEST
-				printf("Disconnected descriptor %d\n", (fds + i)->fd);
+				//printf("Disconnected descriptor %d\n", (fds + i)->fd);
 #endif
 				remove_tid_data_by_fd((fds + i)->fd);
 				cleanup(0, (fds + i)->fd, 2);
@@ -293,7 +293,7 @@ void *get_data_from_client(void *data) {
 			//Socket error
 			if ((fds + i)->revents & POLLERR) {
 #ifdef TEST
-				printf("Error descriptor %d\n", (fds + i)->fd);
+				//printf("Error descriptor %d\n", (fds + i)->fd);
 #endif
 				remove_tid_data_by_fd((fds + i)->fd);
 				WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
@@ -310,7 +310,7 @@ void *get_data_from_client(void *data) {
 			//Should read info?
 			if ((fds + i)->revents & POLLIN) {
 #ifdef TEST
-				printf("Read descriptor %d\n", (fds + i)->fd);
+				//printf("Read descriptor %d\n", (fds + i)->fd);
 #endif
 				client_data message;
 				//TODO check this code twice
@@ -324,7 +324,7 @@ void *get_data_from_client(void *data) {
 					remove_tid_data_by_fd((fds + i)->fd);
 					if (retval == 0) {
 #ifdef TEST
-						printf("Disconnect on read descriptor %d\n", (fds + i)->fd);
+						//printf("Disconnect on read descriptor %d\n", (fds + i)->fd);
 #endif
 						/* Disconnect */
 						cleanup(1, (fds + i)->fd, 2);

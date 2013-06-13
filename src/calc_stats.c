@@ -731,18 +731,39 @@ void *get_accounts(){
 }
 
 //-----------------------------------------------------------------------------
+int comapre_users_name(char *username, Account *ac){
+ int i=0;
+ User_stats *us = NULL;
+ for (i = 0; i < ac->users->len; i++) {
+ 		us = g_ptr_array_index (ac->users, i);
+ 		if(!strncmp(us->id, username, USERNAMEMAXLEN)){
+ 			return 0;
+ 		}
+ }
+ return 1;
+}
+
 void dbctl_restrict_set( gpointer key, Account * ac, void *data ) 
 {
-  int i = 1;
+  int first = 0;
   char tmp_buf[ _DBGOVERNOR_BUFFER_8192 ];
   DbCtlCommand *command = (DbCtlCommand *)data;
   struct governor_config data_cfg;
   get_config_data( &data_cfg );
 
   User_stats *us = (User_stats *)g_hash_table_lookup( users, command->options.username );
-  if( !us ) us = add_user_stats( command->options.username, accounts, users );
+  if( !us ) {
+	  us = add_user_stats( command->options.username, accounts, users );
+	  first = 1;
+  }
 
-  if( strcmp( ac->id, command->options.username ) == 0 )
+  if(first==1){
+	  us = (User_stats *)g_hash_table_lookup( users, command->options.username );
+      if(us) ac = us->account;
+  }
+
+  if(( strncmp( ac->id, command->options.username, USERNAMEMAXLEN ) == 0 )
+	  || (comapre_users_name(command->options.username, ac)==0))
     {
       stats_limit_cfg cfg_buf;
 	  stats_limit_cfg *sl = config_get_account_limit( ac->id , &cfg_buf);
@@ -786,7 +807,6 @@ void dbctl_restrict_set( gpointer key, Account * ac, void *data )
 
 void dbctl_unrestrict_set( gpointer key, Account * ac, void *data ) 
 {
-  int i = 1;
   char tmp_buf[ _DBGOVERNOR_BUFFER_8192 ];
   DbCtlCommand *command = (DbCtlCommand *)data;
   struct governor_config data_cfg;
@@ -838,7 +858,6 @@ void dbctl_unrestrict_set( gpointer key, Account * ac, void *data )
 
 void dbctl_unrestrict_all_set( gpointer key, Account * ac, void *data ) 
 {
-  int i = 1;
   char tmp_buf[ _DBGOVERNOR_BUFFER_8192 ];
   struct governor_config data_cfg;
   get_config_data( &data_cfg );

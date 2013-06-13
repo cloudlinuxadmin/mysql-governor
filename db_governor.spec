@@ -156,6 +156,7 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 %changelog
 * Wed Jun 12 2013 Alexey Berezhok <alexey_com@ukr.net> 1.0-7
 - Fixed dbctl unrestricted-all command
+- Fixed dbctl restrict command
 
 * Tue Jun 11 2013 Alexey Berezhok <alexey_com@ukr.net> 1.0-6
 - Fixed version MySQL for cPanel
