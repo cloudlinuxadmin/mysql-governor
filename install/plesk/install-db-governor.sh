@@ -35,6 +35,7 @@ function installDb(){
 	    mv -f /usr/libexec/mysqld /usr/libexec/mysqld.bak
           fi
 	  yum install cl-MySQL-bench cl-MySQL-client cl-MySQL-devel cl-MySQL-server cl-MySQL-shared --nogpgcheck -y
+          ln -sf /etc/init.d/mysql /etc/init.d/mysqld
 	fi
 	if [ "$SQL_VERSION" == "mysql51" ]; then
 	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/cl-mysql-beta.repo
@@ -42,6 +43,7 @@ function installDb(){
 	   mv -f /usr/libexec/mysqld /usr/libexec/mysqld.bak
           fi
 	  yum install cl-MySQL-client cl-MySQL-devel cl-MySQL-server cl-MySQL-shared --nogpgcheck -y
+          ln -sf /etc/init.d/mysql /etc/init.d/mysqld
 	fi
 	if [ "$SQL_VERSION" == "mysql55" ]; then
 	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/cl-mysql-beta-5.5.repo
@@ -49,6 +51,7 @@ function installDb(){
 	   mv -f /usr/libexec/mysqld /usr/libexec/mysqld.bak
           fi
 	  yum install cl-MySQL-client cl-MySQL-devel cl-MySQL-server cl-MySQL-shared --nogpgcheck -y
+          ln -sf /etc/init.d/mysql /etc/init.d/mysqld
 	fi
 	if [ "$SQL_VERSION" == "mariadb55" ]; then
 	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/cl-mariadb-5.5.repo
