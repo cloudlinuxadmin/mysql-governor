@@ -158,6 +158,7 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 - Fixed dbctl unrestricted-all command
 - Fixed dbctl restrict command
 - Added symlink /etc/init.d/mysqld creation on /etc/init.d/mysql
+- Added check type of mysql from file on mysqlclient install
 
 * Tue Jun 11 2013 Alexey Berezhok <alexey_com@ukr.net> 1.0-6
 - Fixed version MySQL for cPanel

@@ -3,7 +3,10 @@
 my $ver_db = "5.1";
 my $ver_cli = "18";
 my $ver_cli2 = "15";
-my @type_db = _current_mysql();
+my @type_db = _current_mysql_form_file();
+if(  lc( $type_db[ 0 ] ) eq "" ){
+  @type_db = _current_mysql();
+}
 print $type_db[ 0 ] . "\n";
 
 if( substr( lc( $type_db[ 0 ] ), 0, 5 ) eq "mysql" )
@@ -94,4 +97,40 @@ sub _current_mysql()
   }
 
   return $mysql_name, $mysql_ver;
+}
+
+sub _current_mysql_form_file()
+{
+my $mysqlTypeFileSet="/usr/share/lve/dbgovernor/mysql.type";
+my $mysql_name = "";
+my $mysql_ver = "";
+if( open( my $mysql_db, "<", $mysqlTypeFileSet ) )
+{
+  my $type_db = <$mysql_db>;
+  if( $type_db ne "auto" )
+  {
+    if( $type_db eq "mysql50" )
+    {
+      $mysql_ver="5.0.0";
+      $mysql_name="mysql";
+    }
+    if( $type_db eq "mysql51" )
+    {
+      $mysql_ver="5.1.0";
+      $mysql_name="mysql";
+    }
+    if( $type_db eq "mysql55" )
+    {
+      $mysql_ver="5.5.0";
+      $mysql_name="mysql";
+    }
+    if( $type_db eq "mariadb55" )
+    {
+      $mysql_ver="5.5.0";
+      $mysql_name="mariadb";
+    }
+  }
+  close( $mysql_db );
+}
+return $mysql_name, $mysql_ver;
 }
