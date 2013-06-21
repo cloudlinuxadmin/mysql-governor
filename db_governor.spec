@@ -1,6 +1,6 @@
 Name: governor-mysql
 Version: 1.0
-Release: 7%{?dist}.cloudlinux
+Release: 8%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -9,7 +9,7 @@ Source0: %{name}-%{version}.tar.bz2
 Requires: glib2
 Requires: ncurses
 Requires: lve-utils >= 1.1-3
-Requires: lve-stats >= 0.9-26
+Requires: lve-stats >= 0.9-27
 Requires: tmpwatch
 Requires(preun): /sbin/chkconfig
 BuildRequires: cmake
@@ -154,6 +154,10 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Fri Jun 21 2013 Alexey Berezhok <alexey_com@ukr.net>, Pavel Shkatula <shpp@cloudlinux.com> 1.0-8
+- Added SHOW FULL PROCESSLIST instead SHOW PROCESSLIST
+- Added supporting fixing mysqls
+
 * Wed Jun 12 2013 Alexey Berezhok <alexey_com@ukr.net> 1.0-7
 - Fixed dbctl unrestricted-all command
 - Fixed dbctl restrict command
