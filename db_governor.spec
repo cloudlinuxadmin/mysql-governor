@@ -1,6 +1,6 @@
 Name: governor-mysql
 Version: 1.0
-Release: 9%{?dist}.cloudlinux
+Release: 10%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -154,6 +154,10 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Thu Jul 04 2013 Alexey Berezhok <alexey_com@ukr.net> 1.0-10
+- Fixed Plesk installation error
+- Added MySQL 5.5.32 support
+
 * Tue Jun 25 2013 Alexey Berezhok <alexey_com@ukr.net> 1.0-9
 - Added MariaDB 5.5.31
 
