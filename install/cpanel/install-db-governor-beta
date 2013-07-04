@@ -250,7 +250,7 @@ sub cPPkg_getfilelist {
 	 $file =~ s/5\.1\.63-2/5\.1\.68-4/;
 	 $file =~ s/\.cloudlinux\.1/\.cloudlinux/;
          $file =~ s/5\.0\.95-1/5\.0\.96-4/;
-         $file =~ s/5\.5\.25-3/5\.5\.30-5/;
+         $file =~ s/5\.5\.25-3/5\.5\.32-6/;
          $file =~ s/i386/i686/;
 	 print $url . '/' . $file. "\n";
          push( @FILES, $url . '/' . $file );

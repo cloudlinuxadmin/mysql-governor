@@ -130,7 +130,7 @@ checkFile "/etc/container/mysql-governor.xml"
 if [ -e /etc/container/mysql-governor.xml ]; then
     IS_LOGIN=`cat /etc/container/mysql-governor.xml | grep login=`
     if [ -z "$IS_LOGIN" ]; then
-        sed -e "s/<connector prefix_separator=\"_\"\/>/<connector prefix_separator=\"_\" login=\"$MYSQLUSER\" password=\"$MYSQLPASSWORD\"\/>/" -i /etc/container/mysql-governor.xml
+        sed -e "s/<connector prefix_separator=\"_\"\/>/<connector prefix_separator=\"_\" login=\"$MYSQLUSER\" password=\"$(echo $MYSQLPASSWORD | sed -e 's/\([[\/.*]\|\]\)/\\&/g')\"\/>/" -i /etc/container/mysql-governor.xml
     fi
     
 fi
