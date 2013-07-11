@@ -17,10 +17,10 @@ int delete_user_from_list(char *username);
 long get_users_list_size();
 void printf_bad_users_list();
 
-int is_user_in_bad_list_cleint(char *username);
+int32_t is_user_in_bad_list_cleint(char *username);
 int init_bad_users_list_client();
 int remove_bad_users_list_client();
-int is_user_in_bad_list_cleint_persistent(char *username);
+int32_t is_user_in_bad_list_cleint_persistent(char *username);
 int user_in_bad_list_cleint_show();
 int init_bad_users_list_utility();
 int remove_bad_users_list_utility();

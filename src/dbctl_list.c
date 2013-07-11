@@ -306,7 +306,7 @@ void list( void )
   {
     client_type_t ctt = DBCTL;
     fwrite( &ctt, sizeof( client_type_t ), 1, out ); 
-	fflush( out );
+    fflush( out );
 
     DbCtlCommand command;
     command.command = LIST;
@@ -320,7 +320,7 @@ void list( void )
     command.options.user_max_connections = 0;
 
     fwrite_wrapper( &command, sizeof( DbCtlCommand ), 1, out );
-	fflush( out );
+    fflush( out );
     
     print_list( in );
     closesock( socket, in, out );
@@ -356,3 +356,5 @@ void list_restricted( void )
     closesock( _socket, in, out );
   }
 }
+
+

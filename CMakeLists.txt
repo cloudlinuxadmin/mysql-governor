@@ -25,9 +25,11 @@ SET(config_SRC ${SRC}/governor_config.c ${SRC}/ezxml.c)
 SET(db_governor_SRC ${SRC}/governor.c 
                     ${config_SRC} 
                     ${SRC}/fifo_stats.c 
-                    ${SRC}/stats.c ${SRC}/user_account.c 
+                    ${SRC}/stats.c 
+                    ${SRC}/user_account.c 
                     ${SRC}/dbgovernor_string_functions.c 
-                    ${SRC}/log.c ${SRC}/wrappers.c 
+                    ${SRC}/log.c 
+                    ${SRC}/wrappers.c 
                     ${SRC}/dlload.c
                     ${SRC}/calc_stats.c
                     ${SRC}/governor_server.c
@@ -41,6 +43,7 @@ SET(db_governor_SRC ${SRC}/governor.c
                     ${SRC}/commands.c
                     ${SRC}/dbtop_server.c
                     ${SRC}/shared_memory.c
+                    ${SRC}/dbuser_map.c
 )
 SET(dbtop_SRC ${SRC}/dbtop.c ${SRC}/dbgovernor_string_functions.c ${SRC}/wrappers.c)
 SET(governor_lib_src ${SRC}/dbgovernor_string_functions.c 
@@ -54,7 +57,18 @@ SET(mysql_unfreeze_SRC ${SRC}/mysql_unfreeze.c
 						${SRC}/dlload.c 
 						${SRC}/log.c 
 						${config_SRC}
-						${SRC}/shared_memory.c)
+						${SRC}/shared_memory.c
+                    ${SRC}/calc_stats.c
+                    ${SRC}/user_account.c 
+                    ${SRC}/stats.c 
+                    ${SRC}/fifo_stats.c 
+                    ${SRC}/tick_generator.c 
+                    ${SRC}/tid_table.c
+                    ${SRC}/log-decoder.c
+                    ${SRC}/getsysinfo.c
+                    ${SRC}/commands.c
+                    ${SRC}/dbuser_map.c
+						)
                     
 SET(dbctl_SRC ${SRC}/dbctl.c 
                     ${SRC}/dbctl_set.c 
@@ -62,8 +76,9 @@ SET(dbctl_SRC ${SRC}/dbctl.c
                     ${SRC}/dbctl_rest.c
                     ${SRC}/dbctl_conn.c
                     ${SRC}/dbctl_cfg.c
-                    ${SRC}/ezxml.c
-                    ${SRC}/wrappers.c)
+                    ${SRC}/wrappers.c
+					${config_SRC}
+                    )
 SET(governor_lib_src ${SRC}/dbgovernor_string_functions.c 
                     ${SRC}/governor_write_data.c
                     ${SRC}/parce_proc_fs.c

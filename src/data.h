@@ -44,6 +44,10 @@ typedef char parameter_t[USERNAMEMAXLEN];
 #define PATH_TO_GOVERNOR_STATS "/var/lve/dbgovernor/"
 #define PATH_TO_LOG_USER_QUERIES "/var/lve/dbgovernor-store/"
 
+#define DBUSER_MAP_FILE "/etc/container/dbuser-map"
+
+#define BAD_LVE 3
+
 /* Network names identificators */
 typedef enum client_type_enum
 {
@@ -200,5 +204,11 @@ typedef struct __dbgov_statitrics
   int cause;
 
 } dbgov_statitrics;
+
+typedef struct _user_map
+{
+  username_t username;
+  parameter_t uid;
+} UserMap;
 
 #endif /* DATA_H_ */

@@ -103,6 +103,7 @@ def usage():
 	print " -c | --clean-mysql         : clean MySQL packages list (after governor installation)"
 	print " -m | --clean-mysql-delete  : clean cl-MySQL packages list (after governor deletion)"
 	print " -u | --upgrade             : install MySQL with mysql_upgrade_command"
+        print " -t | --dbupdate            : update UserMap file"
 
 def install_mysql():
 	if cp.name == "Plesk" and verCompare (cp.version, "10") >= 0:
@@ -120,6 +121,22 @@ def install_mysql():
 	else:
 		print "Current panel unsupported. Panel name: "+cp.name+" version: "+cp.version
 
+def update_user_map_file():
+	if cp.name == "Plesk" and verCompare (cp.version, "10") >= 0:
+		exec_command(SOURCE+"utils/empty_ction.sh")
+	elif cp.name == "cPanel":
+		exec_command(SOURCE+"utils/dbgovernor_map")
+	elif cp.name == "InterWorx":
+		exec_command(SOURCE+"utils/empty_ction.sh")
+	elif cp.name == "ISPManager":	
+		exec_command(SOURCE+"utils/empty_ction.sh")
+	elif cp.name == "DirectAdmin":
+		exec_command(SOURCE+"utils/empty_ction.sh")
+	else:
+		exec_command(SOURCE+"utils/empty_ction.sh")
+
+def install_dbmap_update():
+        update_user_map_file();                
 
 def install_mysql_beta():
         exec_command_out(SOURCE+"other/set_fs_suid_dumpable.sh")
@@ -132,6 +149,8 @@ def install_mysql_beta():
                 exec_command_out(SOURCE+"cpanel/install-mysql-disabler.sh")
                 exec_command_out(SOURCE+"cpanel/cpanel-install-hooks")		
                 exec_command_out(SOURCE+"cpanel/upgrade-mysql-disabler.sh")
+                if os.path.exists("/usr/share/lve/dbgovernor/utils/dbgovernor-usermap-cron"):
+                        shutil.copy2("/usr/share/lve/dbgovernor/utils/dbgovernor-usermap-cron", "/etc/cron.d/dbgovernor-usermap-cron")
 	elif cp.name == "InterWorx":
 		exec_command_out(SOURCE+"iworx/install-db-governor.sh --install")
 	elif cp.name == "ISPManager":	
@@ -268,7 +287,7 @@ def warn_message():
                 
 cp = get_cp()
 try:
-	opts, args = getopt.getopt(sys.argv[1:], "hidcm", ["help", "install", "delete", "install-beta", "clean-mysql", "clean-mysql-delete", "upgrade"])
+	opts, args = getopt.getopt(sys.argv[1:], "hidcmut", ["help", "install", "delete", "install-beta", "clean-mysql", "clean-mysql-delete", "upgrade", "dbupdate"])
 except getopt.GetoptError, err:
 	# print help information and exit:
 	print str(err) # will print something like "option -a not recognized"
@@ -284,6 +303,7 @@ for o, a in opts:
 		install_mysql_beta()
 		remove_mysql_justdb()
                 set_bad_lve_container()
+                install_dbmap_update()
 	elif o in ("-u", "--upgrade"):
                 warn_message()
 		remove_mysqlclients()
@@ -297,6 +317,7 @@ for o, a in opts:
 		    exec_command_out("/usr/share/lve/dbgovernor/chk-mysqlclient")
                 if os.path.exists("/usr/bin/alt-php-mysql-reconfigure"):                                                                                                                                                                     
                     exec_command_out("/usr/bin/alt-php-mysql-reconfigure") 
+                install_dbmap_update()
 	elif o in ("-d", "--delete"):
                 remove_repo_file()
 		remove_mysql_justdb_cl()
@@ -308,6 +329,8 @@ for o, a in opts:
                 remove_mysql_justdb()
 	elif o in ("m", "--clean-mysql-delete"):
 		remove_mysql_justdb_cl()
+        elif o in ("t", "--dbupdate"):
+		update_user_map_file()
 	else:
 		usage()
 		sys.exit(2)

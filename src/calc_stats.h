@@ -18,6 +18,7 @@ void clac_stats_difference_inner(long long cpu, long long read, long long write,
 void proceed_accounts(double tm);
 Stats *
 add_new_stats(username_t username, Stats * st, long long tick_id);
+void add_empty_stats_for_uid( username_t username );
 void free_accounts_and_users();
 void init_accounts_and_users();
 void print_to_restrict_log_stats(void *data);

@@ -35,6 +35,7 @@
 #include "commands.h"
 #include "dbtop_server.h"
 #include "shared_memory.h"
+#include "dbuser_map.h"
 
 #define BUF_SIZE_III 100
 
@@ -345,7 +346,7 @@ void trackingDaemon( void )
     	                                                	            	        
 int main(int argc, char *argv[]) {
 	int ret;
-	pthread_t thread, thread_governor, thread_dbtop, thread_prcd;
+	pthread_t thread, thread_governor, thread_dbtop, thread_prcd, thread_user_map;
 	char buffer[_DBGOVERNOR_BUFFER_2048];
 
     struct governor_config data_cfg;
@@ -537,14 +538,32 @@ int main(int argc, char *argv[]) {
 		config_free();
 		exit(EXIT_FAILURE);
 	}
+	ret = pthread_create(&thread_user_map, NULL, parse_map_file_every_hour, NULL);
+	if (ret < 0) {
+		pthread_cancel(thread);
+		pthread_cancel(thread_governor);
+		pthread_cancel(thread_dbtop);
+		pthread_cancel(thread_prcd);
+		if (!data_cfg.is_gpl && data_cfg.use_lve) {
+			remove_bad_users_list();
+		}
+		db_close();
+		delete_mysql_function();
+		close_log();
+		close_restrict_log();
+		config_free();
+		exit(EXIT_FAILURE);
+	}
 	pthread_detach(thread_governor);
 	pthread_detach(thread_dbtop);
 	pthread_detach(thread_prcd);
+	pthread_detach(thread_user_map);
 	pthread_join(thread, NULL);
 
 	pthread_cancel(thread_governor);
 	pthread_cancel(thread_dbtop);
 	pthread_cancel(thread_prcd);
+	pthread_cancel(thread_user_map);
 
 	if (!data_cfg.is_gpl && data_cfg.use_lve) {
 		remove_bad_users_list();

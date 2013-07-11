@@ -1,6 +1,6 @@
 Name: governor-mysql
 Version: 1.0
-Release: 10%{?dist}.cloudlinux
+Release: 11%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -64,6 +64,7 @@ mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/ispmanager
 mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/tmp
 mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/logs
 mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/tmp
+mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils
 install -D -m 755 script/db_governor $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/
 install -D -m 755 bin/db_governor $RPM_BUILD_ROOT%{_sbindir}/
 install -D -m 755 bin/dbtop $RPM_BUILD_ROOT%{_sbindir}/
@@ -88,6 +89,8 @@ install -D -m 755 install/iworx/install-db-governor.sh $RPM_BUILD_ROOT/usr/share
 install -D -m 755 install/ispmanager/install-db-governor.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/ispmanager/install-db-governor.sh
 install -D -m 755 install/other/install-db-governor.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/other/install-db-governor.sh
 install -D -m 755 install/other/set_fs_suid_dumpable.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/other/set_fs_suid_dumpable.sh
+install -D -m 755 install/utils/dbgovernor_map $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/dbgovernor_map
+install -D -m 755 install/utils/empty_action.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/empty_action.sh
 
 install -D -m 755 install/chk-mysqlclient $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/chk-mysqlclient
 install -D -m 755 install/db-select-mysql $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/db-select-mysql
@@ -154,6 +157,12 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Thu Jul 11 2013 Alexey Berezhok <alexey_com@ukr.net>, Pavel Shkatula <shpp@cloudlinux.com> 1.0-11
+- Added separate LVE for each user
+- Added usermap file
+- Added cPanel hooks for file creation
+- Fixed syntax check in dbctl
+
 * Thu Jul 04 2013 Alexey Berezhok <alexey_com@ukr.net> 1.0-10
 - Fixed Plesk installation error
 - Added MySQL 5.5.32 support

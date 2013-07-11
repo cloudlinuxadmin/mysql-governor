@@ -31,7 +31,163 @@ typedef struct dbclt_options
   int option;
   char *val;
 } Options;
- 
+
+typedef char name_comm[ 256 ];
+
+int valid_comm( int argc, char **argv )
+{
+  name_comm level_111[] = { "set", "restrict" };
+  name_comm level_110[] = { "ignore", "monitor", "delete", "unrestrict" };
+  name_comm level_100[] = { "list", "list-restricted", "unrestrict-all" };
+
+  if( strcmp( "--help", argv[ 1 ] ) == 0  ||
+      strcmp( "--version", argv[ 1 ] ) == 0 )
+    return 1;
+    
+  int val_comm = 0;
+  int i = 0;
+  for( i = 0; i < 3; i++ )
+    if( strcmp( level_100[ i ], argv[ 1 ] ) == 0 )
+      val_comm++;
+  for( i = 0; i < 4; i++ )
+    if( strcmp( level_110[ i ], argv[ 1 ] ) == 0 )
+      val_comm++;
+  for( i = 0; i < 2; i++ )
+    if( strcmp( level_111[ i ], argv[ 1 ] ) == 0 )
+      val_comm++;
+
+  if( !val_comm ) return 0; 
+
+  for( i = 0; i < 3; i++ )
+  {
+    if( strcmp( level_100[ i ], argv[ 1 ] ) == 0 )
+      if( argc > 2 )
+      {
+        printf( "Incorrect syntax\n" );
+        return 0; 
+      }
+  }
+
+  for( i = 0; i < 4; i++ )
+  {
+    if( strcmp( level_110[ i ], argv[ 1 ] ) == 0 )
+    {
+      if( argc != 3 )
+      {
+        printf( "Incorrect syntax\n" );
+        return 0; 
+      }
+      else
+      {
+        int j = 0;
+        for( j = 0; j < 3; j++ )
+          if( strcmp( level_100[ j ], argv[ 2 ] ) == 0 )
+          {
+            printf( "Incorrect syntax\n" );
+            return 0; 
+          }
+
+        for( j = 0; j < 4; j++ )
+          if( strcmp( level_110[ j ], argv[ 2 ] ) == 0 )
+          {
+            printf( "Incorrect syntax\n" );
+            return 0; 
+          }
+
+        for( j = 0; j < 2; j++ )
+          if( strcmp( level_111[ j ], argv[ 2 ] ) == 0 )
+          {
+            printf( "Incorrect syntax\n" );
+            return 0; 
+          }
+
+        if( strcmp( "default", argv[ 2 ] ) == 0 )
+        {
+          printf( "Incorrect syntax\n" );
+          return 0; 
+        }
+      }
+    }
+  }
+
+  for( i = 0; i < 2; i++ )
+  {
+    if( strcmp( level_111[ i ], argv[ 1 ] ) == 0 )
+    {
+      if( argc > 2 )
+      {
+        if( strcmp( level_111[ i ], "set" ) == 0 )
+        {
+          if( strcmp( "default", argv[ 2 ] ) != 0 )
+          {
+            int j = 0;
+            for( j = 0; j < 3; j++ )
+              if( strcmp( level_100[ j ], argv[ 2 ] ) == 0 )
+              {
+                printf( "Incorrect syntax\n" );
+                return 0; 
+              }
+            for( j = 0; j < 4; j++ )
+              if( strcmp( level_110[ j ], argv[ 2 ] ) == 0 )
+              {
+                printf( "Incorrect syntax\n" );
+                return 0; 
+              }
+            for( j = 0; j < 2; j++ )
+              if( strcmp( level_111[ j ], argv[ 2 ] ) == 0 )
+              {
+                printf( "Incorrect syntax\n" );
+                return 0; 
+              }
+          }
+          else
+          {
+            if( argc == 3 )
+            {
+              printf( "Incorrect syntax\n" );
+              return 0; 
+            }
+          }
+        }
+        if( strcmp( level_111[ i ], "restrict" ) == 0 )
+        {
+          int j = 0;
+          for( j = 0; j < 3; j++ )
+            if( strcmp( level_100[ j ], argv[ 2 ] ) == 0 )
+            {
+              printf( "Incorrect syntax\n" );
+              return 0; 
+            }
+          for( j = 0; j < 4; j++ )
+            if( strcmp( level_110[ j ], argv[ 2 ] ) == 0 )
+            {
+              printf( "Incorrect syntax\n" );
+              return 0; 
+            }
+          for( j = 0; j < 2; j++ )
+            if( strcmp( level_111[ j ], argv[ 2 ] ) == 0 )
+            {
+              printf( "Incorrect syntax\n" );
+              return 0; 
+            }
+          if( argc == 3 )
+          {
+            printf( "Incorrect syntax\n" );
+            return 0; 
+          }
+        }
+      }
+      else
+      {
+        printf( "Incorrect syntax\n" );
+        return 0; 
+      }
+    }
+  }
+
+  return 1;
+}
+
 void version( void )
 {
   printf( "version 0.0.1\n" );
@@ -176,6 +332,8 @@ int GetCmd( int argc, char **argv )
   int *ret = (int*)malloc( sizeof( int ) ); 
   *ret = 0;
 
+  if( !valid_comm( argc, argv ) ) return 1;
+
   if( strcmp( "set", argv[ 1 ] ) == 0 )
   {
     if( argc > 2  )
@@ -265,7 +423,7 @@ int GetCmd( int argc, char **argv )
 
 int main( int argc, char **argv )
 {    
-  if( argc < 2 ||  GetCmd( argc, argv ) == 1 ) usage();
+  if( argc < 2 || GetCmd( argc, argv ) == 1 ) usage();
  
   return 0;
 }

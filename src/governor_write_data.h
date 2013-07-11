@@ -29,6 +29,7 @@ void governor_lve_exit(uint32_t *cookie);
 int governor_enter_lve_light(uint32_t *cookie);
 void governor_lve_exit_null();
 int governor_lve_enter_pid(pid_t pid);
+int governor_lve_enter_pid_user(pid_t pid, char *username);
 
 
 #endif /* GOVERNOR_WRITE_DATA_H_ */

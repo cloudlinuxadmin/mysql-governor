@@ -104,6 +104,17 @@ add_new_stats(username_t username, Stats * st, long long tick_id) {
 	return stt;
 }
 
+void add_empty_stats_for_uid( username_t username )
+{
+  lock_acc();
+/*
+  User_stats *us = (User_stats *)g_hash_table_lookup( users, username );
+  if( !us )
+*/
+  add_user_stats( username, accounts, users );
+  unlock_acc();
+}
+
 void tick_empty_users(gpointer key, User_stats * us, void *data) {
 	if (is_new_tick(us->tick)) {
 		us->tick = get_current_tick();

@@ -781,4 +781,3 @@ void log_user_queries( char *user_name, MODE_TYPE debug_mode )
   }
   (*_mysql_free_result)( res );
 }
-

@@ -34,8 +34,6 @@
 
 #define SEC2NANO 1000000000
 
-#define BAD_LVE 3
-
 pthread_mutex_t mtx_write = PTHREAD_MUTEX_INITIALIZER;
 sock_data sd;
 
@@ -385,11 +383,14 @@ void governor_destroy_lve() {
 	remove_bad_users_list_client();
 }
 
+__thread uint32_t lve_uid = 0;
+
 int governor_enter_lve(uint32_t *cookie, char *username) {
-	if (is_user_in_bad_list_cleint_persistent(username) && lve_enter_flags
+	int container_lve = is_user_in_bad_list_cleint_persistent(username);
+	if (container_lve && lve_enter_flags
 			&& lve) {
                 errno = 0;
-		int rc = lve_enter_flags(lve, BAD_LVE, cookie, ((int) ((1 << 2) | (1
+		int rc = lve_enter_flags(lve, container_lve, cookie, ((int) ((1 << 2) | (1
 				<< 3)))); //LVE_NO_MAXENTER|LVE_SILENCE
 		int keep_errno = errno;
 		if (rc) {
@@ -401,15 +402,16 @@ int governor_enter_lve(uint32_t *cookie, char *username) {
 
 			return -1;
 		}
+		lve_uid = container_lve;
 		return 0;
 	}
 	return 1;
 }
 
 int governor_enter_lve_light(uint32_t *cookie) {
-	if (lve_enter_flags && lve) {
+	if (lve_enter_flags && lve && lve_uid) {
                 errno = 0;
-		int rc = lve_enter_flags(lve, BAD_LVE, cookie, ((int) ((1 << 2) | (1
+		int rc = lve_enter_flags(lve, lve_uid, cookie, ((int) ((1 << 2) | (1
 				<< 3)))); //LVE_NO_MAXENTER|LVE_SILENCE
 		int keep_errno = errno;
 		if (rc) {
@@ -440,6 +442,16 @@ void governor_lve_exit_null() {
 int governor_lve_enter_pid(pid_t pid){
 	if(lve_enter_pid){
 	    if(lve_enter_pid(lve, BAD_LVE, pid)) return -1;
+	}
+	return 0;
+}
+
+int governor_lve_enter_pid_user(pid_t pid, char *username){
+	if(lve_enter_pid && username){
+		int container_lve = is_user_in_bad_list_cleint_persistent(username);
+		if(container_lve){
+			if(lve_enter_pid(lve, container_lve, pid)) return -1;
+		}
 	}
 	return 0;
 }

@@ -20,5 +20,4 @@ void send_commands_cycle();
 void send_commands(Command * cmd, void *data);
 void *send_governor(void *data);
 
-
 #endif /* COMMANDS_H_ */

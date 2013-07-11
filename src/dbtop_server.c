@@ -215,7 +215,7 @@ void *run_dbctl_command( void *data )
     FILE *out;
     out = fdopen((int) ns, "w+");
     int new_record = 1, get_response;
-	
+
     while( !feof( out ) ) 
     {
       fwrite_wrapper( &new_record, sizeof(int), 1, out );
@@ -274,7 +274,7 @@ void send_account(const char *key, Account * ac, FILE * out) {
 		if (!fwrite_wrapper(&new_record, sizeof(int), 1, out))
 			return;
 		dbtop_exch dt;
-		lock_acc();		
+		lock_acc();	
 		strncpy(dt.id, ac->id, sizeof(username_t));
 		memcpy(&dt.current, &ac->current, sizeof(Stats));
 		memcpy(&dt.short_average, &ac->short_average, sizeof(Stats));

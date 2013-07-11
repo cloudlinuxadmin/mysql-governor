@@ -1,1 +1,2 @@
 10 01 * * * root /usr/sbin/tmpwatch -umc 10 /var/lve/dbgovernor-store
+15 01 * * * root /usr/share/lve/dbgovernor/mysqlgovernor.py --dbupdate 

@@ -141,5 +141,4 @@ void governor_enable_reconn_lve (MODE_TYPE debug_mode);
 char *get_work_user();
 void lve_connection(char *user_name, MODE_TYPE debug_mode);
 void log_user_queries( char *user_name, MODE_TYPE debug_mode );
-
 #endif /* MYSQL_CONNECTOR_COMMON_H_ */

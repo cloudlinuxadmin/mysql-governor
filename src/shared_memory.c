@@ -20,16 +20,21 @@
 #include "data.h"
 #include "dbgovernor_string_functions.h"
 #include "shared_memory.h"
+#include "dbuser_map.h"
 
-#define MAX_ITEMS_IN_TABLE 128000
+#define MAX_ITEMS_IN_TABLE 100000
 #define SHARED_MEMORY_NAME "governor_bad_users_list"
 #define SHARED_MEMORY_SEM "governor_bad_users_list_sem"
 
+typedef struct __items_structure {
+    char username[USERNAMEMAXLEN];
+    int32_t uid;
+} items_structure;
+
 typedef struct __shm_structure {
 	long numbers;
-	char items[MAX_ITEMS_IN_TABLE][USERNAMEMAXLEN];
+	items_structure items[MAX_ITEMS_IN_TABLE];
 } shm_structure;
-
 
 shm_structure *bad_list = NULL;
 int shm_fd = 0;
@@ -131,7 +136,7 @@ int is_user_in_list(char *username) {
 	return -1;
 	long index;
 	for (index = 0; index < bad_list->numbers; index++) {
-		if (!strncmp(bad_list->items[index], username, USERNAMEMAXLEN))
+        if (!strncmp(bad_list->items[index].username, username, USERNAMEMAXLEN))
 		return 1;
 	}
 	return 0;
@@ -140,12 +145,19 @@ int is_user_in_list(char *username) {
 int add_user_to_list(char *username) {
 	if (!bad_list)
 	return -1;
+	int uid = BAD_LVE;
+	if( lock_read_map() == 0 )
+	{
+	  uid=get_uid(username);
+	  unlock_rdwr_map();
+	}
 	if (!is_user_in_list(username)) {
 		if ((bad_list->numbers + 1) == MAX_ITEMS_IN_TABLE)
 		return -2;
 		if (sem_wait(sem) == 0) {
-			strlcpy(bad_list->items[bad_list->numbers++], username,
+			strlcpy(bad_list->items[bad_list->numbers].username, username,
 					USERNAMEMAXLEN);
+            bad_list->items[bad_list->numbers++].uid = uid;
 			sem_post(sem);
 		}
 	}
@@ -157,18 +169,24 @@ int delete_user_from_list(char *username) {
 	return -1;
 	long index;
 	for (index = 0; index < bad_list->numbers; index++) {
-		if (!strncmp(bad_list->items[index], username, USERNAMEMAXLEN)) {
+		if (!strncmp(bad_list->items[index].username, username, USERNAMEMAXLEN)) {
 			if (sem_wait(sem) == 0) {
 				if (index == (bad_list->numbers - 1)) {
 					bad_list->numbers--;
 					sem_post(sem);
 					return 0;
 				} else {
-					memmove((char *) bad_list->items + USERNAMEMAXLEN
-							* sizeof(char) * index, (char *) bad_list->items
-							+ USERNAMEMAXLEN * sizeof(char) * (index + 1),
-							(bad_list->numbers - index - 1) * USERNAMEMAXLEN
-							* sizeof(char));
+					memmove( 
+                             bad_list->items + index, 
+                             bad_list->items + (index + 1),
+							 sizeof( items_structure )
+                           );
+/*
+					memmove((char *) bad_list->items + USERNAMEMAXLEN * sizeof(char) * index, 
+                            (char *) bad_list->items + USERNAMEMAXLEN * sizeof(char) * (index + 1),
+							(bad_list->numbers - index - 1) * USERNAMEMAXLEN * sizeof(char)
+                           );
+*/
 					bad_list->numbers--;
 					sem_post(sem);
 					return 0;
@@ -191,15 +209,15 @@ void printf_bad_users_list() {
 	return;
 	long index;
 	for (index = 0; index < bad_list->numbers; index++) {
-		printf("%ld) user - %s\n", index, bad_list->items[index]);
+		printf("%ld) user - %s\n", index, bad_list->items[index].username);
 	}
 	return;
 }
 
 
-int is_user_in_bad_list_cleint(char *username) {
+int32_t is_user_in_bad_list_cleint(char *username) {
 	int shm_fd_clents = 0;
-	int fnd = 0;
+	int32_t fnd = 0;
 	shm_structure *bad_list_clents;
 	if ((shm_fd_clents = shm_open(SHARED_MEMORY_NAME, O_RDONLY, 0755)) < 0) {
 		return 0;
@@ -219,9 +237,9 @@ int is_user_in_bad_list_cleint(char *username) {
 				if (bad_list_clents) {
 					long index;
 					for (index = 0; index < bad_list_clents->numbers; index++) {
-						if (!strncmp(bad_list_clents->items[index], username,
+						if (!strncmp(bad_list_clents->items[index].username, username,
 								USERNAMEMAXLEN)) {
-							fnd = 1;
+							fnd = bad_list_clents->items[index].uid;
 							break;
 						}
 					}
@@ -278,7 +296,7 @@ int user_in_bad_list_cleint_show() {
 				if (bad_list_clents) {
 					long index;
 					for (index = 0; index < bad_list_clents->numbers; index++) {
-						printf("%s\n", bad_list_clents->items[index]);
+						printf("%s\n", bad_list_clents->items[index].username);
 					}
 				}
 				trys = 0;
@@ -337,10 +355,10 @@ int remove_bad_users_list_client() {
 	return 0;
 }
 
-int is_user_in_bad_list_cleint_persistent(char *username) {
+int32_t is_user_in_bad_list_cleint_persistent(char *username) {
 	sem_t *sem_client = sem_open(SHARED_MEMORY_SEM, 0, 0777, 1);
 	int trys = 1, sem_reopen = 0;
-	int fnd = 0;
+	int32_t fnd = 0;
 
 	if (sem_client != SEM_FAILED) {
 		while (trys) {
@@ -349,9 +367,9 @@ int is_user_in_bad_list_cleint_persistent(char *username) {
 					long index = 0;
 					//pthread_mutex_lock(&mtx_shared);
 					for (index = 0; index < bad_list_clents_global->numbers; index++) {
-						if (!strncmp(bad_list_clents_global->items[index],
+						if (!strncmp(bad_list_clents_global->items[index].username,
 								username, USERNAMEMAXLEN)) {
-							fnd = 1;
+							fnd = bad_list_clents_global->items[index].uid;
 							break;
 						}
 					}

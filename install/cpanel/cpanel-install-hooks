@@ -11,15 +11,28 @@
 ####################################################
 
 postupcp="/scripts/postupcp"
+mysqluserupdate1="/usr/local/cpanel/hooks/mysql/adduser"
+mysqluserupdate2="/usr/local/cpanel/hooks/mysql/deluser"
 
 ####################################################
 # Hooks list                                       #
 ####################################################
 
 postupcp_hook="$common_path_of_cpanel/upgrade-mysql-disabler.sh"
+mysqlupdate_hook="/usr/share/lve/dbgovernor/utils/dbgovernor_map"
 
 createHookHeader "$postupcp"
 checkHookString "$postupcp" "$postupcp_hook" "dbgovernor"
 removeEmptyStringsFromFile "$postupcp"
+
+createHookHeader "$mysqluserupdate1"
+checkHookString "$mysqluserupdate1" "$mysqlupdate_hook" "dbgovernor"
+removeEmptyStringsFromFile "$mysqluserupdate1"
+
+createHookHeader "$mysqluserupdate2"
+checkHookString "$mysqluserupdate2" "$mysqlupdate_hook" "dbgovernor"
+removeEmptyStringsFromFile "$mysqluserupdate2"
+
+/usr/local/cpanel/bin/register_hooks
 
 echo
