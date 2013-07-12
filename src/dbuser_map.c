@@ -103,12 +103,17 @@ int get_map_file()
         UserMap_ = (UserMap*)g_malloc( sizeof( UserMap ) );
 
         for( l = 0; l < USERNAMEMAXLEN; l++ )
-        { UserMap_->username[ l ] = 0; UserMap_->uid[ l ] = 0; }
+        { UserMap_->username[ l ] = 0; }
+        UserMap_->uid = 0;
         
         strcpy( UserMap_->username, username );
-        strcpy( UserMap_->uid, uid );
-      
-        g_hash_table_insert( userMap, username, UserMap_ );
+        int tmp_uid = atoi(uid);
+        if(tmp_uid>=1){
+        	UserMap_->uid = tmp_uid;
+        	g_hash_table_insert( userMap, username, UserMap_ );
+        } else {
+        	g_free(UserMap_);
+        }
       }
     }
   }
@@ -177,7 +182,7 @@ int get_uid( username_t u )
 {
 	UserMap *UserMap_ = (UserMap *)g_hash_table_find(userMap, (GHRFunc)find_uid, u);
 
-	return UserMap_?atoi( UserMap_->uid ):BAD_LVE;
+	return UserMap_?UserMap_->uid:BAD_LVE;
 }
 
 int lock_read_map()

@@ -386,6 +386,7 @@ void governor_destroy_lve() {
 __thread uint32_t lve_uid = 0;
 
 int governor_enter_lve(uint32_t *cookie, char *username) {
+	lve_uid = 0;
 	int container_lve = is_user_in_bad_list_cleint_persistent(username);
 	if (container_lve && lve_enter_flags
 			&& lve) {

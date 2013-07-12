@@ -208,7 +208,7 @@ typedef struct __dbgov_statitrics
 typedef struct _user_map
 {
   username_t username;
-  parameter_t uid;
+  int uid;
 } UserMap;
 
 #endif /* DATA_H_ */
