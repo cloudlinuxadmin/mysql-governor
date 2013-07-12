@@ -200,7 +200,7 @@ def cp_supported():
 def remove_specific_package(pname, yb):
         print "Looking for " + pname
 	if yb.rpmdb.searchNevra(name=pname):
-	    exec_command_out("rpm -e --justdb --nodeps " + pname)
+	    exec_command("rpm -e --justdb --nodeps " + pname)
 	else:
 	    print pname + " not installed"
 
