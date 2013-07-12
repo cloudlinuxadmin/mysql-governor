@@ -21,6 +21,7 @@ Conflicts: db-governor
 Conflicts: db-governor-mysql
 Conflicts: db_governor
 Conflicts: cpanel-db-governor
+AutoReq: 0
 %description
 This package provides dbtop, db_governor utilities.
 
