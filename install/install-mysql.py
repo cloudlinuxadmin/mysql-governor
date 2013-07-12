@@ -224,6 +224,7 @@ def remove_mysql_justdb():
         remove_sepcific_mysql('MySQL55', yb)
 	remove_sepcific_mysql('MariaDB', yb)
 	remove_sepcific_mysql('mariadb', yb)
+        remove_sepcific_mysql('mysql', yb)
 	print "Cleaning of MySQL packages completed"
 
 def remove_mysql_justdb_cl():
