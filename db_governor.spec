@@ -1,6 +1,6 @@
 Name: governor-mysql
 Version: 1.0
-Release: 11%{?dist}.cloudlinux
+Release: 12%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -21,6 +21,7 @@ Conflicts: db-governor
 Conflicts: db-governor-mysql
 Conflicts: db_governor
 Conflicts: cpanel-db-governor
+AutoReq: 0
 %description
 This package provides dbtop, db_governor utilities.
 
@@ -157,6 +158,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Fri Jul 12 2013 Alexey Berezhok <alexey_com@ukr.net> 1.0-12
+- Disabled AutoReq
+
 * Thu Jul 11 2013 Alexey Berezhok <alexey_com@ukr.net>, Pavel Shkatula <shpp@cloudlinux.com> 1.0-11
 - Added separate LVE for each user
 - Added usermap file
