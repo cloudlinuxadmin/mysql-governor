@@ -1,6 +1,6 @@
 Name: governor-mysql
 Version: 1.0
-Release: 12%{?dist}.cloudlinux
+Release: 13%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -158,6 +158,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Fri Jul 12 2013 Alexey Berezhok <alexey_com@ukr.net> 1.0-13
+- Added removing mysql on mysqlgovernor.py --install
+
 * Fri Jul 12 2013 Alexey Berezhok <alexey_com@ukr.net> 1.0-12
 - Disabled AutoReq
 
