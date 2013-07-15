@@ -300,10 +300,13 @@ for o, a in opts:
 		sys.exit()
 	elif o in ("-i", "--install"):
                 warn_message()
+                remove_mysqlclients()
                 remove_mysql_justdb_cl()
 		install_mysql_beta()
 		remove_mysql_justdb()
                 set_bad_lve_container()
+                if os.path.exists("/usr/share/lve/dbgovernor/chk-mysqlclient"):
+		    exec_command_out("/usr/share/lve/dbgovernor/chk-mysqlclient")
                 install_dbmap_update()
 	elif o in ("-u", "--upgrade"):
                 warn_message()
