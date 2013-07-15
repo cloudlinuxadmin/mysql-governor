@@ -53,7 +53,7 @@ time_t last_modify_map()
   return sb.st_mtime;
 }
 
-int get_map_file()
+int get_map_file(struct governor_config *data_cfg)
 {
   FILE *map;
   char buf[ 256 ];
@@ -107,7 +107,7 @@ int get_map_file()
         UserMap_->uid = 0;
         
         strcpy( UserMap_->username, username );
-        int tmp_uid = atoi(uid);
+        int tmp_uid = data_cfg->separate_lve?atoi(uid):BAD_LVE;
         if(tmp_uid>=1){
         	UserMap_->uid = tmp_uid;
         	g_hash_table_insert( userMap, username, UserMap_ );
@@ -145,6 +145,7 @@ void *parse_map_file_every_hour( void *data )
   } else {
 	  curr--;
   }
+  get_config_data( &data_cfg );
   while( 1 ) 
   {
     last_mod = last_modify_map();
@@ -152,9 +153,8 @@ void *parse_map_file_every_hour( void *data )
     {
       if( lock_write_map() == 0 )
       {
-        if( !get_map_file() )
+        if( !get_map_file(&data_cfg) )
         {
-          get_config_data( &data_cfg );
           WRITE_LOG( NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048, "Failed read dbuser-map file", data_cfg.log_mode );
         }
         else

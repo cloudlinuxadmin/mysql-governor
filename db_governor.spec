@@ -1,6 +1,6 @@
 Name: governor-mysql
 Version: 1.0
-Release: 15%{?dist}.cloudlinux
+Release: 16%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -158,6 +158,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Mon Jul 15 2013 Alexey Berezhok <alexey_com@ukr.net> 1.0-16
+- Added SEPARATE MODE on/off
+
 * Mon Jul 15 2013 Alexey Berezhok <alexey_com@ukr.net> 1.0-15
 - Fixed Plesk conflict on mysqlgovernor.py --install with mysqlclient
 

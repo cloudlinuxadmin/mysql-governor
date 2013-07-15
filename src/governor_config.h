@@ -44,6 +44,7 @@ struct governor_config
   int max_user_connections;
   int killuser;
   int is_gpl;
+  int separate_lve;
 };
 
 stats_limit_cfg *
