@@ -158,7 +158,7 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
-* Monn Jul 15 2013 Alexey Berezhok <alexey_com@ukr.net> 1.0-15
+* Mon Jul 15 2013 Alexey Berezhok <alexey_com@ukr.net> 1.0-15
 - Fixed Plesk conflict on mysqlgovernor.py --install with mysqlclient
 
 * Mon Jul 15 2013 Alexey Berezhok <alexey_com@ukr.net> 1.0-14
