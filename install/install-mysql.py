@@ -123,17 +123,17 @@ def install_mysql():
 
 def update_user_map_file():
 	if cp.name == "Plesk" and verCompare (cp.version, "10") >= 0:
-		exec_command(SOURCE+"utils/empty_ction.sh")
+		exec_command(SOURCE+"utils/empty_action.sh")
 	elif cp.name == "cPanel":
 		exec_command(SOURCE+"utils/dbgovernor_map")
 	elif cp.name == "InterWorx":
-		exec_command(SOURCE+"utils/empty_ction.sh")
+		exec_command(SOURCE+"utils/empty_action.sh")
 	elif cp.name == "ISPManager":	
-		exec_command(SOURCE+"utils/empty_ction.sh")
+		exec_command(SOURCE+"utils/empty_action.sh")
 	elif cp.name == "DirectAdmin":
-		exec_command(SOURCE+"utils/empty_ction.sh")
+		exec_command(SOURCE+"utils/empty_action.sh")
 	else:
-		exec_command(SOURCE+"utils/empty_ction.sh")
+		exec_command(SOURCE+"utils/empty_action.sh")
 
 def install_dbmap_update():
         update_user_map_file();                
@@ -224,7 +224,6 @@ def remove_mysql_justdb():
         remove_sepcific_mysql('MySQL55', yb)
 	remove_sepcific_mysql('MariaDB', yb)
 	remove_sepcific_mysql('mariadb', yb)
-        remove_sepcific_mysql('mysql', yb)
 	print "Cleaning of MySQL packages completed"
 
 def remove_mysql_justdb_cl():
@@ -301,6 +300,7 @@ for o, a in opts:
 		sys.exit()
 	elif o in ("-i", "--install"):
                 warn_message()
+                remove_mysql_justdb_cl()
 		install_mysql_beta()
 		remove_mysql_justdb()
                 set_bad_lve_container()
