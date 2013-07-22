@@ -117,6 +117,13 @@ int init_bad_users_list() {
 	return 0;
 }
 
+int init_bad_users_list_if_not_exitst(){
+	if (!bad_list){
+		return init_bad_users_list();
+	}
+	return 0;
+}
+
 void clear_bad_users_list() {
 	if (!bad_list)
 	return;
@@ -142,7 +149,7 @@ int is_user_in_list(char *username) {
 	return 0;
 }
 
-int add_user_to_list(char *username) {
+int add_user_to_list(char *username, int is_all) {
 	if (!bad_list)
 	return -1;
 	int uid = BAD_LVE;
@@ -150,6 +157,9 @@ int add_user_to_list(char *username) {
 	{
 	  uid=get_uid(username);
 	  unlock_rdwr_map();
+	}
+	if(is_all && uid == BAD_LVE ){
+		uid = 0;
 	}
 	if (!is_user_in_list(username)) {
 		if ((bad_list->numbers + 1) == MAX_ITEMS_IN_TABLE)
@@ -198,6 +208,17 @@ int delete_user_from_list(char *username) {
 	return -2;
 }
 
+int delete_allusers_from_list() {
+	if (!bad_list)
+	return -1;
+	if (sem_wait(sem) == 0) {
+		clear_bad_users_list();
+		sem_post(sem);
+		return 0;
+	}
+	return -2;
+}
+
 long get_users_list_size() {
 	if (!bad_list)
 	return 0;
@@ -209,7 +230,7 @@ void printf_bad_users_list() {
 	return;
 	long index;
 	for (index = 0; index < bad_list->numbers; index++) {
-		printf("%ld) user - %s\n", index, bad_list->items[index].username);
+		printf("%ld) user - %s, uid - %d\n", index, bad_list->items[index].username, bad_list->items[index].uid);
 	}
 	return;
 }

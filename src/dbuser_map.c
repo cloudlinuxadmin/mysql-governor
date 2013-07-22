@@ -166,6 +166,7 @@ void *parse_map_file_every_hour( void *data )
         set_dbuser_map();
         unlock_rdwr_map();
       }
+      reinit_users_list();
     }
     sleep( DELTA_TIME );
   }

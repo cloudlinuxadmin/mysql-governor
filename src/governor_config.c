@@ -320,18 +320,23 @@ config_init (const char *path)
 
   tmp_xml = ezxml_child (xml, "lve");
   cfg->use_lve = 0;
+  cfg->all_lve = 0;
   cfg->separate_lve = 0;
   if(tmp_xml != NULL){
 	  if (ezxml_attr (tmp_xml, "use")){
-		  if(!strcasecmp(ezxml_attr (tmp_xml, "use"),"On")){
+		  if(!strcasecmp(ezxml_attr (tmp_xml, "use"),"On") || 
+             !strcasecmp(ezxml_attr (tmp_xml, "use"),"Single")){
 			  cfg->use_lve = 1;
 		  }
-	  }
-
-	  if (ezxml_attr (tmp_xml, "separate")){
-	  	  if(!strcasecmp(ezxml_attr (tmp_xml, "separate"),"On")){
-	  		  cfg->separate_lve = 1;
-	  	  }
+		  if(!strcasecmp(ezxml_attr (tmp_xml, "use"),"AbUsers")){
+			  cfg->use_lve = 1;
+              cfg->separate_lve = 1;
+		  }
+		  if(!strcasecmp(ezxml_attr (tmp_xml, "use"),"All")){
+			  cfg->use_lve = 1;
+			  cfg->all_lve = 1;
+			  cfg->separate_lve = 1;
+		  }
 	  }
   }
 

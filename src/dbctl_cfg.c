@@ -420,3 +420,32 @@ void reread_cfg_cmd( void )
     closesock( _socket, in, out );
   }
 }
+
+void reinit_users_list_cmd( void )
+{
+  FILE *in;
+  FILE *out;
+  int _socket;
+
+  if( opensock( &_socket, &in, &out ) )
+  {
+    client_type_t ctt = DBCTL;
+    fwrite( &ctt, sizeof( client_type_t ), 1, out ); fflush( out );
+
+    DbCtlCommand command;
+    command.command = REINIT_USERS_LIST;
+    strcpy( command.parameter, "" );
+    strcpy( command.options.username, "" );
+    command.options.cpu = 0;
+    command.options.level = 0;
+    command.options.read = 0;
+    command.options.write = 0;
+    command.options.timeout = 0;
+    command.options.user_max_connections = 0;
+
+    fwrite_wrapper( &command, sizeof( DbCtlCommand ), 1, out );
+    fflush( out );
+    
+    closesock( _socket, in, out );
+  }
+}

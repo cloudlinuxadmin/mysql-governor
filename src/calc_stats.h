@@ -36,5 +36,6 @@ void clac_stats_difference_inner_add_to_counters(long long cpu, long long read,
 void dbctl_restrict_set( gpointer key, Account *ac, void *data );
 void dbctl_unrestrict_set( gpointer key, Account *ac, void *data );
 void dbctl_unrestrict_all_set( gpointer key, Account *ac, void *data );
+void reinit_users_list();
 
 #endif /* CALC_STATS_H_ */

@@ -471,11 +471,11 @@ int main(int argc, char *argv[]) {
 	init_accounts_and_users();
 	//Work cycle
 	create_socket();
-	if (!data_cfg.is_gpl && data_cfg.use_lve) {
+	if (!data_cfg.is_gpl ) {
 		if (init_bad_users_list() < 0) {
-			WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048, "Can't init BAD list, work in dbdisable mode",
+			WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048, "Can't init BAD list, work in monytor only mode",
 					data_cfg.log_mode);
-			data_cfg.use_lve = 0;
+			get_config()->use_lve = 0;
 			governor_enable_reconn(data_cfg.log_mode);
 		} else {
 			WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048, "BAD list init successfully",
@@ -486,7 +486,7 @@ int main(int argc, char *argv[]) {
 		governor_enable_reconn(data_cfg.log_mode);
 	ret = pthread_create(&thread, NULL, get_data_from_client, NULL);
 	if (ret < 0) {
-		if (!data_cfg.is_gpl && data_cfg.use_lve) {
+		if (!data_cfg.is_gpl ) {
 			remove_bad_users_list();
 		}
 		db_close();
@@ -499,7 +499,7 @@ int main(int argc, char *argv[]) {
 	ret = pthread_create(&thread_governor, NULL, send_governor, NULL);
 	if (ret < 0) {
 		pthread_cancel(thread);
-		if (!data_cfg.is_gpl && data_cfg.use_lve) {
+		if (!data_cfg.is_gpl ) {
 			remove_bad_users_list();
 		}
 		db_close();
@@ -513,7 +513,7 @@ int main(int argc, char *argv[]) {
 	if (ret < 0) {
 		pthread_cancel(thread);
 		pthread_cancel(thread_governor);
-		if (!data_cfg.is_gpl && data_cfg.use_lve) {
+		if (!data_cfg.is_gpl ) {
 			remove_bad_users_list();
 		}
 		db_close();
@@ -528,7 +528,7 @@ int main(int argc, char *argv[]) {
 		pthread_cancel(thread);
 		pthread_cancel(thread_governor);
 		pthread_cancel(thread_dbtop);
-		if (!data_cfg.is_gpl && data_cfg.use_lve) {
+		if (!data_cfg.is_gpl ) {
 			remove_bad_users_list();
 		}
 		db_close();
@@ -544,7 +544,7 @@ int main(int argc, char *argv[]) {
 		pthread_cancel(thread_governor);
 		pthread_cancel(thread_dbtop);
 		pthread_cancel(thread_prcd);
-		if (!data_cfg.is_gpl && data_cfg.use_lve) {
+		if (!data_cfg.is_gpl ) {
 			remove_bad_users_list();
 		}
 		db_close();
@@ -565,7 +565,7 @@ int main(int argc, char *argv[]) {
 	pthread_cancel(thread_prcd);
 	pthread_cancel(thread_user_map);
 
-	if (!data_cfg.is_gpl && data_cfg.use_lve) {
+	if (!data_cfg.is_gpl ) {
 		remove_bad_users_list();
 	}
 

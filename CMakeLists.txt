@@ -76,7 +76,23 @@ SET(dbctl_SRC ${SRC}/dbctl.c
                     ${SRC}/dbctl_rest.c
                     ${SRC}/dbctl_conn.c
                     ${SRC}/dbctl_cfg.c
+                    
+                    ${SRC}/shared_memory.c
+                    ${SRC}/log.c
+                    ${SRC}/dlload.c
                     ${SRC}/wrappers.c
+                    ${SRC}/dbgovernor_string_functions.c 
+                    ${SRC}/calc_stats.c
+                    ${SRC}/user_account.c 
+                    ${SRC}/stats.c 
+                    ${SRC}/fifo_stats.c 
+                    ${SRC}/tick_generator.c 
+                    ${SRC}/tid_table.c
+                    ${SRC}/log-decoder.c
+                    ${SRC}/getsysinfo.c
+                    ${SRC}/commands.c
+                    ${SRC}/dbuser_map.c
+                    ${SRC}/mysql_connector_common.c
 					${config_SRC}
                     )
 SET(governor_lib_src ${SRC}/dbgovernor_string_functions.c 

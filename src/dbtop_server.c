@@ -186,9 +186,20 @@ void *run_dbctl_command( void *data )
 	//config_init( CONFIG_PATH );
     reread_config();
   }
+  else if( command.command == REINIT_USERS_LIST )
+  {
+    reread_config();
+    if( !data_cfg.is_gpl ) {
+      lock_acc();
+      g_hash_table_foreach( (GHashTable *)get_accounts(), (GHFunc)dbctl_unrestrict_all_set, NULL );
+      unlock_acc();
+    }
+    reinit_users_list();
+  }
   else if( command.command == RESTRICT )
   {
     if( !data_cfg.is_gpl ){
+      if( data_cfg.all_lve || !data_cfg.use_lve ) return; //lve use=all or off
       lock_acc();
       g_hash_table_foreach( (GHashTable *)get_accounts(), (GHFunc)dbctl_restrict_set, &command );
       unlock_acc();
@@ -197,6 +208,7 @@ void *run_dbctl_command( void *data )
   else if( command.command == UNRESTRICT )
   {
     if( !data_cfg.is_gpl ) {
+      if( data_cfg.all_lve || !data_cfg.use_lve ) return; //lve use=all or off
       lock_acc();
       g_hash_table_foreach( (GHashTable *)get_accounts(), (GHFunc)dbctl_unrestrict_set, &command );
       unlock_acc();
@@ -205,6 +217,7 @@ void *run_dbctl_command( void *data )
   else if( command.command == UNRESTRICT_A )
   {
     if( !data_cfg.is_gpl ) {
+      if( data_cfg.all_lve || !data_cfg.use_lve ) return; //lve use=all or off
       lock_acc();
       g_hash_table_foreach( (GHashTable *)get_accounts(), (GHFunc)dbctl_unrestrict_all_set, NULL );
       unlock_acc();

@@ -15,12 +15,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <getopt.h>
-#include <string.h>
 #include <unistd.h>
 #include <ncurses.h>
 #include <pthread.h>
 
 #include <glib.h>
+
+#include "dbgovernor_string_functions.h"
 
 #include "dbctl_set.h"
 #include "dbctl_list.h"
@@ -39,10 +40,16 @@ int valid_comm( int argc, char **argv )
   name_comm level_111[] = { "set", "restrict" };
   name_comm level_110[] = { "ignore", "monitor", "delete", "unrestrict" };
   name_comm level_100[] = { "list", "list-restricted", "unrestrict-all" };
+  
+  char _tmp_arg[ 11 ]; _tmp_arg[ 0 ] = '\0';
+  strlcpy( _tmp_arg, argv[ 1 ], sizeof( _tmp_arg ) );
 
   if( strcmp( "--help", argv[ 1 ] ) == 0  ||
-      strcmp( "--version", argv[ 1 ] ) == 0 )
+      strcmp( "--version", argv[ 1 ] ) == 0 ||
+      strcmp( "--lve-mode", _tmp_arg ) == 0 )
+  {
     return 1;
+  }
     
   int val_comm = 0;
   int i = 0;
@@ -218,6 +225,12 @@ void help( void )
 
   printf( "--help                   show this message\n" );
   printf( "--version                version number\n" );
+  printf( "--lve-mode               set lve mode 'off|abusers|all|single|on'\n" );
+  printf( "                            'off' - not put user's queries into LVE\n" );
+  printf( "                            'abusers' - when user reaches the limit,\n" );
+  printf( "                                        put user's queries into LVE for that user (experimental)\n" );
+  printf( "                            'all' - user's queries always run inside LVE for that user (experimental)\n" );
+  printf( "                            'single|on' - single LVE for all abusers. 'on' - deprecated\n" );
 
   printf( "\nparameter:\n" );
   printf( "default                  set default parameter\n" );
@@ -241,6 +254,7 @@ GList *GetOptList( int argc, char **argv, int *ret )
     { "read", required_argument, NULL, 'r'},
     { "write", required_argument, NULL, 'w'},
     { "level", required_argument, NULL, 'l'},
+    { "lve-mode", required_argument, NULL, 100},
     { "help", no_argument, &helpflag, 1 },
     { "version", no_argument, &verflag, 1 },
     { 0, 0, 0, 0 }
@@ -272,6 +286,16 @@ GList *GetOptList( int argc, char **argv, int *ret )
       }
         break;
       case 'l':
+      {
+        Options *_opts;
+        _opts = malloc( sizeof( Options ) );
+        _opts->option = opt;
+        _opts->val = optarg;
+        
+        opts = g_list_append( opts, _opts );
+      }
+        break;
+      case 100:
       {
         Options *_opts;
         _opts = malloc( sizeof( Options ) );
@@ -331,6 +355,9 @@ int GetCmd( int argc, char **argv )
 {
   int *ret = (int*)malloc( sizeof( int ) ); 
   *ret = 0;
+  
+  char _tmp_arg[ 11 ]; _tmp_arg[ 0 ] = '\0';
+  strlcpy( _tmp_arg, argv[ 1 ], sizeof( _tmp_arg ) );
 
   if( !valid_comm( argc, argv ) ) return 1;
 
@@ -408,6 +435,12 @@ int GetCmd( int argc, char **argv )
   else if( strcmp( "unrestrict-all", argv[ 1 ] ) == 0 )
   {
     unrestrict_all();
+  }
+  else if( strcmp( "--lve-mode", _tmp_arg ) == 0 )
+  {
+    char *_argv = argv[ 2 ];
+    GList *list = (GList *)GetOptList( argc, argv, ret );
+    setLveMode( (char*)GetVal( 100, list ) );
   }
   else
   {

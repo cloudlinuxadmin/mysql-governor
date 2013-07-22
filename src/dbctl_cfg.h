@@ -58,5 +58,6 @@ DbCtlLimitAttr write_def );
 //---------------------------------------------------
 void rewrite_cfg( char *data );
 void reread_cfg_cmd( void );
+void reinit_users_list_cmd( void );
 
 #endif // _CFG_H

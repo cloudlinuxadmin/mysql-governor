@@ -96,6 +96,8 @@ void account_unrestrict(Account * ac) {
 
     get_config_data( &data_cfg );
     if( data_cfg.is_gpl ) return;
+    if( data_cfg.all_lve ) return; //lve use=all
+    if( !data_cfg.use_lve && !data_cfg.separate_lve ) return; //lve use=off
 
 	for (i = 0; i < ac->users->len; i++) {
 		us = g_ptr_array_index (ac->users, i);
@@ -121,6 +123,7 @@ void account_restrict(Account * ac, stats_limit_cfg * limit) {
     
     get_config_data( &data_cfg );
     if( data_cfg.is_gpl ) return;
+    if( data_cfg.all_lve || !data_cfg.use_lve ) return; //lve use=all or off
     
 	for (i = 0; i < ac->users->len; i++) {
 		us = g_ptr_array_index (ac->users, i);
@@ -183,17 +186,17 @@ void send_commands(Command * cmd, void *data) {
 		switch (cmd->command) {
 		case FREEZE:
 			if (data_cfg.use_lve) {
-				if (add_user_to_list(cmd->username) < 0) {
+				if (add_user_to_list(cmd->username, data_cfg.all_lve) < 0) {
 					WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048, "Can't add user to BAD list %s",
 							data_cfg.log_mode, cmd->username);
 				} else {
 					update_user_limit(cmd->username, (unsigned int) data_cfg.max_user_connections,
 											data_cfg.log_mode);
 				}
-			} else
+			} /*else
 				update_user_limit(cmd->username, (unsigned int) -1,
 						data_cfg.log_mode);
-			//if(data_cfg.killuser==1) kill_connection(cmd->username, data_cfg.log_mode);
+			if(data_cfg.killuser==1) kill_connection(cmd->username, data_cfg.log_mode);*/
 			lve_connection(cmd->username, data_cfg.log_mode);
 			if( data_cfg.logqueries_use ) log_user_queries( cmd->username, data_cfg.log_mode );
 			break;

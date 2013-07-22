@@ -45,6 +45,7 @@ struct governor_config
   int killuser;
   int is_gpl;
   int separate_lve;
+  int all_lve;
 };
 
 stats_limit_cfg *
@@ -57,5 +58,6 @@ void config_add_work_user (const char *user_name);
 //struct governor_config * get_config();
 void get_config_data( struct governor_config *data );
 MODE_TYPE get_config_log_mode();
+struct governor_config * get_config();
 
 #endif

@@ -56,7 +56,7 @@ typedef enum client_type_enum
 
 typedef enum dbctl_command_enum
 {
-  SET = 0, IGNORE, DELETE, LIST, LIST_R, RESTRICT, UNRESTRICT, UNRESTRICT_A, LOG_PATH, REREAD_CFG
+  SET = 0, IGNORE, DELETE, LIST, LIST_R, RESTRICT, UNRESTRICT, UNRESTRICT_A, LOG_PATH, REREAD_CFG, REINIT_USERS_LIST
 } dbctl_command_l;
 
 typedef enum

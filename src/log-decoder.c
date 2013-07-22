@@ -177,7 +177,7 @@ void getParamName(char *buffer, Account * ac){
 		  strcpy(buffer, "write");
 		  break;
 		default:
-		  strcpy(buffer, "unk");
+		  strcpy(buffer, "manual");
 		  break;
 		}
 }

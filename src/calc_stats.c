@@ -353,6 +353,8 @@ void account_analyze(gpointer * key, Account * ac, void *data) {
     struct governor_config data_cfg;
     get_config_data( &data_cfg );
 
+    if(data_cfg.all_lve || !data_cfg.use_lve) return;
+
 	if (sl->mode != IGNORE_MODE) {
 		if (0 == ac->timeout) {
 			//I am not restricted, but I might be in penalty period. Restrict account if need
@@ -899,4 +901,41 @@ void dbctl_unrestrict_all_set( gpointer key, Account * ac, void *data )
 	ac->info.field_restrict = 0;
 	ac->info.field_level_restrict = 0;
 
+}
+
+void add_all_users_to_list( gpointer key, Account *ac, void *data ) 
+{
+	User_stats *us;
+	if(ac){
+		int i = 0;
+		for (i = 0; i < ac->users->len; i++){
+			us = g_ptr_array_index (ac->users, i);
+			if(us) add_user_to_list( us->id , 1);
+		}
+	}
+}
+
+void reinit_users_list()
+{
+  struct governor_config data_cfg;
+  get_config_data( &data_cfg );
+  
+  if( lock_write_map() == 0 )
+  {
+     if( !get_map_file(&data_cfg) )
+     {
+    	char buffer[_DBGOVERNOR_BUFFER_2048];
+        WRITE_LOG( NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048, "Failed read dbuser-map file", data_cfg.log_mode );
+     }
+
+     unlock_rdwr_map();
+  }
+
+  delete_allusers_from_list();
+  if( data_cfg.all_lve )
+  {
+    GHashTable *ac = (GHashTable*)get_accounts();
+    if( ac != NULL )
+      g_hash_table_foreach( ac, (GHFunc)add_all_users_to_list, NULL );
+  }
 }

@@ -11,9 +11,12 @@
 */
 
 #include <stdio.h>
+#include <glib.h>
 
 #include "ezxml.h"
 #include "data.h"
+#include "calc_stats.h"
+#include "shared_memory.h"
 
 #include "dbctl_cfg.h"
 #include "dbctl_set.h"
@@ -466,6 +469,41 @@ int watchUser( char *user )
   rewrite_cfg( ezxml_toxml( cfg ) );
   ezxml_free( cfg );
   reread_cfg_cmd();
+  
+  return 1;
+}
+
+int setLveMode( char *mode )
+{
+  ezxml_t cfg = (ezxml_t)ParseXmlCfg( CONFIG_PATH );
+
+  if( cfg == NULL )
+  {
+    fprintf( stderr, "Error reading config file %s\n", CONFIG_PATH );
+    return 0;
+  }
+  
+  if( strcmp( mode, "off" ) != 0 && 
+      strcmp( mode, "abusers" ) != 0 && 
+      strcmp( mode, "all" ) != 0 && 
+      strcmp( mode, "single" ) != 0 && 
+      strcmp( mode, "on" ) != 0 )
+  {
+    fprintf( stderr, "Incorrect value mode\n" );
+    return 0;
+  }
+  
+  ezxml_t child = (ezxml_t)SearchTagByName( cfg, "lve", NULL );
+  
+  if( child == NULL )
+    child = ezxml_add_child( cfg, "lve", strlen( "lve" ) );
+
+  child = ezxml_set_attr( child, "use", mode );
+  
+  rewrite_cfg( ezxml_toxml( cfg ) );
+  ezxml_free( cfg );
+
+  reinit_users_list_cmd();
   
   return 1;
 }
