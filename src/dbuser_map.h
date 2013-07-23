@@ -29,6 +29,7 @@
 time_t last_modify_map();
 int get_map_file();
 int get_uid( username_t u );
+char *get_account( username_t u );
 
 int lock_read_map();
 int lock_write_map();

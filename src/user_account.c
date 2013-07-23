@@ -12,6 +12,7 @@
 #include "dbgovernor_string_functions.h"
 #include "governor_config.h"
 #include "user_account.h"
+#include "dbuser_map.h"
 
 static GHashTable *user_account_table;
 
@@ -70,16 +71,33 @@ get_user_account (username_t username)
       stats_limit_cfg *sl = config_get_account_limit (ua->username, &cfg_buf);
       if (sl->account_flag)
 	{
-	  char *ptr = strchr (username, data_cfg.separator);
-	  /*  NULL - no underscore, 0 -- first char is underscore */
-	  if (ptr == NULL || ptr == username)
-	    {
-	      strlcpy (ua->account, username, USERNAMEMAXLEN);
-	    }
-	  else
-	    {
-	      strlcpy (ua->account, username, ptr - username + 1);
-	    }
+        if(data_cfg.separator != '*'){
+    	  char *ptr = strchr (username, data_cfg.separator);
+	  	  /*  NULL - no underscore, 0 -- first char is underscore */
+	  	  if (ptr == NULL || ptr == username)
+	    	{
+	      	  strlcpy (ua->account, username, USERNAMEMAXLEN);
+	    	}
+	  	  else
+	    	{
+	      	  strlcpy (ua->account, username, ptr - username + 1);
+	    	}
+		} else {
+			char *ptr = NULL;
+			if( lock_read_map() == 0 )
+			{
+			  ptr=get_account(username);
+			  unlock_rdwr_map();
+			}
+			if (ptr == NULL)
+			{
+			  strlcpy (ua->account, username, USERNAMEMAXLEN);
+			}
+			else
+			{
+			  strlcpy (ua->account, ptr, USERNAMEMAXLEN);
+			}
+		}
 	}
       else
 	{

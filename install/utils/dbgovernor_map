@@ -64,7 +64,7 @@ my $cnt_new = @new;
 if($cnt_old>0 || $cnt_new>0){
     open (MAPFILE, ">$mapfilename"); 
     foreach my $item (@copy_new){
-	print MAPFILE $$item[0], " ", $$item[1], "\n";
+	print MAPFILE $$item[0], " ", $$item[1], " ", $$item[2], "\n";
     }
     close(MAPFILE);
 }
@@ -81,7 +81,7 @@ sub get_map_list_ {
     
 	if ($uid>=0 && exists($$user_map1{'stash'}{'MYSQL'}{'dbusers'})){
 	    for my $key (keys $$user_map1{'stash'}{'MYSQL'}{'dbusers'}) { 
-		push @arr, [ $key, "$uid" ];
+		push @arr, [ $key, $user, "$uid" ];
 	    }
 	}
     }

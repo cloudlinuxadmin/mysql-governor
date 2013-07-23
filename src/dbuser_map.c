@@ -56,8 +56,8 @@ time_t last_modify_map()
 int get_map_file(struct governor_config *data_cfg)
 {
   FILE *map;
-  char buf[ 256 ];
-  username_t username;
+  char buf[ 1024 ];
+  username_t username, account_name;
   parameter_t uid;
 
   int l = 0;
@@ -69,9 +69,9 @@ int get_map_file(struct governor_config *data_cfg)
   {
     if( fgets( buf, sizeof( buf ), map ) )
     {
-      int i = 0, split = 0;
+      int i = 0, split = 0, split2 = 0;
       for( l = 0; l < USERNAMEMAXLEN; l++ )
-      { username[ l ] = 0; uid[ l ] = 0; }
+      { username[ l ] = 0; uid[ l ] = 0; account_name[ l ] = 0;}
   
       for( i = 0; i < strlen( buf ); i++ )
       {
@@ -86,14 +86,24 @@ int get_map_file(struct governor_config *data_cfg)
         }
         else
         {
-          if( i > split  )
-          {
-            if( buf[ i ] != '\n' ) uid[ i - split - 1 ] = buf[ i ];
+          if(split2 == 0){
+        	  if( buf[ i ] != ' ' ) account_name[ i -split -1 ] = buf[ i ];
+        	  else
+        	  {
+        	    account_name[ i -split -1 ] = '\0';
+        	    split2 = i;
+        	  }
+          } else {
+        	  if( i > split2  )
+        	  {
+        		  if( buf[ i ] != '\n' ) uid[ i - split2 - 1 ] = buf[ i ];
+        	  }
           }
         }
       }
-      uid[ i + 1 ] = '\0';
-      trim( username ); trim( uid );
+      uid[ USERNAMEMAXLEN - 1 ] = '\0';
+      trim( username ); trim( uid ); trim( account_name );
+      if(!username[0] || !account_name[0]) continue;
       
       UserMap *UserMap_ = NULL;
       UserMap_ = (UserMap*)g_hash_table_lookup( userMap, username );
@@ -103,10 +113,11 @@ int get_map_file(struct governor_config *data_cfg)
         UserMap_ = (UserMap*)g_malloc( sizeof( UserMap ) );
 
         for( l = 0; l < USERNAMEMAXLEN; l++ )
-        { UserMap_->username[ l ] = 0; }
+        { UserMap_->username[ l ] = 0;  UserMap_->account_name[ l ] = 0;}
         UserMap_->uid = 0;
         
         strcpy( UserMap_->username, username );
+        strcpy( UserMap_->account_name, account_name );
         int tmp_uid = data_cfg->separate_lve?atoi(uid):BAD_LVE;
         if(tmp_uid>=1){
         	UserMap_->uid = tmp_uid;
@@ -184,6 +195,13 @@ int get_uid( username_t u )
 	UserMap *UserMap_ = (UserMap *)g_hash_table_find(userMap, (GHRFunc)find_uid, u);
 
 	return UserMap_?UserMap_->uid:BAD_LVE;
+}
+
+char *get_account( username_t u )
+{
+	UserMap *UserMap_ = (UserMap *)g_hash_table_find(userMap, (GHRFunc)find_uid, u);
+
+	return UserMap_?(char *)UserMap_->account_name:NULL;
 }
 
 int lock_read_map()

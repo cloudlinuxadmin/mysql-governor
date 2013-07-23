@@ -209,6 +209,7 @@ typedef struct _user_map
 {
   username_t username;
   int uid;
+  username_t account_name;
 } UserMap;
 
 #endif /* DATA_H_ */
