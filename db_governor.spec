@@ -1,6 +1,6 @@
 Name: governor-mysql
 Version: 1.0
-Release: 18%{?dist}.cloudlinux
+Release: 19%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -159,11 +159,14 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Tue Jul 23 2013 Alexey Berezhok <alexey_com@ukr.net> 1.0-19
+- Unified dbusrer-map
+
 * Tue Jul 23 2013 Alexey Berezhok <alexey_com@ukr.net> 1.0-18
 - Added wget requires
 - Added acount name from dbusrer-map
 
-* Mon Jul 22 2013 Alexey Berezhok <alexey_com@ukr.net> 1.0-17
+* Mon Jul 22 2013 Alexey Berezhok <alexey_com@ukr.net>, Pavel Shkatula <shpp@cloudlinux.com> 1.0-17
 - Added lve mode - off/single(on)/abusers/all
 
 * Mon Jul 15 2013 Alexey Berezhok <alexey_com@ukr.net> 1.0-16

@@ -1,14 +1,22 @@
-#!/usr/local/cpanel/3rdparty/bin/perl
-# cpanel - bin/dbmaptool                          Copyright(c) 2010 cPanel, Inc.
-#                                                           All rights Reserved.
-# copyright@cpanel.net                                         http://cpanel.net
-# This code is subject to the cPanel license. Unauthorized copying is prohibited
+#!/usr/bin/perl
 
+#BEGIN { unshift @INC, '/scripts'; }
+BEGIN { unshift @INC, '/usr/local/cpanel', '/scripts'; }
+
+my $pckg_name = 'Cpanel';
 use strict;
 use warnings;
-use Cpanel::Config::Users         ();
-use Cpanel::DB::Map               ();
-use Cpanel::DB                    ();
+
+eval "use " .$pckg_name . "::cPPkgs          ();";
+if ($@){
+    $pckg_name = 'cPScript';
+    eval "use " .$pckg_name . "::cPPkgs       ();";
+}
+
+eval "use " .$pckg_name . "::Config::Users         ();";
+eval "use  " .$pckg_name . "::DB::Map              ();";
+eval "use  " .$pckg_name . "::DB                   ();";
+
 use Data::Dumper;
 
 my $mapfilename = "/etc/container/dbuser-map";
@@ -80,7 +88,7 @@ sub get_map_list_ {
 	($name, $dummy, $uid, $dummy, $dummy, $dummy, $dummy, $dummy, $dummy) = getpwnam($user);
     
 	if ($uid>=0 && exists($$user_map1{'stash'}{'MYSQL'}{'dbusers'})){
-	    for my $key (keys $$user_map1{'stash'}{'MYSQL'}{'dbusers'}) { 
+	    for my $key (keys %{$$user_map1{'stash'}{'MYSQL'}{'dbusers'}}) { 
 		push @arr, [ $key, $user, "$uid" ];
 	    }
 	}
