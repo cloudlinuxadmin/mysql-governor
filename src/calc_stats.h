@@ -31,6 +31,7 @@ void clac_stats_difference_inner_from_counter(long long cpu, long long read,
 void clac_stats_difference_add_to_counters(client_data *new, tid_table *old);
 void clac_stats_difference_inner_add_to_counters(long long cpu, long long read,
 		long long write, tid_table *old);
+int is_user_ignored(char *user_name);
 
 //--- for dbctl ---------------------------------------------------------------
 void dbctl_restrict_set( gpointer key, Account *ac, void *data );

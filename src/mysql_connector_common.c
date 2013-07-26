@@ -61,6 +61,7 @@ static char work_user[USERNAMEMAXLEN];
 MYSQL *mysql_send_governor = NULL;
 //Pointer to DB connection that send command
 MYSQL *mysql_do_command = NULL;
+MYSQL *mysql_do_kill = NULL;
 /*
  * Для корректного реконнекта необходимы параметры соединения, на случай, если авто
  * реконнект не сработает
@@ -264,6 +265,10 @@ int db_close() {
 	if (mysql_do_command != NULL) {
 		(*_mysql_close)(mysql_do_command);
 		mysql_do_command = NULL;
+	}
+	if (mysql_do_kill != NULL) {
+		(*_mysql_close)(mysql_do_kill);
+		mysql_do_kill = NULL;
 	}
 	return 0;
 }
@@ -604,6 +609,14 @@ int db_connect(const char *host, const char *user_name,
 					"Write connection error",
 					data_cfg.log_mode);
 			return -1;
+		} else {
+			if (db_connect_common(&mysql_do_kill, host, user_name,
+							user_password, db_name, debug_mode, argc, argv, 0) < 0) {
+					WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
+							"Kill connection error",
+							data_cfg.log_mode);
+				return -1;
+			}
 		}
 
 	}
@@ -780,4 +793,9 @@ void log_user_queries( char *user_name, MODE_TYPE debug_mode )
     fclose( log_queries );
   }
   (*_mysql_free_result)( res );
+}
+
+MYSQL *get_mysql_connect()
+{
+  return mysql_do_kill;
 }

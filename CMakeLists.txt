@@ -44,6 +44,7 @@ SET(db_governor_SRC ${SRC}/governor.c
                     ${SRC}/dbtop_server.c
                     ${SRC}/shared_memory.c
                     ${SRC}/dbuser_map.c
+                    ${SRC}/slow_queries.c
 )
 SET(dbtop_SRC ${SRC}/dbtop.c ${SRC}/dbgovernor_string_functions.c ${SRC}/wrappers.c)
 SET(governor_lib_src ${SRC}/dbgovernor_string_functions.c 

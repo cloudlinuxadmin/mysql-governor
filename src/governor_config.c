@@ -379,6 +379,16 @@ config_init (const char *path)
 	}
   }
 
+  tmp_xml = ezxml_child( xml, "slow" );
+  cfg->slow_time = 0;
+  if( tmp_xml != NULL )
+  {
+    if( ( ptr = ezxml_attr ( tmp_xml, "time" ) ) != NULL )
+    {
+      cfg->slow_time =  parse_period( ptr );
+    }
+  }
+
   cfg->killuser = 0;
   cfg->max_user_connections = 30;
 

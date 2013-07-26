@@ -939,3 +939,29 @@ void reinit_users_list()
       g_hash_table_foreach( ac, (GHFunc)add_all_users_to_list, NULL );
   }
 }
+
+gboolean find_acount_cmp( gpointer key, Account *ac, void *data )
+{
+  User_stats *us;
+  if(ac){
+	int i = 0;
+	for (i = 0; i < ac->users->len; i++){
+		us = g_ptr_array_index (ac->users, i);
+		if(us && !strncmp(us->id, (char *)data, USERNAMEMAXLEN)) return 1;
+	}
+  }
+  return 0;
+}
+
+int is_user_ignored(char *user_name){
+	stats_limit_cfg cfg_buf;
+	Account *ac = NULL;
+	pthread_mutex_lock(&mtx_account);
+	ac = (Account *)g_hash_table_find(accounts, (GHRFunc)find_acount_cmp, user_name);
+	pthread_mutex_unlock(&mtx_account);
+	stats_limit_cfg *sl = config_get_account_limit(ac?ac->id:user_name, &cfg_buf);
+	if (sl->mode != IGNORE_MODE){
+		return 0;
+	}
+	return 1;
+}
