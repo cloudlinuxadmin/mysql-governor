@@ -60,7 +60,7 @@ int opensock( int *_socket, FILE **in, FILE **out )
 
   if( !*in || !*out ) 
   {
-    printf( "Can't connect to socket. Maybe governor is not started" );
+    printf( "Configuration saved. Unable to apply to live instance - can't connect to socket. Maybe governor is not started\n" );
     return 0;
   }
 

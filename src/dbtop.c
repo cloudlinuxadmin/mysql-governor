@@ -678,14 +678,10 @@ void printOneScreenNoCurses() {
 
 void *
 read_keys() {
-	int ch;
+	int ch = '\0';
 	printHeader();
 	while (1) {
-		ch = getch ();
-		if (ch == ERR) {
-            screen_regenerate();
-			continue;
-		}
+
 		switch (ch) {
 		case 'c':
 			sort_type = 0;
@@ -741,6 +737,13 @@ read_keys() {
 
 		}
         screen_regenerate();
+
+        ch = getch ();
+        if (ch == ERR) {
+            screen_regenerate();
+        	continue;
+        }
+
 	}
 }
 
@@ -805,7 +808,7 @@ int main(int argc, char *argv[]) {
 	in = fdopen(_socket, "r+");
 	out = fdopen(_socket, "w");
 	if (!in || !out) {
-		printf("Can't connect to socket. Maybe governor is not started");
+		printf("Can't connect to socket. Maybe governor is not started\n");
 		exit(-1);
 	}
 	if (no_curses) {
@@ -820,9 +823,9 @@ int main(int argc, char *argv[]) {
 	}
 	
 ///    
-    client_type_t ctt = DBTOP;
+    /*client_type_t ctt = DBTOP;
 	fwrite(&ctt, sizeof(client_type_t), 1, out);
-	fflush(out);
+	fflush(out);*/
 	accounts = NULL;
 	recv_accounts = NULL;
 	initscr();
