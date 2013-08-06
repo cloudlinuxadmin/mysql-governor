@@ -555,7 +555,8 @@ int main(int argc, char *argv[]) {
 		config_free();
 		exit(EXIT_FAILURE);
 	}
-	if( data_cfg.slow_time ) {
+
+	if( data_cfg.slow_queries ) {
 		ret = pthread_create(&thread_slow_query, NULL, parse_slow_query, NULL);
     	if (ret < 0) {
 			pthread_cancel(thread);
@@ -574,11 +575,12 @@ int main(int argc, char *argv[]) {
 			exit(EXIT_FAILURE);
     	}
 	}
+
 	pthread_detach(thread_governor);
 	pthread_detach(thread_dbtop);
 	pthread_detach(thread_prcd);
 	pthread_detach(thread_user_map);
-	if( data_cfg.slow_time ) {
+	if( data_cfg.slow_queries ) {
 		pthread_detach(thread_slow_query);
     }
 	pthread_join(thread, NULL);
@@ -587,10 +589,9 @@ int main(int argc, char *argv[]) {
 	pthread_cancel(thread_dbtop);
 	pthread_cancel(thread_prcd);
 	pthread_cancel(thread_user_map);
-	if( data_cfg.slow_time ) {
+	if( data_cfg.slow_queries ) {
 		pthread_cancel(thread_slow_query);
     }
-
 	if (!data_cfg.is_gpl ) {
 		remove_bad_users_list();
 	}

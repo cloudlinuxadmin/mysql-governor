@@ -20,8 +20,8 @@ typedef struct split_str
 }SplitStr;
 
 
-int setDefault( char *cpu, char *read, char *write );
-int setUser( char *para, char *cpu, char *read, char *write );
+int setDefault( char *cpu, char *read, char *write, char *slow );
+int setUser( char *para, char *cpu, char *read, char *write, char *slow );
 int deleteUser( char *user );
 int ignoreUser( char *user );
 int watchUser( char *user );

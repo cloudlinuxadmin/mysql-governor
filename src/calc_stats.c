@@ -961,7 +961,7 @@ int is_user_ignored(char *user_name){
 	pthread_mutex_unlock(&mtx_account);
 	stats_limit_cfg *sl = config_get_account_limit(ac?ac->id:user_name, &cfg_buf);
 	if (sl->mode != IGNORE_MODE){
-		return 0;
+		return sl->slow._current;
 	}
-	return 1;
+	return 0;
 }

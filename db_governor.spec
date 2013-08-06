@@ -1,6 +1,6 @@
 Name: governor-mysql
 Version: 1.0
-Release: 21%{?dist}.cloudlinux
+Release: 22%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -159,6 +159,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Tue Aug 06 2013 Alexey Berezhok <alexey_com@ukr.net>, Pavel Shkatula <shpp@cloudlinux.com> 1.0-22
+- Added set slow query kill time per account
+
 * Mon Jul 29 2013 Alexey Berezhok <alexey_com@ukr.net>, Pavel Shkatula <shpp@cloudlinux.com> 1.0-21
 - Fixed error messages when governor stopped
 - Fixed dbtop delay on start

@@ -39,21 +39,27 @@ int split( SplitStr **s_s, char *str, char t )
   
   cnt++;
   
-  if( cnt < 4 ) return 0;
+  if( t == '\n' ) cnt = 1;
+  else if( cnt < 4 ) return 0;
   
   (*s_s) = malloc( cnt * sizeof( SplitStr ) );
   int str_ind[ cnt ];
 
   int i = 0, ind = 0;
-  for( ; i < strlen( str ); i++ )
+  if( cnt == 4 )
   {
-    if( str[ i ] == t ) 
+    for( ; i < strlen( str ); i++ )
     {
-      str_ind[ ind ] = i;
-      ind++;
+      if( str[ i ] == t ) 
+      {
+        str_ind[ ind ] = i;
+        ind++;
+      }
     }
+    str_ind[ ind ] = strlen( str );
   }
-  str_ind[ ind ] = strlen( str );
+  else
+    str_ind[ ind ] = strlen( str );
   
   int ind_pre = 0;
   for( ind = 0; ind < cnt; ind++ )
@@ -77,13 +83,18 @@ int checkCorrectAttrs( ezxml_t child, char *s )
     if( strcmp( ezxml_attr( limit, "name" ), s ) == 0 )
     {
       if( !ezxml_attr( limit, "current" ) ) cnt++;
-      if( !ezxml_attr( limit, "short" ) ) cnt++;
-      if( !ezxml_attr( limit, "mid" ) ) cnt++;
-      if( !ezxml_attr( limit, "long" ) ) cnt++;
+      
+      if( strcmp( "slow", s ) != 0 )
+      {
+        if( !ezxml_attr( limit, "short" ) ) cnt++;
+        if( !ezxml_attr( limit, "mid" ) ) cnt++;
+        if( !ezxml_attr( limit, "long" ) ) cnt++;
+      }
     }
   }
 
   if( cnt == 4 ) return 1;
+  else if( strcmp( "slow", s ) == 0 ) return cnt;
   else return 0;
 }
 
@@ -123,6 +134,16 @@ ezxml_t setLimitAttr( ezxml_t limit, char *s )
     if( isprint( data[ 3 ].str[ 0 ] ) )
       limit = ezxml_set_attr( limit, "long", data[ 3 ].str );
   }
+  else if( strcmp( ezxml_attr( limit, "name" ), "slow" ) == 0 )
+  {
+    if( split( &data, s, '\n' ) )
+    {
+      if( isprint( data[ 0 ].str[ 0 ] ) )
+        limit = ezxml_set_attr( limit, "current", data[ 0 ].str );
+    }
+    else
+      puts( "Error format parameter!" );
+  }
   else
     puts( "Error format parameter!" );
   
@@ -138,7 +159,7 @@ ezxml_t addLimit( ezxml_t child, char *n, char *s )
   return setLimitAttr( limit, s );
 }
 
-int setDefault( char *cpu, char *read, char *write )
+int setDefault( char *cpu, char *read, char *write, char *slow )
 {
   ezxml_t cfg = (ezxml_t)ParseXmlCfg( CONFIG_PATH );
 
@@ -158,6 +179,7 @@ int setDefault( char *cpu, char *read, char *write )
     if( cpu ) limit = addLimit( child, "cpu", cpu );
     if( read ) limit = addLimit( child, "read", read );
     if( write ) limit = addLimit( child, "write", write );
+    if( slow ) limit = addLimit( child, "slow", slow );
     
     if( checkCorrectAttrs( child, "cpu" ) ) 
       limit = removeBadLimit( child, "cpu" );
@@ -165,6 +187,8 @@ int setDefault( char *cpu, char *read, char *write )
       limit = removeBadLimit( child, "read" );
     if( checkCorrectAttrs( child, "write" ) ) 
       limit = removeBadLimit( child, "write" );
+    if( checkCorrectAttrs( child, "slow" ) ) 
+      limit = removeBadLimit( child, "slow" );
   }
   else
   {
@@ -215,6 +239,22 @@ int setDefault( char *cpu, char *read, char *write )
       if( checkCorrectAttrs( child, "write" ) ) 
         limit = removeBadLimit( child, "write" );
     }
+    
+    if( slow )
+    {
+      int cnt_attr = 0;
+      for( limit = ezxml_child( child, "limit" ); limit; limit = limit->next ) 
+      {
+        if( strcmp( ezxml_attr( limit, "name" ), "slow" ) == 0 ) 
+        {
+          limit = setLimitAttr( limit, slow );
+          cnt_attr++;
+        }
+      }
+      if( !cnt_attr ) limit = addLimit( child, "slow", slow );
+      if( checkCorrectAttrs( child, "slow" ) ) 
+        limit = removeBadLimit( child, "slow" );
+    }
   }
   
   rewrite_cfg( ezxml_toxml( cfg ) );
@@ -224,7 +264,7 @@ int setDefault( char *cpu, char *read, char *write )
   return 1;
 }
 
-int setUser( char *para, char *cpu, char *read, char *write )
+int setUser( char *para, char *cpu, char *read, char *write, char *slow )
 {
   ezxml_t cfg = (ezxml_t)ParseXmlCfg( CONFIG_PATH );
 
@@ -246,6 +286,7 @@ int setUser( char *para, char *cpu, char *read, char *write )
     if( cpu ) limit = addLimit( child, "cpu", cpu );    
     if( read ) limit = addLimit( child, "read", read );
     if( write ) limit = addLimit( child, "write", write );
+    if( slow ) limit = addLimit( child, "slow", slow );
 
     if( checkCorrectAttrs( child, "cpu" ) ) 
       limit = removeBadLimit( child, "cpu" );
@@ -253,6 +294,8 @@ int setUser( char *para, char *cpu, char *read, char *write )
       limit = removeBadLimit( child, "read" );
     if( checkCorrectAttrs( child, "write" ) ) 
       limit = removeBadLimit( child, "write" );
+    if( checkCorrectAttrs( child, "slow" ) ) 
+      limit = removeBadLimit( child, "slow" );
   }
   else
   {
@@ -302,6 +345,22 @@ int setUser( char *para, char *cpu, char *read, char *write )
       if( !cnt_attr ) limit = addLimit( child, "write", write );
       if( checkCorrectAttrs( child, "write" ) ) 
         limit = removeBadLimit( child, "write" );
+    }
+    
+    if( slow )
+    {
+      int cnt_attr = 0;
+      for( limit = ezxml_child( child, "limit" ); limit; limit = limit->next ) 
+      {
+        if( strcmp( ezxml_attr( limit, "name" ), "slow" ) == 0 ) 
+        {
+          limit = setLimitAttr( limit, slow );
+          cnt_attr++;
+        }
+      }
+      if( !cnt_attr ) limit = addLimit( child, "slow", slow );
+      if( checkCorrectAttrs( child, "slow" ) ) 
+        limit = removeBadLimit( child, "slow" );
     }
   }
   

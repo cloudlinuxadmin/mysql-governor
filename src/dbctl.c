@@ -240,6 +240,7 @@ void help( void )
   printf( "--cpu=N                  limit CPU   (pct)  usage\n" );
   printf( "--read=N                 limit READ  (Mb/s) usage\n" );
   printf( "--write=N                limit WRITE (Mb/s) usage\n" );
+  printf( "--slow=N                 limit time for long running select queries\n" );
   printf( "--level=N                level (1,2,3 or 4) specified\n" );
 }
 
@@ -253,6 +254,7 @@ GList *GetOptList( int argc, char **argv, int *ret )
     { "cpu", required_argument, NULL, 'c'},
     { "read", required_argument, NULL, 'r'},
     { "write", required_argument, NULL, 'w'},
+    { "slow", required_argument, NULL, 's'},
     { "level", required_argument, NULL, 'l'},
     { "lve-mode", required_argument, NULL, 100},
     { "help", no_argument, &helpflag, 1 },
@@ -262,7 +264,7 @@ GList *GetOptList( int argc, char **argv, int *ret )
   
   GList *opts = NULL;
   int opt;
-  while( ( opt = getopt_long(argc, argv, "c:r:w:", loptions, NULL ) ) != -1 ) 
+  while( ( opt = getopt_long(argc, argv, "c:r:w:s:", loptions, NULL ) ) != -1 ) 
   {
     switch( opt ) 
     {
@@ -281,6 +283,18 @@ GList *GetOptList( int argc, char **argv, int *ret )
           puts( "Error format parameter!" );
           exit( 0 );
         }
+
+        opts = g_list_append( opts, _opts );
+      }
+        break;
+      case 's':
+      {
+        Options *_opts;
+        _opts = malloc( sizeof( Options ) );
+        _opts->option = opt;
+        _opts->val = optarg;
+        
+        SplitStr *data = NULL;
 
         opts = g_list_append( opts, _opts );
       }
@@ -369,9 +383,9 @@ int GetCmd( int argc, char **argv )
       GList *list = (GList *)GetOptList( argc, argv, ret );
       
       if( strcmp( "default", _argv ) == 0 )
-        setDefault( (char*)GetVal( 'c', list ), (char*)GetVal( 'r', list ), (char*)GetVal( 'w', list ) );
+        setDefault( (char*)GetVal( 'c', list ), (char*)GetVal( 'r', list ), (char*)GetVal( 'w', list ), (char*)GetVal( 's', list ) );
       else
-        setUser( _argv, (char*)GetVal( 'c', list ), (char*)GetVal( 'r', list ), (char*)GetVal( 'w', list ) );
+        setUser( _argv, (char*)GetVal( 'c', list ), (char*)GetVal( 'r', list ), (char*)GetVal( 'w', list ), (char*)GetVal( 's', list ) );
     }
     else
       return 1;

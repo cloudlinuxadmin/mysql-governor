@@ -23,5 +23,7 @@
 <user mysql_name="logaholic" mode="ignore"></user>
 <user mysql_name="cphulkd" mode="ignore"></user>
 <user mysql_name="pp" mode="ignore"></user>
+<user mysql_name="DELAYED" mode="ignore"></user>
+<user mysql_name="admin" mode="ignore"></user>
 
 </governor>

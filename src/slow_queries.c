@@ -97,7 +97,7 @@ void *parse_slow_query( void *data )
   while( 1 ) 
   {
 #ifdef TEST
-    //printf( "data_cfg.slow_time=%d\n", data_cfg.slow_time );
+    //printf( "slow_time=%d\n", slow_time );
 #endif
     if( mysql_do_command == NULL )
     {
@@ -149,20 +149,21 @@ void *parse_slow_query( void *data )
             db_mysql_get_string( buffer, row[ 7 ], lengths[ 7 ] );
             strncpy( Info, buffer, _DBGOVERNOR_BUFFER_2048 );
             upper( Info );
-            if( !is_user_ignored(User) &&
+            long slow_time = is_user_ignored(User);
+            if( slow_time > 0 &&
             		strncmp( f_str, Info, strlen( f_str ) ) == 0 &&
             		is_request_in_state(State) )
             {
 #ifdef TEST
 /*
               printf( "is SELECT\n" );
-              printf( "Id=%d, Time=%d,  slow_time=%d\n", atoi( Id ), atoi( Time ), data_cfg.slow_time );
+              printf( "Id=%d, Time=%d,  slow_time=%d\n", atoi( Id ), atoi( Time ), slow_time );
 */
 #endif
-              if( atoi( Time ) > data_cfg.slow_time )
+              if( atoi( Time ) > slow_time )
               {
 #ifdef TEST
-                //printf( "Time > data_cfg.slow_time\n" );
+                //printf( "Time > slow_time\n" );
 #endif
                 kill_query_by_id( atoi( Id ), data_cfg.log_mode );
               }

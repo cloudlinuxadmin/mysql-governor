@@ -181,20 +181,30 @@ set_stats_limit (ezxml_t inner_xml, stats_limit_cfg * st)
       exit (-1);
     }
 
-  value[0] = atof (val_ptr);
-  value[1] =
-    ((val_ptr =
-      ezxml_attr (inner_xml, "short")) == NULL) ? (-1) : atof (val_ptr);
-  value[2] =
-    ((val_ptr =
-      ezxml_attr (inner_xml, "mid")) == NULL) ? (-1) : atof (val_ptr);
-  value[3] =
-    ((val_ptr =
-      ezxml_attr (inner_xml, "long")) == NULL) ? (-1) : atof (val_ptr);
-
+  if( strcmp( ptr, "slow" ) == 0 )
+  {
+    value[0] = parse_period( val_ptr );
+    value[1] = -1;
+    value[2] = -1;
+    value[3] = -1;
+  } 
+  else
+  {
+    value[0] = atof (val_ptr);
+    value[1] =
+      ((val_ptr =
+        ezxml_attr (inner_xml, "short")) == NULL) ? (-1) : atof (val_ptr);
+    value[2] =
+      ((val_ptr =
+        ezxml_attr (inner_xml, "mid")) == NULL) ? (-1) : atof (val_ptr);
+    value[3] =
+      ((val_ptr =
+        ezxml_attr (inner_xml, "long")) == NULL) ? (-1) : atof (val_ptr);
+  } 
   _set_val (&st->cpu, ptr, "cpu", value) ||
     _set_val (&st->write, ptr, "write", value) ||
-    _set_val (&st->read, ptr, "read", value)
+    _set_val (&st->read, ptr, "read", value) ||
+    _set_val (&st->slow, ptr, "slow", value)
     || fprintf (stderr, "Unknown limit setting: %s\n", ptr);
 }
 
@@ -379,14 +389,17 @@ config_init (const char *path)
 	}
   }
 
-  tmp_xml = ezxml_child( xml, "slow" );
-  cfg->slow_time = 0;
+  tmp_xml = ezxml_child (xml, "slow_queries");
+  cfg->slow_queries = 0;
   if( tmp_xml != NULL )
   {
-    if( ( ptr = ezxml_attr ( tmp_xml, "time" ) ) != NULL )
+    if( ezxml_attr( tmp_xml, "run" ) )
     {
-      cfg->slow_time =  parse_period( ptr );
-    }
+      if( !strcasecmp( ezxml_attr( tmp_xml, "run" ), "On" ) )
+      {
+        cfg->slow_queries = 1;
+      }
+	}
   }
 
   cfg->killuser = 0;

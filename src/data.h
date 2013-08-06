@@ -112,6 +112,7 @@ typedef struct user_statistics_struct_cfg
   T_LONG cpu;
   T_LONG write;
   T_LONG read;
+  T_LONG slow;
   bool account_flag;		// true == account ("name" attribute), false == "mysql_name" attribute
   MODE_TYPE mode;		// RESTRICT_MODE|NORESTRICT_MODE|IGNORE_MODE (default = RESTRICT_MODE)
 } Stats_cfg;
