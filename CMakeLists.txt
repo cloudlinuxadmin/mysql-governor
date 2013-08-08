@@ -161,7 +161,7 @@ set(rm_arg -f
 )
 
 add_custom_target (
-    source
+    sources
     COMMAND ${link_cmd} ${link_arg}
     COMMAND ${tar_command} ${tar_args}
     COMMAND ${rm_cmd} ${rm_arg}
