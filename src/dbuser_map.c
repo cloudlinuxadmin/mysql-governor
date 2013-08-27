@@ -192,14 +192,20 @@ gboolean find_uid( gpointer key, UserMap *um, void *data )
 
 int get_uid( username_t u )
 {
-	UserMap *UserMap_ = (UserMap *)g_hash_table_find(userMap, (GHRFunc)find_uid, u);
+	UserMap *UserMap_ = NULL;
+	if(userMap){
+		UserMap_ = (UserMap *)g_hash_table_find(userMap, (GHRFunc)find_uid, u);
+	}
 
 	return UserMap_?UserMap_->uid:BAD_LVE;
 }
 
 char *get_account( username_t u )
 {
-	UserMap *UserMap_ = (UserMap *)g_hash_table_find(userMap, (GHRFunc)find_uid, u);
+	UserMap *UserMap_ = NULL;
+	if(userMap){
+		UserMap_ = (UserMap *)g_hash_table_find(userMap, (GHRFunc)find_uid, u);
+	}
 
 	return UserMap_?(char *)UserMap_->account_name:NULL;
 }

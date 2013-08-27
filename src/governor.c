@@ -472,6 +472,19 @@ int main(int argc, char *argv[]) {
 	init_accounts_and_users();
 	//Work cycle
 	create_socket();
+
+	if(!activate_plugin(data_cfg.log_mode)){
+		if (!data_cfg.is_gpl ) {
+			remove_bad_users_list();
+		}
+		db_close();
+		delete_mysql_function();
+		close_log();
+		close_restrict_log();
+		config_free();
+		exit(EXIT_FAILURE);
+	}
+
 	if (!data_cfg.is_gpl ) {
 		if (init_bad_users_list() < 0) {
 			WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048, "Can't init BAD list, work in monytor only mode",
@@ -485,6 +498,7 @@ int main(int argc, char *argv[]) {
 		}
 	} else
 		governor_enable_reconn(data_cfg.log_mode);
+
 	ret = pthread_create(&thread, NULL, get_data_from_client, NULL);
 	if (ret < 0) {
 		if (!data_cfg.is_gpl ) {

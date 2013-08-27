@@ -76,6 +76,8 @@ enum mysql_option
 #define QUERY_KILL_USER_QUERY_ID "KILL CONNECTION %d"
 //Получение версии mysql
 #define QUERY_GET_SERVER_INFO "SELECT VERSION()"
+#define QUERY_GET_PLUGIN_INFO "show plugins"
+#define QUERY_SET_PLUGIN_INFO "INSTALL PLUGIN governor SONAME 'governor.so'"
 /*
  * Команда получение списка запросов. Нет - mysql_list_processes, т.к.
  * не вижу преимуществ перед mysql_query
@@ -86,6 +88,12 @@ enum mysql_option
 #define QUERY_GOVERNOR_MODE_ENABLE_RECON "ENABLE_GOVERNOR_RECON"
 #define QUERY_GOVERNOR_MODE_ENABLE_LVE "ENABLE_GOVERNOR_LVE"
 #define QUERY_GOVERNOR_MODE_ENABLE_RECON_LVE "ENABLE_GOVERNOR_RECON_LVE"
+
+#define QUERY_GOVERNOR_MODE_ENABLE_PLG "set global governor_governor_get_command = 1"
+#define QUERY_GOVERNOR_MODE_ENABLE_RECON_PLG "set global governor_governor_get_command = 1"
+#define QUERY_GOVERNOR_MODE_ENABLE_LVE_PLG "set global governor_governor_get_command = 2"
+#define QUERY_GOVERNOR_MODE_ENABLE_RECON_LVE_PLG "set global governor_governor_get_command = 2"
+#define QUERY_GOVERNOR_RECON_LVE_PLG2 "set global governor_enable_governor_recon_lve = 0"
 
 /*
  * Функция соединения с БД mysql
@@ -142,4 +150,5 @@ char *get_work_user();
 void lve_connection(char *user_name, MODE_TYPE debug_mode);
 void log_user_queries( char *user_name, MODE_TYPE debug_mode );
 MYSQL *get_mysql_connect();
+int activate_plugin( MODE_TYPE debug_mode );
 #endif /* MYSQL_CONNECTOR_COMMON_H_ */

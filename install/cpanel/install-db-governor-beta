@@ -160,6 +160,10 @@ if ($sql_version_2=="5.5"){
     }  
 } 
 
+if ($sql_version=="5.5"){
+    system '/usr/bin/yum', 'install', 'libaio', '-y';
+} 
+
 system '/usr/share/lve/dbgovernor/cpanel/check_mysql_leave_pid.sh';
 #check for mysql
 foreach my $url (@FILES){

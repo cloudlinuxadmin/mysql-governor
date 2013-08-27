@@ -97,7 +97,7 @@ def usage():
         print 'Use following syntax to manage DBGOVERNOR istall utility:'                                                                                                       
         print sys.argv[0]+" [OPTIONS]"                                                                                                                       
         print 'Options:'                                                                                                                                     
-        print " -i | --install             : instal MySQL for db-governor"                                                                 
+        print " -i | --install             : install MySQL for db-governor"                                                                 
         print " -d | --delete              : delete MySQL for db-governor"                                                                  
 	print "    | --install-beta        : install MySQL 5.1.63 beta   "
 	print " -c | --clean-mysql         : clean MySQL packages list (after governor installation)"

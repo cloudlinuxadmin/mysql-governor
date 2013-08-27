@@ -157,10 +157,10 @@ if [ "$SQL_VERSION" == "mysql55" ]; then
     if [ -e /usr/libexec/mysqld ]; then
 	mv -f /usr/libexec/mysqld /usr/libexec/mysqld.bak
     fi
-    yum install cl-MySQL-client cl-MySQL-devel cl-MySQL-server cl-MySQL-shared --nogpgcheck -y
+    yum install cl-MySQL-client cl-MySQL-devel cl-MySQL-server cl-MySQL-shared libaio --nogpgcheck -y
 fi
 if [ "$SQL_VERSION" == "mariadb55" ]; then
-    yum install cl-mariadb cl-mariadb-bench cl-mariadb-devel cl-mariadb-libs cl-mariadb-server --nogpgcheck -y
+    yum install cl-mariadb cl-mariadb-bench cl-mariadb-devel cl-mariadb-libs cl-mariadb-server libaio --nogpgcheck -y
 fi
 
 #/sbin/service mysqld stop
