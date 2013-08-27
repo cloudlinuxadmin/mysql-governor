@@ -17,6 +17,7 @@ BuildRequires: cmake
 BuildRequires: ncurses-devel
 BuildRequires: glib2-devel
 BuildRequires: autoconf
+BuildRequires: tar
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 Conflicts: db-governor
 Conflicts: db-governor-mysql
