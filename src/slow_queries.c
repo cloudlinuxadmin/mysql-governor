@@ -151,8 +151,8 @@ void *parse_slow_query( void *data )
             upper( Info );
             long slow_time = is_user_ignored(User);
             if( slow_time > 0 &&
-            		strncmp( f_str, Info, strlen( f_str ) ) == 0 &&
-            		is_request_in_state(State) )
+            		strncmp( f_str, Info, strlen( f_str ) ) == 0 
+                        /*&& is_request_in_state(State)*/ )
             {
 #ifdef TEST
 /*

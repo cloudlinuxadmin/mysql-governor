@@ -1,6 +1,6 @@
 Name: governor-mysql
 Version: 1.0
-Release: 24%{?dist}.cloudlinux
+Release: 25%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -160,6 +160,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Wed Aug 28 2013 Alexey Berezhok <alexey_com@ukr.net> 1.0-25
+- Removed state checking on query killing
+
 * Tue Aug 27 2013 Alexey Berezhok <alexey_com@ukr.net>, Pavel Shkatula <shpp@cloudlinux.com> 1.0-24
 - Added support governor's plugin for MariaDB
 - Added governor's plugin for MariaDB
