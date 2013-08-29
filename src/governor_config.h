@@ -47,6 +47,8 @@ struct governor_config
   int separate_lve;
   int all_lve;
   int slow_queries;
+  int restrict_mode;
+  unsigned l_unlimit;	// in seconds
 };
 
 stats_limit_cfg *

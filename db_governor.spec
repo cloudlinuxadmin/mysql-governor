@@ -1,6 +1,6 @@
 Name: governor-mysql
 Version: 1.0
-Release: 25%{?dist}.cloudlinux
+Release: 26%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -160,6 +160,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Thu Aug 29 2013 Alexey Berezhok <alexey_com@ukr.net>, Pavel Shkatula <shpp@cloudlinux.com> 1.0-26
+- Added new restrict mode support
+
 * Wed Aug 28 2013 Alexey Berezhok <alexey_com@ukr.net> 1.0-25
 - Removed state checking on query killing
 

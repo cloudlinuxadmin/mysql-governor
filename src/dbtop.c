@@ -413,6 +413,9 @@ char getRestrictChar(GOVERNORS_PERIOD_NAME restrict_level) {
 	case 2:
 		ch = '3';
 		break;
+	case 1000:
+		ch = 'R';
+		break;
 	default:
 		ch = '4';
 	}

@@ -402,6 +402,24 @@ config_init (const char *path)
 	}
   }
 
+  tmp_xml = ezxml_child( xml, "restrict_mode" );
+  cfg->restrict_mode = 0;
+  cfg->l_unlimit = parse_period( "60s" );
+  if( tmp_xml != NULL )
+  {
+    if( ezxml_attr( tmp_xml, "use" ) )
+    {
+      if( !strcasecmp( ezxml_attr( tmp_xml, "use" ), "limit" ) )
+      {
+        cfg->restrict_mode = 1;
+      }
+    }
+    if( ( ptr = ezxml_attr( tmp_xml, "unlimit" ) ) != NULL )
+    {
+      cfg->l_unlimit = parse_period( ptr );
+    }
+  }
+
   cfg->killuser = 0;
   cfg->max_user_connections = 30;
 

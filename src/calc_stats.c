@@ -345,6 +345,167 @@ int check_restrict(Account * ac) {
 	return 0;
 }
 
+static int check_restrict_limit(Account * ac) {
+	stats_limit_cfg cfg_buf;
+	stats_limit_cfg *sl = config_get_account_limit(ac->id, &cfg_buf);
+	char restrict_bufer[_DBGOVERNOR_BUFFER_4096];
+	int restrict_period = 0;
+	GOVERNORS_FIELD_NAME _cur = is_stat_overlimit_current(&ac->current, sl);
+	time_t now;
+	time(&now);
+    struct governor_config data_cfg;
+    get_config_data( &data_cfg );
+
+	if (_cur != NORESTRICT_PARAM2) {
+		//Current restrict
+		restrict_period = data_cfg.l_unlimit;
+		if( data_cfg.statistic_mode ) IncNumberOfRestricts( ac->id, get_cause_of_restrict(_cur) );
+		ac->restricted = 1000;
+		ac->timeout = restrict_period;
+		time(&ac->start_count);
+		ac->info.field_restrict = CURRENT_PERIOD;
+		ac->info.field_level_restrict = _cur;
+		account_restrict(ac, sl);
+		if (data_cfg.restrict_log) {
+			char tmp_buf[_DBGOVERNOR_BUFFER_8192];
+			prepareRestrictDescriptionLimit(tmp_buf, ac, sl);
+			WRITE_LOG( &ac->current,
+					1,
+					tmp_buf,
+					_DBGOVERNOR_BUFFER_8192,
+					tmp_buf,
+					data_cfg.log_mode);
+
+		}
+		return 1;
+
+	} else {
+		GOVERNORS_FIELD_NAME _short = is_stat_overlimit_short(
+				&ac->short_average, sl);
+		if (_short != NORESTRICT_PARAM2) {
+			//Short restrict
+			restrict_period = data_cfg.l_unlimit;
+			if( data_cfg.statistic_mode ) IncNumberOfRestricts( ac->id, get_cause_of_restrict(_cur) );
+			ac->restricted = 1000;
+			ac->timeout = restrict_period;
+			time(&ac->start_count);
+			ac->info.field_restrict = SHORT_PERIOD;
+			ac->info.field_level_restrict = _short;
+			account_restrict(ac, sl);
+			if (data_cfg.restrict_log) {
+				char tmp_buf[_DBGOVERNOR_BUFFER_8192];
+				prepareRestrictDescriptionLimit(tmp_buf, ac, sl);
+				WRITE_LOG( &ac->short_average,
+						1,
+						tmp_buf,
+						_DBGOVERNOR_BUFFER_8192,
+						tmp_buf,
+						data_cfg.log_mode);
+
+			}
+			return 1;
+		} else {
+			GOVERNORS_FIELD_NAME _mid = is_stat_overlimit_mid(&ac->mid_average,
+					sl);
+			if (_mid != NORESTRICT_PARAM2) {
+				//Mid restrict
+				restrict_period = data_cfg.l_unlimit;
+				if( data_cfg.statistic_mode ) IncNumberOfRestricts( ac->id, get_cause_of_restrict(_cur) );
+				ac->restricted = 1000;
+				ac->timeout = restrict_period;
+				time(&ac->start_count);
+				ac->info.field_restrict = MID_PERIOD;
+				ac->info.field_level_restrict = _mid;
+				account_restrict(ac, sl);
+				if (data_cfg.restrict_log) {
+					char tmp_buf[_DBGOVERNOR_BUFFER_8192];
+					prepareRestrictDescriptionLimit(tmp_buf, ac, sl);
+					WRITE_LOG( &ac->mid_average,
+							1,
+							tmp_buf,
+							_DBGOVERNOR_BUFFER_8192,
+							tmp_buf,
+							data_cfg.log_mode);
+				}
+				return 1;
+			} else {
+				GOVERNORS_FIELD_NAME _long = is_stat_overlimit_long(
+						&ac->long_average, sl);
+				if (_long != NORESTRICT_PARAM2) {
+					//Long restrict
+					restrict_period = data_cfg.l_unlimit;
+					if( data_cfg.statistic_mode ) IncNumberOfRestricts( ac->id, get_cause_of_restrict(_cur) );
+					ac->restricted = 1000;
+					ac->timeout = restrict_period;
+					time(&ac->start_count);
+					ac->info.field_restrict = LONG_PERIOD;
+					ac->info.field_level_restrict = _long;
+					account_restrict(ac, sl);
+					if (data_cfg.restrict_log) {
+						char tmp_buf[_DBGOVERNOR_BUFFER_8192];
+						prepareRestrictDescriptionLimit(tmp_buf, ac, sl);
+
+						WRITE_LOG( &ac->long_average,
+								1,
+								tmp_buf,
+								_DBGOVERNOR_BUFFER_8192,
+								tmp_buf,
+								data_cfg.log_mode);
+					}
+					return 1;
+				}
+			}
+		}
+	}
+	return 0;
+}
+
+static account_analyze_limit(gpointer * key, Account * ac, void *data){
+	stats_limit_cfg cfg_buf;
+	stats_limit_cfg *sl = config_get_account_limit(ac->id, &cfg_buf);
+	int restrict_period = 0;
+	char tmp_buf[_DBGOVERNOR_BUFFER_8192];
+    struct governor_config data_cfg;
+    get_config_data( &data_cfg );
+
+    if(data_cfg.all_lve || !data_cfg.use_lve) return;
+
+	if (sl->mode != IGNORE_MODE) {
+		if (0 == ac->timeout) {
+			//I am not restricted, but I might be in penalty period. Restrict account if need
+			if (check_restrict_limit(ac)) {
+				//If restricted, just exit
+				return;
+			}
+		}
+		time_t now;
+		time(&now);
+		if (ac->start_count > 0) {
+			//check if account need to unrestrict
+			int check_restrict_value = check_restrict_limit(ac);
+			if (check_restrict_value){
+				time(&ac->start_count);
+			} else if (0 != ac->timeout && ac->start_count + ac->timeout <= now){
+				//Unrestrict account
+				ac->start_count = 0;
+				ac->restricted = 0;
+				ac->info.field_restrict = NO_PERIOD;
+				ac->info.field_level_restrict = NORESTRICT_PARAM2;
+				ac->timeout = 0;
+				account_unrestrict(ac);
+				sprintf(tmp_buf, "Restrict mode is over for user %s\n", ac->id);
+				WRITE_LOG( NULL,
+							1,
+							tmp_buf,
+							_DBGOVERNOR_BUFFER_8192,
+							tmp_buf,
+							data_cfg.log_mode);
+			}
+		}
+
+	}
+}
+
 void account_analyze(gpointer * key, Account * ac, void *data) {
 	stats_limit_cfg cfg_buf;
 	stats_limit_cfg *sl = config_get_account_limit(ac->id, &cfg_buf);
@@ -575,7 +736,11 @@ void proceed_accounts(double tm) {
 	pthread_mutex_lock(&mtx_account);
 	g_hash_table_foreach(users, (GHFunc) tick_empty_users, NULL);
 	g_hash_table_foreach(accounts, (GHFunc) calc_acc_stats, NULL);
-	g_hash_table_foreach(accounts, (GHFunc) account_analyze, NULL);
+	if(data_cfg.restrict_mode){
+		g_hash_table_foreach(accounts, (GHFunc) account_analyze_limit, NULL);
+	} else {
+		g_hash_table_foreach(accounts, (GHFunc) account_analyze, NULL);
+	}
     if( data_cfg.statistic_mode ) old_tm_stats = AddDbGovStatitrics( old_tm_stats );
 	pthread_mutex_unlock(&mtx_account);
 }
@@ -797,8 +962,13 @@ void dbctl_restrict_set( gpointer key, Account * ac, void *data )
 	  }
 
 	  time( &now );
-      ac->timeout = get_timeout( &level, timeout_coeff );
-	  ac->restricted = level;
+	  if(data_cfg.restrict_mode){
+		  ac->timeout = data_cfg.l_unlimit;
+		  ac->restricted = 1000;
+	  } else {
+		  ac->timeout = get_timeout( &level, timeout_coeff );
+		  ac->restricted = level;
+	  }
       if( data_cfg.statistic_mode ) 
         if( level >= 0 ) IncNumberOfRestricts( ac->id, RESTRICT_BY_CPU | RESTRICT_BY_READ | RESTRICT_BY_WRITE );
       time( &ac->start_count );
@@ -809,7 +979,10 @@ void dbctl_restrict_set( gpointer key, Account * ac, void *data )
       if( data_cfg.restrict_log ) 
       {
         char tmp_buf[ _DBGOVERNOR_BUFFER_8192 ];
-		prepareRestrictDescription( tmp_buf, ac, sl );
+        if(data_cfg.restrict_mode)
+        	prepareRestrictDescriptionLimit( tmp_buf, ac, sl );
+        else
+        	prepareRestrictDescription( tmp_buf, ac, sl );
 		WRITE_LOG( &ac->current, 1, tmp_buf, _DBGOVERNOR_BUFFER_8192,
 			  	   tmp_buf, data_cfg.log_mode
 				 );

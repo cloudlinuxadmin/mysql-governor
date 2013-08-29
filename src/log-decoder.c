@@ -223,6 +223,36 @@ prepareRestrictDescription (char *buffer, Account * ac,
     }
 }
 
+void
+prepareRestrictDescriptionLimit (char *buffer, Account * ac,
+			    stats_limit_cfg * limit)
+{
+  char ch[32];
+  char varName[_DBGOVERNOR_BUFFER_128];
+  strcpy (buffer, "");
+  if (ac->info.field_restrict==NO_PERIOD)
+    {
+      strcpy (buffer, "unrestrict");
+      if (cfg->restrict_format >= 2)
+	insertSystemInfo (buffer);
+      return;
+    }
+  else
+    {
+
+	  getPeriodName(ch, ac);
+	  getParamName(varName, ac);
+	  sprintf (buffer,
+		   "%s LIMIT_ENFORCED period %s, field %s value %llu/limit %ld",
+		   ac->id, ch, varName, getRestrictValue (ac),
+		   getLimitValue (ac, limit));
+      if (cfg->restrict_format >= 2){
+    	  insertSystemInfo (buffer);
+      }
+      return;
+    }
+}
+
 /*Получить соответсвующий периоду список параметров, т.н дамп*/
 stats_limit *
 getRestrictDump(Account * ac)
