@@ -346,9 +346,14 @@ double db_mysql_get_float(char *result, unsigned long length) {
 }
 
 //Get ranged string from string. NULL at end safety
-void db_mysql_get_string(char *buffer, char *result, unsigned long length) {
-	memcpy(buffer, result, length);
-	buffer[length] = 0;
+void db_mysql_get_string(char *buffer, char *result, unsigned long length, unsigned long max_bufer_len) {
+        unsigned long nlen = 0;
+	if(max_bufer_len<length)
+		nlen = max_bufer_len - 1;
+	else
+		nlen = length;
+        memcpy(buffer, result, nlen);
+	buffer[nlen] = 0;
 }
 
 //Get last DB error
@@ -723,7 +728,7 @@ int check_mysql_version(MODE_TYPE debug_mode) {
 		row = (*_mysql_fetch_row)(res);
 		if (row) {
 			lengths = (*_mysql_fetch_lengths)(res);
-			db_mysql_get_string(buffer, row[0], lengths[0]);
+			db_mysql_get_string(buffer, row[0], lengths[0], _DBGOVERNOR_BUFFER_2048);
 			if (strstr(buffer, "-cll-lve")) {
 				sprintf(outbuffer, "MySQL version correct %s", buffer);
 				WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
@@ -863,7 +868,7 @@ void log_user_queries( char *user_name, MODE_TYPE debug_mode )
         if( strcmp( row[ 1 ], user_name ) == 0 )
         {
           lengths = (*_mysql_fetch_lengths)( res );
-          db_mysql_get_string( buffer, row[ 7 ], lengths[ 7 ] );
+          db_mysql_get_string( buffer, row[ 7 ], lengths[ 7 ], _DBGOVERNOR_BUFFER_8192 );
           fprintf( log_queries, "%s\n", buffer );
         }
       }
@@ -906,7 +911,7 @@ int activate_plugin( MODE_TYPE debug_mode ){
 			res = (*_mysql_store_result)(mysql_send_governor);
 			while( ( row = (*_mysql_fetch_row)( res ) ) ){
 				lengths = (*_mysql_fetch_lengths)(res);
-				db_mysql_get_string(buffer, row[0], lengths[0]);
+				db_mysql_get_string(buffer, row[0], lengths[0], _DBGOVERNOR_BUFFER_2048);
 				if(!strncasecmp(buffer, "GOVERNOR", _DBGOVERNOR_BUFFER_2048)){
 					is_founf_plg = 1;
 				}

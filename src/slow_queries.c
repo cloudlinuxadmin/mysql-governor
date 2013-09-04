@@ -26,7 +26,7 @@
 #include "slow_queries.h"
 #include "calc_stats.h"
 
-#define DELTA_TIME 30
+#define DELTA_TIME 15
 
 extern M_mysql_store_result;
 extern M_mysql_num_rows;
@@ -138,15 +138,15 @@ void *parse_slow_query( void *data )
             printf( "row[ 7 ]=%s\n", buffer );
 */
 #endif            
-            db_mysql_get_string( buffer, row[ 0 ], lengths[ 0 ] );
+            db_mysql_get_string( buffer, row[ 0 ], lengths[ 0 ], _DBGOVERNOR_BUFFER_8192 );
             strncpy( Id, buffer,  _DBGOVERNOR_BUFFER_2048);
-            db_mysql_get_string( buffer, row[ 1 ], lengths[ 1 ] );
+            db_mysql_get_string( buffer, row[ 1 ], lengths[ 1 ], _DBGOVERNOR_BUFFER_8192 );
             strncpy( User, buffer, USERNAMEMAXLEN );
-            db_mysql_get_string( buffer, row[ 5 ], lengths[ 5 ] );
+            db_mysql_get_string( buffer, row[ 5 ], lengths[ 5 ], _DBGOVERNOR_BUFFER_8192 );
             strncpy( Time, buffer, _DBGOVERNOR_BUFFER_2048);
-            db_mysql_get_string( buffer, row[ 6 ], lengths[ 6 ] );
+            db_mysql_get_string( buffer, row[ 6 ], lengths[ 6 ], _DBGOVERNOR_BUFFER_8192 );
             strncpy( State, buffer, _DBGOVERNOR_BUFFER_256 );
-            db_mysql_get_string( buffer, row[ 7 ], lengths[ 7 ] );
+            db_mysql_get_string( buffer, row[ 7 ], lengths[ 7 ], _DBGOVERNOR_BUFFER_8192 );
             strncpy( Info, buffer, _DBGOVERNOR_BUFFER_2048 );
             upper( Info );
             long slow_time = is_user_ignored(User);

@@ -358,7 +358,7 @@ void *get_data_from_client(void *data) {
 						memset(&tbl_buff, 0, sizeof(tid_table));
 						tid_table *tbl = get_tid_data(message.tid, &tbl_buff);
 						//This tid use another user. This strange
-						if ((tbl != NULL)
+						/*if ((tbl != NULL)
 								&& (!strncmp(tbl_buff.username, message.username,
 								USERNAMEMAXLEN))) {
 							if (data_cfg.log_mode == DEBUG_MODE)
@@ -366,7 +366,7 @@ void *get_data_from_client(void *data) {
 										_DBGOVERNOR_BUFFER_2048,
 										"Lost TID user info. User name %s",
 										data_cfg.log_mode, tbl->username);
-						}
+						}*/
 						add_new_tid_data(&message, (fds + i)->fd);
 					} else {
 						tid_table tbl_buff;
