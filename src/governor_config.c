@@ -245,6 +245,8 @@ config_free ()
 	free (cfg->log);
       if (cfg->restrict_log)
 	free (cfg->restrict_log);
+      if (cfg->slow_queries_log)
+	free (cfg->slow_queries_log);
       free (cfg);
     }
 }
@@ -399,7 +401,15 @@ config_init (const char *path)
       {
         cfg->slow_queries = 1;
       }
-	}
+    }
+    if( ezxml_attr( tmp_xml, "log" ) )
+    {
+      cfg->slow_queries_log = strdup( ezxml_attr( tmp_xml, "log" ) );
+    }
+    else
+    {
+      cfg->slow_queries_log = NULL;
+    }
   }
 
   tmp_xml = ezxml_child( xml, "restrict_mode" );

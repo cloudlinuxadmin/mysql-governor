@@ -76,7 +76,7 @@ if(!$canusecPPkg){
     my $is_51=index('5.1',$CPCONF{'mysql-version'});
     my $is_55=index('5.5',$CPCONF{'mysql-version'});
     if (($is_50 == -1) && ($is_51 == -1) && ($is_55 == -1)){
-	$sql_version = "5.6";
+	$sql_version = "5.7";
     }
 }
 
@@ -99,6 +99,11 @@ if( open( my $mysql_db, "<", $mysqlTypeFileSet ) )
     {
       $sql_version="5.5";
       $sql_version_2=$sql_version;
+    }
+    if( $type_db eq "mysql56" )
+    {
+      $sql_version="5.5";
+      $sql_version_2="mysql56";
     }
     if( $type_db eq "mariadb55" )
     {
@@ -130,10 +135,13 @@ if ($sql_version_2=="5.5"){
     @FILES = cPPkg_getfilelist($cPPkg, $sql_version , 'http://repo.cloudlinux.com/other/'. $system_tp .'/cl-mysql-beta-5.5/'. $arch , $system_tp);
 } 
 
-if ($sql_version_2=="mariadb55"){
+if ($sql_version_2 eq "mariadb55"){
     @FILES = cPPkg_getfilelist_mariadb55($cPPkg, $sql_version_2 , 'http://repo.cloudlinux.com/other/'. $system_tp .'/cl-mariadb-5.5/'. $arch , $system_tp . ".cloudlinux." . $arch);
 } 
 
+if ($sql_version_2 eq "mysql56"){
+    @FILES = cPPkg_getfilelist_mysql56($cPPkg, $sql_version_2 , 'http://repo.cloudlinux.com/other/'. $system_tp .'/cl-mysql-beta-5.6/'. $arch , $system_tp . ".2.cloudlinux." . $arch);
+} 
 
 #remove old mysql
 #system 'yum', 'erase', '-y', 'MySQL-client', 'MySQL-devel', 'MySQL-bench', 'MySQL-shared', 'MySQL-server';
@@ -162,7 +170,7 @@ if ($sql_version_2=="5.5"){
 
 if ($sql_version=="5.5"){
     system '/usr/bin/yum', 'install', 'libaio', '-y';
-} 
+}
 
 system '/usr/share/lve/dbgovernor/cpanel/check_mysql_leave_pid.sh';
 #check for mysql
@@ -210,6 +218,7 @@ sub get_repo {
 	if ($msql_version=="5.0") {$burl = $murl ."/".  $msystem_tp . "/cl-mysql-beta-5.0.repo";}
 	if ($msql_version=="5.5") {$burl = $murl ."/".  $msystem_tp . "/cl-mysql-beta-5.5.repo";}
 	if ($msql_version=="mariadb55") {$burl = $murl ."/".  $msystem_tp . "/cl-mariadb-5.5.repo";}
+	if ($msql_version=="mysql56") {$burl = $murl ."/".  $msystem_tp . "/cl-mysql-beta-5.6.repo";}
 	my $res = do_command("wget -O /etc/yum.repos.d/cl-mysql.repo $burl");
         if($res==0){
             	system 'yum', 'clean', 'metadata';
@@ -268,6 +277,25 @@ sub cPPkg_getfilelist_mariadb55 {
      my $url = $_[2];
      my $mp = $_[3];
      my @fls = ("cl-mariadb-5.5.31-18", "cl-mariadb-bench-5.5.31-18", "cl-mariadb-devel-5.5.31-18", "cl-mariadb-libs-5.5.31-18", "cl-mariadb-server-5.5.31-18");
+     
+     my @FILES; 
+     foreach my $file ( @fls ) { 
+	 $mp =~ s/cl5/el5/;
+	 $mp =~ s/cl6/el6/;
+         $mp =~ s/i386/i686/;
+	 print $url . '/' . $file. ".". $mp. ".rpm". "\n";
+         push( @FILES, $url . '/' . $file. ".". $mp. ".rpm" );
+     }
+     return @FILES;
+}
+
+sub cPPkg_getfilelist_mysql56 {
+     my $cPPkg = $_[0];                                                                                                                                     
+     my $majorver   = $_[1];
+     my $url = $_[2];
+     my $mp = $_[3];
+     my $stp = $_[4];
+     my @fls = ( "cl-MySQL-client-5.6.13-1", "cl-MySQL-devel-5.6.13-1", "cl-MySQL-server-5.6.13-1", "cl-MySQL-shared-5.6.13-1", "cl-MySQL-test-5.6.13-1");
      
      my @FILES; 
      foreach my $file ( @fls ) { 

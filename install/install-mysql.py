@@ -198,11 +198,11 @@ def cp_supported():
 	return False
 
 def remove_specific_package(pname, yb):
-        print "Looking for " + pname
+        #print "Looking for " + pname
 	if yb.rpmdb.searchNevra(name=pname):
 	    exec_command("rpm -e --justdb --nodeps " + pname)
-	else:
-	    print pname + " not installed"
+	#else:
+	    #print pname + " not installed"
 
 def remove_sepcific_mysql(mname, yb):
         remove_specific_package(mname + "-server", yb)
@@ -284,6 +284,11 @@ def warn_message():
         print bcolors.OKGREEN + "Instruction: how to create whole database backup - " + bcolors.OKBLUE +"http://docs.cloudlinux.com/index.html?backing_up_mysql.html"+ bcolors.ENDC
         time.sleep(10)
 
+def fix_libmygcc():
+	if os.path.exists("/usr/lib64/mysql/libmygcc.a"):
+		os.rename("/usr/lib64/mysql/libmygcc.a", "/usr/lib64/mysql/libmygcc.a.bak")
+	if os.path.exists("/usr/lib/mysql/libmygcc.a"):
+		os.rename("/usr/lib/mysql/libmygcc.a", "/usr/lib/mysql/libmygcc.a.bak")
                 
 cp = get_cp()
 try:
@@ -308,6 +313,7 @@ for o, a in opts:
                 if os.path.exists("/usr/share/lve/dbgovernor/chk-mysqlclient"):
 		    exec_command_out("/usr/share/lve/dbgovernor/chk-mysqlclient")
                 install_dbmap_update()
+		fix_libmygcc()
 	elif o in ("-u", "--upgrade"):
                 warn_message()
 		remove_mysqlclients()
@@ -322,6 +328,7 @@ for o, a in opts:
                 if os.path.exists("/usr/bin/alt-php-mysql-reconfigure"):                                                                                                                                                                     
                     exec_command_out("/usr/bin/alt-php-mysql-reconfigure") 
                 install_dbmap_update()
+		fix_libmygcc()
 	elif o in ("-d", "--delete"):
                 remove_repo_file()
 		remove_mysql_justdb_cl()

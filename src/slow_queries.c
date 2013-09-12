@@ -77,6 +77,7 @@ void *parse_slow_query( void *data )
 {
   char buffer[ _DBGOVERNOR_BUFFER_8192 ];
   char sql_buffer[ _DBGOVERNOR_BUFFER_8192 ];
+  char log_buffer[ _DBGOVERNOR_BUFFER_8192 ];
   struct governor_config data_cfg;
 
   MYSQL *mysql_do_command = get_mysql_connect();
@@ -151,8 +152,8 @@ void *parse_slow_query( void *data )
             upper( Info );
             long slow_time = is_user_ignored(User);
             if( slow_time > 0 &&
-            		strncmp( f_str, Info, strlen( f_str ) ) == 0 
-                        /*&& is_request_in_state(State)*/ )
+                strncmp( f_str, Info, strlen( f_str ) ) == 0 
+            /*&& is_request_in_state(State)*/ )
             {
 #ifdef TEST
 /*
@@ -166,6 +167,14 @@ void *parse_slow_query( void *data )
                 //printf( "Time > slow_time\n" );
 #endif
                 kill_query_by_id( atoi( Id ), data_cfg.log_mode );
+
+                char Info_[ _DBGOVERNOR_BUFFER_2048 ];
+                strncpy( Info_, Info, 600 );
+                sprintf( log_buffer, "Query killed - %s : %s", 
+                                     User, 
+                                     Info_ 
+                        );
+                WRITE_LOG( NULL, 2, buffer, _DBGOVERNOR_BUFFER_2048, log_buffer, data_cfg.log_mode );
               }
             }
           }

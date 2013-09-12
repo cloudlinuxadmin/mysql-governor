@@ -163,6 +163,7 @@ void becameDaemon( int self_supporting ) {
 				"Can't start setsid", data_cfg.log_mode);
 		close_log();
 		close_restrict_log();
+		close_slow_queries_log();
 		config_free();
 		fprintf(stderr, "Can't start setsid\n");
 		fflush(stderr);
@@ -179,6 +180,7 @@ void becameDaemon( int self_supporting ) {
 		;
 		close_log();
 		close_restrict_log();
+		close_slow_queries_log();
 		config_free();
 		fprintf(stderr, "Can't start daemon\n");
 		fflush(stderr);
@@ -198,6 +200,7 @@ void becameDaemon( int self_supporting ) {
 				data_cfg.log_mode);
 		close_log();
 		close_restrict_log();
+		close_slow_queries_log();
 		config_free();
 		fprintf(stderr, "Child chdir error\n");
 		fflush(stderr);
@@ -209,6 +212,7 @@ void becameDaemon( int self_supporting ) {
 				"Unable to create PID file", data_cfg.log_mode);
 		close_log();
 		close_restrict_log();
+		close_slow_queries_log();
 		config_free();
 		fprintf(stderr, "Unable to create PID file\n");
 		fflush(stderr);
@@ -226,6 +230,11 @@ void becameDaemon( int self_supporting ) {
 		}
 		if (get_restrict_log()) {
 			FILE *tmp_fd = get_restrict_log();
+			if (fd == fileno(tmp_fd))
+				continue;
+		}
+		if (get_slow_queries_log()) {
+			FILE *tmp_fd = get_slow_queries_log();
 			if (fd == fileno(tmp_fd))
 				continue;
 		}
@@ -303,6 +312,10 @@ void initGovernor( void )
   // Open restrict log if exists
   if( data_cfg.restrict_log )
     open_restrict_log( data_cfg.restrict_log );
+
+  // Open slow queries log if exists
+  if( data_cfg.slow_queries_log )
+    open_slow_queries_log( data_cfg.slow_queries_log );
 }
     	                                          
 void trackingDaemon( void )
@@ -405,6 +418,7 @@ int main(int argc, char *argv[]) {
 				data_cfg.log_mode);
 		close_log();
 		close_restrict_log();
+		close_slow_queries_log();
 		config_free();
 		fprintf(stderr, "Child chdir error\n");
 		fflush(stderr);
@@ -418,6 +432,7 @@ int main(int argc, char *argv[]) {
 				data_cfg.log_mode);
 		close_log();
 		close_restrict_log();
+		close_slow_queries_log();
 		config_free();
 		exit(EXIT_FAILURE);
 	}
@@ -435,6 +450,7 @@ int main(int argc, char *argv[]) {
 				delete_mysql_function();
 				close_log();
 				close_restrict_log();
+				close_slow_queries_log();
 				config_free();
 				exit(EXIT_FAILURE);
 			} else {
@@ -454,6 +470,7 @@ int main(int argc, char *argv[]) {
 		delete_mysql_function();
 		close_log();
 		close_restrict_log();
+		close_slow_queries_log();
 		config_free();
 		exit(EXIT_FAILURE);
 	}
@@ -481,6 +498,7 @@ int main(int argc, char *argv[]) {
 		delete_mysql_function();
 		close_log();
 		close_restrict_log();
+		close_slow_queries_log();        
 		config_free();
 		exit(EXIT_FAILURE);
 	}
@@ -508,6 +526,7 @@ int main(int argc, char *argv[]) {
 		delete_mysql_function();
 		close_log();
 		close_restrict_log();
+		close_slow_queries_log();        
 		config_free();
 		exit(EXIT_FAILURE);
 	}
@@ -521,6 +540,7 @@ int main(int argc, char *argv[]) {
 		delete_mysql_function();
 		close_log();
 		close_restrict_log();
+		close_slow_queries_log();        
 		config_free();
 		exit(EXIT_FAILURE);
 	}
@@ -535,6 +555,7 @@ int main(int argc, char *argv[]) {
 		delete_mysql_function();
 		close_log();
 		close_restrict_log();
+		close_slow_queries_log();        
 		config_free();
 		exit(EXIT_FAILURE);
 	}
@@ -550,6 +571,7 @@ int main(int argc, char *argv[]) {
 		delete_mysql_function();
 		close_log();
 		close_restrict_log();
+		close_slow_queries_log();        
 		config_free();
 		exit(EXIT_FAILURE);
 	}
@@ -566,6 +588,7 @@ int main(int argc, char *argv[]) {
 		delete_mysql_function();
 		close_log();
 		close_restrict_log();
+		close_slow_queries_log();        
 		config_free();
 		exit(EXIT_FAILURE);
 	}
@@ -585,6 +608,7 @@ int main(int argc, char *argv[]) {
 			delete_mysql_function();
 			close_log();
 			close_restrict_log();
+			close_slow_queries_log();        
 			config_free();
 			exit(EXIT_FAILURE);
     	}
@@ -619,6 +643,7 @@ int main(int argc, char *argv[]) {
 	delete_mysql_function();
 	close_log();
 	close_restrict_log();
+	close_slow_queries_log();        
 	config_free();
 
 	return 0;

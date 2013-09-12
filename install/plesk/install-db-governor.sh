@@ -53,6 +53,14 @@ function installDb(){
 	  yum install cl-MySQL-client cl-MySQL-devel cl-MySQL-server cl-MySQL-shared libaio --nogpgcheck -y
           ln -sf /etc/init.d/mysql /etc/init.d/mysqld
 	fi
+	if [ "$SQL_VERSION" == "mysql56" ]; then
+	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/cl-mysql-beta-5.6.repo
+	  if [ -e /usr/libexec/mysqld ]; then
+	   mv -f /usr/libexec/mysqld /usr/libexec/mysqld.bak
+          fi
+	  yum install cl-MySQL-client cl-MySQL-devel cl-MySQL-server cl-MySQL-shared libaio --nogpgcheck -y
+          ln -sf /etc/init.d/mysql /etc/init.d/mysqld
+	fi
 	if [ "$SQL_VERSION" == "mariadb55" ]; then
 	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/cl-mariadb-5.5.repo
 	  yum install cl-mariadb cl-mariadb-bench cl-mariadb-devel cl-mariadb-libs cl-mariadb-server libaio --nogpgcheck -y

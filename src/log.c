@@ -28,7 +28,7 @@ static char *mode_type_enum_to_str[] = { "TEST_MODE",
   "IGNORE_MODE"
 };
 
-static FILE *log = NULL, *restrict_log = NULL;
+static FILE *log = NULL, *restrict_log = NULL, *slow_queries_log = NULL;
 
 void print_stats_cfg(FILE * f, stats_limit_cfg * s);
 
@@ -61,6 +61,12 @@ int open_restrict_log(const char *log_file) {
 	return 0;
 }
 
+int open_slow_queries_log(const char *log_file) {
+	if ((slow_queries_log = fopen(log_file, "a")) == NULL)
+		return errno;
+	return 0;
+}
+
 int close_log(void) {
 	if (log && fclose(log)) {
 		log = NULL;
@@ -76,6 +82,15 @@ int close_restrict_log(void) {
 		return errno;
 	}
 	restrict_log = NULL;
+	return 0;
+}
+
+int close_slow_queries_log(void) {
+	if (slow_queries_log && fclose(slow_queries_log)) {
+		slow_queries_log = NULL;
+		return errno;
+	}
+	slow_queries_log = NULL;
 	return 0;
 }
 
@@ -178,12 +193,45 @@ int write_restrict_log(const char *error_string, Stats * limits) {
 	return 0;
 }
 
+int write_slow_queries_log(const char *error_string) {
+	if (slow_queries_log == NULL)
+		return -1;
+
+	char current_date[128];
+	time_t rawtime;
+	struct tm timeinfo;
+	int rc;
+    struct governor_config data_cfg;
+    get_config_data( &data_cfg );
+
+	time(&rawtime);
+	if (!localtime_r(&rawtime, &timeinfo))
+		return EINVAL;
+	strftime(current_date, 128, "%c", &timeinfo);
+
+	rc = fprintf(slow_queries_log, "[%s] %s  ", current_date, error_string);
+
+	if (rc < 0)
+		return EIO;
+
+	fprintf(slow_queries_log, "\n");
+
+	if (fflush(slow_queries_log))
+		return errno;
+
+	return 0;
+}
+
 FILE *get_log() {
 	return log;
 }
 
 FILE *get_restrict_log() {
 	return restrict_log;
+}
+
+FILE *get_slow_queries_log() {
+	return slow_queries_log;
 }
 
 void print_stats_cfg(FILE * f, stats_limit_cfg * s) {

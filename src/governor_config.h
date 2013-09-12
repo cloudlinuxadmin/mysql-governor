@@ -49,6 +49,7 @@ struct governor_config
   int slow_queries;
   int restrict_mode;
   unsigned l_unlimit;	// in seconds
+  char *slow_queries_log;
 };
 
 stats_limit_cfg *

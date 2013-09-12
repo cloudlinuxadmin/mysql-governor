@@ -101,6 +101,9 @@ fi
 if [ "$SQL_VERSION" == "mysql55" ]; then
 	wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL_VER/cl-mysql-beta-5.5.repo
 fi
+if [ "$SQL_VERSION" == "mysql56" ]; then
+	wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL_VER/cl-mysql-beta-5.6.repo
+fi
 if [ "$SQL_VERSION" == "mariadb55" ]; then
 	wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL_VER/cl-mariadb-5.5.repo
 fi
@@ -154,6 +157,12 @@ if [ "$SQL_VERSION" == "mysql51" ]; then
     yum install cl-MySQL-client cl-MySQL-devel cl-MySQL-server cl-MySQL-shared --nogpgcheck -y
 fi
 if [ "$SQL_VERSION" == "mysql55" ]; then
+    if [ -e /usr/libexec/mysqld ]; then
+	mv -f /usr/libexec/mysqld /usr/libexec/mysqld.bak
+    fi
+    yum install cl-MySQL-client cl-MySQL-devel cl-MySQL-server cl-MySQL-shared libaio --nogpgcheck -y
+fi
+if [ "$SQL_VERSION" == "mysql56" ]; then
     if [ -e /usr/libexec/mysqld ]; then
 	mv -f /usr/libexec/mysqld /usr/libexec/mysqld.bak
     fi
