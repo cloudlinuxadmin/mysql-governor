@@ -1,6 +1,6 @@
 Name: governor-mysql
 Version: 1.0
-Release: 28%{?dist}.cloudlinux
+Release: 29%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -160,6 +160,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Fri Sep 13 2013 Alexey Berezhok <alexey_com@ukr.net>  1.0-29
+- Fix in db-select-mysql script for mysql56 support
+
 * Thu Sep 12 2013 Alexey Berezhok <alexey_com@ukr.net>, Pavel Shkatula <shpp@cloudlinux.com>  1.0-28
 - Added MySQL5.6 support
 - Added logging slow query killing

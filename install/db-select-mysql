@@ -49,7 +49,7 @@ while( $#ARGV != -1 )
     print "Usage: db-select-mysql [options]\n";
     print "  options:\n";
     print "  --mysql-version=<mysql type> or -m <mysql type>     set version of mysql\n";
-    print "      mysql type: auto, mysql50, mysql51, mysql55, mariadb55\n";
+    print "      mysql type: auto, mysql50, mysql51, mysql55, mysql56, mariadb55\n";
     print "  --install-now                                       if need reinstall mysql now\n";
     print "  --current-mysql                                     show current installed mysql\n";
     print "  --current-running-mysql                             show current running mysql\n";
@@ -112,6 +112,8 @@ sub _current_mysql()
         print "mysql 5.1\n";
       } elsif( $type_db eq "mysql55" ) {
         print "mysql 5.5\n";
+      } elsif( $type_db eq "mysql56" ) {
+        print "mysql 5.6\n";
       } elsif( $type_db eq "mariadb55" ) {
         print "mariadb 55\n";
       } else {
