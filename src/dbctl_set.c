@@ -27,7 +27,7 @@ void get_mb( char **s )
 {
   //unsigned long long int mb = atol( *s ) * 1000000;
   //sprintf( *s, "%d", mb );
-  *s = realloc( *s, strlen( *s ) + ( 6 * sizeof( char ) ) );
+  *s = realloc( *s, strlen( *s ) + ( 15 * sizeof( char ) ) );
   sprintf( *s, "%s000000", *s );
 }
     

@@ -200,9 +200,9 @@ char *GetDefault( GArray *tags )
   DbCtlFoundTag *found_tag_ = g_array_index( tags, DbCtlFoundTag*, 0 );
   if( !found_tag_->limit_attr ) return "Error\n";
   
-  char *buffer_cpu = (char*)malloc( 18 * sizeof( char ) );
-  char *buffer_read = (char*)malloc( 22 * sizeof( char ) );
-  char *buffer_write = (char*)malloc( 22 * sizeof( char ) );
+  char *buffer_cpu = (char*)malloc( 25 * sizeof( char ) );
+  char *buffer_read = (char*)malloc( 29 * sizeof( char ) );
+  char *buffer_write = (char*)malloc( 29 * sizeof( char ) );
   char digit_buf_c[ G_ASCII_DTOSTR_BUF_SIZE ];
   char digit_buf_s[ G_ASCII_DTOSTR_BUF_SIZE ];
   char digit_buf_m[ G_ASCII_DTOSTR_BUF_SIZE ];
@@ -223,26 +223,26 @@ char *GetDefault( GArray *tags )
       write_mid = atoi( get_mb_str( GetLimitAttr( found_tag_->limit_attr, "write", "mid" ) ) ),
       write_long = atoi( get_mb_str( GetLimitAttr( found_tag_->limit_attr, "write", "long" ) ) );
 
-  sprintf( buffer_cpu, "%s/%s/%s/%s",
+  snprintf( buffer_cpu, 25, "%s/%s/%s/%s",
                         g_strdup_printf( "%i", cpu_curr ),
                         g_strdup_printf( "%i", cpu_short ),
                         g_strdup_printf( "%i", cpu_mid ),
                         g_strdup_printf( "%i", cpu_long ) 
          );
-  sprintf( buffer_read, "%s/%s/%s/%s",
+  snprintf( buffer_read, 29, "%s/%s/%s/%s",
                          read_curr < 1 ? "<1" : g_strdup_printf( "%i", read_curr ),
                          read_short < 1 ? "<1" : g_strdup_printf( "%i", read_short ),
                          read_mid < 1 ? "<1" : g_strdup_printf( "%i", read_mid ),
                          read_long < 1 ? "<1" : g_strdup_printf( "%i", read_long ) 
          );
 
-  sprintf( buffer_write, "%s/%s/%s/%s",
+  snprintf( buffer_write, 29, "%s/%s/%s/%s",
                          write_curr < 1 ? "<1" : g_strdup_printf( "%i", write_curr ),
                          write_short < 1 ? "<1" : g_strdup_printf( "%i", write_short ),
                          write_mid < 1 ? "<1" : g_strdup_printf( "%i", write_mid ),
                          write_long < 1 ? "<1" : g_strdup_printf( "%i", write_long )
         );
-  sprintf( buffer, "default           %-18s  %-22s     %-22s", buffer_cpu, buffer_read, buffer_write );
+  snprintf( buffer, 85, "default          %-25s  %-29s     %-29s", buffer_cpu, buffer_read, buffer_write );
   printf( "%s\n", buffer );
 
   return NULL;
@@ -306,29 +306,29 @@ char *GetDefaultForUsers( GArray *tags, DbCtlLimitAttr cpu_def,
       print_list_t->name = (char*)malloc( 16 * sizeof( char ) );
       print_list_t->data = (char*)malloc( 69 * sizeof( char ) );
 
-      char *buffer_cpu = (char*)malloc( 18 * sizeof( char ) );
-      char *buffer_read = (char*)malloc( 22 * sizeof( char ) );
-      char *buffer_write = (char*)malloc( 22 * sizeof( char ) );
+      char *buffer_cpu = (char*)malloc( 25 * sizeof( char ) );
+      char *buffer_read = (char*)malloc( 29 * sizeof( char ) );
+      char *buffer_write = (char*)malloc( 29 * sizeof( char ) );
 
-      sprintf( buffer_cpu, "%d/%d/%d/%d",
+      snprintf( buffer_cpu, 25,  "%d/%d/%d/%d",
                              cpu_curr,                    //cpu
                              cpu_short,
                              cpu_mid,
                              cpu_long );
-      sprintf( buffer_read, "%s/%s/%s/%s",
+      snprintf( buffer_read, 29, "%s/%s/%s/%s",
                             read_curr < 1 ? "<1" : g_strdup_printf( "%i", read_curr ),
                             read_short < 1 ? "<1" : g_strdup_printf( "%i", read_short ),
                             read_mid < 1 ? "<1" : g_strdup_printf( "%i", read_mid ),
                             read_long < 1 ? "<1" : g_strdup_printf( "%i", read_long ) );
 
-      sprintf( buffer_write, "%s/%s/%s/%s",
+      snprintf( buffer_write, 29, "%s/%s/%s/%s",
                              write_curr < 1 ? "<1" : g_strdup_printf( "%i", write_curr ),
                              write_short < 1 ? "<1" : g_strdup_printf( "%i", write_short ),
                              write_mid < 1 ? "<1" : g_strdup_printf( "%i", write_mid ),
                              write_long < 1 ? "<1" : g_strdup_printf( "%i", write_long ) );
 
-      sprintf( print_list_t->name, "%-16s", name );
-      sprintf( print_list_t->data, "  %-18s  %-22s     %-22s", buffer_cpu, buffer_read, buffer_write );
+      snprintf( print_list_t->name, 16, "%-16s", name );
+      snprintf( print_list_t->data, 69, "  %-25s  %-29s     %-29s", buffer_cpu, buffer_read, buffer_write );
       arr_print_list = g_list_append( arr_print_list, print_list_t );
     }
   }

@@ -7,7 +7,8 @@
 <restrict level1="60s" level2="15m" level3="1h" level4="1d" timeout="1h" log="/var/log/dbgovernor-restrict.log" format="SHORT|MEDIUM|LONG|VERYLONG|CHECKTICKS"/>
 <restrict_mode use="period|limit" unlimit="1m"></restrict_mode>
 <statistic mode="on|off"/>
-<slow_queries run="on|off"></slow_queries>
+<slow_queries run="on|off" log="/var/log/dbgovernor-kill.log"></slow_queries>
+<restrict_mode use="period|limit" unlimit="1m"></restrict_mode>
 <default>
   <limit name="slow" current="30"/>
   <limit name="cpu" current="-1" short="-1" mid="-1" long="-1"/>

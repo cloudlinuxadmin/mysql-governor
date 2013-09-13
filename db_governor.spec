@@ -163,6 +163,7 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 * Thu Sep 12 2013 Alexey Berezhok <alexey_com@ukr.net>, Pavel Shkatula <shpp@cloudlinux.com>  1.0-28
 - Added MySQL5.6 support
 - Added logging slow query killing
+- Fixed dbctl list segfault
 
 * Wed Sep 04 2013 Alexey Berezhok <alexey_com@ukr.net> 1.0-27
 - Fixed crash governor on killing queries more than 9K

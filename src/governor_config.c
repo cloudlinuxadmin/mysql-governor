@@ -413,15 +413,15 @@ config_init (const char *path)
   }
 
   tmp_xml = ezxml_child( xml, "restrict_mode" );
-  cfg->restrict_mode = 0;
+  cfg->restrict_mode = 1;
   cfg->l_unlimit = parse_period( "60s" );
   if( tmp_xml != NULL )
   {
     if( ezxml_attr( tmp_xml, "use" ) )
     {
-      if( !strcasecmp( ezxml_attr( tmp_xml, "use" ), "limit" ) )
+      if( !strcasecmp( ezxml_attr( tmp_xml, "use" ), "period" ) )
       {
-        cfg->restrict_mode = 1;
+        cfg->restrict_mode = 0;
       }
     }
     if( ( ptr = ezxml_attr( tmp_xml, "unlimit" ) ) != NULL )

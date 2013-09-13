@@ -163,7 +163,7 @@ void print_list( FILE *in )
   DbCtlLimitAttr cpu_def, read_def, write_def;
 
   ReadCfg( CONFIG_PATH, "default" );
-  printf( " user             cpu(%)              read(Mb/s)                 write(Mb/s)\n" );
+  printf( " user             cpu(%)                     read(Mb/s)                        write(Mb/s)\n" );
   GetDefault( GetCfg() );
   
   DbCtlFoundTag *found_tag_ = g_array_index( GetCfg(), DbCtlFoundTag*, 0 );
