@@ -195,7 +195,7 @@ gint ComparePrintByName( gpointer a, gpointer b )
 
 char *GetDefault( GArray *tags )
 {
-  char *buffer= (char*)malloc( 85 * sizeof( char ) );
+  char *buffer= (char*)malloc( 120 * sizeof( char ) );
 
   DbCtlFoundTag *found_tag_ = g_array_index( tags, DbCtlFoundTag*, 0 );
   if( !found_tag_->limit_attr ) return "Error\n";
@@ -242,7 +242,7 @@ char *GetDefault( GArray *tags )
                          write_mid < 1 ? "<1" : g_strdup_printf( "%i", write_mid ),
                          write_long < 1 ? "<1" : g_strdup_printf( "%i", write_long )
         );
-  snprintf( buffer, 85, "default          %-25s  %-29s     %-29s", buffer_cpu, buffer_read, buffer_write );
+  snprintf( buffer, 120, "default          %-25s  %-29s     %-29s", buffer_cpu, buffer_read, buffer_write );
   printf( "%s\n", buffer );
 
   return NULL;
@@ -259,7 +259,7 @@ char *GetDefaultForUsers( GArray *tags, DbCtlLimitAttr cpu_def,
   for( ; i < tags->len; i++ )
   {
     char *buffer_name = (char*)malloc( 16 * sizeof( char ) ),
-	       *buffer_data = (char*)malloc( 69 * sizeof( char ) );
+	       *buffer_data = (char*)malloc( 90 * sizeof( char ) );
     DbCtlFoundTag *found_tag_ = g_array_index( tags, DbCtlFoundTag*, i );
     char *name = GetUserName( found_tag_->attr );
     char *mode = GetAttr( found_tag_->attr, "mode" );
@@ -304,7 +304,7 @@ char *GetDefaultForUsers( GArray *tags, DbCtlLimitAttr cpu_def,
 
       print_list_t = (DbCtlPrintList*)malloc( sizeof( DbCtlPrintList ) );
       print_list_t->name = (char*)malloc( 16 * sizeof( char ) );
-      print_list_t->data = (char*)malloc( 69 * sizeof( char ) );
+      print_list_t->data = (char*)malloc( 90 * sizeof( char ) );
 
       char *buffer_cpu = (char*)malloc( 25 * sizeof( char ) );
       char *buffer_read = (char*)malloc( 29 * sizeof( char ) );
@@ -328,7 +328,7 @@ char *GetDefaultForUsers( GArray *tags, DbCtlLimitAttr cpu_def,
                              write_long < 1 ? "<1" : g_strdup_printf( "%i", write_long ) );
 
       snprintf( print_list_t->name, 16, "%-16s", name );
-      snprintf( print_list_t->data, 69, "  %-25s  %-29s     %-29s", buffer_cpu, buffer_read, buffer_write );
+      snprintf( print_list_t->data, 90, "  %-25s  %-29s     %-29s", buffer_cpu, buffer_read, buffer_write );
       arr_print_list = g_list_append( arr_print_list, print_list_t );
     }
   }
