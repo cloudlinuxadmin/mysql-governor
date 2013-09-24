@@ -37,6 +37,7 @@
 #include "shared_memory.h"
 #include "dbuser_map.h"
 #include "slow_queries.h"
+#include "version.h"
 
 #define BUF_SIZE_III 100
 
@@ -365,6 +366,15 @@ int main(int argc, char *argv[]) {
 
     struct governor_config data_cfg;
 
+    if (argc>1)
+      if (strcmp(argv[argc-1], "-v" )==0 ||
+          strcmp(argv[argc-1], "--version")==0) {
+        printf("governor-mysql version %s\n", GOVERNOR_CUR_VER);  
+        exit(0);
+      } else {
+	printf("governor-mysql starting error\n");  
+        exit(-1);
+      }
 /*
     get_config_data( &data_cfg );
 	// init global structures 

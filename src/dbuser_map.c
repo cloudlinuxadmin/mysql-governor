@@ -26,7 +26,7 @@
 #include "dbuser_map.h"
 
 #define MAX_TRY 10
-#define DELTA_TIME 3600
+#define DELTA_TIME 300
 //#define DELTA_TIME 10
 
 static GHashTable *userMap = NULL;

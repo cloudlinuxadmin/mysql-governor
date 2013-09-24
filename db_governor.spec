@@ -1,6 +1,9 @@
+%define g_version   1.0
+%define g_release   31
+
 Name: governor-mysql
-Version: 1.0
-Release: 30%{?dist}.cloudlinux
+Version: %{g_version}
+Release: %{g_release}%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -33,6 +36,9 @@ This package provides dbtop, db_governor utilities.
 
 %build
 cmake .
+
+echo -e "#ifndef VERSION_H_\n#define VERSION_H_\n#define GOVERNOR_CUR_VER \"%{g_version}-%{g_release}\"\n#endif\n" > src/version.h
+
 make
 cd install
 autoconf
@@ -160,6 +166,10 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Tue Sep 24 2013 Alexey Berezhok <alexey_com@ukr.net>, Pavel Shkatula <shpp@cloudlinux.com>  1.0-31
+- Added db_governor --version
+- Decreased dbuser-map interval rescanning to 5 min
+
 * Wed Sep 18 2013 Alexey Berezhok <alexey_com@ukr.net>  1.0-30
 - Fixed dbctl list output
 
