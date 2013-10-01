@@ -21,7 +21,7 @@ if [ "$1" == "--delete" ]; then
 		    sed '/userstat_running/d' -i /etc/my.cnf
 		fi
 	    fi
-	else    
+	else
 	    IS_OPT=`cat /etc/my.cnf | grep userstat`
 	    if [ -z "$IS_OPT" ]; then
 		sed -e "s/\[mysqld\]/\[mysqld\]\nuserstat_running=0\n/" -i /etc/my.cnf
@@ -41,15 +41,17 @@ else
   SQL_VERSION_="auto"
 fi
 
-installDb "$SQL_VERSION_"
+installDbTest "$SQL_VERSION_"
 
-MYSQLUSER="admin"
-MYSQLPASSWORD=`cat /etc/psa/.psa.shadow`
+MYSQLUSER="iworx"
+MYSQLPASSWORD=`cat /home/interworx/iworx.ini | grep rootdsn= | cut -d"/" -f3 | cut -d: -f2 | cut -d@ -f1`
+
 if [ -e /usr/bin/mysql_upgrade ]; then
    /usr/bin/mysql_upgrade --user=${MYSQLUSER} --password=${MYSQLPASSWORD}
 elif [ -e /usr/bin/mysql_fix_privilege_tables ]; then
    /usr/bin/mysql_fix_privilege_tables --user=${MYSQLUSER} --password=${MYSQLPASSWORD}
 fi
+
 
 echo "Patch governor configuration file"
 checkFile "/etc/container/mysql-governor.xml"

@@ -125,34 +125,34 @@ fi
 /sbin/service mysqld stop
 
 if [ "$SQL_VERSION" == "auto" ]; then
-    yum install cl-MySQL* -y
+    yum install cl-MySQL* -y  --enablerepo=cl-mysql-${MYSQL_OPT}-testing
 fi
 if [ "$SQL_VERSION" == "mysql50" ]; then
     if [ -e /usr/libexec/mysqld ]; then
 	mv -f /usr/libexec/mysqld /usr/libexec/mysqld.bak
     fi
-    yum install cl-MySQL-bench cl-MySQL-client cl-MySQL-devel cl-MySQL-server cl-MySQL-shared --nogpgcheck -y
+    yum install cl-MySQL-bench cl-MySQL-client cl-MySQL-devel cl-MySQL-server cl-MySQL-shared --nogpgcheck -y  --enablerepo=cl-mysql-5.0-testing
 fi
 if [ "$SQL_VERSION" == "mysql51" ]; then
     if [ -e /usr/libexec/mysqld ]; then
 	mv -f /usr/libexec/mysqld /usr/libexec/mysqld.bak
     fi
-    yum install cl-MySQL-client cl-MySQL-devel cl-MySQL-server cl-MySQL-shared --nogpgcheck -y
+    yum install cl-MySQL-client cl-MySQL-devel cl-MySQL-server cl-MySQL-shared --nogpgcheck -y  --enablerepo=cl-mysql-5.1-testing
 fi
 if [ "$SQL_VERSION" == "mysql55" ]; then
     if [ -e /usr/libexec/mysqld ]; then
 	mv -f /usr/libexec/mysqld /usr/libexec/mysqld.bak
     fi
-    yum install cl-MySQL-client cl-MySQL-devel cl-MySQL-server cl-MySQL-shared libaio --nogpgcheck -y
+    yum install cl-MySQL-client cl-MySQL-devel cl-MySQL-server cl-MySQL-shared libaio --nogpgcheck -y  --enablerepo=cl-mysql-5.5-testing
 fi
 if [ "$SQL_VERSION" == "mysql56" ]; then
     if [ -e /usr/libexec/mysqld ]; then
 	mv -f /usr/libexec/mysqld /usr/libexec/mysqld.bak
     fi
-    yum install cl-MySQL-client cl-MySQL-devel cl-MySQL-server cl-MySQL-shared libaio --nogpgcheck -y
+    yum install cl-MySQL-client cl-MySQL-devel cl-MySQL-server cl-MySQL-shared libaio --nogpgcheck -y  --enablerepo=cl-mysql-5.6-testing
 fi
 if [ "$SQL_VERSION" == "mariadb55" ]; then
-    yum install cl-mariadb cl-mariadb-bench cl-mariadb-devel cl-mariadb-libs cl-mariadb-server libaio --nogpgcheck -y
+    yum install cl-mariadb cl-mariadb-bench cl-mariadb-devel cl-mariadb-libs cl-mariadb-server libaio --nogpgcheck -y  --enablerepo=cl-mysql-5.5-testing
 fi
 
 #/sbin/service mysqld stop

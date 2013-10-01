@@ -114,6 +114,38 @@ if( open( my $mysql_db, "<", $mysqlTypeFileSet ) )
   close( $mysql_db );
 }
 
+#if(($sql_version!="5.1") && ($sql_version!="5.0")){
+#    print "MySQL beta is available only for 5.1 and 5.0\n";
+#    exit;
+#}
+
+$cPPkg->setupfiles( $sql_version );
+
+my @FILES;
+if ($sql_version_2=="5.1"){
+    @FILES = cPPkg_getfilelist($cPPkg, $sql_version , 'http://repo.cloudlinux.com/other/'. $system_tp .'/mysqls/cl-mysql-5.1-stable/'. $arch , $system_tp);
+    remove_userstat();
+} 
+
+if ($sql_version_2=="5.0"){
+    @FILES = cPPkg_getfilelist($cPPkg, $sql_version , 'http://repo.cloudlinux.com/other/'. $system_tp .'/mysqls/cl-mysql-5.0-stable/'. $arch , $system_tp);
+} 
+
+if ($sql_version_2=="5.5"){
+    @FILES = cPPkg_getfilelist($cPPkg, $sql_version , 'http://repo.cloudlinux.com/other/'. $system_tp .'/mysqls/cl-mysql-5.5-stable/'. $arch , $system_tp);
+} 
+
+if ($sql_version_2 eq "mariadb55"){
+    @FILES = cPPkg_getfilelist_mariadb55($cPPkg, $sql_version_2 , 'http://repo.cloudlinux.com/other/'. $system_tp .'/mysqls/cl-mariadb-5.5-stable/'. $arch , $system_tp . ".cloudlinux." . $arch);
+} 
+
+if ($sql_version_2 eq "mysql56"){
+    @FILES = cPPkg_getfilelist_mysql56($cPPkg, $sql_version_2 , 'http://repo.cloudlinux.com/other/'. $system_tp .'/mysqls/cl-mysql-5.6-stable/'. $arch , $system_tp . ".2.cloudlinux." . $arch);
+} 
+
+#remove old mysql
+#system 'yum', 'erase', '-y', 'MySQL-client', 'MySQL-devel', 'MySQL-bench', 'MySQL-shared', 'MySQL-server';
+
 #stop mysql beffore reinstall (need for mysql 5.5)
 system '/sbin/service', 'mysql', 'stop';
 
@@ -141,12 +173,24 @@ if ($sql_version=="5.5"){
 }
 
 system '/usr/share/lve/dbgovernor/cpanel/check_mysql_leave_pid.sh';
+#check for mysql
+foreach my $url (@FILES){
+    my $rpmfile = eval $pckg_name . "::UrlTools::urltofile('$url');";
+    if(index($url,"debuginfo")==-1){
+        if ( !(eval $pckg_name . "::RpmUtils::isinstalled( 'rpm' => '$rpmfile', 'stripdot' => 0 );") || $force){
+	    system 'rpm', '-Uvh', '--nodeps', '--force', $url;
+	    print  $rpmfile . " installed\n";
+        }
+    }
+}
 
 get_repo($sql_version_2, $system_tp);
 
-resmysql();
+#disable mysql update
+#eval $pckg_name . "::FileUtils::TouchFile::touchfile('/etc/mysqlupdisable');";
+#print  "Update disable file created\n";
 
-installMySQLTesting($sql_version_2, $system_tp);
+resmysql();
 
 print  "db_governor checking: ";
 if (check_package('governor-mysql')){
@@ -155,26 +199,6 @@ if (check_package('governor-mysql')){
     system '/sbin/service', 'db_governor', 'restart';
 } else {
     print "FAILED \n";
-}
-
-sub installMySQLTesting
-{
-    my $msql_version = $_[0];
-    my $msystem_tp = $_[1];
-
-    if ($msql_version=="5.1") {
-	do_command("yum install cl-MySQL-client cl-MySQL-devel cl-MySQL-server cl-MySQL-shared cl-MySQL-bench cl-MySQL-test --nogpgcheck -y --enablerepo=cl-mysql-5.1-testing");
-    } else if ($msql_version=="5.0") {
-	do_command("yum install cl-MySQL-bench cl-MySQL-client cl-MySQL-devel cl-MySQL-server cl-MySQL-shared cl-MySQL-bench cl-MySQL-test --nogpgcheck -y --enablerepo=cl-mysql-5.0-testing");
-    } else if ($msql_version=="5.5") {
-	do_command("yum install cl-MySQL-client cl-MySQL-devel cl-MySQL-server cl-MySQL-shared cl-MySQL-bench cl-MySQL-test libaio --nogpgcheck -y --enablerepo=cl-mysql-5.5-testing");
-    } else if ($msql_version=="mariadb55") {
-	do_command("yum install cl-mariadb cl-mariadb-bench cl-mariadb-devel cl-mariadb-libs cl-mariadb-server libaio --nogpgcheck -y --enablerepo=cl-mysql-5.5-testing");
-    } else if ($msql_version=="mysql56") {
-	do_command("yum install cl-MySQL-client cl-MySQL-devel cl-MySQL-server cl-MySQL-shared cl-MySQL-test libaio --nogpgcheck -y --enablerepo=cl-mysql-5.6-testing");
-    } else {
-	print "Error unknown version\n";
-    }
 }
 
 sub do_command
@@ -222,6 +246,67 @@ sub check_package {
     }
 }
 
+
+sub cPPkg_getfilelist {
+     my $cPPkg = $_[0];                                                                                                                                     
+     my $majorver   = $_[1];
+     my $url = $_[2];
+     my $mp = $_[3];
+     
+     my @FILES; 
+     foreach my $file ( @{ $cPPkg->{'pkgdata'}{ $cPPkg->{'arch'} }{$majorver}{'files'} } ) { 
+	 if ($mp eq "cl6"){
+	    $file =~ s/%syst%/el6/;
+	 } else {
+	    $file =~ s/%syst%/el5/;
+	 }
+	 $file =~ s/5\.1\.63-2/5\.1\.68-4/;
+	 $file =~ s/\.cloudlinux\.1/\.cloudlinux/;
+         $file =~ s/5\.0\.95-1/5\.0\.96-4/;
+         $file =~ s/5\.5\.25-3/5\.5\.32-6/;
+         $file =~ s/i386/i686/;
+	 print $url . '/' . $file. "\n";
+         push( @FILES, $url . '/' . $file );
+     }
+     return @FILES;
+}
+
+sub cPPkg_getfilelist_mariadb55 {
+     my $cPPkg = $_[0];                                                                                                                                     
+     my $majorver   = $_[1];
+     my $url = $_[2];
+     my $mp = $_[3];
+     my @fls = ("cl-mariadb-5.5.31-18", "cl-mariadb-bench-5.5.31-18", "cl-mariadb-devel-5.5.31-18", "cl-mariadb-libs-5.5.31-18", "cl-mariadb-server-5.5.31-18");
+     
+     my @FILES; 
+     foreach my $file ( @fls ) { 
+	 $mp =~ s/cl5/el5/;
+	 $mp =~ s/cl6/el6/;
+         $mp =~ s/i386/i686/;
+	 print $url . '/' . $file. ".". $mp. ".rpm". "\n";
+         push( @FILES, $url . '/' . $file. ".". $mp. ".rpm" );
+     }
+     return @FILES;
+}
+
+sub cPPkg_getfilelist_mysql56 {
+     my $cPPkg = $_[0];                                                                                                                                     
+     my $majorver   = $_[1];
+     my $url = $_[2];
+     my $mp = $_[3];
+     my $stp = $_[4];
+     my @fls = ( "cl-MySQL-client-5.6.13-1", "cl-MySQL-devel-5.6.13-1", "cl-MySQL-server-5.6.13-1", "cl-MySQL-shared-5.6.13-1", "cl-MySQL-test-5.6.13-1");
+     
+     my @FILES; 
+     foreach my $file ( @fls ) { 
+	 $mp =~ s/cl5/el5/;
+	 $mp =~ s/cl6/el6/;
+         $mp =~ s/i386/i686/;
+	 print $url . '/' . $file. ".". $mp. ".rpm". "\n";
+         push( @FILES, $url . '/' . $file. ".". $mp. ".rpm" );
+     }
+     return @FILES;
+}
 
 sub resmysql {
     if ( -e '/var/cpanel/useapt' && -e '/usr/bin/apt-get' ) {

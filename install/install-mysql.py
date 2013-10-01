@@ -104,6 +104,7 @@ def usage():
 	print " -m | --clean-mysql-delete  : clean cl-MySQL packages list (after governor deletion)"
 	print " -u | --upgrade             : install MySQL with mysql_upgrade_command"
         print " -t | --dbupdate            : update UserMap file"
+	print "    | --update-mysql-beta   : update MySQL from testing repository"
 
 def install_mysql():
 	if cp.name == "Plesk" and verCompare (cp.version, "10") >= 0:
@@ -145,7 +146,7 @@ def install_mysql_beta():
 	elif cp.name == "cPanel":
 		# install hook for CPanel to patch Apache's suexec and suphp
 		exec_command_out(SOURCE+"cpanel/db_governor-clear-old-hook")
-		exec_command_out(SOURCE+"cpanel/install-db-governor-beta")
+		exec_command_out(SOURCE+"cpanel/install-db-governor-stable")
                 exec_command_out(SOURCE+"cpanel/install-mysql-disabler.sh")
                 exec_command_out(SOURCE+"cpanel/cpanel-install-hooks")		
                 exec_command_out(SOURCE+"cpanel/upgrade-mysql-disabler.sh")
@@ -159,6 +160,28 @@ def install_mysql_beta():
 		exec_command_out(SOURCE+"da/install-db-governor.sh --install")
 	else:
                 exec_command_out(SOURCE+"other/install-db-governor.sh --install")
+
+def install_mysql_beta_testing():
+        exec_command_out(SOURCE+"other/set_fs_suid_dumpable.sh")
+	if cp.name == "Plesk" and verCompare (cp.version, "10") >= 0:
+		exec_command_out(SOURCE+"plesk/install-db-governor-beta.sh --install")
+	elif cp.name == "cPanel":
+		# install hook for CPanel to patch Apache's suexec and suphp
+		exec_command_out(SOURCE+"cpanel/db_governor-clear-old-hook")
+		exec_command_out(SOURCE+"cpanel/install-db-governor-beta")
+                exec_command_out(SOURCE+"cpanel/install-mysql-disabler.sh")
+                exec_command_out(SOURCE+"cpanel/cpanel-install-hooks")		
+                exec_command_out(SOURCE+"cpanel/upgrade-mysql-disabler.sh")
+                if os.path.exists("/usr/share/lve/dbgovernor/utils/dbgovernor-usermap-cron"):
+                        shutil.copy2("/usr/share/lve/dbgovernor/utils/dbgovernor-usermap-cron", "/etc/cron.d/dbgovernor-usermap-cron")
+	elif cp.name == "InterWorx":
+		exec_command_out(SOURCE+"iworx/install-db-governor-beta.sh --install")
+	elif cp.name == "ISPManager":	
+		exec_command_out(SOURCE+"ispmanager/install-db-governor-beta.sh --install")
+	elif cp.name == "DirectAdmin":
+		exec_command_out(SOURCE+"da/install-db-governor-beta.sh --install")
+	else:
+                exec_command_out(SOURCE+"other/install-db-governor-beta.sh --install")
 
 
 def delete_mysql():
@@ -292,7 +315,7 @@ def fix_libmygcc():
                 
 cp = get_cp()
 try:
-	opts, args = getopt.getopt(sys.argv[1:], "hidcmut", ["help", "install", "delete", "install-beta", "clean-mysql", "clean-mysql-delete", "upgrade", "dbupdate"])
+	opts, args = getopt.getopt(sys.argv[1:], "hidcmut", ["help", "install", "delete", "install-beta", "clean-mysql", "clean-mysql-delete", "upgrade", "dbupdate", "update-mysql-beta"])
 except getopt.GetoptError, err:
 	# print help information and exit:
 	print str(err) # will print something like "option -a not recognized"
@@ -336,6 +359,17 @@ for o, a in opts:
                 delete_governor_rpm()
 	elif o in ("--install-beta",):
                 print "Option is deprecated. Use --install instead"
+	elif o in ("--update-mysql-beta",):
+		warn_message()
+                remove_mysqlclients()
+                remove_mysql_justdb_cl()
+		install_mysql_beta_testing()
+		remove_mysql_justdb()
+                set_bad_lve_container()
+                if os.path.exists("/usr/share/lve/dbgovernor/chk-mysqlclient"):
+		    exec_command_out("/usr/share/lve/dbgovernor/chk-mysqlclient")
+                install_dbmap_update()
+		fix_libmygcc()
 	elif o in ("c", "--clean-mysql"):
                 remove_mysql_justdb()
 	elif o in ("m", "--clean-mysql-delete"):

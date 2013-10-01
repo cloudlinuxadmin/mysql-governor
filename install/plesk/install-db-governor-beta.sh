@@ -41,7 +41,7 @@ else
   SQL_VERSION_="auto"
 fi
 
-installDb "$SQL_VERSION_"
+installDbTest "$SQL_VERSION_"
 
 MYSQLUSER="admin"
 MYSQLPASSWORD=`cat /etc/psa/.psa.shadow`

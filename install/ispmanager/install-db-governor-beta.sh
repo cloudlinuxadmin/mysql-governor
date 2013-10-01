@@ -15,13 +15,13 @@ if [ "$1" == "--delete" ]; then
 		if [ -z "$IS_OPT" ]; then
 		    sed -e "s/\[mysqld\]/\[mysqld\]\nuserstat=0\n/" -i /etc/my.cnf
 		fi    
-            else
-                if [ -e /etc/my.cnf ]; then
+	    else
+		if [ -e /etc/my.cnf ]; then
 		    sed '/userstat/d' -i /etc/my.cnf
 		    sed '/userstat_running/d' -i /etc/my.cnf
 		fi
 	    fi
-	else    
+	else
 	    IS_OPT=`cat /etc/my.cnf | grep userstat`
 	    if [ -z "$IS_OPT" ]; then
 		sed -e "s/\[mysqld\]/\[mysqld\]\nuserstat_running=0\n/" -i /etc/my.cnf
@@ -41,10 +41,12 @@ else
   SQL_VERSION_="auto"
 fi
 
-installDb "$SQL_VERSION_"
+installDbTest "$SQL_VERSION_"
 
-MYSQLUSER="admin"
-MYSQLPASSWORD=`cat /etc/psa/.psa.shadow`
+
+MYSQLUSER="root"
+MYSQLPASSWORD=`cat /usr/local/ispmgr/etc/ispmgr.conf | sed -n '/DbServer "MySQL"/,/SupportCenterServer/p' | sed -n '/Password /p' | sed '/Change/d' | tr -d '\n' | cut -d" " -f2`
+
 if [ -e /usr/bin/mysql_upgrade ]; then
    /usr/bin/mysql_upgrade --user=${MYSQLUSER} --password=${MYSQLPASSWORD}
 elif [ -e /usr/bin/mysql_fix_privilege_tables ]; then
