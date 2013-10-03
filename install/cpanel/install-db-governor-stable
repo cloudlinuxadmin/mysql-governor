@@ -217,8 +217,8 @@ sub get_repo {
 	if ($msql_version=="5.1") {$burl = $murl ."/".  $msystem_tp . "/mysqls/cl-mysql-5.1-common.repo";}
 	if ($msql_version=="5.0") {$burl = $murl ."/".  $msystem_tp . "/mysqls/cl-mysql-5.0-common.repo";}
 	if ($msql_version=="5.5") {$burl = $murl ."/".  $msystem_tp . "/mysqls/cl-mysql-5.5-common.repo";}
-	if ($msql_version=="mariadb55") {$burl = $murl ."/".  $msystem_tp . "/mysqls/cl-mariadb-5.5-common.repo";}
-	if ($msql_version=="mysql56") {$burl = $murl ."/".  $msystem_tp . "/mysqls/cl-mysql-5.6-common.repo";}
+	if ($msql_version eq "mariadb55") {$burl = $murl ."/".  $msystem_tp . "/mysqls/cl-mariadb-5.5-common.repo";}
+	if ($msql_version eq "mysql56") {$burl = $murl ."/".  $msystem_tp . "/mysqls/cl-mysql-5.6-common.repo";}
 	my $res = do_command("wget -O /etc/yum.repos.d/cl-mysql.repo $burl");
         if($res==0){
             	system 'yum', 'clean', 'metadata';
