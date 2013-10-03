@@ -1,5 +1,5 @@
 %define g_version   1.0
-%define g_release   31
+%define g_release   32
 
 Name: governor-mysql
 Version: %{g_version}
@@ -166,6 +166,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Thu Oct 03 2013 Alexey Berezhok <alexey_com@ukr.net>  1.0-32
+- Added support new repos (stable and testing)
+
 * Tue Sep 24 2013 Alexey Berezhok <alexey_com@ukr.net>, Pavel Shkatula <shpp@cloudlinux.com>  1.0-31
 - Added db_governor --version
 - Decreased dbuser-map interval rescanning to 5 min
