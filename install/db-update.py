@@ -84,9 +84,9 @@ def upd_mysql():
 		    elif fline=="mariadb55":
 			exec_command_out("/usr/bin/yum update -y "+clMySQL_list+" --nogpgcheck --disableexcludes=all")
 		    else:
-			exec_command_out("/usr/bin/yum update "+clCleanMySQL_list+" --enablerepo=mysql --nogpgcheck -y")
+			exec_command_out("/usr/bin/yum update "+clCleanMySQL_list+" --nogpgcheck -y --disableexcludes=all")
 		else:
-		    exec_command_out("/usr/bin/yum update "+clCleanMySQL_list+" --enablerepo=mysql --nogpgcheck -y")
+		    exec_command_out("/usr/bin/yum update "+clCleanMySQL_list+" --nogpgcheck -y --disableexcludes=all")
 	elif cp.name == "cPanel":
 		if os.path.exists("/usr/share/lve/dbgovernor/mysql.type"):
 		    fline=open("/usr/share/lve/dbgovernor/mysql.type").readline().rstrip()
@@ -106,9 +106,9 @@ def upd_mysql():
 		    elif fline=="mariadb55":
 			exec_command_out("/usr/bin/yum update -y "+clMySQL_list+" --nogpgcheck --disableexcludes=all")
 		    else:
-			exec_command_out("/usr/bin/yum update "+clCleanMySQL_list+" --enablerepo=mysql --nogpgcheck -y")
+			exec_command_out("/usr/bin/yum update "+clCleanMySQL_list+" --nogpgcheck -y --disableexcludes=all")
 		else:
-		    exec_command_out("/usr/bin/yum update "+clCleanMySQL_list+" --enablerepo=mysql --nogpgcheck -y")
+		    exec_command_out("/usr/bin/yum update "+clCleanMySQL_list+" --nogpgcheck -y --disableexcludes=all")
 	elif cp.name == "ISPManager":
 		if os.path.exists("/usr/share/lve/dbgovernor/mysql.type"):
 		    fline=open("/usr/share/lve/dbgovernor/mysql.type").readline().rstrip()
@@ -117,9 +117,9 @@ def upd_mysql():
 		    elif fline=="mariadb55":
 			exec_command_out("/usr/bin/yum update -y "+clMySQL_list+" --nogpgcheck --disableexcludes=all")
 		    else:
-			exec_command_out("/usr/bin/yum update "+clCleanMySQL_list+" --enablerepo=mysql --nogpgcheck -y")
+			exec_command_out("/usr/bin/yum update "+clCleanMySQL_list+" --nogpgcheck -y --disableexcludes=all")
 		else:
-		    exec_command_out("/usr/bin/yum update "+clCleanMySQL_list+" --enablerepo=mysql --nogpgcheck -y")
+		    exec_command_out("/usr/bin/yum update "+clCleanMySQL_list+" --nogpgcheck -y --disableexcludes=all")
 	elif cp.name == "DirectAdmin":
 		if os.path.exists("/usr/share/lve/dbgovernor/mysql.type"):
 		    fline=open("/usr/share/lve/dbgovernor/mysql.type").readline().rstrip()
@@ -139,9 +139,9 @@ def upd_mysql():
 		    elif fline=="mariadb55":
 			exec_command_out("/usr/bin/yum update -y "+clMySQL_list+" --nogpgcheck --disableexcludes=all")
 		    else:
-			exec_command_out("/usr/bin/yum update "+clCleanMySQL_list+" --enablerepo=mysql --nogpgcheck -y")
+			exec_command_out("/usr/bin/yum update "+clCleanMySQL_list+" --nogpgcheck -y --disableexcludes=all")
 		else:
-		    exec_command_out("/usr/bin/yum update "+clCleanMySQL_list+" --enablerepo=mysql --nogpgcheck -y")
+		    exec_command_out("/usr/bin/yum update "+clCleanMySQL_list+" --nogpgcheck -y --disableexcludes=all")
 
 
 cp = get_cp()

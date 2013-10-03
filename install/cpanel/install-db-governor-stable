@@ -140,7 +140,7 @@ if ($sql_version_2 eq "mariadb55"){
 } 
 
 if ($sql_version_2 eq "mysql56"){
-    @FILES = cPPkg_getfilelist_mysql56($cPPkg, $sql_version_2 , 'http://repo.cloudlinux.com/other/'. $system_tp .'/mysqls/cl-mysql-5.6-stable/'. $arch , $system_tp . ".2.cloudlinux." . $arch);
+    @FILES = cPPkg_getfilelist_mysql56($cPPkg, $sql_version_2 , 'http://repo.cloudlinux.com/other/'. $system_tp .'/mysqls/cl-mysql-5.6-stable/'. $arch , $system_tp . ".4.cloudlinux." . $arch);
 } 
 
 #remove old mysql
@@ -263,7 +263,7 @@ sub cPPkg_getfilelist {
 	 $file =~ s/5\.1\.63-2/5\.1\.68-4/;
 	 $file =~ s/\.cloudlinux\.1/\.cloudlinux/;
          $file =~ s/5\.0\.95-1/5\.0\.96-4/;
-         $file =~ s/5\.5\.25-3/5\.5\.32-6/;
+         $file =~ s/5\.5\.25-3/5\.5\.32-10/;
          $file =~ s/i386/i686/;
 	 print $url . '/' . $file. "\n";
          push( @FILES, $url . '/' . $file );

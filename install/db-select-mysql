@@ -12,6 +12,7 @@ my $type_db = "";
 
 my $set_mysql_type = 0;
 my $install_now = 0;
+my $install_now_beta = 0;
 my $current_mysql = 0;
 my $current_running_mysql = 0;
 
@@ -35,6 +36,10 @@ while( $#ARGV != -1 )
   if( $arg eq "--install-now" )
   {
     $install_now = 1;
+  }
+  if( $arg eq "--install-now-beta" )
+  {
+    $install_now_beta = 1;
   }  
   if( $arg eq "--current-mysql" )
   {
@@ -53,6 +58,7 @@ while( $#ARGV != -1 )
     print "  --install-now                                       if need reinstall mysql now\n";
     print "  --current-mysql                                     show current installed mysql\n";
     print "  --current-running-mysql                             show current running mysql\n";
+    print "  --install-now-beta                                  if need reinstall mysql beta now\n";
     print "\n";
   }
 }
@@ -77,6 +83,11 @@ if( $install_now and !$set_mysql_type )
   system( "/usr/share/lve/dbgovernor/mysqlgovernor.py --upgrade" );
 }
 
+if( $install_now_beta and !$set_mysql_type )
+{
+  system( "/usr/share/lve/dbgovernor/mysqlgovernor.py --update-mysql-beta" );
+}
+
 exit 0;
 
 #-----------------------------------------------
@@ -94,6 +105,11 @@ sub _set_mysql_type
   {
     print "install now...\n";
     system( "/usr/share/lve/dbgovernor/mysqlgovernor.py --upgrade" );
+  }
+  if( $install_now_beta )
+  {
+    print "install now beta...\n";
+    system( "/usr/share/lve/dbgovernor/mysqlgovernor.py --update-mysql-beta" );
   }
 }
 

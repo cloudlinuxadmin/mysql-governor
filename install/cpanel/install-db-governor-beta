@@ -164,13 +164,13 @@ sub installMySQLTesting
 
     if ($msql_version=="5.1") {
 	do_command("yum install cl-MySQL-client cl-MySQL-devel cl-MySQL-server cl-MySQL-shared cl-MySQL-bench cl-MySQL-test --nogpgcheck -y --enablerepo=cl-mysql-5.1-testing");
-    } else if ($msql_version=="5.0") {
+    } elsif ($msql_version=="5.0") {
 	do_command("yum install cl-MySQL-bench cl-MySQL-client cl-MySQL-devel cl-MySQL-server cl-MySQL-shared cl-MySQL-bench cl-MySQL-test --nogpgcheck -y --enablerepo=cl-mysql-5.0-testing");
-    } else if ($msql_version=="5.5") {
+    } elsif ($msql_version=="5.5") {
 	do_command("yum install cl-MySQL-client cl-MySQL-devel cl-MySQL-server cl-MySQL-shared cl-MySQL-bench cl-MySQL-test libaio --nogpgcheck -y --enablerepo=cl-mysql-5.5-testing");
-    } else if ($msql_version=="mariadb55") {
+    } elsif ($msql_version eq "mariadb55") {
 	do_command("yum install cl-mariadb cl-mariadb-bench cl-mariadb-devel cl-mariadb-libs cl-mariadb-server libaio --nogpgcheck -y --enablerepo=cl-mysql-5.5-testing");
-    } else if ($msql_version=="mysql56") {
+    } elsif ($msql_version eq "mysql56") {
 	do_command("yum install cl-MySQL-client cl-MySQL-devel cl-MySQL-server cl-MySQL-shared cl-MySQL-test libaio --nogpgcheck -y --enablerepo=cl-mysql-5.6-testing");
     } else {
 	print "Error unknown version\n";
