@@ -27,7 +27,7 @@ function installDb(){
 	  if [ -e /usr/libexec/mysqld ]; then
 	   mv -f /usr/libexec/mysqld /usr/libexec/mysqld.bak
           fi
-	  yum install mysql mysql-server mysql-bench mysql-shared mysql-libs --enablerepo=mysql --nogpgcheck -y
+	  yum install mysql mysql-server mysql-bench mysql-shared mysql-libs --nogpgcheck -y
 	fi
 	if [ "$SQL_VERSION" == "mysql50" ]; then
 	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqls/cl-mysql-5.0-common.repo

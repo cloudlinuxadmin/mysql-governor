@@ -1,5 +1,5 @@
 %define g_version   1.0
-%define g_release   33
+%define g_release   34
 
 Name: governor-mysql
 Version: %{g_version}
@@ -174,8 +174,11 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
-* Thu Oct 03 2013 Alexey Berezhok <alexey_com@ukr.net>  1.0-32
-- Added support new repos (stable and testing)
+* Fri Oct 04 2013 Alexey Berezhok <alexey_com@ukr.net>  1.0-34
+- Fixes in mysql other install script
+
+* Fri Oct 04 2013 Alexey Berezhok <alexey_com@ukr.net>  1.0-33
+- Fixes in mysql cpanel install script
 
 * Tue Sep 24 2013 Alexey Berezhok <alexey_com@ukr.net>, Pavel Shkatula <shpp@cloudlinux.com>  1.0-31
 - Added db_governor --version
