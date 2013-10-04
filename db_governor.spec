@@ -1,5 +1,5 @@
 %define g_version   1.0
-%define g_release   32
+%define g_release   33
 
 Name: governor-mysql
 Version: %{g_version}
