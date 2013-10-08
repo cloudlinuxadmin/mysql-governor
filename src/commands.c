@@ -187,8 +187,10 @@ void send_commands(Command * cmd, void *data) {
 		case FREEZE:
 			if (data_cfg.use_lve) {
 				if (add_user_to_list(cmd->username, data_cfg.all_lve) < 0) {
-					WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048, "Can't add user to BAD list %s",
+                                        if (data_cfg.log_mode == DEBUG_MODE) {
+					        WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048, "Can't add user to BAD list %s",
 							data_cfg.log_mode, cmd->username);
+                                        }
 				} else {
 					update_user_limit(cmd->username, (unsigned int) data_cfg.max_user_connections,
 											data_cfg.log_mode);

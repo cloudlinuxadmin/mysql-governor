@@ -174,8 +174,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
-* Fri Oct 04 2013 Alexey Berezhok <alexey_com@ukr.net>  1.0-34
+* Fri Oct 04 2013 Alexey Berezhok <alexey_com@ukr.net>, Pavel Shkatula <shpp@cloudlinux.com> 1.0-34
 - Fixes in mysql other install script
+- Fixed interval unit for kill query
 
 * Fri Oct 04 2013 Alexey Berezhok <alexey_com@ukr.net>  1.0-33
 - Fixes in mysql cpanel install script

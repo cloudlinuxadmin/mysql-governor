@@ -128,8 +128,7 @@ get_seconds (const char *value, char unit)
     case 'D':
       return val * 60 * 60 * 24;
     default:
-      fprintf (stderr, "Error while parsing period\n");
-      exit (-1);
+      return val;
     }
 }
 
