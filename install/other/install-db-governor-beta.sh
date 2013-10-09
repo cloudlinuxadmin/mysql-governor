@@ -4,7 +4,6 @@
 
 if [ "$1" == "--delete" ]; then
 	echo "Removing mysql for db_governor start"
-	yum install mysql mysql-server mysql-bench mysql-shared mysql-libs --enablerepo=mysql --nogpgcheck -y
 	checkFile "/etc/my.cnf"
 	VERSION=`mysql --version | awk '{ print $5 }' | cut -d. -f1,2`
 	if [ ! -e /etc/my.cnf.bkp ]; then
