@@ -1,5 +1,5 @@
 %define g_version   1.0
-%define g_release   35
+%define g_release   36
 
 Name: governor-mysql
 Version: %{g_version}
@@ -174,6 +174,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Thu Oct 24 2013 Alexey Berezhok <alexey_com@ukr.net> 1.0-36
+- Optimized commands system of mysql installation
+
 * Thu Oct 17 2013 Alexey Berezhok <alexey_com@ukr.net> 1.0-35
 - Fixed path to perl in dbuser-map utility
 

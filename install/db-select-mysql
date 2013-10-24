@@ -55,10 +55,8 @@ while( $#ARGV != -1 )
     print "  options:\n";
     print "  --mysql-version=<mysql type> or -m <mysql type>     set version of mysql\n";
     print "      mysql type: auto, mysql50, mysql51, mysql55, mysql56, mariadb55\n";
-    print "  --install-now                                       if need reinstall mysql now\n";
-    print "  --current-mysql                                     show current installed mysql\n";
-    print "  --current-running-mysql                             show current running mysql\n";
-    print "  --install-now-beta                                  if need reinstall mysql beta now\n";
+    print "  --install-now                                       deprecated moved option to mysqlgovernor\n";
+    print "  --install-now-beta                                  deprecated moved option to mysqlgovernor\n";
     print "\n";
   }
 }

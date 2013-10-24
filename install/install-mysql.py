@@ -99,12 +99,11 @@ def usage():
         print 'Options:'                                                                                                                                     
         print " -i | --install             : install MySQL for db-governor"                                                                 
         print " -d | --delete              : delete MySQL for db-governor"                                                                  
-	print "    | --install-beta        : install MySQL 5.1.63 beta   "
+	print "    | --install-beta        : install MySQL beta for governor or update beta if exists newer beta version  "
 	print " -c | --clean-mysql         : clean MySQL packages list (after governor installation)"
 	print " -m | --clean-mysql-delete  : clean cl-MySQL packages list (after governor deletion)"
 	print " -u | --upgrade             : install MySQL with mysql_upgrade_command"
         print " -t | --dbupdate            : update UserMap file"
-	print "    | --update-mysql-beta   : update MySQL from testing repository"
 
 def install_mysql():
 	if cp.name == "Plesk" and verCompare (cp.version, "10") >= 0:
@@ -312,7 +311,7 @@ def fix_libmygcc():
 		os.rename("/usr/lib64/mysql/libmygcc.a", "/usr/lib64/mysql/libmygcc.a.bak")
 	if os.path.exists("/usr/lib/mysql/libmygcc.a"):
 		os.rename("/usr/lib/mysql/libmygcc.a", "/usr/lib/mysql/libmygcc.a.bak")
-                
+
 cp = get_cp()
 try:
 	opts, args = getopt.getopt(sys.argv[1:], "hidcmut", ["help", "install", "delete", "install-beta", "clean-mysql", "clean-mysql-delete", "upgrade", "dbupdate", "update-mysql-beta"])
@@ -358,9 +357,7 @@ for o, a in opts:
                 delete_mysql()
                 delete_governor_rpm()
 	elif o in ("--install-beta",):
-                print "Option is deprecated. Use --install instead"
-	elif o in ("--update-mysql-beta",):
-		warn_message()
+    		warn_message()
                 remove_mysqlclients()
                 remove_mysql_justdb_cl()
 		install_mysql_beta_testing()
@@ -370,6 +367,8 @@ for o, a in opts:
 		    exec_command_out("/usr/share/lve/dbgovernor/chk-mysqlclient")
                 install_dbmap_update()
 		fix_libmygcc()
+	elif o in ("--update-mysql-beta",):
+		print "Option is deprecated. Use --install-beta instead"
 	elif o in ("c", "--clean-mysql"):
                 remove_mysql_justdb()
 	elif o in ("m", "--clean-mysql-delete"):
