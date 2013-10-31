@@ -455,7 +455,7 @@ config_init (const char *path)
 
   if(ezxml_attr (tmp_xml, "user_max_connections")){
 	  cfg->max_user_connections = atoi(ezxml_attr (tmp_xml, "user_max_connections"));
-	  if(cfg->max_user_connections<=0) cfg->max_user_connections = 30;
+	  if(cfg->max_user_connections<0) cfg->max_user_connections = 30;
   }
 
   cfg->restrict_format = getRestrictFormat (ezxml_attr (tmp_xml, "format"));

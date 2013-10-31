@@ -185,6 +185,7 @@ void send_commands(Command * cmd, void *data) {
 	if (cmd) {
 		switch (cmd->command) {
 		case FREEZE:
+		{
 			if (data_cfg.use_lve) {
 				if (add_user_to_list(cmd->username, data_cfg.all_lve) < 0) {
                                         if (data_cfg.log_mode == DEBUG_MODE) {
@@ -192,7 +193,7 @@ void send_commands(Command * cmd, void *data) {
 							data_cfg.log_mode, cmd->username);
                                         }
 				} else {
-					update_user_limit(cmd->username, (unsigned int) data_cfg.max_user_connections,
+					if(data_cfg.max_user_connections) update_user_limit(cmd->username, (unsigned int) data_cfg.max_user_connections,
 											data_cfg.log_mode);
 				}
 			} /*else
@@ -201,17 +202,21 @@ void send_commands(Command * cmd, void *data) {
 			if(data_cfg.killuser==1) kill_connection(cmd->username, data_cfg.log_mode);*/
 			//lve_connection(cmd->username, data_cfg.log_mode);
 			if( data_cfg.logqueries_use ) log_user_queries( cmd->username, data_cfg.log_mode );
+		}
 			break;
 		case UNFREEZE:
+		{
 			if (data_cfg.use_lve) {
 				if (delete_user_from_list(cmd->username) < 0) {
 					WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048, "Can't delete user form BAD list %s",
 							data_cfg.log_mode, cmd->username);
 				}
-				update_user_limit(cmd->username, (unsigned int) 0, data_cfg.log_mode);
+				if(data_cfg.max_user_connections) update_user_limit(cmd->username, (unsigned int) 0, data_cfg.log_mode);
 				//kill_connection(cmd->username, data_cfg.log_mode);
-			} else
-				update_user_limit(cmd->username, 0, data_cfg.log_mode);
+			} else {
+				if(data_cfg.max_user_connections) update_user_limit(cmd->username, 0, data_cfg.log_mode);
+			}
+		}
 			break;
 		}
 	}
