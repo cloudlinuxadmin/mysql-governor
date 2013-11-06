@@ -177,11 +177,6 @@ int valid_comm( int argc, char **argv )
               printf( "Incorrect syntax\n" );
               return 0; 
             }
-          if( argc == 3 )
-          {
-            printf( "Incorrect syntax\n" );
-            return 0; 
-          }
         }
       }
       else
@@ -431,7 +426,7 @@ int GetCmd( int argc, char **argv )
     {
       char *_argv = argv[ 2 ];
       GList *list = (GList *)GetOptList( argc, argv, ret );
-	  
+  
       restrict_user( _argv, (char*)GetVal( 'l', list ) );
     }
     else
