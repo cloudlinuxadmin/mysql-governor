@@ -1,5 +1,5 @@
 %define g_version   1.0
-%define g_release   39
+%define g_release   40
 
 Name: governor-mysql
 Version: %{g_version}
@@ -174,6 +174,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Tue Nov 12 2013 Alexey Berezhok <alexey_com@ukr.net> 1.0-40
+- Added installation of mysqlclient from new repo
+
 * Wed Nov 06 2013 Alexey Berezhok <alexey_com@ukr.net> 1.0-39
 - Fixed governor redelete BAD user
 

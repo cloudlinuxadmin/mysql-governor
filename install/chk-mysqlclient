@@ -72,7 +72,7 @@ sub _install_client
   close( READ );
 
   system( "rpm -e " . trim($curr_client) . " --nodeps");
-  system( "yum install -y mysqlclient" . $ver_client_ . " mysqlclient" . $ver_client1_ . " --enablerepo=cloudlinux-updates-testing --disableexcludes=all" );
+  system( "yum install -y mysqlclient" . $ver_client_ . " mysqlclient" . $ver_client1_ . " --enablerepo=cloudlinux-updates-testing --enablerepo=mysqclient --disableexcludes=all" );
 }
 
 sub _current_mysql()
