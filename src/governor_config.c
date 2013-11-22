@@ -164,6 +164,9 @@ parse_period (const char *period)
 	  result += get_seconds (value, unit);
 	}
     }
+  if(!result){
+	  result = atoi(period);
+  }
 
   return result;
 }

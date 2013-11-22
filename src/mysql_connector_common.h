@@ -137,11 +137,13 @@ void db_mysql_get_string (char *buffer, char *result, unsigned long length, unsi
 char *db_getlasterror (MYSQL * mysql_internal);
 void
 update_user_limit (char *user_name, unsigned int limit, MODE_TYPE debug_mode);
+void
+update_user_limit_no_flush (char *user_name, unsigned int limit, MODE_TYPE debug_mode);
 void flush_user_stat (MODE_TYPE debug_mode);
 void flush_user_priv (MODE_TYPE debug_mode);
 void kill_query (char *user_name, MODE_TYPE debug_mode);
 void kill_connection (char *user_name, MODE_TYPE debug_mode);
-void kill_query_by_id (long id, MODE_TYPE debug_mode);
+void kill_query_by_id (long id, MODE_TYPE debug_mode, MYSQL * mysql_internal);
 void governor_enable (MODE_TYPE debug_mode);
 void governor_enable_reconn (MODE_TYPE debug_mode);
 void governor_enable_lve (MODE_TYPE debug_mode);

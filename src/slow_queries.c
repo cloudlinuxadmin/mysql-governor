@@ -80,7 +80,7 @@ void *parse_slow_query( void *data )
   char log_buffer[ _DBGOVERNOR_BUFFER_8192 ];
   struct governor_config data_cfg;
 
-  MYSQL *mysql_do_command = get_mysql_connect();
+  MYSQL *mysql_do_kill_internal = get_mysql_connect();
   MYSQL_RES *res;
   MYSQL_ROW row;
   unsigned long *lengths;
@@ -100,13 +100,13 @@ void *parse_slow_query( void *data )
 #ifdef TEST
     //printf( "slow_time=%d\n", slow_time );
 #endif
-    if( mysql_do_command == NULL )
+    if( mysql_do_kill_internal == NULL )
     {
       sleep( DELTA_TIME );
       continue;
     }
     snprintf( sql_buffer, _DBGOVERNOR_BUFFER_8192, QUERY_GET_PROCESSLIST_INFO );
-    if( db_mysql_exec_query( sql_buffer, mysql_do_command, data_cfg.log_mode ) )
+    if( db_mysql_exec_query( sql_buffer, mysql_do_kill_internal, data_cfg.log_mode ) )
     {
 #ifdef TEST
       //printf( "db_mysql_exec_query ERROR\n" );
@@ -118,7 +118,7 @@ void *parse_slow_query( void *data )
 #ifdef TEST
       //printf( "db_mysql_exec_query OK\n" );
 #endif
-      res = (*_mysql_store_result)( mysql_do_command );
+      res = (*_mysql_store_result)( mysql_do_kill_internal );
       counts = (*_mysql_num_rows)( res );
 
       if( counts > 0 )
@@ -166,7 +166,7 @@ void *parse_slow_query( void *data )
 #ifdef TEST
                 //printf( "Time > slow_time\n" );
 #endif
-                kill_query_by_id( atoi( Id ), data_cfg.log_mode );
+                kill_query_by_id( atoi( Id ), data_cfg.log_mode, mysql_do_kill_internal );
 
                 char Info_[ _DBGOVERNOR_BUFFER_2048 ];
                 strncpy( Info_, Info, 600 );

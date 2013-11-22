@@ -39,6 +39,7 @@ static GList* command_list = NULL, *command_list_send = NULL;
 
 pthread_mutex_t mtx_commands = PTHREAD_MUTEX_INITIALIZER;
 volatile int is_send_command_cycle = 0;
+volatile int is_any_flush = 0;
 
 void free_commands(Command * cmd, GDestroyNotify free_func) {
 	if (cmd) {
@@ -193,8 +194,11 @@ void send_commands(Command * cmd, void *data) {
 							data_cfg.log_mode, cmd->username);
                                         }
 				} else {
-					if(data_cfg.max_user_connections) update_user_limit(cmd->username, (unsigned int) data_cfg.max_user_connections,
+					if(data_cfg.max_user_connections) {
+						update_user_limit_no_flush(cmd->username, (unsigned int) data_cfg.max_user_connections,
 											data_cfg.log_mode);
+						is_any_flush = 1;
+					}
 				}
 			} /*else
 				update_user_limit(cmd->username, (unsigned int) -1,
@@ -208,15 +212,19 @@ void send_commands(Command * cmd, void *data) {
 		{
 			if (data_cfg.use_lve) {
 				if (delete_user_from_list(cmd->username) < 0) {
-                                     if (data_cfg.log_mode == DEBUG_MODE) {
 					WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048, "Can't delete user form BAD list %s",
 							data_cfg.log_mode, cmd->username);
-                                     }
 				}
-				if(data_cfg.max_user_connections) update_user_limit(cmd->username, (unsigned int) 0, data_cfg.log_mode);
+				if(data_cfg.max_user_connections) {
+					update_user_limit_no_flush(cmd->username, (unsigned int) 0, data_cfg.log_mode);
+					is_any_flush = 1;
+				}
 				//kill_connection(cmd->username, data_cfg.log_mode);
 			} else {
-				if(data_cfg.max_user_connections) update_user_limit(cmd->username, 0, data_cfg.log_mode);
+				if(data_cfg.max_user_connections) {
+					update_user_limit_no_flush(cmd->username, 0, data_cfg.log_mode);
+					is_any_flush = 1;
+				}
 			}
 		}
 			break;
@@ -225,7 +233,13 @@ void send_commands(Command * cmd, void *data) {
 }
 
 void *send_commands_cycle_in(void *data) {
+
+	struct governor_config data_cfg;
+	get_config_data( &data_cfg );
+	is_any_flush = 0;
 	g_list_foreach(command_list_send, (GFunc) send_commands, NULL);
+	if(data_cfg.max_user_connections && is_any_flush) flush_user_priv(data_cfg.log_mode);
+	is_any_flush = 0;
 	is_send_command_cycle = 0;
 	return NULL;
 }

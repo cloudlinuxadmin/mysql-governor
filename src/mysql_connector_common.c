@@ -365,8 +365,7 @@ db_getlasterror(MYSQL * mysql_internal) {
 		return NULL;
 }
 
-//Set new max_user_connections parameter
-void update_user_limit(char *user_name, unsigned int limit,
+void update_user_limit_no_flush(char *user_name, unsigned int limit,
 		MODE_TYPE debug_mode) {
 	char buffer[_DBGOVERNOR_BUFFER_2048];
 	char sql_buffer[_DBGOVERNOR_BUFFER_8192];
@@ -394,6 +393,12 @@ void update_user_limit(char *user_name, unsigned int limit,
 	}
 	res = (*_mysql_store_result)(mysql_do_command);
 	(*_mysql_free_result)(res);
+}
+
+//Set new max_user_connections parameter
+void update_user_limit(char *user_name, unsigned int limit,
+		MODE_TYPE debug_mode) {
+	update_user_limit_no_flush(user_name, limit, debug_mode);
 	flush_user_priv(debug_mode);
 }
 
@@ -455,7 +460,7 @@ void kill_query(char *user_name, MODE_TYPE debug_mode) {
 	(*_mysql_free_result)(res);
 }
 
-void kill_query_by_id(long id, MODE_TYPE debug_mode) {
+void kill_query_by_id(long id, MODE_TYPE debug_mode, MYSQL * mysql_internal) {
 	char buffer[_DBGOVERNOR_BUFFER_2048];
 	char sql_buffer[_DBGOVERNOR_BUFFER_8192];
 	MYSQL_RES *res;
@@ -463,7 +468,7 @@ void kill_query_by_id(long id, MODE_TYPE debug_mode) {
     get_config_data( &data_cfg );
 
 	snprintf(sql_buffer, _DBGOVERNOR_BUFFER_8192, QUERY_KILL_USER_QUERY_ID, id);
-	if (db_mysql_exec_query(sql_buffer, mysql_do_command, debug_mode)) {
+	if (db_mysql_exec_query(sql_buffer, mysql_internal, debug_mode)) {
 
 		if (debug_mode != DEBUG_MODE) {
 			WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
@@ -476,7 +481,7 @@ void kill_query_by_id(long id, MODE_TYPE debug_mode) {
 		}
 
 	}
-	res = (*_mysql_store_result)(mysql_do_command);
+	res = (*_mysql_store_result)(mysql_internal);
 	(*_mysql_free_result)(res);
 }
 
