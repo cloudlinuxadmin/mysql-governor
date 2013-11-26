@@ -1,5 +1,5 @@
 %define g_version   1.0
-%define g_release   41
+%define g_release   42
 
 Name: governor-mysql
 Version: %{g_version}
@@ -174,6 +174,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Tue Nov 26 2013 Alexey Berezhok <alexey_com@ukr.net> 1.0-42
+- Added PATH to governor's cron task
+
 * Fri Nov 22 2013 Alexey Berezhok <alexey_com@ukr.net> 1.0-41
 - Fixed governor crash on KILL QUERY sending
 - Optimize FLUSH PRIVILEGES sending
