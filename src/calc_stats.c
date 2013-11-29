@@ -52,6 +52,12 @@ static double old_tm_stats = 0.0;
 pthread_mutex_t mtx_account = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mtx_counters = PTHREAD_MUTEX_INITIALIZER;
 
+typedef struct __send_to_glib_info{
+	char *dbg;
+	double tm;
+	MODE_TYPE log_mode;
+} send_to_glib_info;
+
 #define is_stat_overlimit(x) GOVERNORS_FIELD_NAME \
 is_stat_overlimit_## x(Stats *st, stats_limit_cfg *limit) \
 { \
@@ -88,6 +94,13 @@ add_new_stats(username_t username, Stats * st, long long tick_id) {
 	if (!us) {
 		us = add_user_stats(username, accounts, users);
 	}
+
+	if(data_cfg.debug_user && !us->account->need_dbg){
+		int len = strlen(data_cfg.debug_user);
+		if(!strncmp(data_cfg.debug_user, us->account->id, len)){
+			us->account->need_dbg = 1;
+		}
+	}
 	/*if(check_if_user_restricted(username, accounts) && data_cfg.use_lve){
 		return NULL;
 	}*/
@@ -107,11 +120,9 @@ add_new_stats(username_t username, Stats * st, long long tick_id) {
 void add_empty_stats_for_uid( username_t username )
 {
   lock_acc();
-/*
+
   User_stats *us = (User_stats *)g_hash_table_lookup( users, username );
-  if( !us )
-*/
-  add_user_stats( username, accounts, users );
+  if( !us ) add_user_stats( username, accounts, users );
   unlock_acc();
 }
 
@@ -124,9 +135,11 @@ void tick_empty_users(gpointer key, User_stats * us, void *data) {
 	}
 }
 
-void calc_acc_stats(gpointer key, Account * ac, void *data) {
+void calc_acc_stats(gpointer key, Account * ac, gpointer data) {
 	int i = 1;
 	User_stats *us = (User_stats *) g_ptr_array_index (ac->users, 0);
+    
+    send_to_glib_info *internal_info = (send_to_glib_info *)data;
 
 	Stats *ptr = fifo_stats_get(us->stats, 0);
 	ac->current = *fifo_stats_get(us->stats, 0);
@@ -135,6 +148,19 @@ void calc_acc_stats(gpointer key, Account * ac, void *data) {
 	ac->long_average = us->long_average;
 	while (i < ac->users->len) {
 		us = (User_stats *) g_ptr_array_index (ac->users, i++);
+		if(ac->need_dbg){
+			char output_buffer[_DBGOVERNOR_BUFFER_2048];
+			WRITE_LOG(
+					NULL,
+					1,
+					output_buffer,
+					_DBGOVERNOR_BUFFER_2048,
+					" step 2-%d: proceed user stats %s, c %f, r %llu, w %llu",
+					internal_info->log_mode,
+					i, us->id?us->id:"Unk", fifo_stats_get(us->stats, 0)->cpu,
+							fifo_stats_get(us->stats, 0)->read,
+							fifo_stats_get(us->stats, 0)->write );
+		}
 
 		sum_stats(&ac->current, fifo_stats_get(us->stats, 0));
 		sum_stats(&ac->short_average, &us->short_average);
@@ -142,6 +168,19 @@ void calc_acc_stats(gpointer key, Account * ac, void *data) {
 		sum_stats(&ac->long_average, &us->long_average);
 		ptr = fifo_stats_get(us->stats, 0);
 	}
+
+	if(ac->need_dbg){
+		char output_buffer[_DBGOVERNOR_BUFFER_2048];
+		WRITE_LOG(
+				NULL,
+				1,
+				output_buffer,
+				_DBGOVERNOR_BUFFER_2048,
+				" step 3: summary, c %f, r %llu, w %llu",
+				internal_info->log_mode,
+				ac->current.cpu, ac->current.read, ac->current.write );
+	}
+
 }
 
 is_stat_overlimit(current)
@@ -568,8 +607,23 @@ void account_analyze(gpointer * key, Account * ac, void *data) {
 
 void add_user_stats_from_counter(gpointer key, Stat_counters * item, gpointer user_data){
 	Stats st;
-	double *in_tm = (double *)user_data;
+	send_to_glib_info *internal_info = (send_to_glib_info *)user_data;
+	double *in_tm = (double *)&internal_info->tm;
 	clac_stats_difference_inner_from_counter((long long)item->s.cpu, item->s.read, item->s.write, item->tm, &st, *in_tm);
+	if(internal_info->dbg){
+		int len = strlen(internal_info->dbg);
+		if(!strncmp(internal_info->dbg, (char *)key, len)){
+			char output_buffer[_DBGOVERNOR_BUFFER_2048];
+			WRITE_LOG(
+					NULL,
+					1,
+					output_buffer,
+					_DBGOVERNOR_BUFFER_2048,
+					" step 1: counters c %f, r %llu, w %llu, tm %f",
+					internal_info->log_mode,
+					item->s.cpu, item->s.read, item->s.write, (*in_tm - item->tm));
+		}
+	}
 	add_new_stats((char *)key, &st, get_current_tick());
 	reset_counters((char *)key);
 }
@@ -729,13 +783,15 @@ void proceed_accounts(double tm) {
     struct governor_config data_cfg;
     get_config_data( &data_cfg );
 
+    send_to_glib_info snd = { data_cfg.debug_user, tm, data_cfg.log_mode };
+
 	increment_tick();
-	pthread_mutex_lock(&mtx_counters);
-	g_hash_table_foreach(get_counters_table(), (GHFunc) add_user_stats_from_counter, (gpointer)&tm);
-	pthread_mutex_unlock(&mtx_counters);
 	pthread_mutex_lock(&mtx_account);
+	pthread_mutex_lock(&mtx_counters);
+	g_hash_table_foreach(get_counters_table(), (GHFunc) add_user_stats_from_counter, (gpointer)&snd);
+	pthread_mutex_unlock(&mtx_counters);
 	g_hash_table_foreach(users, (GHFunc) tick_empty_users, NULL);
-	g_hash_table_foreach(accounts, (GHFunc) calc_acc_stats, NULL);
+	g_hash_table_foreach(accounts, (GHFunc) calc_acc_stats, (gpointer)&snd);
 	if(data_cfg.restrict_mode){
 		g_hash_table_foreach(accounts, (GHFunc) account_analyze_limit, NULL);
 	} else {

@@ -18,5 +18,6 @@
 
 <user mysql_name="root" mode="restrict|norestrict|ignore"></user>
 <user name="mysql" mode="restrict|norestrict|ignore"></user>
+<debug_user name="testuser"/>
 
 </governor>

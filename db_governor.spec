@@ -1,5 +1,5 @@
 %define g_version   1.0
-%define g_release   42
+%define g_release   43
 
 Name: governor-mysql
 Version: %{g_version}
@@ -174,6 +174,11 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Fri Nov 29 2013 Alexey Berezhok <aberezhok@cloudlinux.com>, Pavel Shkatula <shpp@cloudlinux.com> 1.0-43
+- Fixed duplicate user name in account on reread usermap file
+- Optimaze cooperation of dbuser-map and separator parameter
+- Added debug_user parameter to config for debugging some user statistic calculation
+
 * Tue Nov 26 2013 Alexey Berezhok <alexey_com@ukr.net> 1.0-42
 - Added PATH to governor's cron task
 

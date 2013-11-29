@@ -84,7 +84,7 @@ set_linux_version ()
   struct utsname uts;
   unsigned x = 0, y = 0, z = 0;
 
-  if (uname (&uts) == -1)	/* failure most likely implies impending death */
+  if (uname (&uts) == -1)
     return -1;
   sscanf (uts.release, "%u.%u.%u", &x, &y, &z);
   if (LINUX_VERSION_CODE (x, y, z) >= LINUX_VERSION_CODE (2, 6, 0)

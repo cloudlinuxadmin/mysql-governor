@@ -43,6 +43,7 @@ typedef struct account_struct
   int timeout;
   time_t start_count;
   restrict_info info;
+  int need_dbg;
 
 } Account;
 

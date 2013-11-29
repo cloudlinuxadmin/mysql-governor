@@ -235,6 +235,8 @@ config_free ()
 {
   if (cfg)
     {
+	  if(cfg->debug_user)
+		  free(cfg->debug_user);
       if (cfg->account_limits)
 	g_hash_table_unref (cfg->account_limits);
       if (cfg->db_login)
@@ -365,6 +367,16 @@ config_init (const char *path)
         cfg->statistic_mode = 0;
       }
 	}
+  }
+
+  tmp_xml = ezxml_child (xml, "debug_user");
+  cfg->debug_user = NULL;
+    if( tmp_xml != NULL )
+    {
+      if( ezxml_attr( tmp_xml, "name" ) )
+      {
+    	  cfg->debug_user = strdup (ezxml_attr (tmp_xml, "name"));
+  	}
   }
 
   tmp_xml = ezxml_child( xml, "logqueries" );
