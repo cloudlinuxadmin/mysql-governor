@@ -102,7 +102,7 @@ SET(governor_lib_src ${SRC}/dbgovernor_string_functions.c
                     ${SRC}/parce_proc_fs.c
                     ${SRC}/shared_memory.c             
 )
-SET_SOURCE_FILES_PROPERTIES(${db_governor_SRC} ${dbtop_SRC} ${governor_lib_src} ${mysql_unfreeze_SRC} ${dbctl_SRC} PROPERTIES COMPILE_FLAGS "-DOK -g")
+SET_SOURCE_FILES_PROPERTIES(${db_governor_SRC} ${dbtop_SRC} ${governor_lib_src} ${mysql_unfreeze_SRC} ${dbctl_SRC} PROPERTIES COMPILE_FLAGS "-DOK -ggdb -fstack-protector-all")
 
 ADD_EXECUTABLE(db_governor ${db_governor_SRC})
 ADD_EXECUTABLE(dbtop ${dbtop_SRC})

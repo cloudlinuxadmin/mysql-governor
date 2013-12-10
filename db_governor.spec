@@ -1,5 +1,5 @@
 %define g_version   1.0
-%define g_release   43
+%define g_release   44
 
 Name: governor-mysql
 Version: %{g_version}
@@ -174,6 +174,10 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Tue Dec 10 2013 Alexey Berezhok <aberezhok@cloudlinux.co> 1.0-44
+- Fixed error bad users list creation (cause of mysql crash)
+- Added gcc -stack-protector for more detail crash info
+
 * Fri Nov 29 2013 Alexey Berezhok <aberezhok@cloudlinux.com>, Pavel Shkatula <shpp@cloudlinux.com> 1.0-43
 - Fixed duplicate user name in account on reread usermap file
 - Optimaze cooperation of dbuser-map and separator parameter

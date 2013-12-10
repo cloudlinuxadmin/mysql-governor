@@ -160,7 +160,7 @@ static int connect_to_server_in() {
 	 * Create the address we will be connecting to.
 	 */
 	saun.sun_family = AF_UNIX;
-	strcpy(saun.sun_path, MYSQL_SOCK_ADDRESS);
+	strncpy(saun.sun_path, MYSQL_SOCK_ADDRESS, sizeof(saun.sun_path)-1);
 
 	/*
 	 * Try to connect to the address.  For this to
