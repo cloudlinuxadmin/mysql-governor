@@ -1,5 +1,5 @@
 %define g_version   1.0
-%define g_release   44
+%define g_release   45
 
 Name: governor-mysql
 Version: %{g_version}
@@ -174,6 +174,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Wed Dec 11 2013 Alexey Berezhok <aberezhok@cloudlinux.co> 1.0-45
+- Added reconnect to database on execution errors
+
 * Tue Dec 10 2013 Alexey Berezhok <aberezhok@cloudlinux.co> 1.0-44
 - Fixed error bad users list creation (cause of mysql crash)
 - Added gcc -stack-protector for more detail crash info

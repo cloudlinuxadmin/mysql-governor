@@ -21,7 +21,7 @@
 //Common variables definitions
 #define PROGRAMM_NAME "mysql_connector"
 //Количество попыток выполнения провалившегося к базе запроса
-#define EXEC_QUERY_TRIES 2
+#define EXEC_QUERY_TRIES 3
 
 
 //Определим псевдонимы для типов и переменных mysql. Так удобнее работать
@@ -153,4 +153,9 @@ void lve_connection(char *user_name, MODE_TYPE debug_mode);
 void log_user_queries( char *user_name, MODE_TYPE debug_mode );
 MYSQL *get_mysql_connect();
 int activate_plugin( MODE_TYPE debug_mode );
+
+void db_close_kill();
+void db_close_command();
+void db_close_send();
+
 #endif /* MYSQL_CONNECTOR_COMMON_H_ */

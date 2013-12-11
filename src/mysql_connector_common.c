@@ -214,6 +214,23 @@ int db_connect_common(MYSQL ** internal_db, const char *host,
 	return 0;
 }
 
+int local_reconnect(MYSQL * mysql_internal,	MODE_TYPE debug_mode){
+	char *unm = NULL;
+	char *upwd = NULL;
+	if(global_user_name[0]) unm = global_user_name;
+	if(global_user_password[0]) upwd = global_user_password;
+	my_bool reconnect = 1;
+	//Авторекоонет - подключить
+	(*_mysql_options)(mysql_internal, MYSQL_OPT_RECONNECT, &reconnect);
+	//Еще разок соединимся
+	if (!(*_mysql_real_connect)(mysql_internal, global_host,
+			unm, upwd, global_db_name, 0,
+			_unix_socket_addres, 0)) {
+		return -1;
+	}
+	return 0;
+}
+
 //Exec query, if error occurred - try again EXEC_QUERY_TRIES times
 int db_mysql_exec_query(const char *query, MYSQL * mysql_internal,
 		MODE_TYPE debug_mode) {
@@ -223,17 +240,8 @@ int db_mysql_exec_query(const char *query, MYSQL * mysql_internal,
 	//Проверим наличие соединения, а вдруг пропало
 	if ((*_mysql_ping)(mysql_internal)) {
 		//База действительно ушла прочь, что даже реконнект не помог
-		char *unm = NULL;
-		char *upwd = NULL;
-		if(global_user_name[0]) unm = global_user_name;
-		if(global_user_password[0]) upwd = global_user_password;
-		my_bool reconnect = 1;
-		//Авторекоонет - подключить
-		(*_mysql_options)(mysql_internal, MYSQL_OPT_RECONNECT, &reconnect);
-		//Еще разок соединимся
-		if (!(*_mysql_real_connect)(mysql_internal, global_host,
-				unm, upwd, global_db_name, 0,
-				_unix_socket_addres, 0)) {
+
+		if(local_reconnect(mysql_internal, debug_mode)<0){
 			return -1;
 		}
 	}
@@ -241,6 +249,10 @@ int db_mysql_exec_query(const char *query, MYSQL * mysql_internal,
 	int execution_counters = EXEC_QUERY_TRIES;
 	while ((*_mysql_query)(mysql_internal, query)) {
 		execution_counters--;
+		if (execution_counters == 1) {
+			//Try to recconect
+			local_reconnect(mysql_internal, debug_mode);
+		}
 		if (execution_counters == 0) {
 			if (debug_mode != DEBUG_MODE) {
 				WRITE_LOG(NULL, 0, buf, _DBGOVERNOR_BUFFER_2048,
@@ -258,20 +270,32 @@ int db_mysql_exec_query(const char *query, MYSQL * mysql_internal,
 	return 0;
 }
 
-//Close all databases connections
-int db_close() {
-	if (mysql_send_governor != NULL) {
-		(*_mysql_close)(mysql_send_governor);
-		mysql_send_governor = NULL;
-	}
-	if (mysql_do_command != NULL) {
-		(*_mysql_close)(mysql_do_command);
-		mysql_do_command = NULL;
-	}
+void db_close_kill() {
 	if (mysql_do_kill != NULL) {
 		(*_mysql_close)(mysql_do_kill);
 		mysql_do_kill = NULL;
 	}
+}
+
+void db_close_command(){
+	if (mysql_do_command != NULL) {
+		(*_mysql_close)(mysql_do_command);
+		mysql_do_command = NULL;
+	}
+}
+
+void db_close_send(){
+	if (mysql_send_governor != NULL) {
+		(*_mysql_close)(mysql_send_governor);
+		mysql_send_governor = NULL;
+	}
+}
+
+//Close all databases connections
+int db_close() {
+	db_close_kill();
+	db_close_command();
+	db_close_send();
 	return 0;
 }
 

@@ -189,10 +189,10 @@ void send_commands(Command * cmd, void *data) {
 		{
 			if (data_cfg.use_lve) {
 				if (add_user_to_list(cmd->username, data_cfg.all_lve) < 0) {
-                                        if (data_cfg.log_mode == DEBUG_MODE) {
+                        if (data_cfg.log_mode == DEBUG_MODE) {
 					        WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048, "Can't add user to BAD list %s",
 							data_cfg.log_mode, cmd->username);
-                                        }
+                        }
 				} else {
 					if(data_cfg.max_user_connections) {
 						update_user_limit_no_flush(cmd->username, (unsigned int) data_cfg.max_user_connections,
@@ -212,8 +212,10 @@ void send_commands(Command * cmd, void *data) {
 		{
 			if (data_cfg.use_lve) {
 				if (delete_user_from_list(cmd->username) < 0) {
-					WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048, "Can't delete user form BAD list %s",
+					if(data_cfg.log_mode == DEBUG_MODE) {
+						WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048, "Can't delete user form BAD list %s",
 							data_cfg.log_mode, cmd->username);
+					}
 				}
 				if(data_cfg.max_user_connections) {
 					update_user_limit_no_flush(cmd->username, (unsigned int) 0, data_cfg.log_mode);
