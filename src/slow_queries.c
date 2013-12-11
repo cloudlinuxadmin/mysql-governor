@@ -80,7 +80,7 @@ void *parse_slow_query( void *data )
   char log_buffer[ _DBGOVERNOR_BUFFER_8192 ];
   struct governor_config data_cfg;
 
-  MYSQL *mysql_do_kill_internal = get_mysql_connect();
+  MYSQL **mysql_do_kill_internal = get_mysql_connect();
   MYSQL_RES *res;
   MYSQL_ROW row;
   unsigned long *lengths;
@@ -100,7 +100,7 @@ void *parse_slow_query( void *data )
 #ifdef TEST
     //printf( "slow_time=%d\n", slow_time );
 #endif
-    if( mysql_do_kill_internal == NULL )
+    if( *mysql_do_kill_internal == NULL )
     {
       sleep( DELTA_TIME );
       continue;
@@ -118,7 +118,7 @@ void *parse_slow_query( void *data )
 #ifdef TEST
       //printf( "db_mysql_exec_query OK\n" );
 #endif
-      res = (*_mysql_store_result)( mysql_do_kill_internal );
+      res = (*_mysql_store_result)( *mysql_do_kill_internal );
       counts = (*_mysql_num_rows)( res );
 
       if( counts > 0 )

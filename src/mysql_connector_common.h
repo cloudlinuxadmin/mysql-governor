@@ -119,7 +119,7 @@ db_connect_common (MYSQL ** internal_db,
  * debug_mode - режим вывода ошибок
  */
 int
-db_mysql_exec_query (const char *query, MYSQL * mysql_internal,
+db_mysql_exec_query (const char *query, MYSQL ** mysql_internal,
 		     MODE_TYPE debug_mode);
 
 //Закрыть ВСЕ соединения к БД
@@ -143,7 +143,7 @@ void flush_user_stat (MODE_TYPE debug_mode);
 void flush_user_priv (MODE_TYPE debug_mode);
 void kill_query (char *user_name, MODE_TYPE debug_mode);
 void kill_connection (char *user_name, MODE_TYPE debug_mode);
-void kill_query_by_id (long id, MODE_TYPE debug_mode, MYSQL * mysql_internal);
+void kill_query_by_id (long id, MODE_TYPE debug_mode, MYSQL ** mysql_internal);
 void governor_enable (MODE_TYPE debug_mode);
 void governor_enable_reconn (MODE_TYPE debug_mode);
 void governor_enable_lve (MODE_TYPE debug_mode);
@@ -151,7 +151,7 @@ void governor_enable_reconn_lve (MODE_TYPE debug_mode);
 char *get_work_user();
 void lve_connection(char *user_name, MODE_TYPE debug_mode);
 void log_user_queries( char *user_name, MODE_TYPE debug_mode );
-MYSQL *get_mysql_connect();
+MYSQL **get_mysql_connect();
 int activate_plugin( MODE_TYPE debug_mode );
 
 void db_close_kill();
