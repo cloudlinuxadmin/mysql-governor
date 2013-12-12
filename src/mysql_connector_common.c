@@ -213,9 +213,9 @@ static int local_reconnect(MYSQL **mysql_internal,	MODE_TYPE debug_mode){
 	if(global_user_password[0]) upwd = global_user_password;
 	my_bool reconnect = 1;
 	//Авторекоонет - подключить
-	(*_mysql_options)(mysql_internal, MYSQL_OPT_RECONNECT, &reconnect);
+	(*_mysql_options)(*mysql_internal, MYSQL_OPT_RECONNECT, &reconnect);
 	//Еще разок соединимся
-	if (!(*_mysql_real_connect)(mysql_internal, global_host,
+	if (!(*_mysql_real_connect)(*mysql_internal, global_host,
 			unm, upwd, global_db_name, 0,
 			_unix_socket_addres, 0)) {
 		return -1;
