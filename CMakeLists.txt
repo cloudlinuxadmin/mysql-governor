@@ -2,11 +2,17 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.4)
 
 PROJECT(MYSQL_GOVERNOR C)
 
+INCLUDE(CheckFunctionExists)
+
+CHECK_FUNCTION_EXISTS (mmap64 HAVE_MMAP64)
+
 SET(CMAKE_BUILD_TYPE Debug)
 SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+#SET(MYSQL_INCLUDE_DIRS "/usr/include/mysql")
 FIND_PACKAGE(GLIB2 REQUIRED)
 #FIND_PACKAGE(MySQL REQUIRED)
 
+#INCLUDE_DIRECTORIES(${GLIB2_INCLUDE_DIRS} ${MYSQL_INCLUDE_DIRS})
 INCLUDE_DIRECTORIES(${GLIB2_INCLUDE_DIRS})
 #LINK_LIBRARIES(${GLIB2_LIBRARIES} ${MYSQL_CLIENT_LIBS})
 #INCLUDE_DIRECTORIES(${GLIB2_INCLUDE_DIRS})
@@ -102,7 +108,7 @@ SET(governor_lib_src ${SRC}/dbgovernor_string_functions.c
                     ${SRC}/parce_proc_fs.c
                     ${SRC}/shared_memory.c             
 )
-SET_SOURCE_FILES_PROPERTIES(${db_governor_SRC} ${dbtop_SRC} ${governor_lib_src} ${mysql_unfreeze_SRC} ${dbctl_SRC} PROPERTIES COMPILE_FLAGS "-DOK -ggdb -fstack-protector-all")
+SET_SOURCE_FILES_PROPERTIES(${db_governor_SRC} ${dbtop_SRC} ${governor_lib_src} ${mysql_unfreeze_SRC} ${dbctl_SRC} PROPERTIES COMPILE_FLAGS "-DOK -DEZXML_NOMMAP -ggdb -fstack-protector-all")
 
 ADD_EXECUTABLE(db_governor ${db_governor_SRC})
 ADD_EXECUTABLE(dbtop ${dbtop_SRC})
@@ -196,6 +202,7 @@ set(CPACK_SOURCE_TBZ2 "ON")
 set(CPACK_SOURCE_TGZ "OFF")
 set(CPACK_SOURCE_TZ "OFF")
 set(CPACK_SOURCE_ZIP "ON")
+#set(EZXML_NOMMAP 1)
 
 set(CPACK_RPM_USER_BINARY_SPECFILE "${CMAKE_CURRENT_BINARY_DIR}/db_governor.spec")
 include(CPack)

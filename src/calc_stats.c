@@ -270,6 +270,7 @@ int check_restrict(Account * ac) {
     
 	if (_cur != NORESTRICT_PARAM2) {
 		//Current restrict
+		int old_restricted = ac->restricted;
 		if ((ac->start_count + data_cfg.timeout) > now) {
 			restrict_period = get_timeout(&ac->restricted, 1);
 		} else {
@@ -280,7 +281,7 @@ int check_restrict(Account * ac) {
 		time(&ac->start_count);
 		ac->info.field_restrict = CURRENT_PERIOD;
 		ac->info.field_level_restrict = _cur;
-		account_restrict(ac, sl);
+		if (!old_restricted) account_restrict(ac, sl);
 		if (data_cfg.restrict_log) {
 			char tmp_buf[_DBGOVERNOR_BUFFER_8192];
 			prepareRestrictDescription(tmp_buf, ac, sl);
@@ -299,6 +300,7 @@ int check_restrict(Account * ac) {
 				&ac->short_average, sl);
 		if (_short != NORESTRICT_PARAM2) {
 			//Short restrict
+			int old_restricted = ac->restricted;
 			if ((ac->start_count + data_cfg.timeout) > now) {
 				restrict_period = get_timeout(&ac->restricted, 1);
 			} else {
@@ -309,7 +311,7 @@ int check_restrict(Account * ac) {
 			time(&ac->start_count);
 			ac->info.field_restrict = SHORT_PERIOD;
 			ac->info.field_level_restrict = _short;
-			account_restrict(ac, sl);
+			if (!old_restricted) account_restrict(ac, sl);
 			if (data_cfg.restrict_log) {
 				char tmp_buf[_DBGOVERNOR_BUFFER_8192];
 				prepareRestrictDescription(tmp_buf, ac, sl);
@@ -327,6 +329,7 @@ int check_restrict(Account * ac) {
 					sl);
 			if (_mid != NORESTRICT_PARAM2) {
 				//Mid restrict
+				int old_restricted = ac->restricted;
 				if ((ac->start_count + data_cfg.timeout) > now) {
 					restrict_period = get_timeout(&ac->restricted, 1);
 				} else {
@@ -337,7 +340,7 @@ int check_restrict(Account * ac) {
 				time(&ac->start_count);
 				ac->info.field_restrict = MID_PERIOD;
 				ac->info.field_level_restrict = _mid;
-				account_restrict(ac, sl);
+				if (!old_restricted) account_restrict(ac, sl);
 				if (data_cfg.restrict_log) {
 					char tmp_buf[_DBGOVERNOR_BUFFER_8192];
 					prepareRestrictDescription(tmp_buf, ac, sl);
@@ -354,6 +357,7 @@ int check_restrict(Account * ac) {
 						&ac->long_average, sl);
 				if (_long != NORESTRICT_PARAM2) {
 					//Long restrict
+					int old_restricted = ac->restricted;
 					if ((ac->start_count + data_cfg.timeout) > now) {
 						restrict_period = get_timeout(&ac->restricted, 1);
 					} else {
@@ -364,7 +368,7 @@ int check_restrict(Account * ac) {
 					time(&ac->start_count);
 					ac->info.field_restrict = LONG_PERIOD;
 					ac->info.field_level_restrict = _long;
-					account_restrict(ac, sl);
+					if (!old_restricted) account_restrict(ac, sl);
 					if (data_cfg.restrict_log) {
 						char tmp_buf[_DBGOVERNOR_BUFFER_8192];
 						prepareRestrictDescription(tmp_buf, ac, sl);
@@ -399,12 +403,13 @@ static int check_restrict_limit(Account * ac) {
 		//Current restrict
 		restrict_period = data_cfg.l_unlimit;
 		if( data_cfg.statistic_mode ) IncNumberOfRestricts( ac->id, get_cause_of_restrict(_cur) );
+		int old_restricted = ac->restricted;
 		ac->restricted = 1000;
 		ac->timeout = restrict_period;
 		time(&ac->start_count);
 		ac->info.field_restrict = CURRENT_PERIOD;
 		ac->info.field_level_restrict = _cur;
-		account_restrict(ac, sl);
+		if (!old_restricted) account_restrict(ac, sl);
 		if (data_cfg.restrict_log) {
 			char tmp_buf[_DBGOVERNOR_BUFFER_8192];
 			prepareRestrictDescriptionLimit(tmp_buf, ac, sl);
@@ -425,12 +430,13 @@ static int check_restrict_limit(Account * ac) {
 			//Short restrict
 			restrict_period = data_cfg.l_unlimit;
 			if( data_cfg.statistic_mode ) IncNumberOfRestricts( ac->id, get_cause_of_restrict(_cur) );
+			int old_restricted = ac->restricted;
 			ac->restricted = 1000;
 			ac->timeout = restrict_period;
 			time(&ac->start_count);
 			ac->info.field_restrict = SHORT_PERIOD;
 			ac->info.field_level_restrict = _short;
-			account_restrict(ac, sl);
+			if (!old_restricted) account_restrict(ac, sl);
 			if (data_cfg.restrict_log) {
 				char tmp_buf[_DBGOVERNOR_BUFFER_8192];
 				prepareRestrictDescriptionLimit(tmp_buf, ac, sl);
@@ -450,12 +456,13 @@ static int check_restrict_limit(Account * ac) {
 				//Mid restrict
 				restrict_period = data_cfg.l_unlimit;
 				if( data_cfg.statistic_mode ) IncNumberOfRestricts( ac->id, get_cause_of_restrict(_cur) );
+				int old_restricted = ac->restricted;
 				ac->restricted = 1000;
 				ac->timeout = restrict_period;
 				time(&ac->start_count);
 				ac->info.field_restrict = MID_PERIOD;
 				ac->info.field_level_restrict = _mid;
-				account_restrict(ac, sl);
+				if (!old_restricted) account_restrict(ac, sl);
 				if (data_cfg.restrict_log) {
 					char tmp_buf[_DBGOVERNOR_BUFFER_8192];
 					prepareRestrictDescriptionLimit(tmp_buf, ac, sl);
@@ -474,12 +481,13 @@ static int check_restrict_limit(Account * ac) {
 					//Long restrict
 					restrict_period = data_cfg.l_unlimit;
 					if( data_cfg.statistic_mode ) IncNumberOfRestricts( ac->id, get_cause_of_restrict(_cur) );
+					int old_restricted = ac->restricted;
 					ac->restricted = 1000;
 					ac->timeout = restrict_period;
 					time(&ac->start_count);
 					ac->info.field_restrict = LONG_PERIOD;
 					ac->info.field_level_restrict = _long;
-					account_restrict(ac, sl);
+					if (!old_restricted) account_restrict(ac, sl);
 					if (data_cfg.restrict_log) {
 						char tmp_buf[_DBGOVERNOR_BUFFER_8192];
 						prepareRestrictDescriptionLimit(tmp_buf, ac, sl);

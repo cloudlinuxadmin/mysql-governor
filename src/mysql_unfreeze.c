@@ -33,6 +33,14 @@
 int main(int argc, char *argv[]) {
 	int cmd = 0;
     struct governor_config data_cfg;
+
+    if( !config_init( CONFIG_PATH ) )
+    {
+        fprintf( stderr, "Unable to read config file: %s\n", CONFIG_PATH );
+        fflush( stderr );
+        exit( EXIT_FAILURE );
+    }
+
     get_config_data( &data_cfg );
 
 	if (argc > 1) {

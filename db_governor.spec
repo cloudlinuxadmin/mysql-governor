@@ -174,6 +174,11 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Thu Dec 26 2013 Alexey Berezhok <aberezhok@cloudlinux.com>, Pavel Shkatula <shpp@cloudlinux.com> 1.0-46
+- Added memory management in bad user list like mysql
+- Optimized add user to bad list algorithm
+- Fixed lost user on delete from bad list
+
 * Wed Dec 11 2013 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-45
 - Added reconnect to database on execution errors
 

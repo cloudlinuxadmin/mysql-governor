@@ -47,7 +47,7 @@ int init_bad_users_list_utility() {
 		return -1;
 	}
 
-	if ((bad_list = (shm_structure *) mmap(0, sizeof(shm_structure), (PROT_READ
+	if ((bad_list = (shm_structure *) cl_mmap(0, sizeof(shm_structure), (PROT_READ
 									| PROT_WRITE), MAP_SHARED, shm_fd, 0)) == MAP_FAILED) {
 		close(shm_fd);
 		return -1;
@@ -56,7 +56,7 @@ int init_bad_users_list_utility() {
 	sem = sem_open(SHARED_MEMORY_SEM, O_CREAT, 0777, 1);
 
 	if (sem == SEM_FAILED) {
-		munmap((void *) bad_list, sizeof(shm_structure));
+		cl_munmap((void *) bad_list, sizeof(shm_structure));
 		close(shm_fd);
 		return -1;
 	}
@@ -70,7 +70,7 @@ int init_bad_users_list_utility() {
 
 int remove_bad_users_list_utility() {
 	if (sem != SEM_FAILED) sem_close(sem);
-	if (bad_list && (bad_list!= MAP_FAILED)) munmap((void *) bad_list, sizeof(shm_structure));
+	if (bad_list && (bad_list!= MAP_FAILED)) cl_munmap((void *) bad_list, sizeof(shm_structure));
 	close(shm_fd);
 	return 0;
 }
@@ -94,7 +94,7 @@ int init_bad_users_list() {
 		ftruncate(shm_fd, sizeof(shm_structure));
 	}
 
-	if ((bad_list = (shm_structure *) mmap(0, sizeof(shm_structure), (PROT_READ
+	if ((bad_list = (shm_structure *) cl_mmap(0, sizeof(shm_structure), (PROT_READ
 									| PROT_WRITE), MAP_SHARED, shm_fd, 0)) == MAP_FAILED) {
 		close(shm_fd);
 		umask(old_umask);
@@ -105,7 +105,7 @@ int init_bad_users_list() {
 	umask(old_umask);
 
 	if (sem == SEM_FAILED) {
-		munmap((void *) bad_list, sizeof(shm_structure));
+		cl_munmap((void *) bad_list, sizeof(shm_structure));
 		close(shm_fd);
 		return -1;
 	}
@@ -133,7 +133,7 @@ void clear_bad_users_list() {
 int remove_bad_users_list() {
 	if (sem != SEM_FAILED) sem_close(sem);
 	sem_unlink(SHARED_MEMORY_SEM);
-	if (bad_list && (bad_list!= MAP_FAILED)) munmap((void *) bad_list, sizeof(shm_structure));
+	if (bad_list && (bad_list!= MAP_FAILED)) cl_munmap((void *) bad_list, sizeof(shm_structure));
 	close(shm_fd);
 	return 0;
 }
@@ -189,14 +189,9 @@ int delete_user_from_list(char *username) {
 					memmove( 
                              bad_list->items + index, 
                              bad_list->items + (index + 1),
-							 sizeof( items_structure )
+							 sizeof( items_structure ) * (bad_list->numbers - index - 1)
                            );
-/*
-					memmove((char *) bad_list->items + USERNAMEMAXLEN * sizeof(char) * index, 
-                            (char *) bad_list->items + USERNAMEMAXLEN * sizeof(char) * (index + 1),
-							(bad_list->numbers - index - 1) * USERNAMEMAXLEN * sizeof(char)
-                           );
-*/
+
 					bad_list->numbers--;
 					sem_post(sem);
 					return 0;
@@ -243,7 +238,7 @@ int32_t is_user_in_bad_list_cleint(char *username) {
 	if ((shm_fd_clents = shm_open(SHARED_MEMORY_NAME, O_RDONLY, 0755)) < 0) {
 		return 0;
 	}
-	if ((bad_list_clents = (shm_structure *) mmap(0, sizeof(shm_structure),
+	if ((bad_list_clents = (shm_structure *) cl_mmap(0, sizeof(shm_structure),
 			PROT_READ, MAP_SHARED, shm_fd_clents, 0)) == MAP_FAILED) {
 		close(shm_fd_clents);
 		return 0;
@@ -286,7 +281,7 @@ int32_t is_user_in_bad_list_cleint(char *username) {
 		sem_close(sem_client);
 	}
 
-	munmap((void *) bad_list_clents, sizeof(shm_structure));
+	cl_munmap((void *) bad_list_clents, sizeof(shm_structure));
 	close(shm_fd_clents);
 	return fnd;
 }
@@ -300,7 +295,7 @@ int user_in_bad_list_cleint_show() {
 		umask(old_umask);
 		return 0;
 	}
-	if ((bad_list_clents = (shm_structure *) mmap(0, sizeof(shm_structure),
+	if ((bad_list_clents = (shm_structure *) cl_mmap(0, sizeof(shm_structure),
 			PROT_READ, MAP_SHARED, shm_fd_clents, 0)) == MAP_FAILED) {
 		close(shm_fd_clents);
 		umask(old_umask);
@@ -339,7 +334,7 @@ int user_in_bad_list_cleint_show() {
 		sem_close(sem_client);
 	}
 
-	munmap((void *) bad_list_clents, sizeof(shm_structure));
+	cl_munmap((void *) bad_list_clents, sizeof(shm_structure));
 	close(shm_fd_clents);
 	return fnd;
 }
@@ -355,7 +350,7 @@ int init_bad_users_list_client() {
 		pthread_mutex_unlock(&mtx_shared);
 		return -1;
 	}
-	if ((bad_list_clents_global = (shm_structure *) mmap(0,
+	if ((bad_list_clents_global = (shm_structure *) cl_mmap(0,
 			sizeof(shm_structure), PROT_READ, MAP_SHARED, shm_fd_clents_global,
 			0)) == MAP_FAILED) {
 		close(shm_fd_clents_global);
@@ -370,7 +365,7 @@ int init_bad_users_list_client() {
 int remove_bad_users_list_client() {
 	pthread_mutex_lock(&mtx_shared);
 	if (bad_list_clents_global && (bad_list_clents_global != MAP_FAILED))
-		munmap((void *) bad_list_clents_global, sizeof(shm_structure));
+		cl_munmap((void *) bad_list_clents_global, sizeof(shm_structure));
 	close(shm_fd_clents_global);
 	pthread_mutex_unlock(&mtx_shared);
 	return 0;
@@ -386,7 +381,6 @@ int32_t is_user_in_bad_list_cleint_persistent(char *username) {
 			if (sem_trywait(sem_client) == 0) {
 				if (bad_list_clents_global && (bad_list_clents_global != MAP_FAILED)) {
 					long index = 0;
-					//pthread_mutex_lock(&mtx_shared);
 					for (index = 0; index < bad_list_clents_global->numbers; index++) {
 						if (!strncmp(bad_list_clents_global->items[index].username,
 								username, USERNAMEMAXLEN)) {
@@ -394,7 +388,6 @@ int32_t is_user_in_bad_list_cleint_persistent(char *username) {
 							break;
 						}
 					}
-					//pthread_mutex_unlock(&mtx_shared);
 				}
 				trys = 0;
 			} else {
