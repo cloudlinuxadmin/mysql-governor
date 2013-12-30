@@ -137,7 +137,7 @@ function installDbTest(){
 	fi
 	if [ "$SQL_VERSION" == "mariadb55" ]; then
 	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqls/cl-mariadb-5.5-common.repo
-	  yum install cl-mariadb cl-mariadb-bench cl-mariadb-devel cl-mariadb-libs cl-mariadb-server libaio --nogpgcheck -y --enablerepo=cl-mysql-5.5-testing
+	  yum install cl-mariadb cl-mariadb-bench cl-mariadb-devel cl-mariadb-libs cl-mariadb-server libaio --nogpgcheck -y --enablerepo=cl-mariadb-5.5-testing
 	fi
 
 	if [ ! -e /etc/my.cnf.bkp ]; then

@@ -152,7 +152,7 @@ if [ "$SQL_VERSION" == "mysql56" ]; then
     yum install cl-MySQL-client cl-MySQL-devel cl-MySQL-server cl-MySQL-shared libaio --nogpgcheck -y  --enablerepo=cl-mysql-5.6-testing
 fi
 if [ "$SQL_VERSION" == "mariadb55" ]; then
-    yum install cl-mariadb cl-mariadb-bench cl-mariadb-devel cl-mariadb-libs cl-mariadb-server libaio --nogpgcheck -y  --enablerepo=cl-mysql-5.5-testing
+    yum install cl-mariadb cl-mariadb-bench cl-mariadb-devel cl-mariadb-libs cl-mariadb-server libaio --nogpgcheck -y  --enablerepo=cl-mariadb-5.5-testing
 fi
 
 #/sbin/service mysqld stop
