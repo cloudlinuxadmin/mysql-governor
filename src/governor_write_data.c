@@ -24,6 +24,7 @@
 
 #include <unistd.h>
 #include <time.h>
+#include <poll.h>
 
 #include "data.h"
 
@@ -83,10 +84,93 @@ pid_t gettid(void) {
 	return syscall(__NR_gettid);
 }
 
-inline int
-connection_with_timeout(int sk, struct sockaddr_un *sa,  socklen_t len, int timeout)
+static int
+connection_with_timeout_poll(int sk, struct sockaddr_un *sa,  socklen_t len, int timeout)
 {
-    int flags = 0, error = 0, ret = 0;
+    int flags = 0, error = 0, ret = 0, error_len = sizeof(error), current_size = 0, index = 0;
+    int nfds = 1;
+    int ts;
+
+    ts = timeout * 1000;
+    struct pollfd fds[1];
+
+    memset(fds, 0 , sizeof(fds));
+
+    fds[0].fd = sk;
+    fds[0].events= POLLIN;
+
+    if( (flags = fcntl(sk, F_GETFL, 0)) < 0)
+        return -1;
+
+    if(fcntl(sk, F_SETFL, flags | O_NONBLOCK) < 0)
+        return -1;
+
+    if( (ret = connect(sk, (struct sockaddr *)sa, len)) < 0 )
+        if (errno != EINPROGRESS)
+            return -1;
+
+    if(ret != 0){
+    		int is_eintr = 0;
+    		do{
+    			if( (ret = poll(fds, nfds, ts)) < 0){
+    				if (errno!=EINTR){
+    					close(sk);
+    					return -1;
+    				}
+    				is_eintr = 1;
+    			} else {
+    				is_eintr = 0;
+    			}
+    		} while (is_eintr);
+    	    if(ret == 0){
+    	    	close(sk);
+    	        errno = ETIMEDOUT;
+    	        return -1;
+    	    } else if(fds[0].revents & POLLNVAL){
+    	    	close(sk);
+    	    	return -1;
+    	    } else if (fds[0].revents & POLLHUP){
+    	    	close(sk);
+    	    	return -1;
+    	    } else
+#ifdef _GNU_SOURCE
+    	    if (fds[0].revents & POLLHUP){
+    	       	close(sk);
+    	      	return -1;
+    	    } else
+#endif
+    	    if (fds[0].revents & POLLERR){
+    	       	close(sk);
+    	       	return -1;
+    	    } else if(fds[0].revents & POLLOUT){
+    	    	if(getsockopt(sk, SOL_SOCKET, SO_ERROR, &error, &error_len) < 0){
+    	    	   	close(sk);
+    	    	    return -1;
+    	    	}
+    	    } else {
+    	    	close(sk);
+    	    	return -1;
+    	    }
+
+    	    if(error){
+    	    	close(sk);
+    	        errno = error;
+    	        return -1;
+    	    }
+    }
+
+    /*if(fcntl(sk, F_SETFL, flags) < 0) {
+    	close(sk);
+        return -1;
+    }*/
+
+    return 0;
+}
+
+static int
+connection_with_timeout_select(int sk, struct sockaddr_un *sa,  socklen_t len, int timeout)
+{
+    int flags = 0, error = 0, ret = 0, error_len = sizeof(error);
     fd_set  read_set, write_set;
     struct timeval  ts;
 
@@ -108,8 +192,10 @@ connection_with_timeout(int sk, struct sockaddr_un *sa,  socklen_t len, int time
             return -1;
 
     if(ret != 0){
-    	    if( (ret = select(sk + 1, &read_set, &write_set, NULL, &ts)) < 0)
+    	    if( (ret = select(sk + 1, &read_set, &write_set, NULL, &ts)) < 0){
+    	    	close(sk);
     	        return -1;
+    	    }
     	    if(ret == 0){
     	    	close(sk);
     	        errno = ETIMEDOUT;
@@ -117,7 +203,7 @@ connection_with_timeout(int sk, struct sockaddr_un *sa,  socklen_t len, int time
     	    }
 
     	    if (FD_ISSET(sk, &read_set) || FD_ISSET(sk, &write_set)){
-    	        if(getsockopt(sk, SOL_SOCKET, SO_ERROR, &error, &len) < 0){
+    	        if(getsockopt(sk, SOL_SOCKET, SO_ERROR, &error, &error_len) < 0){
     	        	close(sk);
     	            return -1;
     	        }
@@ -147,34 +233,16 @@ static int connect_to_server_in() {
 	sd.socket = 0;
 	sd.status = 0;
 
-	/*
-	 * Get a socket to work with.  This socket will
-	 * be in the UNIX domain, and will be a
-	 * stream socket.
-	 */
 	if ((s = socket(AF_UNIX, SOCK_STREAM, 0)) < 0) {
 		return -1;
 	}
 
-	/*
-	 * Create the address we will be connecting to.
-	 */
 	saun.sun_family = AF_UNIX;
 	strncpy(saun.sun_path, MYSQL_SOCK_ADDRESS, sizeof(saun.sun_path)-1);
 
-	/*
-	 * Try to connect to the address.  For this to
-	 * succeed, the server must already have bound
-	 * this address, and must have issued a listen()
-	 * request.
-	 *
-	 * The third argument indicates the "length" of
-	 * the structure, not just the length of the
-	 * socket name.
-	 */
-	len = sizeof(saun.sun_family) + strlen(saun.sun_path);
+	len = sizeof(struct sockaddr_un);
 
-	if (connection_with_timeout(s, &saun, len, 5) < 0) {
+	if (connection_with_timeout_poll(s, &saun, len, 5) < 0) {
 		return -2;
 	}
 	/*int rt_code;
