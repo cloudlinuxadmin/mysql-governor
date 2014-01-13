@@ -1,5 +1,6 @@
 %define g_version   1.0
-%define g_release   47
+%define g_release   48
+%define g_key_library 1
 
 Name: governor-mysql
 Version: %{g_version}
@@ -129,6 +130,38 @@ if [ ! -z "$rs" ];then
 kill $(pgrep governor)
 fi
 
+#Check if libgovernor.so will be changed on package action
+#if install just save KEY
+#if this KEY will change - need to stop mysql before governor installation
+gKEY="%{g_key_library}"
+if [ $1 -eq 1 ] ; then
+        touch /etc/container/dbgovernor-libcheck
+        echo "$gKey" > /etc/container/dbgovernor-libcheck
+fi
+#if update check KEY
+if [ $1 -eq 2 ] ; then
+   if [ -e "/etc/container/dbgovernor-libcheck" ]; then
+        rKEY=`cat /etc/container/dbgovernor-libcheck | tr -d '\n'`
+        if [ "$rKEY" != "$gKEY" ]; then
+            touch /etc/container/dbgovernor-libcheck
+            echo "U" > /etc/container/dbgovernor-libcheck
+            if [ -e /etc/init.d/mysql ]; then
+                service mysql stop
+             elif [ -e /etc/init.d/mysqld ]; then
+                service mysqld stop
+            fi      
+        fi
+   else
+        touch /etc/container/dbgovernor-libcheck
+        echo "U" > /etc/container/dbgovernor-libcheck
+        if [ -e /etc/init.d/mysql ]; then
+                /etc/init.d/mysql stop
+        elif [ -e /etc/init.d/mysqld ]; then
+                /etc/init.d/mysqld stop
+        fi
+   fi
+fi
+
 %post
 if [ $1 -gt 0 ] ; then
  if [ -e "/usr/share/lve/dbgovernor/other/set_fs_suid_dumpable.sh" ]; then
@@ -148,6 +181,30 @@ fi
 /sbin/ldconfig
 rm -rf /%{_libdir}/liblve.so.1
 ln -s /%{_libdir}/liblve.so.0.9.0 /%{_libdir}/liblve.so.1
+
+#check if in signal file saved U, than need to start mysql
+gKEY="%{g_key_library}"
+if [ -e "/etc/container/dbgovernor-libcheck" ]; then
+    rKEY=`cat /etc/container/dbgovernor-libcheck | tr -d '\n'`
+        if [ "$rKEY" == "U" ]; then
+             if [ -e /etc/init.d/mysql ]; then
+                /etc/init.d/mysql status
+                if [ "$?" != "0" ]; then
+                    /etc/init.d/mysql start
+                else
+                    echo "MySQL already started"
+                fi
+             elif [ -e /etc/init.d/mysqld ]; then
+                /etc/init.d/mysqld status
+                if [ "$?" != "0" ]; then
+                    /etc/init.d/mysqld start
+                else
+                    echo "MySQL already started"
+                fi
+             fi  
+             echo "$gKey" > /etc/container/dbgovernor-libcheck
+        fi
+fi
 
 
 ldconfig
@@ -174,6 +231,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Mon Jan 13 2013 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-48
+- Fixes in libgovernor.so changed select to poll wich can be cause of stack corruption in MySQL
+
 * Mon Dec 30 2013 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-47
 - Fixed MariaDB test repository name
 

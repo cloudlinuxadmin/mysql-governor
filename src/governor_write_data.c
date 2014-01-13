@@ -97,7 +97,7 @@ connection_with_timeout_poll(int sk, struct sockaddr_un *sa,  socklen_t len, int
     memset(fds, 0 , sizeof(fds));
 
     fds[0].fd = sk;
-    fds[0].events= POLLIN;
+    fds[0].events= POLLOUT;
 
     if( (flags = fcntl(sk, F_GETFL, 0)) < 0)
         return -1;
@@ -105,59 +105,55 @@ connection_with_timeout_poll(int sk, struct sockaddr_un *sa,  socklen_t len, int
     if(fcntl(sk, F_SETFL, flags | O_NONBLOCK) < 0)
         return -1;
 
+
     if( (ret = connect(sk, (struct sockaddr *)sa, len)) < 0 )
-        if (errno != EINPROGRESS)
+        if ((errno != EINPROGRESS) && (errno != EINTR))
             return -1;
 
-    if(ret != 0){
-    		int is_eintr = 0;
-    		do{
-    			if( (ret = poll(fds, nfds, ts)) < 0){
-    				if (errno!=EINTR){
-    					close(sk);
-    					return -1;
-    				}
-    				is_eintr = 1;
-    			} else {
-    				is_eintr = 0;
-    			}
-    		} while (is_eintr);
-    	    if(ret == 0){
-    	    	close(sk);
-    	        errno = ETIMEDOUT;
-    	        return -1;
-    	    } else if(fds[0].revents & POLLNVAL){
-    	    	close(sk);
-    	    	return -1;
-    	    } else if (fds[0].revents & POLLHUP){
-    	    	close(sk);
-    	    	return -1;
-    	    } else
+	int is_eintr = 0;
+    do{
+ 	if( (ret = poll(fds, nfds, ts)) < 0){
+ 		if (errno!=EINTR){
+ 			close(sk);
+ 			return -1;
+ 		}
+ 		is_eintr = 1;
+ 	} else {
+ 		is_eintr = 0;
+    	}
+    } while (is_eintr);
+    if(ret == 0){
+     	close(sk);
+        errno = ETIMEDOUT;
+        return -1;
+    } else if(fds[0].revents & POLLNVAL){
+     	close(sk);
+     	return -1;
+    } else if (fds[0].revents & POLLHUP){
+     	close(sk);
+     	return -1;
+    } else
 #ifdef _GNU_SOURCE
-    	    if (fds[0].revents & POLLHUP){
-    	       	close(sk);
-    	      	return -1;
-    	    } else
+    if (fds[0].revents & POLLHUP){
+      	close(sk);
+       	return -1;
+    } else
 #endif
-    	    if (fds[0].revents & POLLERR){
-    	       	close(sk);
-    	       	return -1;
-    	    } else if(fds[0].revents & POLLOUT){
-    	    	if(getsockopt(sk, SOL_SOCKET, SO_ERROR, &error, &error_len) < 0){
-    	    	   	close(sk);
-    	    	    return -1;
-    	    	}
-    	    } else {
-    	    	close(sk);
-    	    	return -1;
-    	    }
-
-    	    if(error){
-    	    	close(sk);
-    	        errno = error;
-    	        return -1;
-    	    }
+    if (fds[0].revents & POLLERR){
+     	close(sk);
+       	return -1;
     }
+
+    if(getsockopt(sk, SOL_SOCKET, SO_ERROR, &error, &error_len) < 0){
+       	close(sk);
+        return -1;
+    }
+    if(error){
+       	close(sk);
+        errno = error;
+        return -1;
+    }
+
 
     /*if(fcntl(sk, F_SETFL, flags) < 0) {
     	close(sk);
