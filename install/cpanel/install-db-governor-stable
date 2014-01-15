@@ -140,7 +140,7 @@ if ($sql_version_2 eq "mariadb55"){
 } 
 
 if ($sql_version_2 eq "mysql56"){
-    @FILES = cPPkg_getfilelist_mysql56($cPPkg, $sql_version_2 , 'http://repo.cloudlinux.com/other/'. $system_tp .'/mysqls/cl-mysql-5.6-stable/'. $arch , $system_tp . ".4.cloudlinux." . $arch);
+    @FILES = cPPkg_getfilelist_mysql56($cPPkg, $sql_version_2 , 'http://repo.cloudlinux.com/other/'. $system_tp .'/mysqls/cl-mysql-5.6-stable/'. $arch , $system_tp . ".5.cloudlinux." . $arch);
 } 
 
 #remove old mysql
@@ -260,10 +260,10 @@ sub cPPkg_getfilelist {
 	 } else {
 	    $file =~ s/%syst%/el5/;
 	 }
-	 $file =~ s/5\.1\.63-2/5\.1\.68-4/;
+	 $file =~ s/5\.1\.63-2/5\.1\.72-4/;
 	 $file =~ s/\.cloudlinux\.1/\.cloudlinux/;
          $file =~ s/5\.0\.95-1/5\.0\.96-4/;
-         $file =~ s/5\.5\.25-3/5\.5\.32-10/;
+         $file =~ s/5\.5\.25-3/5\.5\.34-12/;
          $file =~ s/i386/i686/;
 	 print $url . '/' . $file. "\n";
          push( @FILES, $url . '/' . $file );
@@ -276,7 +276,7 @@ sub cPPkg_getfilelist_mariadb55 {
      my $majorver   = $_[1];
      my $url = $_[2];
      my $mp = $_[3];
-     my @fls = ("cl-mariadb-5.5.31-18", "cl-mariadb-bench-5.5.31-18", "cl-mariadb-devel-5.5.31-18", "cl-mariadb-libs-5.5.31-18", "cl-mariadb-server-5.5.31-18");
+     my @fls = ("cl-mariadb-5.5.34-21", "cl-mariadb-bench-5.5.34-21", "cl-mariadb-devel-5.5.34-21", "cl-mariadb-libs-5.5.34-21", "cl-mariadb-server-5.5.34-21");
      
      my @FILES; 
      foreach my $file ( @fls ) { 
@@ -295,7 +295,7 @@ sub cPPkg_getfilelist_mysql56 {
      my $url = $_[2];
      my $mp = $_[3];
      my $stp = $_[4];
-     my @fls = ( "cl-MySQL-client-5.6.13-1", "cl-MySQL-devel-5.6.13-1", "cl-MySQL-server-5.6.13-1", "cl-MySQL-shared-5.6.13-1", "cl-MySQL-test-5.6.13-1");
+     my @fls = ( "cl-MySQL-client-5.6.15-1", "cl-MySQL-devel-5.6.15-1", "cl-MySQL-server-5.6.15-1", "cl-MySQL-shared-5.6.15-1", "cl-MySQL-test-5.6.15-1");
      
      my @FILES; 
      foreach my $file ( @fls ) { 
