@@ -1,5 +1,5 @@
 %define g_version   1.0
-%define g_release   49
+%define g_release   50
 %define g_key_library 1
 
 Name: governor-mysql
@@ -234,6 +234,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Thu Jan 30 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-50
+- Fix path to perl (for cPanel 11.42.0 installation)
+
 * Wed Jan 15 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-49
 - Update MySQL up to 5.1.72, 5.5.34, 5.6.15 and MariaDB 5.5.34
 
