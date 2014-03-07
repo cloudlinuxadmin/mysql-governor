@@ -106,13 +106,6 @@ index 87cdaaa..23d5e9b 100644
  
 diff --git a/include/mysqld_error.h b/include/mysqld_error.h
 index c35c254..a6637a5 100644
---- a/include/mysqld_error.h
-+++ b/include/mysqld_error.h
-@@ -643,3 +643,4 @@
- #define ER_DEBUG_SYNC_TIMEOUT 1639
- #define ER_DEBUG_SYNC_HIT_LIMIT 1640
- #define ER_ERROR_LAST 1640
-+#define ER_NO_SUCH_THREAD_USER 1641
 diff --git a/max_connection2_mysql_5_1_69_b407.patch b/max_connection2_mysql_5_1_69_b407.patch
 new file mode 100644
 index 0000000..1a95795
@@ -894,14 +887,6 @@ index 18d5ab0..07e1b7a 100644
    /* Make sure that the pid file was created by the same process. */
 diff --git a/sql/share/errmsg.txt b/sql/share/errmsg.txt
 index 7cb9d9e..721ebe1 100644
---- a/sql/share/errmsg.txt
-+++ b/sql/share/errmsg.txt
-@@ -6213,3 +6213,5 @@ ER_DEBUG_SYNC_TIMEOUT
- ER_DEBUG_SYNC_HIT_LIMIT
-   eng "debug sync point hit limit reached"
-   ger "Debug Sync Point Hit Limit erreicht"
-+ER_NO_SUCH_THREAD_USER
-+  eng "Unknown user name: %s"
 diff --git a/sql/sql_acl.cc b/sql/sql_acl.cc
 index df31fec..8abd237 100644
 --- a/sql/sql_acl.cc
