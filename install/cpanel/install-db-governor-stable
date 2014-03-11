@@ -276,7 +276,7 @@ sub cPPkg_getfilelist_mariadb55 {
      my $majorver   = $_[1];
      my $url = $_[2];
      my $mp = $_[3];
-     my @fls = ("cl-mariadb-5.5.34-21", "cl-mariadb-bench-5.5.34-21", "cl-mariadb-devel-5.5.34-21", "cl-mariadb-libs-5.5.34-21", "cl-mariadb-server-5.5.34-21");
+     my @fls = ("cl-mariadb-5.5.34-22", "cl-mariadb-bench-5.5.34-22", "cl-mariadb-devel-5.5.34-22", "cl-mariadb-libs-5.5.34-22", "cl-mariadb-server-5.5.34-22");
      
      my @FILES; 
      foreach my $file ( @fls ) { 
