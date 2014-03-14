@@ -1,5 +1,5 @@
 %define g_version   1.0
-%define g_release   51
+%define g_release   52
 %define g_key_library 1
 
 Name: governor-mysql
@@ -234,6 +234,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Tue Mar 14 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-52
+- Fixed: MYSQLG-52 - dbctl delete issue
+
 * Tue Mar 11 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-51
 - Updated MariaDB up to 5.5.34-22
 

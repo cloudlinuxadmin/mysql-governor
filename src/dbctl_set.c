@@ -25,10 +25,10 @@
 
 void get_mb( char **s )
 {
-  //unsigned long long int mb = atol( *s ) * 1000000;
-  //sprintf( *s, "%d", mb );
-  *s = realloc( *s, strlen( *s ) + ( 15 * sizeof( char ) ) );
-  sprintf( *s, "%s000000", *s );
+  unsigned long long mb = (unsigned long long)(atol( *s )) * (unsigned long long)(1024 * 1024);
+  sprintf( *s, "%llu", mb );
+  //*s = realloc( *s, strlen( *s ) + ( 15 * sizeof( char ) ) );
+  //sprintf( *s, "%s000000", *s );
 }
     
 int split( SplitStr **s_s, char *str, char t )
@@ -464,9 +464,11 @@ int deleteUser( char *user )
   ezxml_t child = (ezxml_t)SearchTagByName( cfg, "user", user );
   if( child != NULL )
   {
-    ezxml_t limit = NULL;
+    /*ezxml_t limit = NULL;
     for( limit = ezxml_child( child, "limit" ); limit; limit = limit->next ) 
-      ezxml_cut( limit );
+      ezxml_cut( limit );*/
+    ezxml_cut(child);
+
 
     rewrite_cfg( ezxml_toxml( cfg ) );
     ezxml_free( cfg );
