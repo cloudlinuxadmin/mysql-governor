@@ -75,7 +75,8 @@ if(!$canusecPPkg){
     my $is_50=index('5.0',$CPCONF{'mysql-version'});
     my $is_51=index('5.1',$CPCONF{'mysql-version'});
     my $is_55=index('5.5',$CPCONF{'mysql-version'});
-    if (($is_50 == -1) && ($is_51 == -1) && ($is_55 == -1)){
+    my $is_56=index('5.6',$CPCONF{'mysql-version'});
+    if (($is_50 == -1) && ($is_51 == -1) && ($is_55 == -1) && ($is_56 == -1)){
 	$sql_version = "5.7";
     }
 }
@@ -118,6 +119,10 @@ if( open( my $mysql_db, "<", $mysqlTypeFileSet ) )
 #    print "MySQL beta is available only for 5.1 and 5.0\n";
 #    exit;
 #}
+
+if ($sql_version_2=="5.6"){
+    $sql_version_2="mysql56";
+} 
 
 $cPPkg->setupfiles( $sql_version );
 

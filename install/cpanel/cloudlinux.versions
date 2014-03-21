@@ -5,3 +5,4 @@ target_settings:
   MySQL50: unmanaged
   MySQL51: unmanaged
   MySQL55: unmanaged
+  MySQL56: unmanaged

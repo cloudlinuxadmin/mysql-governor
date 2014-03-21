@@ -201,7 +201,7 @@ def delete_mysql():
                 else:
                         exec_command_out("/scripts/upcp --force")
                 if os.path.exists("/scripts/check_cpanel_rpms"):
-                        exec_command_out("/scripts/check_cpanel_rpms --fix --targets=MySQL50,MySQL51,MySQL55")
+                        exec_command_out("/scripts/check_cpanel_rpms --fix --targets=MySQL50,MySQL51,MySQL55,MySQL56")
 	elif cp.name == "InterWorx":		
                 exec_command_out(SOURCE+"iworx/install-db-governor.sh --delete")
 	elif cp.name == "ISPManager":
@@ -244,6 +244,7 @@ def remove_mysql_justdb():
         remove_sepcific_mysql('MySQL50', yb)
         remove_sepcific_mysql('MySQL51', yb)
         remove_sepcific_mysql('MySQL55', yb)
+        remove_sepcific_mysql('MySQL56', yb)
 	remove_sepcific_mysql('MariaDB', yb)
 	remove_sepcific_mysql('mariadb', yb)
 	print "Cleaning of MySQL packages completed"

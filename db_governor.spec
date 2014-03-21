@@ -1,5 +1,5 @@
 %define g_version   1.0
-%define g_release   52
+%define g_release   53
 %define g_key_library 1
 
 Name: governor-mysql
@@ -234,6 +234,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Fri Mar 21 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-53
+- Fixed: KNA-700-53569 - support of MySQL56 in cPanel
+
 * Tue Mar 14 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-52
 - Fixed: MYSQLG-52 - dbctl delete issue
 
