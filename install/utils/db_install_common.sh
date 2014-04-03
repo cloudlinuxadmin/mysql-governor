@@ -21,49 +21,49 @@ function installDb(){
 	        sed '/userstat_running/d' -i /etc/my.cnf
 	    fi
 	fi
-
+    yum clean all
 	if [ "$SQL_VERSION" == "auto" ]; then
-	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqls/cl-mysql-common.repo
+	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqlmeta/cl-mysql-common.repo
 	  if [ -e /usr/libexec/mysqld ]; then
 	   mv -f /usr/libexec/mysqld /usr/libexec/mysqld.bak
           fi
-	  yum install mysql mysql-server mysql-bench mysql-shared mysql-libs --nogpgcheck -y
+	  yum install cl-MySQL-meta cl-MySQL-meta-client cl-MySQL-meta-devel --nogpgcheck -y --enablerepo=cl-mysql
 	fi
 	if [ "$SQL_VERSION" == "mysql50" ]; then
-	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqls/cl-mysql-5.0-common.repo
+	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqlmeta/cl-mysql-5.0-common.repo
 	  if [ -e /usr/libexec/mysqld ]; then
 	    mv -f /usr/libexec/mysqld /usr/libexec/mysqld.bak
           fi
-	  yum install cl-MySQL-bench cl-MySQL-client cl-MySQL-devel cl-MySQL-server cl-MySQL-shared --nogpgcheck -y
+	  yum install cl-MySQL-meta cl-MySQL-meta-client cl-MySQL-meta-devel --nogpgcheck -y --enablerepo=cl-mysql
 	  ln -sf /etc/init.d/mysql /etc/init.d/mysqld
 	fi
 	if [ "$SQL_VERSION" == "mysql51" ]; then
-	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqls/cl-mysql-5.1-common.repo
+	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqlmeta/cl-mysql-5.1-common.repo
 	  if [ -e /usr/libexec/mysqld ]; then
 	   mv -f /usr/libexec/mysqld /usr/libexec/mysqld.bak
           fi
-	  yum install cl-MySQL-client cl-MySQL-devel cl-MySQL-server cl-MySQL-shared --nogpgcheck -y
+	  yum install cl-MySQL-meta cl-MySQL-meta-client cl-MySQL-meta-devel --nogpgcheck -y --enablerepo=cl-mysql
 	  ln -sf /etc/init.d/mysql /etc/init.d/mysqld
 	fi
 	if [ "$SQL_VERSION" == "mysql55" ]; then
-	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqls/cl-mysql-5.5-common.repo
+	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqlmeta/cl-mysql-5.5-common.repo
 	  if [ -e /usr/libexec/mysqld ]; then
 	   mv -f /usr/libexec/mysqld /usr/libexec/mysqld.bak
           fi
-	  yum install cl-MySQL-client cl-MySQL-devel cl-MySQL-server cl-MySQL-shared libaio --nogpgcheck -y
+	  yum install cl-MySQL-meta cl-MySQL-meta-client cl-MySQL-meta-devel libaio --nogpgcheck -y --enablerepo=cl-mysql
 	  ln -sf /etc/init.d/mysql /etc/init.d/mysqld
 	fi
 	if [ "$SQL_VERSION" == "mysql56" ]; then
-	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqls/cl-mysql-5.6-common.repo
+	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqlmeta/cl-mysql-5.6-common.repo
 	  if [ -e /usr/libexec/mysqld ]; then
 	   mv -f /usr/libexec/mysqld /usr/libexec/mysqld.bak
           fi
-	  yum install cl-MySQL-client cl-MySQL-devel cl-MySQL-server cl-MySQL-shared libaio --nogpgcheck -y
+	  yum install cl-MySQL-meta cl-MySQL-meta-client cl-MySQL-meta-devel libaio --nogpgcheck -y --enablerepo=cl-mysql
 	  ln -sf /etc/init.d/mysql /etc/init.d/mysqld
 	fi
 	if [ "$SQL_VERSION" == "mariadb55" ]; then
-	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqls/cl-mariadb-5.5-common.repo
-	  yum install cl-mariadb cl-mariadb-bench cl-mariadb-devel cl-mariadb-libs cl-mariadb-server libaio --nogpgcheck -y
+	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqlmeta/cl-mariadb-5.5-common.repo
+	  yum install cl-MariaDB-meta cl-MariaDB-meta-client cl-MariaDB-meta-devel libaio --nogpgcheck -y --enablerepo=cl-mysql
 	fi
 
 	if [ ! -e /etc/my.cnf.bkp ]; then
@@ -95,49 +95,49 @@ function installDbTest(){
 	        sed '/userstat_running/d' -i /etc/my.cnf
 	    fi
 	fi
-
+    yum clean all
 	if [ "$SQL_VERSION" == "auto" ]; then
-	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqls/cl-mysql-common.repo
+	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqlmeta/cl-mysql-common.repo
 	  if [ -e /usr/libexec/mysqld ]; then
 	   mv -f /usr/libexec/mysqld /usr/libexec/mysqld.bak
           fi
-	  yum install mysql mysql-server mysql-bench mysql-shared mysql-libs --nogpgcheck -y --enablerepo=cl-mysql-testing
+	  yum install cl-MySQL-meta cl-MySQL-meta-client cl-MySQL-meta-devel --nogpgcheck -y --enablerepo=cl-mysql-testing
 	fi
 	if [ "$SQL_VERSION" == "mysql50" ]; then
-	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqls/cl-mysql-5.0-common.repo
+	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqlmeta/cl-mysql-5.0-common.repo
 	  if [ -e /usr/libexec/mysqld ]; then
 	    mv -f /usr/libexec/mysqld /usr/libexec/mysqld.bak
           fi
-	  yum install cl-MySQL-bench cl-MySQL-client cl-MySQL-devel cl-MySQL-server cl-MySQL-shared --nogpgcheck -y --enablerepo=cl-mysql-5.0-testing
+	  yum install cl-MySQL-meta cl-MySQL-meta-client cl-MySQL-meta-devel --nogpgcheck -y --enablerepo=cl-mysql-testing
 	  ln -sf /etc/init.d/mysql /etc/init.d/mysqld
 	fi
 	if [ "$SQL_VERSION" == "mysql51" ]; then
-	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqls/cl-mysql-5.1-common.repo
+	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqlmeta/cl-mysql-5.1-common.repo
 	  if [ -e /usr/libexec/mysqld ]; then
 	   mv -f /usr/libexec/mysqld /usr/libexec/mysqld.bak
           fi
-	  yum install cl-MySQL-client cl-MySQL-devel cl-MySQL-server cl-MySQL-shared --nogpgcheck -y --enablerepo=cl-mysql-5.1-testing
+	  yum install cl-MySQL-meta cl-MySQL-meta-client cl-MySQL-meta-devel --nogpgcheck -y --enablerepo=cl-mysql-testing
 	  ln -sf /etc/init.d/mysql /etc/init.d/mysqld
 	fi
 	if [ "$SQL_VERSION" == "mysql55" ]; then
-	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqls/cl-mysql-5.5-common.repo
+	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqlmeta/cl-mysql-5.5-common.repo
 	  if [ -e /usr/libexec/mysqld ]; then
 	   mv -f /usr/libexec/mysqld /usr/libexec/mysqld.bak
           fi
-	  yum install cl-MySQL-client cl-MySQL-devel cl-MySQL-server cl-MySQL-shared libaio --nogpgcheck -y --enablerepo=cl-mysql-5.5-testing
+	  yum install cl-MySQL-meta cl-MySQL-meta-client cl-MySQL-meta-devel libaio --nogpgcheck -y --enablerepo=cl-mysql-testing
 	  ln -sf /etc/init.d/mysql /etc/init.d/mysqld
 	fi
 	if [ "$SQL_VERSION" == "mysql56" ]; then
-	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqls/cl-mysql-5.6-common.repo
+	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqlmeta/cl-mysql-5.6-common.repo
 	  if [ -e /usr/libexec/mysqld ]; then
 	   mv -f /usr/libexec/mysqld /usr/libexec/mysqld.bak
           fi
-	  yum install cl-MySQL-client cl-MySQL-devel cl-MySQL-server cl-MySQL-shared libaio --nogpgcheck -y --enablerepo=cl-mysql-5.6-testing
+      yum install cl-MySQL-meta cl-MySQL-meta-client cl-MySQL-meta-devel libaio --nogpgcheck -y --enablerepo=cl-mysql-testing
 	  ln -sf /etc/init.d/mysql /etc/init.d/mysqld
 	fi
 	if [ "$SQL_VERSION" == "mariadb55" ]; then
-	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqls/cl-mariadb-5.5-common.repo
-	  yum install cl-mariadb cl-mariadb-bench cl-mariadb-devel cl-mariadb-libs cl-mariadb-server libaio --nogpgcheck -y --enablerepo=cl-mariadb-5.5-testing
+	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqlmeta/cl-mariadb-5.5-common.repo
+	  yum install cl-MariaDB-meta cl-MariaDB-meta-client cl-MariaDB-meta-devel libaio --nogpgcheck -y --enablerepo=cl-mysql-testing
 	fi
 
 	if [ ! -e /etc/my.cnf.bkp ]; then

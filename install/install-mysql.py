@@ -105,6 +105,26 @@ def usage():
 	print " -u | --upgrade             : install MySQL with mysql_upgrade_command"
         print " -t | --dbupdate            : update UserMap file"
 
+def check_leave_pid():
+	if cp.name == "Plesk" and verCompare (cp.version, "10") >= 0:
+		if os.path.exists(SOURCE+"utils/check_mysql_leave_pid_other.sh"):
+            	    exec_command(SOURCE+"utils/check_mysql_leave_pid_other.sh")
+	elif cp.name == "cPanel":
+		if os.path.exists(SOURCE+"cpanel/check_mysql_leave_pid.sh"):
+            	    exec_command(SOURCE+"cpanel/check_mysql_leave_pid.sh")
+	elif cp.name == "InterWorx":
+		if os.path.exists(SOURCE+"utils/check_mysql_leave_pid_other.sh"):
+            	    exec_command(SOURCE+"utils/check_mysql_leave_pid_other.sh")
+	elif cp.name == "ISPManager":	
+		if os.path.exists(SOURCE+"utils/check_mysql_leave_pid_other.sh"):
+            	    exec_command(SOURCE+"utils/check_mysql_leave_pid_other.sh")
+	elif cp.name == "DirectAdmin":
+		if os.path.exists(SOURCE+"utils/check_mysql_leave_pid_other.sh"):
+            	    exec_command(SOURCE+"utils/check_mysql_leave_pid_other.sh")
+	else:
+		if os.path.exists(SOURCE+"utils/check_mysql_leave_pid_other.sh"):
+            	    exec_command(SOURCE+"utils/check_mysql_leave_pid_other.sh")
+
 def install_mysql():
 	if cp.name == "Plesk" and verCompare (cp.version, "10") >= 0:
 		exec_command_out(SOURCE+"plesk/install-db-governor.sh --install")
@@ -131,62 +151,92 @@ def update_user_map_file():
 	elif cp.name == "ISPManager":	
 		exec_command(SOURCE+"utils/empty_action.sh")
 	elif cp.name == "DirectAdmin":
-		exec_command(SOURCE+"utils/empty_action.sh")
+		exec_command(SOURCE+"da/dbgovernor_map.py")
 	else:
 		exec_command(SOURCE+"utils/empty_action.sh")
 
 def install_dbmap_update():
-        update_user_map_file();                
+        update_user_map_file(); 
+
+def install_db_user_mapfile_cron():
+        if os.path.exists("/usr/share/lve/dbgovernor/utils/dbgovernor-usermap-cron"):
+		shutil.copy2("/usr/share/lve/dbgovernor/utils/dbgovernor-usermap-cron", "/etc/cron.d/dbgovernor-usermap-cron")
+
+def delete_db_user_mapfile_cron():
+        if os.path.exists("/usr/share/lve/dbgovernor/utils/dbgovernor-usermap-cron"):
+                os.remove("/usr/share/lve/dbgovernor/utils/dbgovernor-usermap-cron")
 
 def install_mysql_beta():
         exec_command_out(SOURCE+"other/set_fs_suid_dumpable.sh")
 	if cp.name == "Plesk" and verCompare (cp.version, "10") >= 0:
+                check_leave_pid()
 		exec_command_out(SOURCE+"plesk/install-db-governor.sh --install")
+                install_db_user_mapfile_cron()
 	elif cp.name == "cPanel":
 		# install hook for CPanel to patch Apache's suexec and suphp
+                check_leave_pid()
 		exec_command_out(SOURCE+"cpanel/db_governor-clear-old-hook")
 		exec_command_out(SOURCE+"cpanel/install-db-governor-stable")
-                exec_command_out(SOURCE+"cpanel/install-mysql-disabler.sh")
-                exec_command_out(SOURCE+"cpanel/cpanel-install-hooks")		
-                exec_command_out(SOURCE+"cpanel/upgrade-mysql-disabler.sh")
-                if os.path.exists("/usr/share/lve/dbgovernor/utils/dbgovernor-usermap-cron"):
-                        shutil.copy2("/usr/share/lve/dbgovernor/utils/dbgovernor-usermap-cron", "/etc/cron.d/dbgovernor-usermap-cron")
+		exec_command_out(SOURCE+"cpanel/install-mysql-disabler.sh")
+		exec_command_out(SOURCE+"cpanel/cpanel-install-hooks")		
+		exec_command_out(SOURCE+"cpanel/upgrade-mysql-disabler.sh")
+		install_db_user_mapfile_cron()
 	elif cp.name == "InterWorx":
+                check_leave_pid()
 		exec_command_out(SOURCE+"iworx/install-db-governor.sh --install")
+                install_db_user_mapfile_cron()
 	elif cp.name == "ISPManager":	
+                check_leave_pid()
 		exec_command_out(SOURCE+"ispmanager/install-db-governor.sh --install")
+                install_db_user_mapfile_cron()
 	elif cp.name == "DirectAdmin":
+                check_leave_pid()
 		exec_command_out(SOURCE+"da/install-db-governor.sh --install")
+                install_db_user_mapfile_cron()
 	else:
+                check_leave_pid()
                 exec_command_out(SOURCE+"other/install-db-governor.sh --install")
+                install_db_user_mapfile_cron()
 
 def install_mysql_beta_testing():
         exec_command_out(SOURCE+"other/set_fs_suid_dumpable.sh")
 	if cp.name == "Plesk" and verCompare (cp.version, "10") >= 0:
+                check_leave_pid()
 		exec_command_out(SOURCE+"plesk/install-db-governor-beta.sh --install")
+                install_db_user_mapfile_cron()
 	elif cp.name == "cPanel":
 		# install hook for CPanel to patch Apache's suexec and suphp
+                check_leave_pid()
 		exec_command_out(SOURCE+"cpanel/db_governor-clear-old-hook")
 		exec_command_out(SOURCE+"cpanel/install-db-governor-beta")
                 exec_command_out(SOURCE+"cpanel/install-mysql-disabler.sh")
                 exec_command_out(SOURCE+"cpanel/cpanel-install-hooks")		
                 exec_command_out(SOURCE+"cpanel/upgrade-mysql-disabler.sh")
-                if os.path.exists("/usr/share/lve/dbgovernor/utils/dbgovernor-usermap-cron"):
-                        shutil.copy2("/usr/share/lve/dbgovernor/utils/dbgovernor-usermap-cron", "/etc/cron.d/dbgovernor-usermap-cron")
+                install_db_user_mapfile_cron()
 	elif cp.name == "InterWorx":
+                check_leave_pid()
 		exec_command_out(SOURCE+"iworx/install-db-governor-beta.sh --install")
+                install_db_user_mapfile_cron()
 	elif cp.name == "ISPManager":	
+                check_leave_pid()
 		exec_command_out(SOURCE+"ispmanager/install-db-governor-beta.sh --install")
+                install_db_user_mapfile_cron()
 	elif cp.name == "DirectAdmin":
+                check_leave_pid()
 		exec_command_out(SOURCE+"da/install-db-governor-beta.sh --install")
+                install_db_user_mapfile_cron()
 	else:
+                check_leave_pid()
                 exec_command_out(SOURCE+"other/install-db-governor-beta.sh --install")
+                install_db_user_mapfile_cron()
 
 
 def delete_mysql():
 	if cp.name == "Plesk" and verCompare (cp.version, "10") >= 0:		
+                delete_db_user_mapfile_cron()
                 exec_command_out(SOURCE+"plesk/install-db-governor.sh --delete")
 	elif cp.name == "cPanel":
+                delete_db_user_mapfile_cron()
                 exec_command_out(SOURCE+"cpanel/cpanel-delete-hooks")
 		if os.path.exists("/etc/mysqlupdisable"):
 			os.remove("/etc/mysqlupdisable")
@@ -203,12 +253,16 @@ def delete_mysql():
                 if os.path.exists("/scripts/check_cpanel_rpms"):
                         exec_command_out("/scripts/check_cpanel_rpms --fix --targets=MySQL50,MySQL51,MySQL55,MySQL56")
 	elif cp.name == "InterWorx":		
+                delete_db_user_mapfile_cron()
                 exec_command_out(SOURCE+"iworx/install-db-governor.sh --delete")
 	elif cp.name == "ISPManager":
+                delete_db_user_mapfile_cron()
                 exec_command_out(SOURCE+"ispmanager/install-db-governor.sh --delete")
 	elif cp.name == "DirectAdmin":
+                delete_db_user_mapfile_cron()
 		exec_command_out(SOURCE+"da/install-db-governor.sh --delete")
 	else:
+                delete_db_user_mapfile_cron()
                 exec_command_out(SOURCE+"other/install-db-governor.sh --delete")
 
 
@@ -233,28 +287,41 @@ def remove_sepcific_mysql(mname, yb):
         remove_specific_package(mname + "-bench", yb)
         remove_specific_package(mname + "-test", yb)
         remove_specific_package(mname + "-client", yb)
-	remove_specific_package(mname + "-libs", yb)
-	remove_specific_package(mname + "-compat", yb)
-	remove_specific_package(mname + "", yb)
+        remove_specific_package(mname + "-libs", yb)
+        remove_specific_package(mname + "-compat", yb)
+        remove_specific_package(mname + "", yb)
 
 def remove_mysql_justdb():
-	yb = yum.YumBase()
+        yb = yum.YumBase()
         remove_sepcific_mysql('cpanel-MySQL', yb)
         remove_sepcific_mysql('MySQL', yb)
         remove_sepcific_mysql('MySQL50', yb)
         remove_sepcific_mysql('MySQL51', yb)
         remove_sepcific_mysql('MySQL55', yb)
         remove_sepcific_mysql('MySQL56', yb)
-	remove_sepcific_mysql('MariaDB', yb)
-	remove_sepcific_mysql('mariadb', yb)
-	print "Cleaning of MySQL packages completed"
+        remove_sepcific_mysql('MariaDB', yb)
+        remove_sepcific_mysql('mariadb', yb)
+        print "Cleaning of MySQL packages completed"
 
 def remove_mysql_justdb_cl():
-	yb = yum.YumBase()
+        yb = yum.YumBase()
         remove_sepcific_mysql('cl-MySQL', yb)
-	remove_sepcific_mysql('cl-mariadb', yb)
-	remove_sepcific_mysql('mysql', yb)
-	print "Cleaning of cl-MySQL packages completed"
+        remove_sepcific_mysql('cl-mariadb', yb)
+        remove_sepcific_mysql('mysql', yb)
+
+        remove_sepcific_mysql('cl-MySQL-meta', yb)
+        remove_sepcific_mysql('cl-MySQL-meta-client', yb)
+        remove_sepcific_mysql('cl-MySQL-meta-devel', yb)
+        remove_sepcific_mysql('cl-MariaDB-meta', yb)
+        remove_sepcific_mysql('cl-MariaDB-meta-client', yb)
+        remove_sepcific_mysql('cl-MariaDB-meta-devel', yb)
+        remove_sepcific_mysql('cl-MySQL50', yb)
+        remove_sepcific_mysql('cl-MySQL51', yb)
+        remove_sepcific_mysql('cl-MySQL55', yb)
+        remove_sepcific_mysql('cl-MySQL56', yb)
+        remove_sepcific_mysql('cl-MariaDB55', yb)
+
+        print "Cleaning of cl-MySQL packages completed"
 
 def delete_governor_rpm():
     exec_command_out("rpm -e governor-mysql")

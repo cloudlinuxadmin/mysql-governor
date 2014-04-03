@@ -1,5 +1,5 @@
 %define g_version   1.0
-%define g_release   53
+%define g_release   54
 %define g_key_library 1
 
 Name: governor-mysql
@@ -113,6 +113,11 @@ install -D -m 755 install/plesk/install-db-governor-beta.sh $RPM_BUILD_ROOT/usr/
 install -D -m 755 install/iworx/install-db-governor-beta.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/iworx/install-db-governor-beta.sh
 install -D -m 755 install/ispmanager/install-db-governor-beta.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/ispmanager/install-db-governor-beta.sh
 install -D -m 755 install/other/install-db-governor-beta.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/other/install-db-governor-beta.sh
+
+install -D -m 755 install/cpanel/install-db-governor.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/install-db-governor.sh
+install -D -m 755 install/da/dbgovernor_map.py $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/da/dbgovernor_map.py 
+install -D -m 755 install/utils/check_mysql_leave_pid_other.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/check_mysql_leave_pid_other.sh
+
 #install cron utility
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/cron.d/
 install -D -m 644 cron/lvedbgovernor-utils-cron $RPM_BUILD_ROOT%{_sysconfdir}/cron.d/
@@ -234,6 +239,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Fri Apr 04 2014 Alexey Berezhok <aberezhok@cloudlinux.com>, Pavel Shkatula <shpp@cloudlinux.com> 1.0-54
+- Moved governor to new MySQL repos
+
 * Fri Mar 21 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-53
 - Fixed: KNA-700-53569 - support of MySQL56 in cPanel
 

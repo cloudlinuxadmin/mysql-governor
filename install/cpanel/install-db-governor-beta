@@ -1,9 +1,9 @@
 #!/usr/local/cpanel/3rdparty/bin/perl
 
-#BEGIN { unshift @INC, '/scripts'; }
 BEGIN { unshift @INC, '/usr/local/cpanel', '/scripts'; }
 
 my $pckg_name = 'Cpanel';
+eval "use " . $pckg_name . ";";
 use strict;
 
 eval "use " .$pckg_name . "::cPPkgs          ();";
@@ -55,61 +55,39 @@ if ( $machine =~ /i.86/ ) {
 
 my %CPCONF =  eval $pckg_name . "::Config::LoadCpConf::loadcpconf();";
 
-# Default to 4 if mysql-version is unset
+# Default to 5.5 if mysql-version is unset
 if (   !exists $CPCONF{'mysql-version'}
     || !defined $CPCONF{'mysql-version'}
     || $CPCONF{'mysql-version'} eq ''
     || $CPCONF{'mysql-version'} eq '3' ) {
-    $CPCONF{'mysql-version'} = '4';
+    $CPCONF{'mysql-version'} = '5.5';
 }
 
 my $updated = 0;
 my $baseurl    = $url . '/sources/cpanel/cl';
 my $cPPkg      =  eval $pckg_name . "::cPPkgs->new( 'MySQL', '$baseurl' );";
 
-my $canusecPPkg = ( $cPPkg->haspkg( $CPCONF{'mysql-version'} ) && $CPCONF{'mysql-version'} >= 4 );
-
 my $sql_version = $CPCONF{'mysql-version'};
 my $sql_version_2 = $sql_version;
-if(!$canusecPPkg){
-    my $is_50=index('5.0',$CPCONF{'mysql-version'});
-    my $is_51=index('5.1',$CPCONF{'mysql-version'});
-    my $is_55=index('5.5',$CPCONF{'mysql-version'});
-    my $is_56=index('5.6',$CPCONF{'mysql-version'});
-    if (($is_50 == -1) && ($is_51 == -1) && ($is_55 == -1) && ($is_56 == -1)){
-	$sql_version = "5.7";
-    }
-}
 
-if( open( my $mysql_db, "<", $mysqlTypeFileSet ) )
-{
+if( open( my $mysql_db, "<", $mysqlTypeFileSet ) ){
   my $type_db = <$mysql_db>;
-  if( $type_db ne "auto" )
-  {
-    if( $type_db eq "mysql50" )
-    {
+  if( $type_db ne "auto" ){
+    $sql_version_2=$type_db;
+    if( $type_db eq "mysql50" ){
       $sql_version="5.0";
-      $sql_version_2=$sql_version;
     }
-    if( $type_db eq "mysql51" )
-    {
+    if( $type_db eq "mysql51" ){
       $sql_version="5.1";
-      $sql_version_2=$sql_version;
     }
-    if( $type_db eq "mysql55" )
-    {
+    if( $type_db eq "mysql55" ){
       $sql_version="5.5";
-      $sql_version_2=$sql_version;
     }
-    if( $type_db eq "mysql56" )
-    {
-      $sql_version="5.5";
-      $sql_version_2="mysql56";
+    if( $type_db eq "mysql56" ){
+      $sql_version="5.6";
     }
-    if( $type_db eq "mariadb55" )
-    {
+    if( $type_db eq "mariadb55" ){
       $sql_version="5.5";
-      $sql_version_2="mariadb55";
     }
   }
   close( $mysql_db );
@@ -119,19 +97,22 @@ if( open( my $mysql_db, "<", $mysqlTypeFileSet ) )
 system '/sbin/service', 'mysql', 'stop';
 
 
-if ($sql_version_2=="5.1"){
-    if ( -e '/usr/libexec/mysqld' ) {
-	rename '/usr/libexec/mysqld', '/usr/libexec/mysqld.bak'
-    }                          
-} 
-
 if ($sql_version_2=="5.0"){
+    $sql_version_2="mysql50";
     if ( -e '/usr/libexec/mysqld' ) {
-	rename '/usr/libexec/mysqld', '/usr/libexec/mysqld.bak'
+        rename '/usr/libexec/mysqld', '/usr/libexec/mysqld.bak'
     }  
 } 
 
+if ($sql_version_2=="5.1"){
+    $sql_version_2="mysql51";
+    if ( -e '/usr/libexec/mysqld' ) {
+        rename '/usr/libexec/mysqld', '/usr/libexec/mysqld.bak'
+    }                          
+} 
+
 if ($sql_version_2=="5.5"){
+    $sql_version_2="mysql55";
     if ( -e '/usr/libexec/mysqld' ) {
 	rename '/usr/libexec/mysqld', '/usr/libexec/mysqld.bak'
     }  
@@ -139,78 +120,20 @@ if ($sql_version_2=="5.5"){
 
 if ($sql_version_2=="5.6"){
     $sql_version_2="mysql56";
+    if ( -e '/usr/libexec/mysqld' ) {
+	rename '/usr/libexec/mysqld', '/usr/libexec/mysqld.bak'
+    }  
 } 
 
-if ($sql_version=="5.5"){
-    system '/usr/bin/yum', 'install', 'libaio', '-y';
-}
-
 system '/usr/share/lve/dbgovernor/cpanel/check_mysql_leave_pid.sh';
-
-get_repo($sql_version_2, $system_tp);
-
+system "/usr/share/lve/dbgovernor/cpanel/install-db-governor.sh $sql_version_2 --install --beta";
 resmysql();
-
-installMySQLTesting($sql_version_2, $system_tp);
-
-print  "db_governor checking: ";
-if (check_package('governor-mysql')){
-    print "OK \n";
-    system 'chkconfig', '--level', '35', 'db_governor', 'on';                                                                                                                  
-    system '/sbin/service', 'db_governor', 'restart';
-} else {
-    print "FAILED \n";
-}
-
-sub installMySQLTesting
-{
-    my $msql_version = $_[0];
-    my $msystem_tp = $_[1];
-
-    if ($msql_version=="5.1") {
-	do_command("yum install cl-MySQL-client cl-MySQL-devel cl-MySQL-server cl-MySQL-shared cl-MySQL-bench cl-MySQL-test --nogpgcheck -y --enablerepo=cl-mysql-5.1-testing");
-    } elsif ($msql_version=="5.0") {
-	do_command("yum install cl-MySQL-bench cl-MySQL-client cl-MySQL-devel cl-MySQL-server cl-MySQL-shared cl-MySQL-bench cl-MySQL-test --nogpgcheck -y --enablerepo=cl-mysql-5.0-testing");
-    } elsif ($msql_version=="5.5") {
-	do_command("yum install cl-MySQL-client cl-MySQL-devel cl-MySQL-server cl-MySQL-shared cl-MySQL-bench cl-MySQL-test libaio --nogpgcheck -y --enablerepo=cl-mysql-5.5-testing");
-    } elsif ($msql_version eq "mariadb55") {
-	do_command("yum install cl-mariadb cl-mariadb-bench cl-mariadb-devel cl-mariadb-libs cl-mariadb-server libaio --nogpgcheck -y --enablerepo=cl-mariadb-5.5-testing");
-    } elsif ($msql_version eq "mysql56") {
-	do_command("yum install cl-MySQL-client cl-MySQL-devel cl-MySQL-server cl-MySQL-shared cl-MySQL-test libaio --nogpgcheck -y --enablerepo=cl-mysql-5.6-testing");
-    } else {
-	print "Error unknown version\n";
-    }
-}
 
 sub do_command
 {
   my($arg) = shift;
   system("$arg");
   return $? >> 8;
-}
-
-
-sub get_repo {
-	my $msql_version = $_[0];
-	my $msystem_tp = $_[1];
-	my $murl = 'http://repo.cloudlinux.com/other';
-	my $burl = "";
-	if ($msql_version=="5.1") {$burl = $murl ."/".  $msystem_tp . "/mysqls/cl-mysql-5.1-common.repo";}
-	if ($msql_version=="5.0") {$burl = $murl ."/".  $msystem_tp . "/mysqls/cl-mysql-5.0-common.repo";}
-	if ($msql_version=="5.5") {$burl = $murl ."/".  $msystem_tp . "/mysqls/cl-mysql-5.5-common.repo";}
-	if ($msql_version eq "mariadb55") {$burl = $murl ."/".  $msystem_tp . "/mysqls/cl-mariadb-5.5-common.repo";}
-	if ($msql_version eq "mysql56") {$burl = $murl ."/".  $msystem_tp . "/mysqls/cl-mysql-5.6-common.repo";}
-	my $res = do_command("wget -O /etc/yum.repos.d/cl-mysql.repo $burl");
-        if($res==0){
-            	system 'yum', 'clean', 'metadata';
-            	if ($msql_version=="mariadb55"){
-			print "Repofile /etc/yum.repos.d/cl-mysql.repo installed for $msql_version\n\n";
-		} else {
-			print "Repofile /etc/yum.repos.d/cl-mysql.repo installed for mysql $msql_version\n\n";
-		}
-        } else {
-		print "\nError on installation. Can't get repo files\n";
-        }
 }
 
 sub check_package {
