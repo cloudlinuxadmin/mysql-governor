@@ -396,9 +396,9 @@ for o, a in opts:
 	elif o in ("-i", "--install"):
                 warn_message()
                 remove_mysqlclients()
+            	remove_mysql_justdb()
                 remove_mysql_justdb_cl()
 		install_mysql_beta()
-		remove_mysql_justdb()
                 set_bad_lve_container()
                 if os.path.exists("/usr/share/lve/dbgovernor/chk-mysqlclient"):
 		    exec_command_out("/usr/share/lve/dbgovernor/chk-mysqlclient")
@@ -428,8 +428,8 @@ for o, a in opts:
     		warn_message()
                 remove_mysqlclients()
                 remove_mysql_justdb_cl()
+                remove_mysql_justdb()
 		install_mysql_beta_testing()
-		remove_mysql_justdb()
                 set_bad_lve_container()
                 if os.path.exists("/usr/share/lve/dbgovernor/chk-mysqlclient"):
 		    exec_command_out("/usr/share/lve/dbgovernor/chk-mysqlclient")
