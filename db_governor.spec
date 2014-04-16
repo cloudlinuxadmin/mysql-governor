@@ -1,5 +1,5 @@
 %define g_version   1.0
-%define g_release   54
+%define g_release   55
 %define g_key_library 1
 
 Name: governor-mysql
@@ -239,6 +239,10 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Wed Apr 16 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-55
+- Switch MySQL installation from cloudlinux-updates-testing
+- Added all mode in DirectAdmin
+
 * Fri Apr 04 2014 Alexey Berezhok <aberezhok@cloudlinux.com>, Pavel Shkatula <shpp@cloudlinux.com> 1.0-54
 - Moved governor to new MySQL repos
 
