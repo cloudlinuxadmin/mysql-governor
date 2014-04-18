@@ -1,6 +1,6 @@
 Name: mysql
-Version: 5.1.69
-Release: 1.4%{?dist}.cloudlinux
+Version: 5.1.73
+Release: 3.1%{?dist}.cloudlinux
 Summary: MySQL client programs and shared libraries
 Group: Applications/Databases
 URL: http://www.mysql.com
@@ -53,9 +53,11 @@ Patch12: mysql-cve-2008-7247.patch
 Patch13: mysql-expired-certs.patch
 Patch16: mysql-chain-certs.patch
 Patch17: mysql-cve-2012-5611.patch
+Patch18: mysql-dump-log-tables.patch
+Patch19: mysql-logrotate.patch
 
-Patch100: userstat_5.1.69.1_b.patch
-Patch101: max_connection2_mysql_5_1_69_b407.patch
+Patch100: userstat_5.1.73.1_b.patch
+Patch101: max_connection2_mysql_5_1_69_b408.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 BuildRequires: perl, readline-devel, openssl-devel, bison
@@ -195,6 +197,8 @@ the MySQL sources.
 %patch13 -p1
 %patch16 -p1
 %patch17 -p1
+%patch18 -p1
+%patch19 -p1
 
 %patch100 -p1
 %patch101 -p1
