@@ -102,6 +102,7 @@ install -D -m 755 install/other/set_fs_suid_dumpable.sh $RPM_BUILD_ROOT/usr/shar
 install -D -m 755 install/utils/dbgovernor_map $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/dbgovernor_map
 install -D -m 755 install/utils/empty_action.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/empty_action.sh
 install -D -m 755 install/utils/db_install_common.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/db_install_common.sh
+install -D -m 755 install/utils/mysql_export $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/mysql_export
 
 install -D -m 755 install/chk-mysqlclient $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/chk-mysqlclient
 install -D -m 755 install/db-select-mysql $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/db-select-mysql
@@ -239,6 +240,11 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Mon Apr 28 2014 Alexey Berezhok <aberezhok@cloudlinux.com> , Pavel Shkatula <shpp@cloudlinux.com> 1.0-56
+- MYSQLG-57: Add support new lvectl
+- MYSQLG-56: Need additional check on success open of configure file
+- MYSQLG-54: Add removing MariaDB-common package 
+
 * Wed Apr 16 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-55
 - Switch MySQL installation from cloudlinux-updates-testing
 - Added all mode in DirectAdmin

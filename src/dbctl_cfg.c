@@ -384,11 +384,14 @@ ezxml_t SearchTagByName( ezxml_t cfg, char *name_tag, char *name )
 
 void rewrite_cfg( char *data )
 {
-  FILE *db_governor_cfg; 
-  db_governor_cfg = fopen( CONFIG_PATH, "w+" );
- 
-  fwrite( data, 1, strlen( data ), db_governor_cfg );
+  FILE *db_governor_cfg;
+  if( ( db_governor_cfg = fopen( CONFIG_PATH, "w+" ) ) == NULL )
+  {
+    fprintf( stderr, "Error reading config file %s\n", CONFIG_PATH );
+    return;
+  }
 
+  fwrite( data, 1, strlen( data ), db_governor_cfg );
   fclose( db_governor_cfg );
 }
 

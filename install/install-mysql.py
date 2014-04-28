@@ -11,6 +11,7 @@ import grp
 import pwd
 import yum
 import time
+import math
 
 import lve_diagnostic
 from lve_diagnostic import *
@@ -23,6 +24,7 @@ from mysql_lib import *
 from pwd import getpwnam  
 from grp import getgrnam  
 from distutils import version
+from distutils.version import StrictVersion
 
 SOURCE="/usr/share/lve/dbgovernor/"
 
@@ -325,24 +327,48 @@ def remove_mysql_justdb_cl():
 
 def delete_governor_rpm():
     exec_command_out("rpm -e governor-mysql")
+    
+def newLveCtl(version1):
+    return StrictVersion("1.4") <= StrictVersion(version1)
+    
+
+
+def numProc(s):
+    try:
+        return int(s)
+    except ValueError:
+        return 0
+                        
+                        
 
 def set_bad_lve_container():
     if os.path.exists("/usr/sbin/lvectl"):
 	clver = get_cl_num()
-	result = exec_command("/usr/sbin/lvectl limits 3")
-	if len(result)==1:
-	    if clver=="5":
-		exec_command_out("/usr/sbin/lvectl set 3 --cpu=25 --ncpu=1 --io=1024 --mem=0 --vmem=0 --maxEntryProcs=0 --save-all-parameters")
-	    else:
-    		exec_command_out("/usr/sbin/lvectl set 3 --cpu=25 --ncpu=1 --io=1024 --nproc=0 --pmem=0 --mem=0 --vmem=0 --maxEntryProcs=0 --save-all-parameters")  
-    	    return
-	result1 = exec_command("/usr/sbin/lvectl limits 3 | sed -n 2p | sed -e 's/\s\+/ /g' | cut -d' ' -f7")
-	result2 = exec_command("/usr/sbin/lvectl limits default | sed -n 2p | sed -e 's/\s\+/ /g' | cut -d' ' -f7")
-	if result1 == result2:
-	    if clver=="5":
-		exec_command_out("/usr/sbin/lvectl set 3 --cpu=25 --ncpu=1 --io=1024 --mem=0 --vmem=0 --maxEntryProcs=0 --save-all-parameters")
-	    else:
-    		exec_command_out("/usr/sbin/lvectl set 3 --cpu=25 --ncpu=1 --io=1024 --nproc=0 --pmem=0 --mem=0 --vmem=0 --maxEntryProcs=0 --save-all-parameters")
+	result0 = exec_command("/usr/sbin/lvectl version | cut -d\"-\" -f1")
+	if len(result0)>0 and newLveCtl(result0[0])==True:
+	    result1 = exec_command("/usr/sbin/lvectl limits 3 | sed -n 2p | sed -e 's/\s\+/ /g' | cut -d' ' -f3")
+	    result2 = exec_command("/usr/sbin/lvectl limits default | sed -n 2p | sed -e 's/\s\+/ /g' | cut -d' ' -f3")
+	    if result1 == result2:
+		result3 = exec_command("cat /proc/cpuinfo | grep processor | wc -l")
+		cpu_lim=800
+		if(len(result3)>0):
+		    cpu_lim = numProc(result3[0]) * 100
+		exec_command_out("/usr/sbin/lvectl set 3 --speed=" + str(int(math.ceil(float(cpu_lim)/4))) + "% --io=1024 --nproc=0 --pmem=0 --mem=0 --vmem=0 --maxEntryProcs=0 --save-all-parameters")
+	else:
+	    result = exec_command("/usr/sbin/lvectl limits 3")
+	    if len(result)==1:
+		if clver=="5":
+		    exec_command_out("/usr/sbin/lvectl set 3 --cpu=25 --ncpu=1 --io=1024 --mem=0 --vmem=0 --maxEntryProcs=0 --save-all-parameters")
+		else:
+    		    exec_command_out("/usr/sbin/lvectl set 3 --cpu=25 --ncpu=1 --io=1024 --nproc=0 --pmem=0 --mem=0 --vmem=0 --maxEntryProcs=0 --save-all-parameters")  
+    		return
+	    result1 = exec_command("/usr/sbin/lvectl limits 3 | sed -n 2p | sed -e 's/\s\+/ /g' | cut -d' ' -f3")
+	    result2 = exec_command("/usr/sbin/lvectl limits default | sed -n 2p | sed -e 's/\s\+/ /g' | cut -d' ' -f3")
+	    if result1 == result2:
+		if clver=="5":
+		    exec_command_out("/usr/sbin/lvectl set 3 --cpu=25 --ncpu=1 --io=1024 --mem=0 --vmem=0 --maxEntryProcs=0 --save-all-parameters")
+		else:
+    		    exec_command_out("/usr/sbin/lvectl set 3 --cpu=25 --ncpu=1 --io=1024 --nproc=0 --pmem=0 --mem=0 --vmem=0 --maxEntryProcs=0 --save-all-parameters")
 
 def remove_repo_file():
         if os.path.exists("/etc/yum.repos.d/cl-mysql.repo"):
@@ -379,6 +405,7 @@ def fix_libmygcc():
 		os.rename("/usr/lib64/mysql/libmygcc.a", "/usr/lib64/mysql/libmygcc.a.bak")
 	if os.path.exists("/usr/lib/mysql/libmygcc.a"):
 		os.rename("/usr/lib/mysql/libmygcc.a", "/usr/lib/mysql/libmygcc.a.bak")
+		
 
 cp = get_cp()
 try:
