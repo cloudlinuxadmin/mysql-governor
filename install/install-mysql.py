@@ -94,11 +94,23 @@ def verCompare (base, test):
 		return 0
 
 def installPythonMysql():
-        yb = yum.YumBase()
-        if yb.rpmdb.searchNevra(name="MySQL-python"):
-            print "MySQL-python already installed"
-        else:
-	    exec_command("yum install -y MySQL-python --disableexcludes=all")        
+	if cp.name == "Plesk" and verCompare (cp.version, "10") >= 0:
+		print "No need in MySQL-python"
+	elif cp.name == "cPanel":
+		print "No need in MySQL-python"
+	elif cp.name == "InterWorx":
+		print "No need in MySQL-python"
+	elif cp.name == "ISPManager":	
+		print "No need in MySQL-python"
+	elif cp.name == "DirectAdmin":
+		yb = yum.YumBase()
+                if yb.rpmdb.searchNevra(name="MySQL-python"):
+                    print "MySQL-python already installed"
+                else:
+	            exec_command("yum install -y MySQL-python --disableexcludes=all")        
+	else:
+		print "Current panel unsupported. Panel name: "+cp.name+" version: "+cp.version
+
 
 def usage():
 	print ''                                                                                                                                             
@@ -145,7 +157,6 @@ def install_mysql():
 	elif cp.name == "ISPManager":	
 		exec_command_out(SOURCE+"ispmanager/install-db-governor.sh --install")
 	elif cp.name == "DirectAdmin":
-                installPythonMysql()
 		exec_command_out(SOURCE+"da/install-db-governor.sh --install")
 	else:
 		print "Current panel unsupported. Panel name: "+cp.name+" version: "+cp.version
@@ -200,7 +211,6 @@ def install_mysql_beta():
                 install_db_user_mapfile_cron()
 	elif cp.name == "DirectAdmin":
                 check_leave_pid()
-                installPythonMysql()
 		exec_command_out(SOURCE+"da/install-db-governor.sh --install")
                 install_db_user_mapfile_cron()
 	else:
@@ -437,6 +447,7 @@ for o, a in opts:
                 set_bad_lve_container()
                 if os.path.exists("/usr/share/lve/dbgovernor/chk-mysqlclient"):
 		    exec_command_out("/usr/share/lve/dbgovernor/chk-mysqlclient")
+                installPythonMysql()
                 install_dbmap_update()
 		fix_libmygcc()
 	elif o in ("-u", "--upgrade"):
@@ -468,6 +479,7 @@ for o, a in opts:
                 set_bad_lve_container()
                 if os.path.exists("/usr/share/lve/dbgovernor/chk-mysqlclient"):
 		    exec_command_out("/usr/share/lve/dbgovernor/chk-mysqlclient")
+                installPythonMysql()
                 install_dbmap_update()
 		fix_libmygcc()
 	elif o in ("--update-mysql-beta",):

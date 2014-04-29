@@ -1,5 +1,5 @@
 %define g_version   1.0
-%define g_release   56
+%define g_release   57
 %define g_key_library 1
 
 Name: governor-mysql
@@ -240,6 +240,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Tue Apr 29 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-57
+- Fixed MySQL-python installation
+
 * Mon Apr 28 2014 Alexey Berezhok <aberezhok@cloudlinux.com> , Pavel Shkatula <shpp@cloudlinux.com> 1.0-56
 - MYSQLG-57: Add support new lvectl
 - MYSQLG-56: Need additional check on success open of configure file
