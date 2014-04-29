@@ -93,6 +93,12 @@ def verCompare (base, test):
 	else:
 		return 0
 
+def installPythonMysql():
+        yb = yum.YumBase()
+        if yb.rpmdb.searchNevra(name="MySQL-python"):
+            print "MySQL-python already installed"
+        else:
+	    exec_command("yum install -y MySQL-python --disableexcludes=all")        
 
 def usage():
 	print ''                                                                                                                                             
@@ -139,6 +145,7 @@ def install_mysql():
 	elif cp.name == "ISPManager":	
 		exec_command_out(SOURCE+"ispmanager/install-db-governor.sh --install")
 	elif cp.name == "DirectAdmin":
+                installPythonMysql()
 		exec_command_out(SOURCE+"da/install-db-governor.sh --install")
 	else:
 		print "Current panel unsupported. Panel name: "+cp.name+" version: "+cp.version
@@ -193,6 +200,7 @@ def install_mysql_beta():
                 install_db_user_mapfile_cron()
 	elif cp.name == "DirectAdmin":
                 check_leave_pid()
+                installPythonMysql()
 		exec_command_out(SOURCE+"da/install-db-governor.sh --install")
                 install_db_user_mapfile_cron()
 	else:

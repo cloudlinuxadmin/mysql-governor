@@ -1,5 +1,5 @@
 %define g_version   1.0
-%define g_release   55
+%define g_release   56
 %define g_key_library 1
 
 Name: governor-mysql
@@ -244,6 +244,8 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 - MYSQLG-57: Add support new lvectl
 - MYSQLG-56: Need additional check on success open of configure file
 - MYSQLG-54: Add removing MariaDB-common package 
+- MYSQLG-55: On mysqlgovernor --install on DA appears message: ImportError: No module named MySQLdb
+- Added mysql_export fucntions
 
 * Wed Apr 16 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-55
 - Switch MySQL installation from cloudlinux-updates-testing
