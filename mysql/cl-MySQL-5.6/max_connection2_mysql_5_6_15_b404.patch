@@ -15,7 +15,6 @@ index 7c4a00d..68b7b4c 100644
  
 diff --git a/include/governor.h b/include/governor.h
 new file mode 100644
-index 0000000..7ee5698
 --- /dev/null
 +++ b/include/governor.h
 @@ -0,0 +1,14 @@
@@ -34,7 +33,6 @@ index 0000000..7ee5698
 +
 +#endif /* GOVERNOR_PTHREAD_WRAPPER_H_ */
 diff --git a/include/my_pthread.h b/include/my_pthread.h
-index 24b2071..057133a 100644
 --- a/include/my_pthread.h
 +++ b/include/my_pthread.h
 @@ -194,6 +194,7 @@ int pthread_cancel(pthread_t thread);
@@ -63,7 +61,6 @@ diff --git a/max_connection2_mysql_5_6_13_b404.patch b/max_connection2_mysql_5_6
 new file mode 100644
 index 0000000..bfc6aa5
 diff --git a/mysys/thr_mutex.c b/mysys/thr_mutex.c
-index 536508a..c1ffde0 100644
 --- a/mysys/thr_mutex.c
 +++ b/mysys/thr_mutex.c
 @@ -25,12 +25,49 @@
@@ -471,7 +468,6 @@ index 536508a..c1ffde0 100644
 +
 +#endif
 diff --git a/sql/lex.h b/sql/lex.h
-index 3b82095..fc71d7b 100644
 --- a/sql/lex.h
 +++ b/sql/lex.h
 @@ -194,6 +194,10 @@ static SYMBOL symbols[] = {
@@ -494,7 +490,6 @@ index 3b82095..fc71d7b 100644
    { "MASTER_AUTO_POSITION",      SYM(MASTER_AUTO_POSITION_SYM)},
    { "MASTER_BIND",      SYM(MASTER_BIND_SYM)},
 diff --git a/sql/mysqld.cc b/sql/mysqld.cc
-index 86fd899..0ed0b98 100644
 --- a/sql/mysqld.cc
 +++ b/sql/mysqld.cc
 @@ -78,6 +78,9 @@
@@ -759,7 +754,6 @@ index 86fd899..0ed0b98 100644
 diff --git a/sql/mysqld.cc.orig b/sql/mysqld.cc.orig
 index 0dd19a2..86fd899 100644
 diff --git a/sql/mysqld.h b/sql/mysqld.h
-index 9312e03..36b4502 100644
 --- a/sql/mysqld.h
 +++ b/sql/mysqld.h
 @@ -16,6 +16,8 @@
@@ -813,7 +807,6 @@ index 9312e03..36b4502 100644
 diff --git a/sql/mysqld.h.orig b/sql/mysqld.h.orig
 index c586c2b..9312e03 100644
 diff --git a/sql/sql_acl.cc b/sql/sql_acl.cc
-index e7a3a44..7626116 100644
 --- a/sql/sql_acl.cc
 +++ b/sql/sql_acl.cc
 @@ -1161,7 +1161,7 @@ static my_bool acl_load(THD *thd, TABLE_LIST *tables)
@@ -841,7 +834,6 @@ diff --git a/sql/sql_acl.cc.orig b/sql/sql_acl.cc.orig
 new file mode 100644
 index 0000000..e7a3a44
 diff --git a/sql/sql_class.cc b/sql/sql_class.cc
-index 207a555..52749cf 100644
 --- a/sql/sql_class.cc
 +++ b/sql/sql_class.cc
 @@ -922,6 +922,8 @@ THD::THD(bool enable_plugins)
@@ -862,7 +854,6 @@ index 207a555..52749cf 100644
    ha_enable_transaction(this,TRUE);
  
 diff --git a/sql/sql_class.h b/sql/sql_class.h
-index a972734..97030c4 100644
 --- a/sql/sql_class.h
 +++ b/sql/sql_class.h
 @@ -2857,6 +2857,7 @@ public:
@@ -884,7 +875,6 @@ index a972734..97030c4 100644
 diff --git a/sql/sql_class.h.orig b/sql/sql_class.h.orig
 index 894d69f..a972734 100644
 diff --git a/sql/sql_cmd.h b/sql/sql_cmd.h
-index 66d572d..1e55c52 100644
 --- a/sql/sql_cmd.h
 +++ b/sql/sql_cmd.h
 @@ -89,7 +89,8 @@ enum enum_sql_command {
@@ -898,7 +888,6 @@ index 66d572d..1e55c52 100644
    SQLCOM_ALTER_USER,
  
 diff --git a/sql/sql_connect.cc b/sql/sql_connect.cc
-index 13f21db..2caf043 100644
 --- a/sql/sql_connect.cc
 +++ b/sql/sql_connect.cc
 @@ -83,6 +83,10 @@ extern mysql_mutex_t LOCK_global_index_stats;
@@ -940,7 +929,6 @@ index 13f21db..2caf043 100644
 diff --git a/sql/sql_connect.cc.orig b/sql/sql_connect.cc.orig
 index d9f55c8..13f21db 100644
 diff --git a/sql/sql_list.cc b/sql/sql_list.cc
-index 89d9659..1625a83 100644
 --- a/sql/sql_list.cc
 +++ b/sql/sql_list.cc
 @@ -35,6 +35,14 @@ void free_list(I_List <i_string> *list)
@@ -959,7 +947,6 @@ index 89d9659..1625a83 100644
  {
    if (rhs.elements)
 diff --git a/sql/sql_list.h b/sql/sql_list.h
-index b73cc31..10465c6 100644
 --- a/sql/sql_list.h
 +++ b/sql/sql_list.h
 @@ -585,6 +585,15 @@ public:
@@ -986,7 +973,6 @@ index b73cc31..10465c6 100644
  
  #endif // INCLUDES_MYSQL_SQL_LIST_H
 diff --git a/sql/sql_parse.cc b/sql/sql_parse.cc
-index d5a2564..fe1ad29 100644
 --- a/sql/sql_parse.cc
 +++ b/sql/sql_parse.cc
 @@ -13,6 +13,7 @@
@@ -1320,7 +1306,6 @@ index d5a2564..fe1ad29 100644
 diff --git a/sql/sql_parse.cc.orig b/sql/sql_parse.cc.orig
 index af4d7bf..d5a2564 100644
 diff --git a/sql/sql_parse.h b/sql/sql_parse.h
-index e9b25fc..15d36ee 100644
 --- a/sql/sql_parse.h
 +++ b/sql/sql_parse.h
 @@ -54,6 +54,8 @@ bool parse_sql(THD *thd,
@@ -1333,7 +1318,6 @@ index e9b25fc..15d36ee 100644
  
  void free_items(Item *item);
 diff --git a/sql/sql_prepare.cc b/sql/sql_prepare.cc
-index 35e4e88..040db3d 100644
 --- a/sql/sql_prepare.cc
 +++ b/sql/sql_prepare.cc
 @@ -2191,6 +2191,7 @@ static bool check_prepared_statement(Prepared_statement *stmt)
@@ -1347,7 +1331,6 @@ index 35e4e88..040db3d 100644
 diff --git a/sql/sql_prepare.cc.orig b/sql/sql_prepare.cc.orig
 index d187418..35e4e88 100644
 diff --git a/sql/sql_tmp_table.cc b/sql/sql_tmp_table.cc
-index f06ebcf..76a129b 100644
 --- a/sql/sql_tmp_table.cc
 +++ b/sql/sql_tmp_table.cc
 @@ -1958,7 +1958,7 @@ bool create_myisam_from_heap(THD *thd, TABLE *table,
@@ -1379,7 +1362,6 @@ diff --git a/sql/sql_tmp_table.cc.orig b/sql/sql_tmp_table.cc.orig
 new file mode 100644
 index 0000000..f06ebcf
 diff --git a/sql/sql_yacc.yy b/sql/sql_yacc.yy
-index 283814b..834f2b0 100644
 --- a/sql/sql_yacc.yy
 +++ b/sql/sql_yacc.yy
 @@ -1194,6 +1194,10 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
@@ -1496,7 +1478,6 @@ index 283814b..834f2b0 100644
 diff --git a/sql/sql_yacc.yy.orig b/sql/sql_yacc.yy.orig
 index ccc0460..283814b 100644
 diff --git a/storage/innobase/include/os0file.h b/storage/innobase/include/os0file.h
-index ef7503a..a4f62eb 100644
 --- a/storage/innobase/include/os0file.h
 +++ b/storage/innobase/include/os0file.h
 @@ -219,6 +219,7 @@ are used to register file deletion operations*/
@@ -1529,7 +1510,6 @@ index ef7503a..a4f62eb 100644
  
  # define register_pfs_file_close_end(locker, result)			\
 diff --git a/storage/innobase/os/os0file.cc b/storage/innobase/os/os0file.cc
-index 9aa8b59..1e11991 100644
 --- a/storage/innobase/os/os0file.cc
 +++ b/storage/innobase/os/os0file.cc
 @@ -4136,6 +4136,7 @@ os_aio_array_reserve_slot(
@@ -1553,7 +1533,6 @@ diff --git a/storage/innobase/os/os0file.cc.orig b/storage/innobase/os/os0file.c
 new file mode 100644
 index 0000000..9aa8b59
 diff --git a/storage/innobase/srv/srv0conc.cc b/storage/innobase/srv/srv0conc.cc
-index 820700a..436f187 100644
 --- a/storage/innobase/srv/srv0conc.cc
 +++ b/storage/innobase/srv/srv0conc.cc
 @@ -463,6 +463,7 @@ retry:
@@ -1597,44 +1576,30 @@ index 820700a..436f187 100644
  	ut_ad(!sync_thread_levels_nonempty_trx(trx->has_search_latch));
  #endif /* UNIV_SYNC_DEBUG */
 diff --git a/support-files/mysql.server.sh b/support-files/mysql.server.sh
-index 7487d5a..eeeab2a 100644
 --- a/support-files/mysql.server.sh
 +++ b/support-files/mysql.server.sh
-@@ -59,6 +59,33 @@ lock_file_path="$lockdir/mysql"
+@@ -59,6 +59,20 @@ lock_file_path="$lockdir/mysql"
  
  # The following variables are only set for letting mysql.server find things.
  
-+cpu_limit=
-+io_limit=
-+
++if [ -e /usr/share/lve/dbgovernor/utils/mysql_export ]; then
++. /usr/share/lve/dbgovernor/utils/mysql_export
++else
 +get_limit(){
-+  if [ -e /usr/sbin/lvectl ]; then
-+        LVE_VER=`/usr/sbin/lvectl --lve-version`
-+        if [ "$LVE_VER" == "4" ]; then
-+            io_limit=`/usr/sbin/lvectl limits 3 | awk 'NR == 2' | awk '{print $6}'`
-+        else
-+            io_limit=`/usr/sbin/lvectl limits 3 | awk 'NR == 2' | awk '{print $8}'`
-+        fi
-+        cpu_limit=`/usr/sbin/lvectl limits 3 | awk 'NR == 2' | awk '{print $2}'`
-+  fi
++    return
 +}
-+
 +set_big_limit(){
-+    if [ -e /usr/sbin/lvectl ]; then
-+	/usr/sbin/lvectl set 3 --cpu=100 --io=0 --save-all-parameters
-+    fi
++    return
 +}
-+
 +set_old_limit(){
-+    if [ -e /usr/sbin/lvectl ]; then
-+	/usr/sbin/lvectl set 3 --cpu=$cpu_limit --io=$io_limit --save-all-parameters
-+    fi
++    return
 +}
++fi
 +
  # Set some defaults
  mysqld_pid_file_path=
  if test -z "$basedir"
-@@ -298,6 +325,11 @@ case "$mode" in
+@@ -298,6 +312,11 @@ case "$mode" in
    'stop')
      # Stop daemon. We use a signal here to avoid having to know the
      # root password.
@@ -1646,7 +1611,7 @@ index 7487d5a..eeeab2a 100644
  
      if test -s "$mysqld_pid_file_path"
      then
-@@ -319,10 +351,12 @@ case "$mode" in
+@@ -319,10 +338,12 @@ case "$mode" in
        then
          rm -f "$lock_file_path"
        fi
@@ -1659,7 +1624,7 @@ index 7487d5a..eeeab2a 100644
      ;;
  
    'restart')
-@@ -337,14 +371,19 @@ case "$mode" in
+@@ -337,14 +358,19 @@ case "$mode" in
      ;;
  
    'reload'|'force-reload')

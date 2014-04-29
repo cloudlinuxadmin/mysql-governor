@@ -18,32 +18,19 @@
 
 prog="MySQL"
 
-cpu_limit=
-io_limit=
-
+if [ -e /usr/share/lve/dbgovernor/utils/mysql_export ]; then
+. /usr/share/lve/dbgovernor/utils/mysql_export
+else
 get_limit(){
-  if [ -e /usr/sbin/lvectl ]; then
-        LVE_VER=`/usr/sbin/lvectl --lve-version`
-        if [ "$LVE_VER" == "4" ]; then
-            io_limit=`/usr/sbin/lvectl limits 3 | awk 'NR == 2' | awk '{print $6}'`
-        else
-            io_limit=`/usr/sbin/lvectl limits 3 | awk 'NR == 2' | awk '{print $8}'`
-        fi
-        cpu_limit=`/usr/sbin/lvectl limits 3 | awk 'NR == 2' | awk '{print $2}'`
-  fi
+    return
 }
-
 set_big_limit(){
-    if [ -e /usr/sbin/lvectl ]; then
-	/usr/sbin/lvectl set 3 --cpu=100 --io=0 --save-all-parameters
-    fi
+    return
 }
-
 set_old_limit(){
-    if [ -e /usr/sbin/lvectl ]; then
-	/usr/sbin/lvectl set 3 --cpu=$cpu_limit --io=$io_limit --save-all-parameters
-    fi
+    return
 }
+fi
 
 
 # extract value of a MySQL option from config files

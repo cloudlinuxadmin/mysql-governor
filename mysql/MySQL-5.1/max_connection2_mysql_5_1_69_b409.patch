@@ -12,9 +12,10 @@ index bd5d2a4..6dc459a 100644
  			$(HEADERS_GEN_MAKE)
  
 diff --git a/include/Makefile.in b/include/Makefile.in
+index e25445d..cd70d0f 100644
 --- a/include/Makefile.in
 +++ b/include/Makefile.in
-@@ -402,7 +402,7 @@ pkginclude_HEADERS = $(HEADERS_ABI) my_dbug.h m_string.h my_sys.h \
+@@ -422,7 +422,7 @@ pkginclude_HEADERS = $(HEADERS_ABI) my_dbug.h m_string.h my_sys.h \
  			decimal.h errmsg.h my_global.h my_net.h \
  			my_getopt.h sslopt-longopts.h my_dir.h \
  			sslopt-vars.h sslopt-case.h sql_common.h keycache.h \
@@ -25,6 +26,7 @@ diff --git a/include/Makefile.in b/include/Makefile.in
  
 diff --git a/include/governor.h b/include/governor.h
 new file mode 100644
+index 0000000..4dcba71
 --- /dev/null
 +++ b/include/governor.h
 @@ -0,0 +1,13 @@
@@ -42,6 +44,7 @@ new file mode 100644
 +
 +#endif /* GOVERNOR_PTHREAD_WRAPPER_H_ */
 diff --git a/include/my_pthread.h b/include/my_pthread.h
+index 3992182..7972b13 100644
 --- a/include/my_pthread.h
 +++ b/include/my_pthread.h
 @@ -190,6 +190,7 @@ void pthread_exit(void *a);	 /* was #define pthread_exit(A) ExitThread(A)*/
@@ -52,11 +55,10 @@ diff --git a/include/my_pthread.h b/include/my_pthread.h
  #include <pthread.h>
  #ifndef _REENTRANT
  #define _REENTRANT
-@@ -501,6 +502,14 @@ void safe_mutex_end(FILE *file);
+@@ -486,6 +487,13 @@ typedef struct st_safe_mutex_info_t
+ } safe_mutex_info_t;
+ #endif /* SAFE_MUTEX_DETECT_DESTROY */
  
- 	/* Wrappers if safe mutex is actually used */
- #ifdef SAFE_MUTEX
-+
 +int put_in_lve(char *user);
 +void lve_thr_exit();
 +void governor_setlve_mysql_thread_info(pid_t thread_id);
@@ -64,18 +66,18 @@ diff --git a/include/my_pthread.h b/include/my_pthread.h
 +__attribute__((noinline)) void my_release_slot();
 +__attribute__((noinline)) void my_reserve_slot();
 +
+ int safe_mutex_init(safe_mutex_t *mp, const pthread_mutexattr_t *attr,
+                     const char *file, uint line);
+ int safe_mutex_lock(safe_mutex_t *mp, my_bool try_lock, const char *file, uint line);
+@@ -501,6 +509,7 @@ void safe_mutex_end(FILE *file);
+ 
+ 	/* Wrappers if safe mutex is actually used */
+ #ifdef SAFE_MUTEX
++
  #undef pthread_mutex_init
  #undef pthread_mutex_lock
  #undef pthread_mutex_unlock
-@@ -528,6 +537,7 @@ void safe_mutex_end(FILE *file);
- #else
- #define safe_mutex_assert_owner(mp)
- #define safe_mutex_assert_not_owner(mp)
-+
- #endif /* SAFE_MUTEX */
- 
- #if defined(MY_PTHREAD_FASTMUTEX) && !defined(SAFE_MUTEX)
-@@ -554,12 +564,23 @@ int my_pthread_fastmutex_lock(my_pthread_fastmutex_t *mp);
+@@ -554,12 +563,23 @@ int my_pthread_fastmutex_lock(my_pthread_fastmutex_t *mp);
  #undef pthread_cond_timedwait
  #undef pthread_mutex_trylock
  #define pthread_mutex_init(A,B) my_pthread_fastmutex_init((A),(B))
@@ -88,7 +90,7 @@ diff --git a/include/my_pthread.h b/include/my_pthread.h
 +void governor_detroy_mysql_thread_info();
 +__attribute__ ((noinline)) int my_pthread_lvemutex_unlock(pthread_mutex_t *mutex);
 +__attribute__ ((noinline)) int my_pthread_lvemutex_lock(my_pthread_fastmutex_t *mp);
-+__attribute__ ((noinline)) int my_pthread_lvemutex_trylock(pthread_mutex_t *mutex);
++__attribute__ ((noinline)) int my_pthread_lvemutex_trylock(pthread_mutex_t *mp);
 +__attribute__((noinline)) void my_release_slot();
 +__attribute__((noinline)) void my_reserve_slot();
 +#define pthread_mutex_lock(A) my_pthread_lvemutex_lock(A)
@@ -102,29 +104,11 @@ diff --git a/include/my_pthread.h b/include/my_pthread.h
  #define pthread_mutex_t my_pthread_fastmutex_t
  #endif /* defined(MY_PTHREAD_FASTMUTEX) && !defined(SAFE_MUTEX) */
  
-diff --git a/include/mysqld_error.h b/include/mysqld_error.h
---- a/include/mysqld_error.h
-+++ b/include/mysqld_error.h
-@@ -643,3 +643,4 @@
- #define ER_DEBUG_SYNC_TIMEOUT 1639
- #define ER_DEBUG_SYNC_HIT_LIMIT 1640
- #define ER_ERROR_LAST 1640
-+#define ER_NO_SUCH_THREAD_USER 1641
-diff --git a/max_connection2_mysql_5_1_68_b406.patch b/max_connection2_mysql_5_1_68_b406.patch
-new file mode 100644
-index 0000000..77fe7c8
 diff --git a/mysys/thr_mutex.c b/mysys/thr_mutex.c
+index 0a7b9a5..3be7a07 100644
 --- a/mysys/thr_mutex.c
 +++ b/mysys/thr_mutex.c
-@@ -18,6 +18,7 @@
- /* This makes a wrapper for mutex handling to make it easier to debug mutex */
- 
- #include <my_global.h>
-+
- #if defined(TARGET_OS_LINUX) && !defined (__USE_UNIX98)
- #define __USE_UNIX98			/* To get rw locks under Linux */
- #endif
-@@ -27,6 +28,42 @@
+@@ -27,12 +27,48 @@
  #include "my_static.h"
  #include <m_string.h>
  
@@ -163,19 +147,17 @@ diff --git a/mysys/thr_mutex.c b/mysys/thr_mutex.c
 +    return;
 +}
 +
-+
  #ifndef DO_NOT_REMOVE_THREAD_WRAPPERS
  /* Remove wrappers */
  #undef pthread_mutex_t
-@@ -36,6 +73,7 @@
+ #undef pthread_mutex_init
+ #undef pthread_mutex_lock
+ #undef pthread_mutex_unlock
++#undef pthread_mutex_trylock
  #undef pthread_mutex_destroy
  #undef pthread_cond_wait
  #undef pthread_cond_timedwait
-+#undef pthread_mutex_trylock
- #ifdef HAVE_NONPOSIX_PTHREAD_MUTEX_INIT
- #define pthread_mutex_init(a,b) my_pthread_mutex_init((a),(b))
- #endif
-@@ -396,6 +434,8 @@ void safe_mutex_end(FILE *file __attribute__((unused)))
+@@ -396,6 +432,8 @@ void safe_mutex_end(FILE *file __attribute__((unused)))
  
  #if defined(THREAD) && defined(MY_PTHREAD_FASTMUTEX) && !defined(SAFE_MUTEX)
  
@@ -184,7 +166,7 @@ diff --git a/mysys/thr_mutex.c b/mysys/thr_mutex.c
  #include "mysys_priv.h"
  #include "my_static.h"
  #include <m_string.h>
-@@ -489,6 +529,298 @@ int my_pthread_fastmutex_lock(my_pthread_fastmutex_t *mp)
+@@ -489,6 +527,298 @@ int my_pthread_fastmutex_lock(my_pthread_fastmutex_t *mp)
    return pthread_mutex_lock(&mp->mutex);
  }
  
@@ -384,13 +366,14 @@ diff --git a/mysys/thr_mutex.c b/mysys/thr_mutex.c
 +	return my_pthread_fastmutex_lock(mp);
 +}
 +
-+__attribute__((noinline)) int my_pthread_lvemutex_trylock(pthread_mutex_t *mutex) {
++
++__attribute__((noinline)) int my_pthread_lvemutex_trylock(pthread_mutex_t *mp) {
 +       if (mysql_lve_mutex_governor_ptr) {
 +               if (mysql_lve_mutex_governor_ptr->is_in_lve == 1) {
 +                       governor_lve_exit(&lve_cookie);
 +               }
 +       }
-+       int ret = pthread_mutex_trylock(mutex);
++       int ret = pthread_mutex_trylock(mp);
 +       if (mysql_lve_mutex_governor_ptr) {
 +           if (ret != EBUSY){
 +                if (mysql_lve_mutex_governor_ptr->is_in_lve == 1) {
@@ -404,7 +387,7 @@ diff --git a/mysys/thr_mutex.c b/mysys/thr_mutex.c
 +                    if (!governor_enter_lve_light(&lve_cookie)) {
 +                           mysql_lve_mutex_governor_ptr->is_in_lve = 1;
 +                    } else {
-+        		   mysql_lve_mutex_governor_ptr->is_in_lve = 0;
++    			   mysql_lve_mutex_governor_ptr->is_in_lve = 0;
 +                    }
 +                }
 +               }
@@ -479,14 +462,62 @@ diff --git a/mysys/thr_mutex.c b/mysys/thr_mutex.c
 +       return;
 +}
 +
-+
  
  void fastmutex_global_init(void)
  {
+@@ -498,3 +828,47 @@ void fastmutex_global_init(void)
+ }
+   
+ #endif /* defined(THREAD) && defined(MY_PTHREAD_FASTMUTEX) && !defined(SAFE_MUTEX) */ 
++
++#if !defined(MY_PTHREAD_FASTMUTEX) && !defined(SAFE_MUTEX) 
++
++#include "mysys_priv.h"
++#include "my_static.h"
++#include <m_string.h>
++#include "governor.h"
++
++void * (*governor_load_lve_library)() = NULL;
++int (*governor_init_lve)() = NULL;
++void (*governor_destroy_lve)() = NULL;
++int (*governor_enter_lve)(uint32_t *, char *) = NULL;
++void (*governor_lve_exit)(uint32_t *) = NULL;
++int (*governor_enter_lve_light)(uint32_t *) = NULL;
++void (*governor_lve_exit_null)() = NULL;
++int (*governor_lve_enter_pid)(pid_t) = NULL;
++ 
++void governor_setlve_mysql_thread_info(pid_t thread_id) {
++	thread_id = 0;
++	return;
++}
++
++__attribute__((noinline)) int put_in_lve(char *user) {
++	user = NULL;
++	return 0;
++}
++
++__attribute__((noinline)) void lve_thr_exit() {
++	return;
++}
++
++void governor_detroy_mysql_thread_info(){
++	return;
++}
++
++__attribute__((noinline)) void my_reserve_slot() {
++       return;
++}
++
++__attribute__((noinline)) void my_release_slot() {
++       return;
++}
++
++#endif
 diff --git a/sql/handler.cc b/sql/handler.cc
+index ed8b1fc..582862c 100644
 --- a/sql/handler.cc
 +++ b/sql/handler.cc
-@@ -1368,6 +1368,7 @@ int ha_rollback_trans(THD *thd, bool all)
+@@ -1367,6 +1367,7 @@ int ha_rollback_trans(THD *thd, bool all)
  int ha_autocommit_or_rollback(THD *thd, int error)
  {
    DBUG_ENTER("ha_autocommit_or_rollback");
@@ -494,7 +525,7 @@ diff --git a/sql/handler.cc b/sql/handler.cc
  #ifdef USING_TRANSACTIONS
    if (thd->transaction.stmt.ha_list)
    {
-@@ -1386,6 +1387,7 @@ int ha_autocommit_or_rollback(THD *thd, int error)
+@@ -1385,6 +1386,7 @@ int ha_autocommit_or_rollback(THD *thd, int error)
      thd->variables.tx_isolation=thd->session_tx_isolation;
    }
  #endif
@@ -503,6 +534,7 @@ diff --git a/sql/handler.cc b/sql/handler.cc
  }
  
 diff --git a/sql/lex.h b/sql/lex.h
+index e90ee68..bb626a4 100644
 --- a/sql/lex.h
 +++ b/sql/lex.h
 @@ -184,6 +184,10 @@ static SYMBOL symbols[] = {
@@ -525,9 +557,10 @@ diff --git a/sql/lex.h b/sql/lex.h
    { "MASTER_CONNECT_RETRY",           SYM(MASTER_CONNECT_RETRY_SYM)},
    { "MASTER_HOST",           SYM(MASTER_HOST_SYM)},
 diff --git a/sql/mysql_priv.h b/sql/mysql_priv.h
+index 323a519..9e33f22 100644
 --- a/sql/mysql_priv.h
 +++ b/sql/mysql_priv.h
-@@ -103,8 +103,12 @@ char *sql_strmake_with_convert(const char *str, size_t arg_length,
+@@ -105,8 +105,12 @@ char *sql_strmake_with_convert(const char *str, size_t arg_length,
  			       CHARSET_INFO *from_cs,
  			       size_t max_res_length,
  			       CHARSET_INFO *to_cs, size_t *result_length);
@@ -540,7 +573,7 @@ diff --git a/sql/mysql_priv.h b/sql/mysql_priv.h
  bool net_request_file(NET* net, const char* fname);
  char* query_table_status(THD *thd,const char *db,const char *table_name);
  
-@@ -1460,6 +1464,10 @@ ST_SCHEMA_TABLE *find_schema_table(THD *thd, const char* table_name);
+@@ -1479,6 +1483,10 @@ ST_SCHEMA_TABLE *find_schema_table(THD *thd, const char* table_name);
  ST_SCHEMA_TABLE *get_schema_table(enum enum_schema_tables schema_table_idx);
  int prepare_schema_table(THD *thd, LEX *lex, Table_ident *table_ident,
                           enum enum_schema_tables schema_table_idx);
@@ -551,11 +584,10 @@ diff --git a/sql/mysql_priv.h b/sql/mysql_priv.h
  int make_schema_select(THD *thd,  SELECT_LEX *sel,
                         enum enum_schema_tables schema_table_idx);
  int mysql_schema_table(THD *thd, LEX *lex, TABLE_LIST *table_list);
-@@ -2033,6 +2041,14 @@ extern ulong expire_logs_days, sync_binlog_period, sync_binlog_counter;
- extern ulong opt_tc_log_size, tc_log_max_pages_used, tc_log_page_size;
+@@ -2053,6 +2061,13 @@ extern ulong opt_tc_log_size, tc_log_max_pages_used, tc_log_page_size;
  extern ulong tc_log_page_waits;
  extern my_bool relay_log_purge, opt_innodb_safe_binlog, opt_innodb;
-+
+ 
 +extern volatile int governor_get_command;
 +extern int (*connect_to_server)();
 +extern int (*send_info_begin)(char *);
@@ -566,7 +598,7 @@ diff --git a/sql/mysql_priv.h b/sql/mysql_priv.h
  extern uint test_flags,select_errors,ha_open_options;
  extern uint protocol_version, mysqld_port, dropping_tables;
  extern uint delay_key_write_options;
-@@ -2412,6 +2428,7 @@ bool flush_error_log(void);
+@@ -2431,6 +2446,7 @@ bool flush_error_log(void);
  /* sql_list.cc */
  void free_list(I_List <i_string_pair> *list);
  void free_list(I_List <i_string> *list);
@@ -574,16 +606,20 @@ diff --git a/sql/mysql_priv.h b/sql/mysql_priv.h
  
  /* sql_yacc.cc */
  #ifndef DBUG_OFF
-@@ -2626,6 +2643,8 @@ bool load_collation(MEM_ROOT *mem_root,
-                     CHARSET_INFO *dflt_cl,
+@@ -2651,6 +2667,8 @@ bool load_collation(MEM_ROOT *mem_root,
                      CHARSET_INFO **cl);
+ 
  
 +extern "C" pid_t gettid(void);
 +
  #endif /* MYSQL_SERVER */
  extern "C" int test_if_data_home_dir(const char *dir);
  
+diff --git a/sql/mysql_priv.h.orig b/sql/mysql_priv.h.orig
+new file mode 100644
+index 0000000..323a519
 diff --git a/sql/mysqld.cc b/sql/mysqld.cc
+index 18d5ab0..07e1b7a 100644
 --- a/sql/mysqld.cc
 +++ b/sql/mysqld.cc
 @@ -29,6 +29,7 @@
@@ -645,9 +681,9 @@ diff --git a/sql/mysqld.cc b/sql/mysqld.cc
  bool opt_update_log, opt_bin_log, opt_ignore_builtin_innodb= 0;
  my_bool opt_log, opt_slow_log;
  ulong log_output_options;
-@@ -1329,6 +1360,19 @@ void clean_up(bool print_message)
-   injector::free_instance();
-   mysql_bin_log.cleanup();
+@@ -1384,6 +1415,19 @@ void clean_up(bool print_message)
+   free_global_table_stats();
+   free_global_index_stats();
  
 +  governor_detroy_mysql_thread_info();
 +
@@ -663,9 +699,9 @@ diff --git a/sql/mysqld.cc b/sql/mysqld.cc
 +  }
 +
  #ifdef HAVE_REPLICATION
-   if (use_slave_mask)
-     bitmap_free(&slave_error_mask);
-@@ -3012,6 +3056,10 @@ SHOW_VAR com_status_vars[]= {
+   end_slave_list();
+ #endif
+@@ -3067,6 +3111,10 @@ SHOW_VAR com_status_vars[]= {
    {"drop_user",            (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_DROP_USER]), SHOW_LONG_STATUS},
    {"drop_view",            (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_DROP_VIEW]), SHOW_LONG_STATUS},
    {"empty_query",          (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_EMPTY_QUERY]), SHOW_LONG_STATUS},
@@ -676,7 +712,7 @@ diff --git a/sql/mysqld.cc b/sql/mysqld.cc
    {"execute_sql",          (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_EXECUTE]), SHOW_LONG_STATUS},
    {"flush",                (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_FLUSH]), SHOW_LONG_STATUS},
    {"grant",                (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_GRANT]), SHOW_LONG_STATUS},
-@@ -3027,6 +3075,7 @@ SHOW_VAR com_status_vars[]= {
+@@ -3082,6 +3130,7 @@ SHOW_VAR com_status_vars[]= {
    {"load_master_data",     (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_LOAD_MASTER_DATA]), SHOW_LONG_STATUS},
    {"load_master_table",    (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_LOAD_MASTER_TABLE]), SHOW_LONG_STATUS},
    {"lock_tables",          (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_LOCK_TABLES]), SHOW_LONG_STATUS},
@@ -684,7 +720,7 @@ diff --git a/sql/mysqld.cc b/sql/mysqld.cc
    {"optimize",             (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_OPTIMIZE]), SHOW_LONG_STATUS},
    {"preload_keys",         (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_PRELOAD_KEYS]), SHOW_LONG_STATUS},
    {"prepare_sql",          (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_PREPARE]), SHOW_LONG_STATUS},
-@@ -7562,6 +7611,7 @@ SHOW_VAR status_vars[]= {
+@@ -7558,6 +7607,7 @@ SHOW_VAR status_vars[]= {
    {"Delayed_errors",           (char*) &delayed_insert_errors,  SHOW_LONG},
    {"Delayed_insert_threads",   (char*) &delayed_insert_threads, SHOW_LONG_NOFLUSH},
    {"Delayed_writes",           (char*) &delayed_insert_writes,  SHOW_LONG},
@@ -692,10 +728,10 @@ diff --git a/sql/mysqld.cc b/sql/mysqld.cc
    {"Flush_commands",           (char*) &refresh_version,        SHOW_LONG_NOFLUSH},
    {"Handler_commit",           (char*) offsetof(STATUS_VAR, ha_commit_count), SHOW_LONG_STATUS},
    {"Handler_delete",           (char*) offsetof(STATUS_VAR, ha_delete_count), SHOW_LONG_STATUS},
-@@ -7748,6 +7798,23 @@ To see what values a running MySQL server is using, type\n\
-     We don't need to set numeric variables refered to in my_long_options
+@@ -7745,6 +7795,24 @@ To see what values a running MySQL server is using, type\n\
      as these are initialized by my_getopt.
  */
+ 
 +void governor_set_fn_ptr_to_null(){
 +	governor_load_lve_library = NULL;
 +	governor_init_lve = NULL;
@@ -713,10 +749,11 @@ diff --git a/sql/mysqld.cc b/sql/mysqld.cc
 +	send_info_end = NULL;
 +	close_sock = NULL;
 +}
- 
++
  static int mysql_init_variables(void)
  {
-@@ -7883,6 +7950,112 @@ static int mysql_init_variables(void)
+   int error;
+@@ -7879,6 +7947,112 @@ static int mysql_init_variables(void)
    global_system_variables.old_passwords= 0;
    global_system_variables.old_alter_table= 0;
    global_system_variables.binlog_format= BINLOG_FORMAT_UNSPEC;
@@ -752,7 +789,7 @@ diff --git a/sql/mysqld.cc b/sql/mysqld.cc
 +		  if ((error_dl = dlerror()) != NULL){
 +			  governor_set_fn2_ptr_to_null();
 +			  break;
-+		  }
++	  }
 +		  sql_print_information("All governors functions found too");
 +		  break;
 +	  }
@@ -781,7 +818,7 @@ diff --git a/sql/mysqld.cc b/sql/mysqld.cc
 +	  	  }
 +	  	  governor_destroy_lve = (void (*)())dlsym(governor_library_handle, "governor_destroy_lve");
 +	  	  if ((error_dl = dlerror()) != NULL){
-+	  		governor_set_fn_ptr_to_null();
++   		    governor_set_fn_ptr_to_null();
 +	  	    break;
 +	  	  }
 +	  	  governor_enter_lve = (int (*)(uint32_t *, char *))dlsym(governor_library_handle, "governor_enter_lve");
@@ -829,7 +866,7 @@ diff --git a/sql/mysqld.cc b/sql/mysqld.cc
    /*
      Default behavior for 4.1 and 5.0 is to treat NULL values as unequal
      when collecting index statistics for MyISAM tables.
-@@ -8809,6 +8982,7 @@ static void set_server_version(void)
+@@ -8805,6 +8979,7 @@ static void set_server_version(void)
  #endif
    if (opt_log || opt_update_log || opt_slow_log || opt_bin_log)
      strmov(end, "-log");                        // This may slow down system
@@ -837,7 +874,7 @@ diff --git a/sql/mysqld.cc b/sql/mysqld.cc
  }
  
  
-@@ -9166,7 +9340,7 @@ static void delete_pid_file(myf flags)
+@@ -9162,7 +9337,7 @@ static void delete_pid_file(myf flags)
    File file;
    if (opt_bootstrap ||
        !pid_file_created ||
@@ -846,16 +883,8 @@ diff --git a/sql/mysqld.cc b/sql/mysqld.cc
      return;
  
    /* Make sure that the pid file was created by the same process. */
-diff --git a/sql/share/errmsg.txt b/sql/share/errmsg.txt
---- a/sql/share/errmsg.txt
-+++ b/sql/share/errmsg.txt
-@@ -6213,3 +6213,5 @@ ER_DEBUG_SYNC_TIMEOUT
- ER_DEBUG_SYNC_HIT_LIMIT
-   eng "debug sync point hit limit reached"
-   ger "Debug Sync Point Hit Limit erreicht"
-+ER_NO_SUCH_THREAD_USER
-+  eng "Unknown user name: %s"
 diff --git a/sql/sql_acl.cc b/sql/sql_acl.cc
+index cf15043..3a22558 100644
 --- a/sql/sql_acl.cc
 +++ b/sql/sql_acl.cc
 @@ -539,7 +539,7 @@ static my_bool acl_load(THD *thd, TABLE_LIST *tables)
@@ -868,17 +897,20 @@ diff --git a/sql/sql_acl.cc b/sql/sql_acl.cc
          else
            user.user_resource.user_conn= 0;
 diff --git a/sql/sql_class.cc b/sql/sql_class.cc
+index 748978f..3f53f49 100644
 --- a/sql/sql_class.cc
 +++ b/sql/sql_class.cc
-@@ -631,6 +631,7 @@ THD::THD()
+@@ -631,7 +631,8 @@ THD::THD()
+ #endif /* defined(ENABLED_DEBUG_SYNC) */
  {
    ulong tmp;
- 
+-
 +  thread_tid_cll = 0;
++  
    /*
      Pass nominal parameters to init_alloc_root only to ensure that
      the destructor works OK in case of an error. The main_mem_root
-@@ -980,6 +981,7 @@ void THD::update_stats(bool ran_command) {
+@@ -985,6 +986,7 @@ void THD::update_stats(bool ran_command) {
  
  void THD::init_for_queries()
  {
@@ -886,10 +918,14 @@ diff --git a/sql/sql_class.cc b/sql/sql_class.cc
    set_time(); 
    ha_enable_transaction(this,TRUE);
  
+diff --git a/sql/sql_class.cc.orig b/sql/sql_class.cc.orig
+new file mode 100644
+index 0000000..748978f
 diff --git a/sql/sql_class.h b/sql/sql_class.h
+index 3a3d1d4..6b33b46 100644
 --- a/sql/sql_class.h
 +++ b/sql/sql_class.h
-@@ -1789,6 +1789,7 @@ public:
+@@ -1801,6 +1801,7 @@ public:
    */
    ulong      row_count;
    pthread_t  real_id;                           /* For debugging */
@@ -897,7 +933,7 @@ diff --git a/sql/sql_class.h b/sql/sql_class.h
    my_thread_id  thread_id;
    uint	     tmp_table, global_read_lock;
    uint	     server_status,open_options;
-@@ -3197,3 +3198,13 @@ void add_diff_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var,
+@@ -3223,3 +3224,13 @@ void add_diff_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var,
  void mark_transaction_to_rollback(THD *thd, bool all);
  
  #endif /* MYSQL_SERVER */
@@ -911,20 +947,26 @@ diff --git a/sql/sql_class.h b/sql/sql_class.h
 +   i_thd(THD* s) : ptr(s) {}                                                                                                                               
 +};                                                                                                                                                        
 +   
+diff --git a/sql/sql_class.h.orig b/sql/sql_class.h.orig
+new file mode 100644
+index 0000000..3a3d1d4
 diff --git a/sql/sql_connect.cc b/sql/sql_connect.cc
+index 06d2793..64dce87 100644
 --- a/sql/sql_connect.cc
 +++ b/sql/sql_connect.cc
-@@ -679,6 +679,9 @@ void update_global_user_stats(THD* thd, bool create_user, time_t now)
+@@ -104,7 +104,10 @@ end:
      0	ok
      1	error
  */
+-
 +int is_root_access(char *user_name){                                                                                                                       
 +     return !strcmp(user_name,"root")||!strcmp(user_name,"mysql");
 +} 
- 
++ 
  static
  int check_for_max_user_connections(THD *thd, USER_CONN *uc)
-@@ -687,6 +690,14 @@ int check_for_max_user_connections(THD *thd, USER_CONN *uc)
+ {
+@@ -112,6 +115,14 @@ int check_for_max_user_connections(THD *thd, USER_CONN *uc)
    DBUG_ENTER("check_for_max_user_connections");
  
    (void) pthread_mutex_lock(&LOCK_user_conn);
@@ -939,7 +981,7 @@ diff --git a/sql/sql_connect.cc b/sql/sql_connect.cc
    if (max_user_connections && !uc->user_resources.user_conn &&
        max_user_connections < (uint) uc->connections)
    {
-@@ -1009,9 +1020,7 @@ check_user(THD *thd, enum enum_server_command command,
+@@ -433,9 +444,7 @@ check_user(THD *thd, enum enum_server_command command,
        thd->main_security_ctx.db_access=0;
  
        /* Don't allow user to connect if he has done too many queries */
@@ -950,7 +992,7 @@ diff --git a/sql/sql_connect.cc b/sql/sql_connect.cc
              (opt_old_style_user_limits ? thd->main_security_ctx.user :
               thd->main_security_ctx.priv_user),
              (opt_old_style_user_limits ? thd->main_security_ctx.host_or_ip :
-@@ -2042,6 +2051,7 @@ static void prepare_new_connection_state(THD* thd)
+@@ -1456,6 +1465,7 @@ static void prepare_new_connection_state(THD* thd)
  pthread_handler_t handle_one_connection(void *arg)
  {
    THD *thd= (THD*) arg;
@@ -959,18 +1001,21 @@ diff --git a/sql/sql_connect.cc b/sql/sql_connect.cc
    thd->thr_create_utime= my_micro_time();
  
 diff --git a/sql/sql_lex.h b/sql/sql_lex.h
+index 9b1b040..1b1845b 100644
 --- a/sql/sql_lex.h
 +++ b/sql/sql_lex.h
-@@ -133,6 +133,8 @@ enum enum_sql_command {
-   // TODO(mcallaghan): update status_vars in mysqld to export these
-   SQLCOM_SHOW_USER_STATS, SQLCOM_SHOW_TABLE_STATS, SQLCOM_SHOW_INDEX_STATS,
-   SQLCOM_SHOW_CLIENT_STATS, SQLCOM_SHOW_THREAD_STATS,
-+  SQLCOM_ENABLE_GOVERNOR, SQLCOM_ENABLE_RECONN_GOVERNOR,
+@@ -126,7 +126,8 @@ enum enum_sql_command {
+   SQLCOM_ALTER_DB_UPGRADE,
+   SQLCOM_SHOW_PROFILE, SQLCOM_SHOW_PROFILES,
+   SQLCOM_SHOW_USER_STATS, SQLCOM_SHOW_TABLE_STATS, SQLCOM_SHOW_INDEX_STATS, 
+-  SQLCOM_SHOW_CLIENT_STATS,
++  SQLCOM_SHOW_CLIENT_STATS, SQLCOM_ENABLE_GOVERNOR, SQLCOM_ENABLE_RECONN_GOVERNOR,
 +  SQLCOM_ENABLE_GOVERNOR_LVE, SQLCOM_ENABLE_RECONN_GOVERNOR_LVE, SQLCOM_LVECMD,
-   /* This should be the last !!! */
-   SQLCOM_END
- };
+   /*
+     When a command is added here, be sure it's also added in mysqld.cc
+     in "struct show_var_st status_vars[]= {" ...
 diff --git a/sql/sql_list.cc b/sql/sql_list.cc
+index 9b8ec5c..fcf7f80 100644
 --- a/sql/sql_list.cc
 +++ b/sql/sql_list.cc
 @@ -70,3 +70,10 @@ base_list::base_list(const base_list &rhs, MEM_ROOT *mem_root)
@@ -985,6 +1030,7 @@ diff --git a/sql/sql_list.cc b/sql/sql_list.cc
 +    delete tmp;
 +}
 diff --git a/sql/sql_parse.cc b/sql/sql_parse.cc
+index aab2da1..2a3d6ae 100644
 --- a/sql/sql_parse.cc
 +++ b/sql/sql_parse.cc
 @@ -14,7 +14,7 @@
@@ -996,9 +1042,9 @@ diff --git a/sql/sql_parse.cc b/sql/sql_parse.cc
  #define MYSQL_LEX 1
  #include "mysql_priv.h"
  #include "sql_repl.h"
-@@ -31,6 +31,21 @@
- #include "sql_trigger.h"
- #include "debug_sync.h"
+@@ -35,6 +35,21 @@
+ 
+ #include <linux/unistd.h>
  
 +#ifdef  __cplusplus
 +extern "C" {
@@ -1018,7 +1064,7 @@ diff --git a/sql/sql_parse.cc b/sql/sql_parse.cc
  /**
    @defgroup Runtime_Environment Runtime Environment
    @{
-@@ -1764,6 +1779,46 @@ void log_slow_statement(THD *thd)
+@@ -2204,6 +2219,45 @@ void log_slow_statement(THD *thd)
    DBUG_VOID_RETURN;
  }
  
@@ -1061,11 +1107,10 @@ diff --git a/sql/sql_parse.cc b/sql/sql_parse.cc
 +	}
 +}
 +
-+
  
  /**
    Create a TABLE_LIST object for an INFORMATION_SCHEMA table.
-@@ -4183,9 +4238,43 @@ end_with_restore_list:
+@@ -4623,9 +4677,42 @@ end_with_restore_list:
  		 MYF(0));
        goto error;
      }
@@ -1077,7 +1122,6 @@ diff --git a/sql/sql_parse.cc b/sql/sql_parse.cc
 +       sql_kill(thd, (ulong)it->val_int(), lex->type & ONLY_KILL_QUERY);                                                                                                                                                                 
 +    }                                                                                                                                                     
 +        
-+    
      break;
    }
 +  case SQLCOM_LVECMD:
@@ -1086,7 +1130,7 @@ diff --git a/sql/sql_parse.cc b/sql/sql_parse.cc
 +
 +      if (lex->table_or_sp_used())
 +      {
-+        my_error(ER_NOT_SUPPORTED_YET, MYF(0), "Usage of subqueries or stored "
++       my_error(ER_NOT_SUPPORTED_YET, MYF(0), "Usage of subqueries or stored "
 +                 "function calls as part of this statement");
 +        break;
 +      }
@@ -1110,7 +1154,7 @@ diff --git a/sql/sql_parse.cc b/sql/sql_parse.cc
  #ifndef NO_EMBEDDED_ACCESS_CHECKS
    case SQLCOM_SHOW_GRANTS:
    {
-@@ -6066,6 +6155,11 @@ void mysql_init_multi_delete(LEX *lex)
+@@ -6509,6 +6596,11 @@ void mysql_init_multi_delete(LEX *lex)
    lex->query_tables_last= &lex->query_tables;
  }
  
@@ -1122,35 +1166,25 @@ diff --git a/sql/sql_parse.cc b/sql/sql_parse.cc
  
  /*
    When you modify mysql_parse(), you may need to mofify
-@@ -6085,6 +6179,7 @@ void mysql_init_multi_delete(LEX *lex)
- void mysql_parse(THD *thd, char *rawbuf, uint length,
-                  const char ** found_semicolon)
- {
-+
-   DBUG_ENTER("mysql_parse");
+@@ -6563,6 +6655,17 @@ void mysql_parse(THD *thd, char *rawbuf, uint length,
  
-   DBUG_EXECUTE_IF("parser_debug", turn_parser_debug_on(););
-@@ -6133,6 +6228,19 @@ void mysql_parse(THD *thd, char *rawbuf, uint length,
-       start_usecs = start_time.tv_sec * 1000000.0 + start_time.tv_usec;
-     }
-   }
-+  
+   struct timespec tp = {0,0};     /* For CPU Time and Real Time */
+ 
 +  if(send_info_begin&&governor_get_command&&chek_governors_avaliable_command(thd)){
-+    (*send_info_begin)(thd->security_ctx->user);
++	(*send_info_begin)(thd->security_ctx->user);
 +  }
-+  
-+  
-+  
++
++
++
 +  /*if(governor_enter_lve && (governor_get_command==2) && chek_governors_avaliable_command(thd)){
-+   if(thd->security_ctx && thd->security_ctx->user && thd->security_ctx->user[0])
-+    governor_enter_lve(&cookie, thd->security_ctx->user);
++	  if(thd->security_ctx && thd->security_ctx->user && thd->security_ctx->user[0])
++		  governor_enter_lve(&cookie, thd->security_ctx->user);
 +  }*/
-+  
-+  
- 
-   if (query_cache_send_result_to_client(thd, rawbuf, length) <= 0)
-   {
-@@ -6185,7 +6293,13 @@ void mysql_parse(THD *thd, char *rawbuf, uint length,
++
+   /* Get CPU start time. (Note: since Linux threads are processes--and since the
+      thread-specific CPUTIME functions seem to be broken, call with the process-related
+      CPU Time constants.)
+@@ -6635,7 +6738,13 @@ void mysql_parse(THD *thd, char *rawbuf, uint length,
              thd->server_status|= SERVER_MORE_RESULTS_EXISTS;
            }
            lex->set_trg_event_type_for_tables();
@@ -1164,22 +1198,21 @@ diff --git a/sql/sql_parse.cc b/sql/sql_parse.cc
  	}
        }
      }
-@@ -6214,6 +6328,14 @@ void mysql_parse(THD *thd, char *rawbuf, uint length,
-     *found_semicolon= NULL;
+@@ -6699,6 +6808,13 @@ void mysql_parse(THD *thd, char *rawbuf, uint length,
+       thd->cpu_time = 0;
    }
  
 +  /*if(governor_lve_exit && (governor_get_command==2) && cookie &&chek_governors_avaliable_command(thd)){
-+    governor_lve_exit(&cookie);
++	  governor_lve_exit(&cookie);
 +  }*/
++
 +  if(send_info_end&&governor_get_command&&chek_governors_avaliable_command(thd)){
-+      (*send_info_end)(thd->security_ctx->user);
++  	  (*send_info_end)(thd->security_ctx->user);
 +  }
-+
-+
-   if (opt_userstat_running) {
-     // Gets the end time.
-     if (!(end_time_error = gettimeofday(&end_time, NULL))) {
-@@ -7298,6 +7420,102 @@ bool reload_acl_and_cache(THD *thd, ulong options, TABLE_LIST *tables,
+ 
+   /******************************************************/
+ 
+@@ -7752,6 +7868,101 @@ bool reload_acl_and_cache(THD *thd, ulong options, TABLE_LIST *tables,
   return result || (thd ? thd->killed : 0);
  }
  
@@ -1278,11 +1311,10 @@ diff --git a/sql/sql_parse.cc b/sql/sql_parse.cc
 +  DBUG_RETURN(error);
 +
 +}
-+
  
  /**
    kill on thread.
-@@ -7384,6 +7602,33 @@ void sql_kill(THD *thd, ulong id, bool only_kill_query)
+@@ -7838,6 +8049,33 @@ void sql_kill(THD *thd, ulong id, bool only_kill_query)
      my_error(error, MYF(0), id);
  }
  
@@ -1316,10 +1348,14 @@ diff --git a/sql/sql_parse.cc b/sql/sql_parse.cc
  
  /** If pointer is not a null pointer, append filename to it. */
  
+diff --git a/sql/sql_parse.cc.orig b/sql/sql_parse.cc.orig
+new file mode 100644
+index 0000000..aab2da1
 diff --git a/sql/sql_prepare.cc b/sql/sql_prepare.cc
+index ddfd5d3..0f07896 100644
 --- a/sql/sql_prepare.cc
 +++ b/sql/sql_prepare.cc
-@@ -2014,6 +2014,7 @@ static bool check_prepared_statement(Prepared_statement *stmt)
+@@ -2011,6 +2011,7 @@ static bool check_prepared_statement(Prepared_statement *stmt)
    case SQLCOM_GRANT:
    case SQLCOM_REVOKE:
    case SQLCOM_KILL:
@@ -1328,6 +1364,7 @@ diff --git a/sql/sql_prepare.cc b/sql/sql_prepare.cc
  
    case SQLCOM_PREPARE:
 diff --git a/sql/sql_select.cc b/sql/sql_select.cc
+index 7507f43..87ff87c 100644
 --- a/sql/sql_select.cc
 +++ b/sql/sql_select.cc
 @@ -10995,6 +10995,7 @@ bool create_myisam_from_heap(THD *thd, TABLE *table, TMP_TABLE_PARAM *param,
@@ -1352,6 +1389,7 @@ diff --git a/sql/sql_select.cc b/sql/sql_select.cc
    (void) table->file->ha_rnd_end();
    (void) new_table.file->close();
 diff --git a/sql/sql_yacc.yy b/sql/sql_yacc.yy
+index e1a0d6d..7fb7f2c 100644
 --- a/sql/sql_yacc.yy
 +++ b/sql/sql_yacc.yy
 @@ -835,6 +835,10 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
@@ -1373,7 +1411,7 @@ diff --git a/sql/sql_yacc.yy b/sql/sql_yacc.yy
  %token  MASTER_CONNECT_RETRY_SYM
  %token  MASTER_HOST_SYM
  %token  MASTER_LOG_FILE_SYM
-@@ -1429,7 +1434,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
+@@ -1428,7 +1433,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
          reset purge begin commit rollback savepoint release
          slave master_def master_defs master_file_def slave_until_opts
          repair restore backup analyze check start checksum
@@ -1382,7 +1420,7 @@ diff --git a/sql/sql_yacc.yy b/sql/sql_yacc.yy
          keycache_list assign_to_keycache preload_list preload_keys
          select_item_list select_item values_list no_braces
          opt_limit_clause delete_limit_clause fields opt_values values
-@@ -1591,6 +1596,10 @@ statement:
+@@ -1590,6 +1595,10 @@ statement:
          | describe
          | do
          | drop
@@ -1393,7 +1431,7 @@ diff --git a/sql/sql_yacc.yy b/sql/sql_yacc.yy
          | execute
          | flush
          | grant
-@@ -1601,6 +1610,7 @@ statement:
+@@ -1600,6 +1609,7 @@ statement:
          | kill
          | load
          | lock
@@ -1401,7 +1439,7 @@ diff --git a/sql/sql_yacc.yy b/sql/sql_yacc.yy
          | optimize
          | keycache
          | partition_entry
-@@ -6481,6 +6491,20 @@ mi_check_type:
+@@ -6480,6 +6490,20 @@ mi_check_type:
          | CHANGED             { Lex->check_opt.flags|= T_CHECK_ONLY_CHANGED; }
          | FOR_SYM UPGRADE_SYM { Lex->check_opt.sql_flags|= TT_FOR_UPGRADE; }
          ;
@@ -1422,7 +1460,7 @@ diff --git a/sql/sql_yacc.yy b/sql/sql_yacc.yy
  
  optimize:
            OPTIMIZE opt_no_write_to_binlog table_or_tables
-@@ -10104,6 +10128,41 @@ opt_profile_args:
+@@ -10113,6 +10137,41 @@ opt_profile_args:
        Lex->profile_query_id= atoi($3.str);
      }
    ;
@@ -1464,14 +1502,18 @@ diff --git a/sql/sql_yacc.yy b/sql/sql_yacc.yy
  
  /* Show things */
  
+diff --git a/sql/sql_yacc.yy.orig b/sql/sql_yacc.yy.orig
+new file mode 100644
+index 0000000..e1a0d6d
 diff --git a/storage/innobase/os/os0file.c b/storage/innobase/os/os0file.c
+index d088ff5..2a02135 100644
 --- a/storage/innobase/os/os0file.c
 +++ b/storage/innobase/os/os0file.c
 @@ -3278,6 +3278,7 @@ os_aio_array_reserve_slot(
  
  	struct aiocb*	control;
  #endif
-+	my_reserve_slot();
++    my_reserve_slot();
  
  loop:
  	os_mutex_enter(array->mutex);
@@ -1479,30 +1521,23 @@ diff --git a/storage/innobase/os/os0file.c b/storage/innobase/os/os0file.c
  	os_aio_array_t*	array,	/* in: aio array */
  	os_aio_slot_t*	slot)	/* in: pointer to slot */
  {
-+	my_release_slot();
++    my_release_slot();
  	ut_ad(array);
  	ut_ad(slot);
  
 diff --git a/storage/innobase/srv/srv0srv.c b/storage/innobase/srv/srv0srv.c
+index f615384..a385205 100644
 --- a/storage/innobase/srv/srv0srv.c
 +++ b/storage/innobase/srv/srv0srv.c
-@@ -725,7 +725,6 @@ srv_table_reserve_slot(
- 
- 	ut_a(type > 0);
- 	ut_a(type <= SRV_MASTER);
--
- 	i = 0;
- 	slot = srv_table_get_nth_slot(i);
- 
-@@ -1013,6 +1012,7 @@ srv_conc_enter_innodb(
+@@ -1013,6 +1013,7 @@ srv_conc_enter_innodb(
  	ibool			has_slept = FALSE;
  	srv_conc_slot_t*	slot	  = NULL;
  	ulint			i;
-+	my_reserve_slot();
++    my_reserve_slot();
  
  	if (trx->mysql_thd != NULL
  	    && thd_is_replication_slave_thread(trx->mysql_thd)) {
-@@ -1171,6 +1171,7 @@ srv_conc_force_enter_innodb(
+@@ -1171,6 +1172,7 @@ srv_conc_force_enter_innodb(
  	trx_t*	trx)	/* in: transaction object associated with the
  			thread */
  {
@@ -1510,30 +1545,30 @@ diff --git a/storage/innobase/srv/srv0srv.c b/storage/innobase/srv/srv0srv.c
  	if (UNIV_LIKELY(!srv_thread_concurrency)) {
  
  		return;
-@@ -1198,6 +1199,7 @@ srv_conc_force_exit_innodb(
+@@ -1198,6 +1200,7 @@ srv_conc_force_exit_innodb(
  			thread */
  {
  	srv_conc_slot_t*	slot	= NULL;
-+	my_release_slot();
++    my_release_slot();
  
  	if (trx->mysql_thd != NULL
  	    && thd_is_replication_slave_thread(trx->mysql_thd)) {
-@@ -1253,6 +1255,7 @@ srv_conc_exit_innodb(
+@@ -1253,6 +1256,7 @@ srv_conc_exit_innodb(
  	trx_t*	trx)	/* in: transaction object associated with the
  			thread */
  {
-+	my_release_slot();
++    my_release_slot();
  	if (trx->n_tickets_to_enter_innodb > 0) {
  		/* We will pretend the thread is still inside InnoDB though it
  		now leaves the InnoDB engine. In this way we save
 diff --git a/support-files/mysql.server.sh b/support-files/mysql.server.sh
+index 8d8e910..0977563 100644
 --- a/support-files/mysql.server.sh
 +++ b/support-files/mysql.server.sh
 @@ -46,6 +46,21 @@
  basedir=
  datadir=
  
-+
 +if [ -e /usr/share/lve/dbgovernor/utils/mysql_export ]; then
 +. /usr/share/lve/dbgovernor/utils/mysql_export
 +else
@@ -1547,6 +1582,7 @@ diff --git a/support-files/mysql.server.sh b/support-files/mysql.server.sh
 +    return
 +}
 +fi
++
 +
  # Default value, in seconds, afterwhich the script should timeout waiting
  # for server start. 

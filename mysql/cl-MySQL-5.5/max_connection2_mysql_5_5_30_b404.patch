@@ -12,7 +12,6 @@ index b2b64a0..6acfb34 100644
  
 diff --git a/include/governor.h b/include/governor.h
 new file mode 100644
-index 0000000..7ee5698
 --- /dev/null
 +++ b/include/governor.h
 @@ -0,0 +1,14 @@
@@ -31,7 +30,6 @@ index 0000000..7ee5698
 +
 +#endif /* GOVERNOR_PTHREAD_WRAPPER_H_ */
 diff --git a/include/my_pthread.h b/include/my_pthread.h
-index e521564..a45ad34 100644
 --- a/include/my_pthread.h
 +++ b/include/my_pthread.h
 @@ -192,6 +192,7 @@ int pthread_cancel(pthread_t thread);
@@ -95,7 +93,6 @@ diff --git a/max_connection2_mysql_5_5_30_b403.patch b/max_connection2_mysql_5_5
 new file mode 100644
 index 0000000..8eba89d
 diff --git a/mysys/thr_mutex.c b/mysys/thr_mutex.c
-index 4d05139..4c8cec2 100644
 --- a/mysys/thr_mutex.c
 +++ b/mysys/thr_mutex.c
 @@ -25,12 +25,49 @@
@@ -503,7 +500,6 @@ index 4d05139..4c8cec2 100644
 +
 +#endif
 diff --git a/sql/lex.h b/sql/lex.h
-index 9e90725..33e6d12 100644
 --- a/sql/lex.h
 +++ b/sql/lex.h
 @@ -191,6 +191,10 @@ static SYMBOL symbols[] = {
@@ -526,7 +522,6 @@ index 9e90725..33e6d12 100644
    { "MASTER_CONNECT_RETRY",           SYM(MASTER_CONNECT_RETRY_SYM)},
    { "MASTER_HOST",           SYM(MASTER_HOST_SYM)},
 diff --git a/sql/mysqld.cc b/sql/mysqld.cc
-index 9df9436..ee14dff 100644
 --- a/sql/mysqld.cc
 +++ b/sql/mysqld.cc
 @@ -69,6 +69,9 @@
@@ -789,7 +784,6 @@ index 9df9436..ee14dff 100644
  
    /* Make sure that the pid file was created by the same process. */    
 diff --git a/sql/mysqld.h b/sql/mysqld.h
-index 959c9d6..9fa02bf 100644
 --- a/sql/mysqld.h
 +++ b/sql/mysqld.h
 @@ -16,6 +16,8 @@
@@ -832,7 +826,6 @@ index 959c9d6..9fa02bf 100644
    TODO: Replace this with an inline function.
   */
 diff --git a/sql/sql_acl.cc b/sql/sql_acl.cc
-index fdd9b10..51d6129 100644
 --- a/sql/sql_acl.cc
 +++ b/sql/sql_acl.cc
 @@ -903,7 +903,7 @@ static my_bool acl_load(THD *thd, TABLE_LIST *tables)
@@ -857,7 +850,6 @@ index fdd9b10..51d6129 100644
            (opt_old_style_user_limits ? sctx->user : sctx->priv_user),
            (opt_old_style_user_limits ? sctx->host_or_ip : sctx->priv_host),
 diff --git a/sql/sql_class.cc b/sql/sql_class.cc
-index 1afcf23..8bd9167 100644
 --- a/sql/sql_class.cc
 +++ b/sql/sql_class.cc
 @@ -809,6 +809,8 @@ THD::THD()
@@ -878,7 +870,6 @@ index 1afcf23..8bd9167 100644
    ha_enable_transaction(this,TRUE);
  
 diff --git a/sql/sql_class.h b/sql/sql_class.h
-index b555b98..8e946fd 100644
 --- a/sql/sql_class.h
 +++ b/sql/sql_class.h
 @@ -2006,6 +2006,7 @@ public:
@@ -898,7 +889,6 @@ index b555b98..8e946fd 100644
    The meat of thd_proc_info(THD*, char*), a macro that packs the last
    three calling-info parameters.
 diff --git a/sql/sql_connect.cc b/sql/sql_connect.cc
-index 12493be..28a2b31 100644
 --- a/sql/sql_connect.cc
 +++ b/sql/sql_connect.cc
 @@ -81,6 +81,10 @@ extern mysql_mutex_t LOCK_global_index_stats;
@@ -938,7 +928,6 @@ index 12493be..28a2b31 100644
    mysql_thread_set_psi_id(thd->thread_id);
  
 diff --git a/sql/sql_lex.h b/sql/sql_lex.h
-index d16166a..00eee9a 100644
 --- a/sql/sql_lex.h
 +++ b/sql/sql_lex.h
 @@ -193,7 +193,8 @@ enum enum_sql_command {
@@ -952,7 +941,6 @@ index d16166a..00eee9a 100644
      When a command is added here, be sure it's also added in mysqld.cc
      in "struct show_var_st status_vars[]= {" ...
 diff --git a/sql/sql_list.cc b/sql/sql_list.cc
-index 99aeccd..d8bea45 100644
 --- a/sql/sql_list.cc
 +++ b/sql/sql_list.cc
 @@ -39,6 +39,14 @@ void free_list(I_List <i_string> *list)
@@ -971,7 +959,6 @@ index 99aeccd..d8bea45 100644
  {
    if (rhs.elements)
 diff --git a/sql/sql_list.h b/sql/sql_list.h
-index bdbe381..dea32d2 100644
 --- a/sql/sql_list.h
 +++ b/sql/sql_list.h
 @@ -570,6 +570,15 @@ public:
@@ -998,7 +985,6 @@ index bdbe381..dea32d2 100644
  
  #endif // INCLUDES_MYSQL_SQL_LIST_H
 diff --git a/sql/sql_parse.cc b/sql/sql_parse.cc
-index 8e2841c..d4e8345 100644
 --- a/sql/sql_parse.cc
 +++ b/sql/sql_parse.cc
 @@ -13,6 +13,7 @@
@@ -1319,7 +1305,6 @@ index 8e2841c..d4e8345 100644
 +
 +
 diff --git a/sql/sql_parse.h b/sql/sql_parse.h
-index 9a55174..b2871fd 100644
 --- a/sql/sql_parse.h
 +++ b/sql/sql_parse.h
 @@ -50,6 +50,8 @@ bool parse_sql(THD *thd,
@@ -1332,7 +1317,6 @@ index 9a55174..b2871fd 100644
  
  void free_items(Item *item);
 diff --git a/sql/sql_prepare.cc b/sql/sql_prepare.cc
-index 06a89c0..39fe9c7 100644
 --- a/sql/sql_prepare.cc
 +++ b/sql/sql_prepare.cc
 @@ -2086,6 +2086,7 @@ static bool check_prepared_statement(Prepared_statement *stmt)
@@ -1344,7 +1328,6 @@ index 06a89c0..39fe9c7 100644
  
    case SQLCOM_PREPARE:
 diff --git a/sql/sql_select.cc b/sql/sql_select.cc
-index 181fa6e..14cb51f 100644
 --- a/sql/sql_select.cc
 +++ b/sql/sql_select.cc
 @@ -11284,6 +11284,7 @@ bool create_myisam_from_heap(THD *thd, TABLE *table, TMP_TABLE_PARAM *param,
@@ -1369,7 +1352,6 @@ index 181fa6e..14cb51f 100644
    (void) table->file->ha_rnd_end();
    (void) new_table.file->close();
 diff --git a/sql/sql_yacc.yy b/sql/sql_yacc.yy
-index af19762..f64f29c 100644
 --- a/sql/sql_yacc.yy
 +++ b/sql/sql_yacc.yy
 @@ -946,6 +946,10 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
@@ -1484,7 +1466,6 @@ index af19762..f64f29c 100644
  
  show:
 diff --git a/storage/innobase/include/os0file.h b/storage/innobase/include/os0file.h
-index 8ef0906..f3d3b98 100644
 --- a/storage/innobase/include/os0file.h
 +++ b/storage/innobase/include/os0file.h
 @@ -204,8 +204,9 @@ used to register actual file read, write and flush */
@@ -1521,7 +1502,6 @@ index 8ef0906..f3d3b98 100644
  #endif /* UNIV_PFS_IO  */
  
 diff --git a/storage/innobase/os/os0file.c b/storage/innobase/os/os0file.c
-index db777f0..77ab113 100644
 --- a/storage/innobase/os/os0file.c
 +++ b/storage/innobase/os/os0file.c
 @@ -3752,6 +3752,7 @@ os_aio_array_reserve_slot(
@@ -1541,7 +1521,6 @@ index db777f0..77ab113 100644
  	ut_ad(slot);
  
 diff --git a/storage/innobase/srv/srv0srv.c b/storage/innobase/srv/srv0srv.c
-index 5872ff2..d3a949e 100644
 --- a/storage/innobase/srv/srv0srv.c
 +++ b/storage/innobase/srv/srv0srv.c
 @@ -1144,6 +1144,7 @@ srv_conc_enter_innodb(
@@ -1585,44 +1564,30 @@ index 5872ff2..d3a949e 100644
  	ut_ad(!sync_thread_levels_nonempty_trx(trx->has_search_latch));
  #endif /* UNIV_SYNC_DEBUG */
 diff --git a/support-files/mysql.server.sh b/support-files/mysql.server.sh
-index b5115a5..f955e50 100644
 --- a/support-files/mysql.server.sh
 +++ b/support-files/mysql.server.sh
-@@ -59,6 +59,33 @@ lock_file_path="$lockdir/mysql"
+@@ -59,6 +59,20 @@ lock_file_path="$lockdir/mysql"
  
  # The following variables are only set for letting mysql.server find things.
  
-+cpu_limit=
-+io_limit=
-+
++if [ -e /usr/share/lve/dbgovernor/utils/mysql_export ]; then
++. /usr/share/lve/dbgovernor/utils/mysql_export
++else
 +get_limit(){
-+  if [ -e /usr/sbin/lvectl ]; then
-+        LVE_VER=`/usr/sbin/lvectl --lve-version`
-+        if [ "$LVE_VER" == "4" ]; then
-+            io_limit=`/usr/sbin/lvectl limits 3 | awk 'NR == 2' | awk '{print $6}'`
-+        else
-+            io_limit=`/usr/sbin/lvectl limits 3 | awk 'NR == 2' | awk '{print $8}'`
-+        fi
-+        cpu_limit=`/usr/sbin/lvectl limits 3 | awk 'NR == 2' | awk '{print $2}'`
-+  fi
++    return
 +}
-+
 +set_big_limit(){
-+    if [ -e /usr/sbin/lvectl ]; then
-+	/usr/sbin/lvectl set 3 --cpu=100 --io=0 --save-all-parameters
-+    fi
++    return
 +}
-+
 +set_old_limit(){
-+    if [ -e /usr/sbin/lvectl ]; then
-+	/usr/sbin/lvectl set 3 --cpu=$cpu_limit --io=$io_limit --save-all-parameters
-+    fi
++    return
 +}
++fi
 +
  # Set some defaults
  mysqld_pid_file_path=
  if test -z "$basedir"
-@@ -298,6 +325,11 @@ case "$mode" in
+@@ -298,6 +312,11 @@ case "$mode" in
    'stop')
      # Stop daemon. We use a signal here to avoid having to know the
      # root password.
@@ -1634,7 +1599,7 @@ index b5115a5..f955e50 100644
  
      if test -s "$mysqld_pid_file_path"
      then
-@@ -319,10 +351,12 @@ case "$mode" in
+@@ -319,10 +338,12 @@ case "$mode" in
        then
          rm -f "$lock_file_path"
        fi
@@ -1647,7 +1612,7 @@ index b5115a5..f955e50 100644
      ;;
  
    'restart')
-@@ -337,14 +371,19 @@ case "$mode" in
+@@ -337,14 +358,19 @@ case "$mode" in
      ;;
  
    'reload'|'force-reload')
