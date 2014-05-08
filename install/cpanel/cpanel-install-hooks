@@ -13,6 +13,8 @@
 postupcp="/scripts/postupcp"
 mysqluserupdate1="/usr/local/cpanel/hooks/mysql/adduser"
 mysqluserupdate2="/usr/local/cpanel/hooks/mysql/deluser"
+mysqlusercreate="/scripts/postwwwacct"
+mysqluserkill="/scripts/postkillacct"
 
 ####################################################
 # Hooks list                                       #
@@ -24,6 +26,14 @@ mysqlupdate_hook="/usr/share/lve/dbgovernor/utils/dbgovernor_map"
 createHookHeader "$postupcp"
 checkHookString "$postupcp" "$postupcp_hook" "dbgovernor"
 removeEmptyStringsFromFile "$postupcp"
+
+createHookHeader "$mysqlusercreate"
+checkHookString "$mysqlusercreate" "$postupcp_hook" "dbgovernor"
+removeEmptyStringsFromFile "$mysqlusercreate"
+
+createHookHeader "$mysqluserkill"
+checkHookString "$mysqluserkill" "$postupcp_hook" "dbgovernor"
+removeEmptyStringsFromFile "$mysqluserkill"
 
 createHookHeader "$mysqluserupdate1"
 checkHookString "$mysqluserupdate1" "$mysqlupdate_hook" "dbgovernor"

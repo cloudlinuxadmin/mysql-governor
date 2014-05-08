@@ -1,5 +1,5 @@
 %define g_version   1.0
-%define g_release   57
+%define g_release   58
 %define g_key_library 1
 
 Name: governor-mysql
@@ -240,6 +240,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Thu May 08 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-58
+- Added default account dbuser for cPanel
+
 * Tue Apr 29 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-57
 - Fixed MySQL-python installation
 
