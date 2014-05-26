@@ -1,4 +1,9 @@
-#!/usr/local/cpanel/3rdparty/bin/perl
+#!/bin/sh
+eval 'if [ -x /usr/local/cpanel/3rdparty/bin/perl ]; then exec /usr/local/cpanel/3rdparty/bin/perl -x -- $0 ${1+"$@"}; else exec /usr/bin/perl -x $0 ${1+"$@"}; fi;'
+if 0;
+
+#!/usr/bin/perl
+
 
 #BEGIN { unshift @INC, '/scripts'; }
 BEGIN { unshift @INC, '/usr/local/cpanel', '/scripts'; }
@@ -7,13 +12,13 @@ my $pckg_name = 'Cpanel';
 use strict;
 use warnings;
 
-eval "use " .$pckg_name . "::cPPkgs          ();";
+eval "use " .$pckg_name . "::Config::Users          ();";
 if ($@){
     $pckg_name = 'cPScript';
-    eval "use " .$pckg_name . "::cPPkgs       ();";
+    eval "use " .$pckg_name . "::Config::Users       ();";
 }
 
-eval "use " .$pckg_name . "::Config::Users         ();";
+#eval "use " .$pckg_name . "::Config::Users         ();";
 eval "use  " .$pckg_name . "::DB::Map              ();";
 eval "use  " .$pckg_name . "::DB                   ();";
 
