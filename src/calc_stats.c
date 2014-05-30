@@ -667,10 +667,22 @@ void dbstat_print_table( gpointer key, dbgov_statitrics *dbgov_statitrics__, voi
   }
 }
 
+int fileSize( FILE *file )
+{
+  int _size;
+
+  fseek( file, 0, SEEK_END );
+  _size = ftell( file );
+  fseek( file, 0, SEEK_SET );
+
+  return _size;
+}
+
 int WriteDbGovStatitrics( void )
 {
   FILE *dbgov_stats;
   char file[ 256 ], file_ts[ 256 ];
+  int _size;
 
   time_t timestamp = time( NULL );
   sprintf( file, "%sgovernor_%d.incomplete", PATH_TO_GOVERNOR_STATS, timestamp );
@@ -681,8 +693,15 @@ int WriteDbGovStatitrics( void )
   if( dbgov_stats != NULL )
   {
     g_hash_table_foreach( DbGovStatitrics, (GHFunc)dbstat_print_table, dbgov_stats );
+    _size = fileSize( dbgov_stats );
     fclose( dbgov_stats );
-    if( rename( file, file_ts ) == 0 ) return 1;
+
+    if( _size > 0 )
+    {
+      if( rename( file, file_ts ) == 0 ) return 1;
+    }
+    else 
+      unlink( file );
   }
   
   return 0;
