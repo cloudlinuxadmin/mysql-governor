@@ -1,5 +1,5 @@
 %define g_version   1.0
-%define g_release   60
+%define g_release   61
 %define g_key_library 1
 
 Name: governor-mysql
@@ -240,6 +240,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Mon Jun 20 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-61
+- Fixed MySQL5.6 installation for cPanel 11.44
+
 * Fri May 30 2014 Pavel Shkatula <shpp@cloudlinux.com> 1.0-60
 - Not created file statistic if no statistic on period
 

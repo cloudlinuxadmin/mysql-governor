@@ -10,13 +10,13 @@ my $pckg_name = 'Cpanel';
 eval "use " . $pckg_name . ";";
 use strict;
 
-eval "use " .$pckg_name . "::cPPkgs          ();";
+eval "use " .$pckg_name . "::SysPkgs          ();";
 if ($@){
     $pckg_name = 'cPScript';
-    eval "use " .$pckg_name . "::cPPkgs       ();";
+    eval "use " .$pckg_name . "::SysPkgs       ();";
 }
 
-eval "use " .$pckg_name . "::SysPkgs              ();";
+#eval "use " .$pckg_name . "::SysPkgs              ();";
 eval "use  " .$pckg_name . "::Sys 	           ();";
 eval "use  " .$pckg_name . "::OSSys                ();";
 eval "use  " .$pckg_name . "::HttpRequest          ();";
