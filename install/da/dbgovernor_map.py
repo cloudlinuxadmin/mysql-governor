@@ -66,12 +66,12 @@ def get_account_list():
         result = cur.fetchall()
         for row in result:
             try:
-		username = row[0].split('_')[0].strip()
-            	user = [username, userList[username]]
-                accountList[ row[0].strip().replace('\\', '')  ] =  user
+                username = row[0].split('_')[0].strip()
+                user = [username, userList[username]]
+                accountList[ row[1].strip().replace('\\', '')  ] =  user
             except KeyError:
-		#db_user has no real user
-		pass
+                #db_user has no real user
+                pass
         con.close()
     except MySQLdb.Error:
         print( con.error() )
@@ -82,9 +82,9 @@ def listUserMap( fileName ):
     listUserMap = {}
     try:
         f = open( fileName )
-	for line in f:
-		( user_, account_, id_ ) = line.split()
-		listUserMap[user_] = [ account_, id_ ]
+        for line in f:
+                ( user_, account_, id_ ) = line.split()
+                listUserMap[user_] = [ account_, id_ ]
         f.close()
     except IOError:
         pass
@@ -92,18 +92,16 @@ def listUserMap( fileName ):
     return listUserMap
 
 def writeFileMap( fileName ):
-    userList = get_dauser( '/usr/local/directadmin/data/users' )
-    #mapList = listUserMap( fileName )
+    mapList = listUserMap( fileName )
     accountList = get_account_list()
 
-    mapList = {}
     f = open( fileName, 'w' )
     for db_user in accountList.keys():
-	mapList[db_user] = accountList[db_user]
+        mapList[db_user] = accountList[db_user]
 
     for db_user, account in mapList.iteritems():
         line = "%s %s %s\n" % (db_user, account[0], account[1])
-	f.writelines( line )
+        f.writelines( line )
     f.close()
 
 if __name__ == '__main__':
