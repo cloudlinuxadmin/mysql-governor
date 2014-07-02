@@ -366,7 +366,7 @@ def set_bad_lve_container():
 	if len(result0)>0 and newLveCtl(result0[0])==True:
 	    result1 = exec_command("/usr/sbin/lvectl limits 3 | sed -n 2p | sed -e 's/\s\+/ /g' | cut -d' ' -f3")
 	    result2 = exec_command("/usr/sbin/lvectl limits default | sed -n 2p | sed -e 's/\s\+/ /g' | cut -d' ' -f3")
-	    if result1 == result2:
+	    if result1 == result2 or len(result1) == 0:
 		result3 = exec_command("cat /proc/cpuinfo | grep processor | wc -l")
 		cpu_lim=800
 		if(len(result3)>0):
