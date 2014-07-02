@@ -6,11 +6,8 @@ import glob
 import string
 import MySQLdb
 
-def isset( variable ):
-	return variable in locals() or variable in globals()
-    
 def get_dauser( path ):
-    users = []
+    users = {}
     os.chdir( path )
     dirList = glob.glob( './*' )
 
@@ -21,30 +18,11 @@ def get_dauser( path ):
                 f = open( fileDomains )
                 if len( f.readline() ) > 0:
                     userName = userDir[ 2: ]
-                    user_id_ = []
-                    user_id_.append( userName )
                     p = pwd.getpwnam( userName )
-                    user_id_.append( p.pw_uid )
-                    users.append( user_id_ )
+                    users[userName] = p.pw_uid
                 f.close()
             except IOError:
                 print( "No file " + fileDomains )
-
-    return users
-
-def get_dauser_full( path ):
-    users = []
-    os.chdir( path )
-    dirList = glob.glob( './*' )
-
-    for userDir in dirList:
-        if os.path.isdir( userDir ):
-            userName = userDir[ 2: ]
-            user_id_ = []
-            user_id_.append( userName )
-            p = pwd.getpwnam( userName )
-            user_id_.append( p.pw_uid )
-            users.append( user_id_ )
 
     return users
 
@@ -52,7 +30,8 @@ def get_account_list():
     conf_name = '/usr/local/directadmin/conf/mysql.conf'
     accountList = {}
     params = {}
-    
+    userList = get_dauser( '/usr/local/directadmin/data/users' )
+
     try:
         f = open( conf_name )
         for line in f.readlines():
@@ -74,70 +53,57 @@ def get_account_list():
         host_ = 'localhost'
     user_ = params[ 'user' ]
     passwd_ = params[ 'passwd' ]
+
+    for ul in userList:
+        user = [ul, userList[ul]]
+        accountList[ ul  ] =  user
+
     try:
         con = MySQLdb.connect( host = host_, user = user_, passwd = passwd_, db = "mysql" )
         cur = con.cursor()
         cur.execute( 'set names `utf8`' )
-        cur.execute( 'select `user`,`db` from db order by `user`' )
+        cur.execute( 'select `user` from db group by `user` order by `user`' )
         result = cur.fetchall()
         for row in result:
-            accountList[ row[ 0 ].strip() ] =  row[ 1 ].strip()
+            try:
+		username = row[0].split('_')[0].strip()
+            	user = [username, userList[username]]
+                accountList[ row[0].strip().replace('\\', '')  ] =  user
+            except KeyError:
+		#db_user has no real user
+		pass
         con.close()
     except MySQLdb.Error:
         print( con.error() )
     
     return accountList
 
-def checkUserMap( fileName ):
-    listUserMap = []
+def listUserMap( fileName ):
+    listUserMap = {}
     try:
         f = open( fileName )
-        listUserMap = f.readlines()
+	for line in f:
+		( user_, account_, id_ ) = line.split()
+		listUserMap[user_] = [ account_, id_ ]
         f.close()
     except IOError:
         pass
 
-    indexDel = []
-    listUserDA = get_dauser( '/usr/local/directadmin/data/users' )
-    for userMap in listUserMap:
-        ( user_, account_, id_ ) = userMap.split()
-        ind = 0
-        for userDA in listUserDA:
-            if user_ == userDA[ 0 ] and id_ == str( userDA[ 1 ] ):
-                indexDel.append( ind )
-            ind = ind + 1
-
-    ind = 0
-    userList = []
-    for userDA in listUserDA:
-        iDel = 0
-        for i in indexDel:
-            if i == ind:
-                iDel = 1
-
-        if iDel == 0:
-            userList.append( userDA )
-        ind = ind + 1
-
-    return userList
+    return listUserMap
 
 def writeFileMap( fileName ):
-    userList = checkUserMap( fileName )
+    userList = get_dauser( '/usr/local/directadmin/data/users' )
+    #mapList = listUserMap( fileName )
     accountList = get_account_list()
 
-    f = open( fileName, 'a' )
-    for userList_ in userList:
-        for key in accountList.keys():
-            if userList_[ 0 ] == key:
-                account_name = key + "_" + accountList[ key ]
-                break
-            else:
-                account_name = None
-        if account_name != None:
-            line = userList_[ 0 ] + ' ' + account_name + ' ' + str( userList_[ 1 ] ) + '\n'
-        else:  
-            line = userList_[ 0 ] + ' ' + userList_[ 0 ] + ' ' + str( userList_[ 1 ] ) + '\n'
-        f.writelines( line )
+    mapList = {}
+    f = open( fileName, 'w' )
+    for db_user in accountList.keys():
+	mapList[db_user] = accountList[db_user]
+
+    for db_user, account in mapList.iteritems():
+        line = "%s %s %s\n" % (db_user, account[0], account[1])
+	f.writelines( line )
     f.close()
 
 if __name__ == '__main__':
