@@ -1,5 +1,5 @@
 %define g_version   1.0
-%define g_release   61
+%define g_release   62
 %define g_key_library 1
 
 Name: governor-mysql
@@ -81,7 +81,8 @@ install -D -m 755 bin/dbtop $RPM_BUILD_ROOT%{_sbindir}/
 install -D -m 755 bin/mysql_unfreeze $RPM_BUILD_ROOT%{_sbindir}/
 install -D -m 755 bin/dbctl $RPM_BUILD_ROOT%{_sbindir}/
 install -D -m 600 db-governor.xml $RPM_BUILD_ROOT%{_sysconfdir}/container/mysql-governor.xml
-install -D -m 755 lib/libgovernor.so $RPM_BUILD_ROOT%{_libdir}/
+install -D -m 755 lib/libgovernor.so $RPM_BUILD_ROOT%{_libdir}/libgovernor.so.%{version} 
+ln -s libgovernor.so.%{version} $RPM_BUILD_ROOT%{_libdir}/libgovernor.so
 #install utility
 install -D -m 755 install/cpanel/check_mysql_leave_pid.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/check_mysql_leave_pid.sh
 install -D -m 755 install/cpanel/db_governor-clear-old-hook $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/db_governor-clear-old-hook
@@ -230,6 +231,7 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 %{_sbindir}/mysql_unfreeze
 %{_sbindir}/dbctl
 %{_libdir}/libgovernor.so
+%{_libdir}/libgovernor.so.%{version}
 %config(noreplace) %{_sysconfdir}/container/mysql-governor.xml
 %{_sysconfdir}/rc.d/init.d/*
 /usr/share/lve/dbgovernor/*
@@ -240,6 +242,10 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Wed Jul 02 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-62
+- Fixed DA dbuser-map creation
+- Switched MySQL installation from production repo
+
 * Mon Jun 20 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-61
 - Fixed MySQL5.6 installation for cPanel 11.44
 
