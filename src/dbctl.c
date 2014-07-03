@@ -233,8 +233,8 @@ void help( void )
 
   printf( "\noptions:\n" );
   printf( "--cpu=N                  limit CPU   (pct)  usage\n" );
-  printf( "--read=N                 limit READ  (Mb/s) usage\n" );
-  printf( "--write=N                limit WRITE (Mb/s) usage\n" );
+  printf( "--read=N                 limit READ  (MB/s) usage\n" );
+  printf( "--write=N                limit WRITE (MB/s) usage\n" );
   printf( "--slow=N                 limit time for long running select queries\n" );
   printf( "--level=N                level (1,2,3 or 4) specified\n" );
 }

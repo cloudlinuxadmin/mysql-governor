@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <governor>
-<lve use="on"/>
+<lve use="abusers"/>
 <connector prefix_separator="_"/>
 <intervals short="15" mid="60" long="300"/>
 <log file="/var/log/dbgovernor-error.log" mode="ERROR"/>

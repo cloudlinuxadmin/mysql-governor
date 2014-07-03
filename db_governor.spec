@@ -1,5 +1,5 @@
 %define g_version   1.0
-%define g_release   62
+%define g_release   63
 %define g_key_library 1
 
 Name: governor-mysql
@@ -242,6 +242,11 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Thu Jul 03 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-63
+- Fixes in dbctl list header
+- Fixes in DA dbuser-map generator
+- AbUser mode as default
+
 * Wed Jul 02 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-62
 - Fixed DA dbuser-map creation
 - Switched MySQL installation from production repo
