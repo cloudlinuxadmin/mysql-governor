@@ -1,5 +1,5 @@
 %define g_version   1.0
-%define g_release   63
+%define g_release   64
 %define g_key_library 1
 
 Name: governor-mysql
@@ -82,7 +82,7 @@ install -D -m 755 bin/mysql_unfreeze $RPM_BUILD_ROOT%{_sbindir}/
 install -D -m 755 bin/dbctl $RPM_BUILD_ROOT%{_sbindir}/
 install -D -m 600 db-governor.xml $RPM_BUILD_ROOT%{_sysconfdir}/container/mysql-governor.xml
 install -D -m 755 lib/libgovernor.so $RPM_BUILD_ROOT%{_libdir}/libgovernor.so.%{version} 
-ln -s libgovernor.so.%{version} $RPM_BUILD_ROOT%{_libdir}/libgovernor.so
+ln -fs libgovernor.so.%{version} $RPM_BUILD_ROOT%{_libdir}/libgovernor.so
 #install utility
 install -D -m 755 install/cpanel/check_mysql_leave_pid.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/check_mysql_leave_pid.sh
 install -D -m 755 install/cpanel/db_governor-clear-old-hook $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/db_governor-clear-old-hook
@@ -242,6 +242,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Thu Jul 03 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-64
+- fix username to be username instead of dbname and make file write atomic
+
 * Thu Jul 03 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-63
 - Fixes in dbctl list header
 - Fixes in DA dbuser-map generator

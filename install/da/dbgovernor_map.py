@@ -54,6 +54,10 @@ def get_account_list():
     user_ = params[ 'user' ]
     passwd_ = params[ 'passwd' ]
 
+    for ul in userList:
+        accountList.append( ( ul, ul, userList[ul] ) )
+
+
     try:
         con = MySQLdb.connect( host = host_, user = user_, passwd = passwd_, db = "mysql" )
         cur = con.cursor()
