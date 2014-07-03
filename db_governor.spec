@@ -1,5 +1,5 @@
 %define g_version   1.0
-%define g_release   64
+%define g_release   65
 %define g_key_library 1
 
 Name: governor-mysql
@@ -242,6 +242,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Thu Jul 03 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-65
+- removed duplicate usernames from DA dbuser-map
+
 * Thu Jul 03 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-64
 - fix username to be username instead of dbname and make file write atomic
 

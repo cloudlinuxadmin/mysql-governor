@@ -81,7 +81,7 @@ def writeFileMap( fileName ):
     accountList = get_account_list()
 
     f = open( fileName+'.tmp', 'w' )
-    for db_user, account_name, account_id in accountList:
+    for db_user, account_name, account_id in set(accountList):
         line = "%s %s %s\n" % (db_user, account_name, account_id)
         f.writelines( line )
     f.close()
