@@ -28,7 +28,7 @@ def get_dauser( path ):
 
 def get_account_list():
     conf_name = '/usr/local/directadmin/conf/mysql.conf'
-    accountList = {}
+    accountList = []
     params = {}
     userList = get_dauser( '/usr/local/directadmin/data/users' )
 
@@ -54,10 +54,6 @@ def get_account_list():
     user_ = params[ 'user' ]
     passwd_ = params[ 'passwd' ]
 
-    for ul in userList:
-        user = [ul, userList[ul]]
-        accountList[ ul  ] =  user
-
     try:
         con = MySQLdb.connect( host = host_, user = user_, passwd = passwd_, db = "mysql" )
         cur = con.cursor()
@@ -67,8 +63,7 @@ def get_account_list():
         for row in result:
             try:
                 username = row[0].split('_')[0].strip()
-                user = [username, userList[username]]
-                accountList[ row[1].strip().replace('\\', '')  ] =  user
+                accountList.append( ( row[0], username, userList[username] ) )
             except KeyError:
                 #db_user has no real user
                 pass
@@ -78,31 +73,15 @@ def get_account_list():
     
     return accountList
 
-def listUserMap( fileName ):
-    listUserMap = {}
-    try:
-        f = open( fileName )
-        for line in f:
-                ( user_, account_, id_ ) = line.split()
-                listUserMap[user_] = [ account_, id_ ]
-        f.close()
-    except IOError:
-        pass
-
-    return listUserMap
-
 def writeFileMap( fileName ):
-    mapList = listUserMap( fileName )
     accountList = get_account_list()
 
-    f = open( fileName, 'w' )
-    for db_user in accountList.keys():
-        mapList[db_user] = accountList[db_user]
-
-    for db_user, account in mapList.iteritems():
-        line = "%s %s %s\n" % (db_user, account[0], account[1])
+    f = open( fileName+'.tmp', 'w' )
+    for db_user, account_name, account_id in accountList:
+        line = "%s %s %s\n" % (db_user, account_name, account_id)
         f.writelines( line )
     f.close()
+    os.rename(fileName+'.tmp', fileName)
 
 if __name__ == '__main__':
     writeFileMap( '/etc/container/dbuser-map' )
