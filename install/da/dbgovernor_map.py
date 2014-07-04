@@ -18,8 +18,11 @@ def get_dauser( path ):
                 f = open( fileDomains )
                 if len( f.readline() ) > 0:
                     userName = userDir[ 2: ]
-                    p = pwd.getpwnam( userName )
-                    users[userName] = p.pw_uid
+                    try:
+                        p = pwd.getpwnam( userName )
+                        users[userName] = p.pw_uid
+                    except KeyError:
+                        print "Warning: user '%s' has no uid!" % userName
                 f.close()
             except IOError:
                 print( "No file " + fileDomains )
