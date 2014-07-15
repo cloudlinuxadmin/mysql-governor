@@ -423,6 +423,18 @@ def fix_libmygcc():
 		os.rename("/usr/lib64/mysql/libmygcc.a", "/usr/lib64/mysql/libmygcc.a.bak")
 	if os.path.exists("/usr/lib/mysql/libmygcc.a"):
 		os.rename("/usr/lib/mysql/libmygcc.a", "/usr/lib/mysql/libmygcc.a.bak")
+
+def remove_percona_justdb():
+        yb = yum.YumBase()
+        remove_sepcific_mysql('Percona-Server', yb)
+        remove_sepcific_mysql('Percona-Server-shared', yb)
+
+        remove_sepcific_mysql('percona-server', yb)
+        remove_sepcific_mysql('percona-server-shared', yb)
+
+        print "Cleaning of Percona-Server packages completed"
+
+
 		
 
 cp = get_cp()
@@ -443,6 +455,7 @@ for o, a in opts:
                 remove_mysqlclients()
             	remove_mysql_justdb()
                 remove_mysql_justdb_cl()
+                remove_percona_justdb()
 		install_mysql_beta()
                 set_bad_lve_container()
                 if os.path.exists("/usr/share/lve/dbgovernor/chk-mysqlclient"):
@@ -454,6 +467,7 @@ for o, a in opts:
                 warn_message()
 		remove_mysqlclients()
 		remove_mysql_justdb_cl()
+                remove_percona_justdb()
 		install_mysql_beta()
 		remove_mysql_justdb()
                 set_bad_lve_container()
@@ -468,6 +482,7 @@ for o, a in opts:
 	elif o in ("-d", "--delete"):
                 remove_repo_file()
 		remove_mysql_justdb_cl()
+                remove_percona_justdb()
                 delete_mysql()
                 delete_governor_rpm()
 	elif o in ("--install-beta",):
