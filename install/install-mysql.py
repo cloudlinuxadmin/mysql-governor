@@ -432,6 +432,24 @@ def remove_percona_justdb():
         remove_sepcific_mysql('percona-server', yb)
         remove_sepcific_mysql('percona-server-shared', yb)
 
+        remove_sepcific_mysql('Percona-Server-51', yb)
+        remove_sepcific_mysql('Percona-Server-shared-51', yb)
+        remove_sepcific_mysql('Percona-Server-client-51', yb)
+        remove_sepcific_mysql('Percona-Server-server-51', yb)
+        remove_sepcific_mysql('Percona-Server-devel-51', yb)
+
+        remove_sepcific_mysql('Percona-Server-55', yb)
+        remove_sepcific_mysql('Percona-Server-shared-55', yb)
+        remove_sepcific_mysql('Percona-Server-client-55', yb)
+        remove_sepcific_mysql('Percona-Server-server-55', yb)
+        remove_sepcific_mysql('Percona-Server-devel-55', yb)
+
+        remove_sepcific_mysql('Percona-Server-56', yb)
+        remove_sepcific_mysql('Percona-Server-shared-56', yb)
+        remove_sepcific_mysql('Percona-Server-client-56', yb)
+        remove_sepcific_mysql('Percona-Server-server-56', yb)
+        remove_sepcific_mysql('Percona-Server-devel-56', yb)
+
         print "Cleaning of Percona-Server packages completed"
 
 
