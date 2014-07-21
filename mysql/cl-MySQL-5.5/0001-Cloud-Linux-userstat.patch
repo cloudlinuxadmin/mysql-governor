@@ -1,568 +1,3 @@
-From 866d5ef180cf5af94a1da9ce725a737435fff685 Mon Sep 17 00:00:00 2001
-From: Kyle Lafkoff <kyle.lafkoff@cpanel.net>
-Date: Wed, 26 Oct 2011 13:11:58 -0500
-Subject: [PATCH 1/6] Cloud Linux userstat
-
-Provided by Cloud Linux for MySQL 5.5.17. This patch was modified to
-remove the portion for sql_parse.cc
-
-File=userstats.patch
-Name=SHOW USER/TABLE/INDEX statistics
-Version=V2
-Author=Google
-License=GPL
-Comment=Added INFORMATION_SCHEMA.*_STATISTICS
-2008-12-01
-YK: fix behavior for prepared statements
-
-2008-11-26
-YK: add switch variable "userstat" to control INFORMATION_SCHEMA.*_STATISTICS (default:OFF)
-2010-12-31
-Ported to 5.5.8
-2011-1-5
-Fix porting
-2011-02
-Rename variable USERSTAT_RUNNING => USERSTAT
----
- SOURCES/mysql/include/mysql/plugin.h               |   2 +
- SOURCES/mysql/include/mysql_com.h                  |   7 +
- .../mysql/mysql-test/r/userstat_bug602047.result   |  15 +
- SOURCES/mysql/mysql-test/t/userstat_bug602047.test |  11 +
- SOURCES/mysql/sql/handler.cc                       | 128 +++++
- SOURCES/mysql/sql/handler.h                        |  22 +-
- SOURCES/mysql/sql/lex.h                            |   5 +
- SOURCES/mysql/sql/log.cc                           |  29 +-
- SOURCES/mysql/sql/log.h                            |   4 +-
- SOURCES/mysql/sql/mysqld.cc                        |  43 +-
- SOURCES/mysql/sql/mysqld.h                         |  24 +-
- SOURCES/mysql/sql/sql_base.cc                      |   7 +
- SOURCES/mysql/sql/sql_class.cc                     | 126 +++++
- SOURCES/mysql/sql/sql_class.h                      |  65 +++
- SOURCES/mysql/sql/sql_connect.cc                   | 613 +++++++++++++++++++++
- SOURCES/mysql/sql/sql_delete.cc                    |   2 +
- SOURCES/mysql/sql/sql_insert.cc                    |  12 +-
- SOURCES/mysql/sql/sql_lex.h                        |   3 +
- SOURCES/mysql/sql/sql_parse.cc                     |  97 ++++
- SOURCES/mysql/sql/sql_prepare.cc                   | 307 ++++++++++-
- SOURCES/mysql/sql/sql_reload.cc                    |  36 +-
- SOURCES/mysql/sql/sql_show.cc                      | 424 ++++++++++++++
- SOURCES/mysql/sql/sql_update.cc                    |  12 +-
- SOURCES/mysql/sql/sql_yacc.yy                      |  54 ++
- SOURCES/mysql/sql/structs.h                        | 166 ++++++
- SOURCES/mysql/sql/sys_vars.cc                      |  11 +
- SOURCES/mysql/storage/myisam/ha_myisam.cc          |  85 ++-
- 27 files changed, 2283 insertions(+), 27 deletions(-)
- create mode 100644 SOURCES/mysql/mysql-test/r/userstat_bug602047.result
- create mode 100644 SOURCES/mysql/mysql-test/t/userstat_bug602047.test
-
-diff --git a/SOURCES/mysql/include/mysql/plugin.h b/SOURCES/mysql/include/mysql/plugin.h
-index 0dced1b..41773de 100644
---- a/SOURCES/mysql/include/mysql/plugin.h
-+++ b/SOURCES/mysql/include/mysql/plugin.h
-@@ -16,6 +16,8 @@
- #ifndef _my_plugin_h
- #define _my_plugin_h
- 
-+#define EXTENDED_FOR_USERSTAT
-+
- /*
-   On Windows, exports from DLL need to be declared
-   Also, plugin needs to be declared as extern "C" because MSVC 
-diff --git a/SOURCES/mysql/include/mysql_com.h b/SOURCES/mysql/include/mysql_com.h
-index f2345be..21e3427 100644
---- a/SOURCES/mysql/include/mysql_com.h
-+++ b/SOURCES/mysql/include/mysql_com.h
-@@ -31,6 +31,7 @@
- 
- #define SERVER_VERSION_LENGTH 60
- #define SQLSTATE_LENGTH 5
-+#define LIST_PROCESS_HOST_LEN 64
- 
- /*
-   Maximum length of comments
-@@ -146,6 +147,12 @@ enum enum_server_command
- #define REFRESH_DES_KEY_FILE	0x40000L
- #define REFRESH_USER_RESOURCES	0x80000L
- 
-+#define REFRESH_TABLE_STATS    0x200000L /* Refresh table stats my_hash table */
-+#define REFRESH_INDEX_STATS    0x400000L /* Refresh index stats my_hash table */
-+#define REFRESH_USER_STATS     0x800000L /* Refresh user stats my_hash table */
-+#define REFRESH_CLIENT_STATS   0x1000000L /* Refresh client stats my_hash table */
-+#define REFRESH_THREAD_STATS   0x2000000L /* Refresh thread stats my_hash table */
-+
- #define CLIENT_LONG_PASSWORD	1	/* new more secure passwords */
- #define CLIENT_FOUND_ROWS	2	/* Found instead of affected rows */
- #define CLIENT_LONG_FLAG	4	/* Get all column flags */
-diff --git a/SOURCES/mysql/mysql-test/r/userstat_bug602047.result b/SOURCES/mysql/mysql-test/r/userstat_bug602047.result
-new file mode 100644
-index 0000000..966439b
---- /dev/null
-+++ b/SOURCES/mysql/mysql-test/r/userstat_bug602047.result
-@@ -0,0 +1,15 @@
-+DROP TABLE IF EXISTS t1;
-+SET GLOBAL userstat=ON;
-+CREATE TABLE t1 ( id int(10), PRIMARY KEY (id)) ENGINE=InnoDB;
-+INSERT INTO t1 VALUES (1),(2),(3),(4),(5),(6),(7),(8),(9),(10);
-+SELECT COUNT(*) FROM t1;
-+COUNT(*)
-+10
-+SELECT ROWS_READ FROM information_schema.table_statistics WHERE TABLE_NAME='t1';
-+ROWS_READ
-+10
-+SELECT ROWS_READ FROM information_schema.index_statistics WHERE TABLE_NAME='t1';
-+ROWS_READ
-+10
-+SET GLOBAL userstat=OFF;
-+DROP TABLE t1;
-diff --git a/SOURCES/mysql/mysql-test/t/userstat_bug602047.test b/SOURCES/mysql/mysql-test/t/userstat_bug602047.test
-new file mode 100644
-index 0000000..436b864
---- /dev/null
-+++ b/SOURCES/mysql/mysql-test/t/userstat_bug602047.test
-@@ -0,0 +1,11 @@
-+--disable_warnings
-+DROP TABLE IF EXISTS t1; 
-+--enable_warnings
-+SET GLOBAL userstat=ON;
-+CREATE TABLE t1 ( id int(10), PRIMARY KEY (id)) ENGINE=InnoDB;
-+INSERT INTO t1 VALUES (1),(2),(3),(4),(5),(6),(7),(8),(9),(10);
-+SELECT COUNT(*) FROM t1; 
-+SELECT ROWS_READ FROM information_schema.table_statistics WHERE TABLE_NAME='t1';
-+SELECT ROWS_READ FROM information_schema.index_statistics WHERE TABLE_NAME='t1';
-+SET GLOBAL userstat=OFF;
-+DROP TABLE t1;
-\ No newline at end of file
-diff --git a/SOURCES/mysql/sql/handler.cc b/SOURCES/mysql/sql/handler.cc
-index c3ad1ca..9a38e85 100644
---- a/SOURCES/mysql/sql/handler.cc
-+++ b/SOURCES/mysql/sql/handler.cc
-@@ -1333,6 +1333,8 @@ int ha_commit_trans(THD *thd, bool all)
-         goto end;
-       }
-     DBUG_EXECUTE_IF("crash_commit_after", DBUG_SUICIDE(););
-+    if (is_real_trans)
-+      thd->diff_commit_trans++;
-     RUN_HOOK(transaction, after_commit, (thd, FALSE));
- end:
-     if (rw_trans && mdl_request.ticket)
-@@ -1493,6 +1495,8 @@ int ha_rollback_trans(THD *thd, bool all)
-   /* Always cleanup. Even if nht==0. There may be savepoints. */
-   if (is_real_trans)
-     thd->transaction.cleanup();
-+
-+  thd->diff_rollback_trans++;
-   if (all)
-     thd->transaction_rollback_request= FALSE;
- 
-@@ -1897,6 +1901,7 @@ int ha_rollback_to_savepoint(THD *thd, SAVEPOINT *sv)
-     ha_info->reset(); /* keep it conveniently zero-filled */
-   }
-   trans->ha_list= sv->ha_list;
-+  thd->diff_rollback_trans++;
-   DBUG_RETURN(error);
- }
- 
-@@ -2273,6 +2278,8 @@ int handler::ha_open(TABLE *table_arg, const char *name, int mode,
-       dup_ref=ref+ALIGN_SIZE(ref_length);
-     cached_table_flags= table_flags();
-   }
-+  rows_read= rows_changed= 0;
-+  memset(index_rows_read, 0, sizeof(index_rows_read));
-   DBUG_RETURN(error);
- }
- 
-@@ -3784,6 +3791,127 @@ void handler::get_dynamic_partition_info(PARTITION_STATS *stat_info,
-   return;
- }
- 
-+// Updates the global table stats with the TABLE this handler represents.
-+void handler::update_global_table_stats()
-+{
-+  if (!opt_userstat)
-+  {
-+    rows_read= rows_changed= 0;
-+    return;
-+  }
-+
-+  if (!rows_read && !rows_changed)
-+    return;  // Nothing to update.
-+  // table_cache_key is db_name + '\0' + table_name + '\0'.
-+  if (!table->s || !table->s->table_cache_key.str || !table->s->table_name.str)
-+    return;
-+
-+  TABLE_STATS* table_stats;
-+  char key[NAME_LEN * 2 + 2];
-+  // [db] + '.' + [table]
-+  sprintf(key, "%s.%s", table->s->table_cache_key.str, table->s->table_name.str);
-+
-+  mysql_mutex_lock(&LOCK_global_table_stats);
-+  // Gets the global table stats, creating one if necessary.
-+  if (!(table_stats = (TABLE_STATS *) my_hash_search(&global_table_stats,
-+                                                     (uchar*)key,
-+                                                     strlen(key))))
-+  {
-+    if (!(table_stats = ((TABLE_STATS *)
-+                         my_malloc(sizeof(TABLE_STATS), MYF(MY_WME | MY_ZEROFILL)))))
-+    {
-+      // Out of memory.
-+      sql_print_error("Allocating table stats failed.");
-+      goto end;
-+    }
-+    strncpy(table_stats->table, key, sizeof(table_stats->table));
-+    table_stats->rows_read=              0;
-+    table_stats->rows_changed=           0;
-+    table_stats->rows_changed_x_indexes= 0;
-+    table_stats->engine_type=            (int) ht->db_type;
-+
-+    if (my_hash_insert(&global_table_stats, (uchar *) table_stats))
-+    {
-+      // Out of memory.
-+      sql_print_error("Inserting table stats failed.");
-+      my_free((char *) table_stats);
-+      goto end;
-+    }
-+  }
-+  // Updates the global table stats.
-+  table_stats->rows_read+=              rows_read;
-+  table_stats->rows_changed+=           rows_changed;
-+  table_stats->rows_changed_x_indexes+=
-+    rows_changed * (table->s->keys ? table->s->keys : 1);
-+  current_thd->diff_total_read_rows+=   rows_read;
-+  rows_read= rows_changed=              0;
-+end:
-+  mysql_mutex_unlock(&LOCK_global_table_stats);
-+}
-+
-+// Updates the global index stats with this handler's accumulated index reads.
-+void handler::update_global_index_stats()
-+{
-+  // table_cache_key is db_name + '\0' + table_name + '\0'.
-+  if (!table->s || !table->s->table_cache_key.str || !table->s->table_name.str)
-+    return;
-+
-+  if (!opt_userstat)
-+  {
-+    for (uint x= 0; x < table->s->keys; ++x)
-+    {
-+      index_rows_read[x]= 0;
-+    }
-+    return;
-+  }
-+
-+  for (uint x = 0; x < table->s->keys; ++x)
-+  {
-+    if (index_rows_read[x])
-+    {
-+      // Rows were read using this index.
-+      KEY* key_info = &table->key_info[x];
-+
-+      if (!key_info->name) continue;
-+
-+      INDEX_STATS* index_stats;
-+      char key[NAME_LEN * 3 + 3];
-+      // [db] + '.' + [table] + '.' + [index]
-+      sprintf(key, "%s.%s.%s",  table->s->table_cache_key.str,
-+              table->s->table_name.str, key_info->name);
-+
-+      mysql_mutex_lock(&LOCK_global_index_stats);
-+      // Gets the global index stats, creating one if necessary.
-+      if (!(index_stats = (INDEX_STATS *) my_hash_search(&global_index_stats,
-+                                                         (uchar *) key,
-+                                                         strlen(key))))
-+      {
-+        if (!(index_stats = ((INDEX_STATS *)
-+                             my_malloc(sizeof(INDEX_STATS), MYF(MY_WME | MY_ZEROFILL)))))
-+        {
-+          // Out of memory.
-+          sql_print_error("Allocating index stats failed.");
-+          goto end;
-+        }
-+        strncpy(index_stats->index, key, sizeof(index_stats->index));
-+        index_stats->rows_read= 0;
-+
-+        if (my_hash_insert(&global_index_stats, (uchar *) index_stats))
-+        {
-+          // Out of memory.
-+          sql_print_error("Inserting index stats failed.");
-+          my_free((char *) index_stats);
-+          goto end;
-+        }
-+      }
-+      // Updates the global index stats.
-+      index_stats->rows_read+= index_rows_read[x];
-+      index_rows_read[x]=      0;
-+  end:
-+      mysql_mutex_unlock(&LOCK_global_index_stats);
-+    }
-+  }
-+}
- 
- /****************************************************************************
- ** Some general functions that isn't in the handler class
-diff --git a/SOURCES/mysql/sql/handler.h b/SOURCES/mysql/sql/handler.h
-index 5eb2d6b..18da7c5 100644
---- a/SOURCES/mysql/sql/handler.h
-+++ b/SOURCES/mysql/sql/handler.h
-@@ -36,6 +36,10 @@
- #include <ft_global.h>
- #include <keycache.h>
- 
-+#if MAX_KEY > 128
-+#error MAX_KEY is too large.  Values up to 128 are supported.
-+#endif
-+
- // the following is for checking tables
- 
- #define HA_ADMIN_ALREADY_DONE	  1
-@@ -579,10 +583,12 @@ struct TABLE;
- enum enum_schema_tables
- {
-   SCH_CHARSETS= 0,
-+  SCH_CLIENT_STATS,
-   SCH_COLLATIONS,
-   SCH_COLLATION_CHARACTER_SET_APPLICABILITY,
-   SCH_COLUMNS,
-   SCH_COLUMN_PRIVILEGES,
-+  SCH_INDEX_STATS,
-   SCH_ENGINES,
-   SCH_EVENTS,
-   SCH_FILES,
-@@ -608,8 +614,11 @@ enum enum_schema_tables
-   SCH_TABLE_CONSTRAINTS,
-   SCH_TABLE_NAMES,
-   SCH_TABLE_PRIVILEGES,
-+  SCH_TABLE_STATS,
-+  SCH_THREAD_STATS,
-   SCH_TRIGGERS,
-   SCH_USER_PRIVILEGES,
-+  SCH_USER_STATS,
-   SCH_VARIABLES,
-   SCH_VIEWS
- };
-@@ -1280,6 +1289,9 @@ public:
-   bool locked;
-   bool implicit_emptied;                /* Can be !=0 only if HEAP */
-   const COND *pushed_cond;
-+  ulonglong rows_read;
-+  ulonglong rows_changed;
-+  ulonglong index_rows_read[MAX_KEY];
-   /**
-     next_insert_id is the next value which should be inserted into the
-     auto_increment column: in a inserting-multi-row statement (like INSERT
-@@ -1331,10 +1343,12 @@ public:
-     ref_length(sizeof(my_off_t)),
-     ft_handler(0), inited(NONE),
-     locked(FALSE), implicit_emptied(0),
--    pushed_cond(0), next_insert_id(0), insert_id_for_cur_row(0),
-+    pushed_cond(0), rows_read(0), rows_changed(0), next_insert_id(0), insert_id_for_cur_row(0),
-     auto_inc_intervals_count(0),
-     m_psi(NULL)
--    {}
-+    {
-+      memset(index_rows_read, 0, sizeof(index_rows_read));
-+    }
-   virtual ~handler(void)
-   {
-     DBUG_ASSERT(locked == FALSE);
-@@ -1459,6 +1473,8 @@ public:
-   {
-     table= table_arg;
-     table_share= share;
-+    rows_read = rows_changed= 0;
-+    memset(index_rows_read, 0, sizeof(index_rows_read));
-   }
-   virtual double scan_time()
-   { return ulonglong2double(stats.data_file_length) / IO_SIZE + 2; }
-@@ -1854,6 +1870,8 @@ public:
-   virtual bool is_crashed() const  { return 0; }
-   virtual bool auto_repair() const { return 0; }
- 
-+  void update_global_table_stats();
-+  void update_global_index_stats();
- 
- #define CHF_CREATE_FLAG 0
- #define CHF_DELETE_FLAG 1
-diff --git a/SOURCES/mysql/sql/lex.h b/SOURCES/mysql/sql/lex.h
-index 4a49858..9e90725 100644
---- a/SOURCES/mysql/sql/lex.h
-+++ b/SOURCES/mysql/sql/lex.h
-@@ -111,6 +111,7 @@ static SYMBOL symbols[] = {
-   { "CIPHER",		SYM(CIPHER_SYM)},
-   { "CLASS_ORIGIN",     SYM(CLASS_ORIGIN_SYM)},
-   { "CLIENT",		SYM(CLIENT_SYM)},
-+  { "CLIENT_STATISTICS",	SYM(CLIENT_STATS_SYM)},
-   { "CLOSE",		SYM(CLOSE_SYM)},
-   { "COALESCE",		SYM(COALESCE)},
-   { "CODE",             SYM(CODE_SYM)},
-@@ -257,6 +258,7 @@ static SYMBOL symbols[] = {
-   { "IN",		SYM(IN_SYM)},
-   { "INDEX",		SYM(INDEX_SYM)},
-   { "INDEXES",		SYM(INDEXES)},
-+  { "INDEX_STATISTICS",	SYM(INDEX_STATS_SYM)},
-   { "INFILE",		SYM(INFILE)},
-   { "INITIAL_SIZE",	SYM(INITIAL_SIZE_SYM)},
-   { "INNER",		SYM(INNER_SYM)},
-@@ -547,12 +549,14 @@ static SYMBOL symbols[] = {
-   { "TABLES",		SYM(TABLES)},
-   { "TABLESPACE",	        SYM(TABLESPACE)},
-   { "TABLE_CHECKSUM",	SYM(TABLE_CHECKSUM_SYM)},
-+  { "TABLE_STATISTICS",	SYM(TABLE_STATS_SYM)},
-   { "TEMPORARY",	SYM(TEMPORARY)},
-   { "TEMPTABLE",	SYM(TEMPTABLE_SYM)},
-   { "TERMINATED",	SYM(TERMINATED)},
-   { "TEXT",		SYM(TEXT_SYM)},
-   { "THAN",             SYM(THAN_SYM)},
-   { "THEN",		SYM(THEN_SYM)},
-+  { "THREAD_STATISTICS",	SYM(THREAD_STATS_SYM)},
-   { "TIME",		SYM(TIME_SYM)},
-   { "TIMESTAMP",	SYM(TIMESTAMP)},
-   { "TIMESTAMPADD",     SYM(TIMESTAMP_ADD)},
-@@ -588,6 +592,7 @@ static SYMBOL symbols[] = {
-   { "USE",		SYM(USE_SYM)},
-   { "USER",		SYM(USER)},
-   { "USER_RESOURCES",	SYM(RESOURCES)},
-+  { "USER_STATISTICS",	SYM(USER_STATS_SYM)},
-   { "USE_FRM",		SYM(USE_FRM)},
-   { "USING",		SYM(USING)},
-   { "UTC_DATE",         SYM(UTC_DATE_SYM)},
-diff --git a/SOURCES/mysql/sql/log.cc b/SOURCES/mysql/sql/log.cc
-index 83ba7b0..96aee56 100644
---- a/SOURCES/mysql/sql/log.cc
-+++ b/SOURCES/mysql/sql/log.cc
-@@ -1006,6 +1006,13 @@ void Log_to_file_event_handler::flush()
-     mysql_slow_log.reopen_file();
- }
- 
-+void Log_to_file_event_handler::flush_slow_log()
-+{
-+  /* reopen slow log file */
-+  if (opt_slow_log)
-+    mysql_slow_log.reopen_file();
-+}
-+
- /*
-   Log error with all enabled log event handlers
- 
-@@ -5001,6 +5008,8 @@ bool MYSQL_BIN_LOG::write(Log_event *event_info)
-                              thd->first_successful_insert_id_in_prev_stmt_for_binlog);
-           if (e.write(file))
-             goto err;
-+          if (file == &log_file)
-+            thd->binlog_bytes_written+= e.data_written;
-         }
-         if (thd->auto_inc_intervals_in_cur_stmt_for_binlog.nb_elements() > 0)
-         {
-@@ -5012,12 +5021,16 @@ bool MYSQL_BIN_LOG::write(Log_event *event_info)
-                              minimum());
-           if (e.write(file))
-             goto err;
-+          if (file == &log_file)
-+            thd->binlog_bytes_written+= e.data_written;
-         }
-         if (thd->rand_used)
-         {
-           Rand_log_event e(thd,thd->rand_saved_seed1,thd->rand_saved_seed2);
-           if (e.write(file))
-             goto err;
-+          if (file == &log_file)
-+            thd->binlog_bytes_written+= e.data_written;
-         }
-         if (thd->user_var_events.elements)
-         {
-@@ -5040,6 +5053,8 @@ bool MYSQL_BIN_LOG::write(Log_event *event_info)
-                                  flags);
-             if (e.write(file))
-               goto err;
-+            if (file == &log_file)
-+              thd->binlog_bytes_written+= e.data_written;
-           }
-         }
-       }
-@@ -5051,6 +5066,8 @@ bool MYSQL_BIN_LOG::write(Log_event *event_info)
-     if (event_info->write(file) ||
-         DBUG_EVALUATE_IF("injecting_fault_writing", 1, 0))
-       goto err;
-+    if (file == &log_file)
-+      thd->binlog_bytes_written+= event_info->data_written;
- 
-     error= 0;
- err:
-@@ -5285,7 +5302,8 @@ uint MYSQL_BIN_LOG::next_file_id()
-     be reset as a READ_CACHE to be able to read the contents from it.
-  */
- 
--int MYSQL_BIN_LOG::write_cache(IO_CACHE *cache, bool lock_log, bool sync_log)
-+int MYSQL_BIN_LOG::write_cache(THD *thd, IO_CACHE *cache,
-+                               bool lock_log, bool sync_log)
- {
-   Mutex_sentry sentry(lock_log ? &LOCK_log : NULL);
- 
-@@ -5332,6 +5350,7 @@ int MYSQL_BIN_LOG::write_cache(IO_CACHE *cache, bool lock_log, bool sync_log)
-       /* write the first half of the split header */
-       if (my_b_write(&log_file, header, carry))
-         return ER_ERROR_ON_WRITE;
-+      thd->binlog_bytes_written+= carry;
- 
-       /*
-         copy fixed second half of header to cache so the correct
-@@ -5400,6 +5419,7 @@ int MYSQL_BIN_LOG::write_cache(IO_CACHE *cache, bool lock_log, bool sync_log)
-     /* Write data to the binary log file */
-     if (my_b_write(&log_file, cache->read_pos, length))
-       return ER_ERROR_ON_WRITE;
-+    thd->binlog_bytes_written+= length;
-     cache->read_pos=cache->read_end;		// Mark buffer used up
-   } while ((length= my_b_fill(cache)));
- 
-@@ -5523,20 +5543,23 @@ bool MYSQL_BIN_LOG::write(THD *thd, IO_CACHE *cache, Log_event *commit_event,
-       Query_log_event qinfo(thd, STRING_WITH_LEN("BEGIN"), TRUE, FALSE, TRUE, 0);
-       if (qinfo.write(&log_file))
-         goto err;
-+      thd->binlog_bytes_written+= qinfo.data_written;
-       DBUG_EXECUTE_IF("crash_before_writing_xid",
-                       {
--                        if ((write_error= write_cache(cache, false, true)))
-+                        if ((write_error= write_cache(thd, cache, false, true)))
-                           DBUG_PRINT("info", ("error writing binlog cache: %d",
-                                                write_error));
-                         DBUG_PRINT("info", ("crashing before writing xid"));
-                         DBUG_SUICIDE();
-                       });
- 
--      if ((write_error= write_cache(cache, false, false)))
-+      if ((write_error= write_cache(thd, cache, false, false)))
-         goto err;
- 
-       if (commit_event && commit_event->write(&log_file))
-         goto err;
-+      if (commit_event)
-+        thd->binlog_bytes_written+= commit_event->data_written;
- 
-       if (incident && write_incident(thd, FALSE))
-         goto err;
-diff --git a/SOURCES/mysql/sql/log.h b/SOURCES/mysql/sql/log.h
-index 1fc13af..443985c 100644
---- a/SOURCES/mysql/sql/log.h
-+++ b/SOURCES/mysql/sql/log.h
-@@ -442,7 +442,8 @@ public:
-   bool write(THD *thd, IO_CACHE *cache, Log_event *commit_event, bool incident);
-   bool write_incident(THD *thd, bool lock);
- 
--  int  write_cache(IO_CACHE *cache, bool lock_log, bool flush_and_sync);
-+  int  write_cache(THD *thd, IO_CACHE *cache,
-+                   bool lock_log, bool flush_and_sync);
-   void set_write_error(THD *thd, bool is_transactional);
-   bool check_write_error(THD *thd);
- 
-@@ -596,6 +597,7 @@ public:
-                            const char *sql_text, uint sql_text_len,
-                            CHARSET_INFO *client_cs);
-   void flush();
-+  void flush_slow_log();
-   void init_pthread_objects();
-   MYSQL_QUERY_LOG *get_mysql_slow_log() { return &mysql_slow_log; }
-   MYSQL_QUERY_LOG *get_mysql_log() { return &mysql_log; }
-diff --git a/SOURCES/mysql/sql/mysqld.cc b/SOURCES/mysql/sql/mysqld.cc
-index 145e222..2bebb2a 100644
 --- a/SOURCES/mysql/sql/mysqld.cc
 +++ b/SOURCES/mysql/sql/mysqld.cc
 @@ -434,6 +434,7 @@ uint   opt_large_page_size= 0;
@@ -769,10 +204,10 @@ index 8a20192..c2e39ad 100644
  extern MYSQL_PLUGIN_IMPORT mysql_mutex_t LOCK_thread_count;
  #ifdef HAVE_OPENSSL
  extern mysql_mutex_t LOCK_des_key_file;
-@@ -456,6 +468,16 @@ inline query_id_t get_query_id()
-   return id;
+@@ -447,6 +459,17 @@
+   return (id+1);
  }
- 
+
 +void init_global_user_stats(void);
 +void init_global_table_stats(void);
 +void init_global_index_stats(void);
@@ -783,9 +218,10 @@ index 8a20192..c2e39ad 100644
 +void free_global_index_stats(void);
 +void free_global_client_stats(void);
 +void free_global_thread_stats(void);
- 
++
  /*
    TODO: Replace this with an inline function.
+  */
 diff --git a/SOURCES/mysql/sql/sql_base.cc b/SOURCES/mysql/sql/sql_base.cc
 index 040c042..9cb5b92 100644
 --- a/SOURCES/mysql/sql/sql_base.cc
@@ -2039,6 +1475,19 @@ index f787fe4..1e053db 100644
  
 diff --git a/SOURCES/mysql/sql/sql_prepare.cc b/SOURCES/mysql/sql/sql_prepare.cc
 index 74279c5..bb53f8f 100644
+--- a/SOURCES/mysql/include/mysql/plugin.h
++++ b/SOURCES/mysql/include/mysql/plugin.h
+@@ -16,6 +16,8 @@
+ #ifndef _my_plugin_h
+ #define _my_plugin_h
+ 
++#define EXTENDED_FOR_USERSTAT
++
+ /*
+   On Windows, exports from DLL need to be declared
+   Also, plugin needs to be declared as extern "C" because MSVC 
+diff --git a/SOURCES/mysql/include/mysql_com.h b/SOURCES/mysql/include/mysql_com.h
+index f2345be..21e3427 100644
 --- a/SOURCES/mysql/sql/sql_prepare.cc
 +++ b/SOURCES/mysql/sql/sql_prepare.cc
 @@ -115,6 +115,9 @@ When one supplies long data for a placeholder:
@@ -3535,3 +2984,496 @@ index 72a29cd..df1cbbe 100644
 -- 
 1.8.3.4
 
+--- a/SOURCES/mysql/include/mysql_com.h
++++ b/SOURCES/mysql/include/mysql_com.h
+@@ -31,6 +31,7 @@
+ 
+ #define SERVER_VERSION_LENGTH 60
+ #define SQLSTATE_LENGTH 5
++#define LIST_PROCESS_HOST_LEN 64
+ 
+ /*
+   Maximum length of comments
+@@ -146,6 +147,12 @@ enum enum_server_command
+ #define REFRESH_DES_KEY_FILE	0x40000L
+ #define REFRESH_USER_RESOURCES	0x80000L
+ 
++#define REFRESH_TABLE_STATS    0x200000L /* Refresh table stats my_hash table */
++#define REFRESH_INDEX_STATS    0x400000L /* Refresh index stats my_hash table */
++#define REFRESH_USER_STATS     0x800000L /* Refresh user stats my_hash table */
++#define REFRESH_CLIENT_STATS   0x1000000L /* Refresh client stats my_hash table */
++#define REFRESH_THREAD_STATS   0x2000000L /* Refresh thread stats my_hash table */
++
+ #define CLIENT_LONG_PASSWORD	1	/* new more secure passwords */
+ #define CLIENT_FOUND_ROWS	2	/* Found instead of affected rows */
+ #define CLIENT_LONG_FLAG	4	/* Get all column flags */
+diff --git a/SOURCES/mysql/mysql-test/r/userstat_bug602047.result b/SOURCES/mysql/mysql-test/r/userstat_bug602047.result
+new file mode 100644
+index 0000000..966439b
+--- /dev/null
++++ b/SOURCES/mysql/mysql-test/r/userstat_bug602047.result
+@@ -0,0 +1,15 @@
++DROP TABLE IF EXISTS t1;
++SET GLOBAL userstat=ON;
++CREATE TABLE t1 ( id int(10), PRIMARY KEY (id)) ENGINE=InnoDB;
++INSERT INTO t1 VALUES (1),(2),(3),(4),(5),(6),(7),(8),(9),(10);
++SELECT COUNT(*) FROM t1;
++COUNT(*)
++10
++SELECT ROWS_READ FROM information_schema.table_statistics WHERE TABLE_NAME='t1';
++ROWS_READ
++10
++SELECT ROWS_READ FROM information_schema.index_statistics WHERE TABLE_NAME='t1';
++ROWS_READ
++10
++SET GLOBAL userstat=OFF;
++DROP TABLE t1;
+diff --git a/SOURCES/mysql/mysql-test/t/userstat_bug602047.test b/SOURCES/mysql/mysql-test/t/userstat_bug602047.test
+new file mode 100644
+index 0000000..436b864
+--- /dev/null
++++ b/SOURCES/mysql/mysql-test/t/userstat_bug602047.test
+@@ -0,0 +1,11 @@
++--disable_warnings
++DROP TABLE IF EXISTS t1; 
++--enable_warnings
++SET GLOBAL userstat=ON;
++CREATE TABLE t1 ( id int(10), PRIMARY KEY (id)) ENGINE=InnoDB;
++INSERT INTO t1 VALUES (1),(2),(3),(4),(5),(6),(7),(8),(9),(10);
++SELECT COUNT(*) FROM t1; 
++SELECT ROWS_READ FROM information_schema.table_statistics WHERE TABLE_NAME='t1';
++SELECT ROWS_READ FROM information_schema.index_statistics WHERE TABLE_NAME='t1';
++SET GLOBAL userstat=OFF;
++DROP TABLE t1;
+\ No newline at end of file
+diff --git a/SOURCES/mysql/sql/handler.cc b/SOURCES/mysql/sql/handler.cc
+index c3ad1ca..9a38e85 100644
+--- a/SOURCES/mysql/sql/handler.cc
++++ b/SOURCES/mysql/sql/handler.cc
+@@ -1333,6 +1333,8 @@ int ha_commit_trans(THD *thd, bool all)
+         goto end;
+       }
+     DBUG_EXECUTE_IF("crash_commit_after", DBUG_SUICIDE(););
++    if (is_real_trans)
++      thd->diff_commit_trans++;
+     RUN_HOOK(transaction, after_commit, (thd, FALSE));
+ end:
+     if (rw_trans && mdl_request.ticket)
+@@ -1493,6 +1495,8 @@ int ha_rollback_trans(THD *thd, bool all)
+   /* Always cleanup. Even if nht==0. There may be savepoints. */
+   if (is_real_trans)
+     thd->transaction.cleanup();
++
++  thd->diff_rollback_trans++;
+   if (all)
+     thd->transaction_rollback_request= FALSE;
+ 
+@@ -1897,6 +1901,7 @@ int ha_rollback_to_savepoint(THD *thd, SAVEPOINT *sv)
+     ha_info->reset(); /* keep it conveniently zero-filled */
+   }
+   trans->ha_list= sv->ha_list;
++  thd->diff_rollback_trans++;
+   DBUG_RETURN(error);
+ }
+ 
+@@ -2273,6 +2278,8 @@ int handler::ha_open(TABLE *table_arg, const char *name, int mode,
+       dup_ref=ref+ALIGN_SIZE(ref_length);
+     cached_table_flags= table_flags();
+   }
++  rows_read= rows_changed= 0;
++  memset(index_rows_read, 0, sizeof(index_rows_read));
+   DBUG_RETURN(error);
+ }
+ 
+@@ -3784,6 +3791,127 @@ void handler::get_dynamic_partition_info(PARTITION_STATS *stat_info,
+   return;
+ }
+ 
++// Updates the global table stats with the TABLE this handler represents.
++void handler::update_global_table_stats()
++{
++  if (!opt_userstat)
++  {
++    rows_read= rows_changed= 0;
++    return;
++  }
++
++  if (!rows_read && !rows_changed)
++    return;  // Nothing to update.
++  // table_cache_key is db_name + '\0' + table_name + '\0'.
++  if (!table->s || !table->s->table_cache_key.str || !table->s->table_name.str)
++    return;
++
++  TABLE_STATS* table_stats;
++  char key[NAME_LEN * 2 + 2];
++  // [db] + '.' + [table]
++  sprintf(key, "%s.%s", table->s->table_cache_key.str, table->s->table_name.str);
++
++  mysql_mutex_lock(&LOCK_global_table_stats);
++  // Gets the global table stats, creating one if necessary.
++  if (!(table_stats = (TABLE_STATS *) my_hash_search(&global_table_stats,
++                                                     (uchar*)key,
++                                                     strlen(key))))
++  {
++    if (!(table_stats = ((TABLE_STATS *)
++                         my_malloc(sizeof(TABLE_STATS), MYF(MY_WME | MY_ZEROFILL)))))
++    {
++      // Out of memory.
++      sql_print_error("Allocating table stats failed.");
++      goto end;
++    }
++    strncpy(table_stats->table, key, sizeof(table_stats->table));
++    table_stats->rows_read=              0;
++    table_stats->rows_changed=           0;
++    table_stats->rows_changed_x_indexes= 0;
++    table_stats->engine_type=            (int) ht->db_type;
++
++    if (my_hash_insert(&global_table_stats, (uchar *) table_stats))
++    {
++      // Out of memory.
++      sql_print_error("Inserting table stats failed.");
++      my_free((char *) table_stats);
++      goto end;
++    }
++  }
++  // Updates the global table stats.
++  table_stats->rows_read+=              rows_read;
++  table_stats->rows_changed+=           rows_changed;
++  table_stats->rows_changed_x_indexes+=
++    rows_changed * (table->s->keys ? table->s->keys : 1);
++  current_thd->diff_total_read_rows+=   rows_read;
++  rows_read= rows_changed=              0;
++end:
++  mysql_mutex_unlock(&LOCK_global_table_stats);
++}
++
++// Updates the global index stats with this handler's accumulated index reads.
++void handler::update_global_index_stats()
++{
++  // table_cache_key is db_name + '\0' + table_name + '\0'.
++  if (!table->s || !table->s->table_cache_key.str || !table->s->table_name.str)
++    return;
++
++  if (!opt_userstat)
++  {
++    for (uint x= 0; x < table->s->keys; ++x)
++    {
++      index_rows_read[x]= 0;
++    }
++    return;
++  }
++
++  for (uint x = 0; x < table->s->keys; ++x)
++  {
++    if (index_rows_read[x])
++    {
++      // Rows were read using this index.
++      KEY* key_info = &table->key_info[x];
++
++      if (!key_info->name) continue;
++
++      INDEX_STATS* index_stats;
++      char key[NAME_LEN * 3 + 3];
++      // [db] + '.' + [table] + '.' + [index]
++      sprintf(key, "%s.%s.%s",  table->s->table_cache_key.str,
++              table->s->table_name.str, key_info->name);
++
++      mysql_mutex_lock(&LOCK_global_index_stats);
++      // Gets the global index stats, creating one if necessary.
++      if (!(index_stats = (INDEX_STATS *) my_hash_search(&global_index_stats,
++                                                         (uchar *) key,
++                                                         strlen(key))))
++      {
++        if (!(index_stats = ((INDEX_STATS *)
++                             my_malloc(sizeof(INDEX_STATS), MYF(MY_WME | MY_ZEROFILL)))))
++        {
++          // Out of memory.
++          sql_print_error("Allocating index stats failed.");
++          goto end;
++        }
++        strncpy(index_stats->index, key, sizeof(index_stats->index));
++        index_stats->rows_read= 0;
++
++        if (my_hash_insert(&global_index_stats, (uchar *) index_stats))
++        {
++          // Out of memory.
++          sql_print_error("Inserting index stats failed.");
++          my_free((char *) index_stats);
++          goto end;
++        }
++      }
++      // Updates the global index stats.
++      index_stats->rows_read+= index_rows_read[x];
++      index_rows_read[x]=      0;
++  end:
++      mysql_mutex_unlock(&LOCK_global_index_stats);
++    }
++  }
++}
+ 
+ /****************************************************************************
+ ** Some general functions that isn't in the handler class
+diff --git a/SOURCES/mysql/sql/handler.h b/SOURCES/mysql/sql/handler.h
+index 5eb2d6b..18da7c5 100644
+--- a/SOURCES/mysql/sql/handler.h
++++ b/SOURCES/mysql/sql/handler.h
+@@ -36,6 +36,10 @@
+ #include <ft_global.h>
+ #include <keycache.h>
+ 
++#if MAX_KEY > 128
++#error MAX_KEY is too large.  Values up to 128 are supported.
++#endif
++
+ // the following is for checking tables
+ 
+ #define HA_ADMIN_ALREADY_DONE	  1
+@@ -579,10 +583,12 @@ struct TABLE;
+ enum enum_schema_tables
+ {
+   SCH_CHARSETS= 0,
++  SCH_CLIENT_STATS,
+   SCH_COLLATIONS,
+   SCH_COLLATION_CHARACTER_SET_APPLICABILITY,
+   SCH_COLUMNS,
+   SCH_COLUMN_PRIVILEGES,
++  SCH_INDEX_STATS,
+   SCH_ENGINES,
+   SCH_EVENTS,
+   SCH_FILES,
+@@ -608,8 +614,11 @@ enum enum_schema_tables
+   SCH_TABLE_CONSTRAINTS,
+   SCH_TABLE_NAMES,
+   SCH_TABLE_PRIVILEGES,
++  SCH_TABLE_STATS,
++  SCH_THREAD_STATS,
+   SCH_TRIGGERS,
+   SCH_USER_PRIVILEGES,
++  SCH_USER_STATS,
+   SCH_VARIABLES,
+   SCH_VIEWS
+ };
+@@ -1280,6 +1289,9 @@ public:
+   bool locked;
+   bool implicit_emptied;                /* Can be !=0 only if HEAP */
+   const COND *pushed_cond;
++  ulonglong rows_read;
++  ulonglong rows_changed;
++  ulonglong index_rows_read[MAX_KEY];
+   /**
+     next_insert_id is the next value which should be inserted into the
+     auto_increment column: in a inserting-multi-row statement (like INSERT
+@@ -1331,10 +1343,12 @@ public:
+     ref_length(sizeof(my_off_t)),
+     ft_handler(0), inited(NONE),
+     locked(FALSE), implicit_emptied(0),
+-    pushed_cond(0), next_insert_id(0), insert_id_for_cur_row(0),
++    pushed_cond(0), rows_read(0), rows_changed(0), next_insert_id(0), insert_id_for_cur_row(0),
+     auto_inc_intervals_count(0),
+     m_psi(NULL)
+-    {}
++    {
++      memset(index_rows_read, 0, sizeof(index_rows_read));
++    }
+   virtual ~handler(void)
+   {
+     DBUG_ASSERT(locked == FALSE);
+@@ -1459,6 +1473,8 @@ public:
+   {
+     table= table_arg;
+     table_share= share;
++    rows_read = rows_changed= 0;
++    memset(index_rows_read, 0, sizeof(index_rows_read));
+   }
+   virtual double scan_time()
+   { return ulonglong2double(stats.data_file_length) / IO_SIZE + 2; }
+@@ -1854,6 +1870,8 @@ public:
+   virtual bool is_crashed() const  { return 0; }
+   virtual bool auto_repair() const { return 0; }
+ 
++  void update_global_table_stats();
++  void update_global_index_stats();
+ 
+ #define CHF_CREATE_FLAG 0
+ #define CHF_DELETE_FLAG 1
+diff --git a/SOURCES/mysql/sql/lex.h b/SOURCES/mysql/sql/lex.h
+index 4a49858..9e90725 100644
+--- a/SOURCES/mysql/sql/lex.h
++++ b/SOURCES/mysql/sql/lex.h
+@@ -111,6 +111,7 @@ static SYMBOL symbols[] = {
+   { "CIPHER",		SYM(CIPHER_SYM)},
+   { "CLASS_ORIGIN",     SYM(CLASS_ORIGIN_SYM)},
+   { "CLIENT",		SYM(CLIENT_SYM)},
++  { "CLIENT_STATISTICS",	SYM(CLIENT_STATS_SYM)},
+   { "CLOSE",		SYM(CLOSE_SYM)},
+   { "COALESCE",		SYM(COALESCE)},
+   { "CODE",             SYM(CODE_SYM)},
+@@ -257,6 +258,7 @@ static SYMBOL symbols[] = {
+   { "IN",		SYM(IN_SYM)},
+   { "INDEX",		SYM(INDEX_SYM)},
+   { "INDEXES",		SYM(INDEXES)},
++  { "INDEX_STATISTICS",	SYM(INDEX_STATS_SYM)},
+   { "INFILE",		SYM(INFILE)},
+   { "INITIAL_SIZE",	SYM(INITIAL_SIZE_SYM)},
+   { "INNER",		SYM(INNER_SYM)},
+@@ -547,12 +549,14 @@ static SYMBOL symbols[] = {
+   { "TABLES",		SYM(TABLES)},
+   { "TABLESPACE",	        SYM(TABLESPACE)},
+   { "TABLE_CHECKSUM",	SYM(TABLE_CHECKSUM_SYM)},
++  { "TABLE_STATISTICS",	SYM(TABLE_STATS_SYM)},
+   { "TEMPORARY",	SYM(TEMPORARY)},
+   { "TEMPTABLE",	SYM(TEMPTABLE_SYM)},
+   { "TERMINATED",	SYM(TERMINATED)},
+   { "TEXT",		SYM(TEXT_SYM)},
+   { "THAN",             SYM(THAN_SYM)},
+   { "THEN",		SYM(THEN_SYM)},
++  { "THREAD_STATISTICS",	SYM(THREAD_STATS_SYM)},
+   { "TIME",		SYM(TIME_SYM)},
+   { "TIMESTAMP",	SYM(TIMESTAMP)},
+   { "TIMESTAMPADD",     SYM(TIMESTAMP_ADD)},
+@@ -588,6 +592,7 @@ static SYMBOL symbols[] = {
+   { "USE",		SYM(USE_SYM)},
+   { "USER",		SYM(USER)},
+   { "USER_RESOURCES",	SYM(RESOURCES)},
++  { "USER_STATISTICS",	SYM(USER_STATS_SYM)},
+   { "USE_FRM",		SYM(USE_FRM)},
+   { "USING",		SYM(USING)},
+   { "UTC_DATE",         SYM(UTC_DATE_SYM)},
+diff --git a/SOURCES/mysql/sql/log.cc b/SOURCES/mysql/sql/log.cc
+index 83ba7b0..96aee56 100644
+--- a/SOURCES/mysql/sql/log.cc
++++ b/SOURCES/mysql/sql/log.cc
+@@ -1006,6 +1006,13 @@ void Log_to_file_event_handler::flush()
+     mysql_slow_log.reopen_file();
+ }
+ 
++void Log_to_file_event_handler::flush_slow_log()
++{
++  /* reopen slow log file */
++  if (opt_slow_log)
++    mysql_slow_log.reopen_file();
++}
++
+ /*
+   Log error with all enabled log event handlers
+ 
+@@ -5001,6 +5008,8 @@ bool MYSQL_BIN_LOG::write(Log_event *event_info)
+                              thd->first_successful_insert_id_in_prev_stmt_for_binlog);
+           if (e.write(file))
+             goto err;
++          if (file == &log_file)
++            thd->binlog_bytes_written+= e.data_written;
+         }
+         if (thd->auto_inc_intervals_in_cur_stmt_for_binlog.nb_elements() > 0)
+         {
+@@ -5012,12 +5021,16 @@ bool MYSQL_BIN_LOG::write(Log_event *event_info)
+                              minimum());
+           if (e.write(file))
+             goto err;
++          if (file == &log_file)
++            thd->binlog_bytes_written+= e.data_written;
+         }
+         if (thd->rand_used)
+         {
+           Rand_log_event e(thd,thd->rand_saved_seed1,thd->rand_saved_seed2);
+           if (e.write(file))
+             goto err;
++          if (file == &log_file)
++            thd->binlog_bytes_written+= e.data_written;
+         }
+         if (thd->user_var_events.elements)
+         {
+@@ -5040,6 +5053,8 @@ bool MYSQL_BIN_LOG::write(Log_event *event_info)
+                                  flags);
+             if (e.write(file))
+               goto err;
++            if (file == &log_file)
++              thd->binlog_bytes_written+= e.data_written;
+           }
+         }
+       }
+@@ -5051,6 +5066,8 @@ bool MYSQL_BIN_LOG::write(Log_event *event_info)
+     if (event_info->write(file) ||
+         DBUG_EVALUATE_IF("injecting_fault_writing", 1, 0))
+       goto err;
++    if (file == &log_file)
++      thd->binlog_bytes_written+= event_info->data_written;
+ 
+     error= 0;
+ err:
+@@ -5285,7 +5302,8 @@ uint MYSQL_BIN_LOG::next_file_id()
+     be reset as a READ_CACHE to be able to read the contents from it.
+  */
+ 
+-int MYSQL_BIN_LOG::write_cache(IO_CACHE *cache, bool lock_log, bool sync_log)
++int MYSQL_BIN_LOG::write_cache(THD *thd, IO_CACHE *cache,
++                               bool lock_log, bool sync_log)
+ {
+   Mutex_sentry sentry(lock_log ? &LOCK_log : NULL);
+ 
+@@ -5332,6 +5350,7 @@ int MYSQL_BIN_LOG::write_cache(IO_CACHE *cache, bool lock_log, bool sync_log)
+       /* write the first half of the split header */
+       if (my_b_write(&log_file, header, carry))
+         return ER_ERROR_ON_WRITE;
++      thd->binlog_bytes_written+= carry;
+ 
+       /*
+         copy fixed second half of header to cache so the correct
+@@ -5400,6 +5419,7 @@ int MYSQL_BIN_LOG::write_cache(IO_CACHE *cache, bool lock_log, bool sync_log)
+     /* Write data to the binary log file */
+     if (my_b_write(&log_file, cache->read_pos, length))
+       return ER_ERROR_ON_WRITE;
++    thd->binlog_bytes_written+= length;
+     cache->read_pos=cache->read_end;		// Mark buffer used up
+   } while ((length= my_b_fill(cache)));
+ 
+@@ -5523,20 +5543,23 @@ bool MYSQL_BIN_LOG::write(THD *thd, IO_CACHE *cache, Log_event *commit_event,
+       Query_log_event qinfo(thd, STRING_WITH_LEN("BEGIN"), TRUE, FALSE, TRUE, 0);
+       if (qinfo.write(&log_file))
+         goto err;
++      thd->binlog_bytes_written+= qinfo.data_written;
+       DBUG_EXECUTE_IF("crash_before_writing_xid",
+                       {
+-                        if ((write_error= write_cache(cache, false, true)))
++                        if ((write_error= write_cache(thd, cache, false, true)))
+                           DBUG_PRINT("info", ("error writing binlog cache: %d",
+                                                write_error));
+                         DBUG_PRINT("info", ("crashing before writing xid"));
+                         DBUG_SUICIDE();
+                       });
+ 
+-      if ((write_error= write_cache(cache, false, false)))
++      if ((write_error= write_cache(thd, cache, false, false)))
+         goto err;
+ 
+       if (commit_event && commit_event->write(&log_file))
+         goto err;
++      if (commit_event)
++        thd->binlog_bytes_written+= commit_event->data_written;
+ 
+       if (incident && write_incident(thd, FALSE))
+         goto err;
+diff --git a/SOURCES/mysql/sql/log.h b/SOURCES/mysql/sql/log.h
+index 1fc13af..443985c 100644
+--- a/SOURCES/mysql/sql/log.h
++++ b/SOURCES/mysql/sql/log.h
+@@ -442,7 +442,8 @@ public:
+   bool write(THD *thd, IO_CACHE *cache, Log_event *commit_event, bool incident);
+   bool write_incident(THD *thd, bool lock);
+ 
+-  int  write_cache(IO_CACHE *cache, bool lock_log, bool flush_and_sync);
++  int  write_cache(THD *thd, IO_CACHE *cache,
++                   bool lock_log, bool flush_and_sync);
+   void set_write_error(THD *thd, bool is_transactional);
+   bool check_write_error(THD *thd);
+ 
+@@ -596,6 +597,7 @@ public:
+                            const char *sql_text, uint sql_text_len,
+                            CHARSET_INFO *client_cs);
+   void flush();
++  void flush_slow_log();
+   void init_pthread_objects();
+   MYSQL_QUERY_LOG *get_mysql_slow_log() { return &mysql_slow_log; }
+   MYSQL_QUERY_LOG *get_mysql_log() { return &mysql_log; }
+diff --git a/SOURCES/mysql/sql/mysqld.cc b/SOURCES/mysql/sql/mysqld.cc
+index 145e222..2bebb2a 100644

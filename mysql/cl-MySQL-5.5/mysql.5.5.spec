@@ -24,13 +24,13 @@
 %define mysql_vendor_2          Sun Microsystems, Inc.
 %define mysql_vendor            Oracle and/or its affiliates
 
-%define mysql_version   5.5.30
+%define mysql_version   5.5.38
 
 %define mysqld_user     mysql
 %define mysqld_group    mysql
 %define mysqldatadir    /var/lib/mysql
 
-%define release         4%{?dist}.cloudlinux
+%define release         21%{?dist}.cloudlinux
 
 #
 # Macros we use which are not available in all supported versions of RPM
@@ -150,7 +150,7 @@
 # Main spec file section
 ##############################################################################
 
-Name:           cl-MySQL
+Name:           cl-MySQL55
 Summary:        MySQL: a very fast and reliable SQL database server
 Group:          Applications/Databases
 Version:        %{mysql_version}
@@ -159,17 +159,24 @@ Distribution:   %{distro_description}
 License:        Copyright (c) 2000, 2011, %{mysql_vendor}.  All rights reserved.  Use is subject to license terms.  Under %{license_type} license as shown in the Description field.
 Source:         http://www.mysql.com/Downloads/MySQL-5.5/%{src_dir}.tar.gz
 Source1:        autogen.sh
+Source8:        libmysql.version
 URL:            http://www.mysql.com/
 Packager:       MySQL Build Team <build@mysql.com>
 Vendor:         %{mysql_vendor}
-Provides:       msqlormysql MySQL-server mysql
 BuildRequires: gcc-c++ gperf ncurses-devel perl readline-devel time zlib-devel bison make
 BuildRequires: libaio-devel
 BuildRequires:  cmake
+Requires: libaio
 AutoReq: 0
+Autoprov: 0
 
 Patch1: 0001-Cloud-Linux-userstat.patch
-Patch2: max_connection2_mysql_5_5_30_b403.patch
+Patch2: max_connection2_mysql_5_5_38_b405.patch
+Patch3: 0003_1-Clean-up-stale-pid-files-in-datadir-when-stopping-to.patch
+Patch5: 0005-Use-accessors-and-fix-type-errors.patch
+#Patch7: mysql-versioning.patch
+#Patch8: mysql-dubious-exports2.patch
+Patch9: mysql-test__db_test.patch
 
 # Think about what you use here since the first step is to
 # run a rm -rf
@@ -202,12 +209,8 @@ documentation and the manual for more information.
 Summary:        MySQL: a very fast and reliable SQL database server
 Group:          Applications/Databases
 Requires: chkconfig coreutils grep procps shadow-utils
-Provides:       msqlormysql mysql-server mysql MySQL MySQL-server
-Obsoletes:      mysql mysql-server 
-# Needed to give access to mysql client for %post calls.
-Requires(post): %{name}-client
-Requires: %{name}-client
 AutoReq: 0
+Autoprov: 0
 
 %description server
 The MySQL(TM) software delivers a very fast, multi-threaded, multi-user,
@@ -237,9 +240,8 @@ package "cl-MYSQL-client" as well!
 %package client
 Summary:        MySQL - Client
 Group:          Applications/Databases
-Obsoletes:      mysql-client
-Provides:       mysql-client MySQL-client
 AutoReq: 0
+Autoprov: 0
 
 %description client
 This package contains the standard MySQL clients and administration tools.
@@ -248,13 +250,12 @@ For a description of MySQL see the base MySQL RPM or http://www.mysql.com/
 
 # ----------------------------------------------------------------------------
 %package test
-Requires:       cl-MySQL-client perl
+Requires:       perl
 Summary:        MySQL - Test suite
 Group:          Applications/Databases
-Provides:       mysql-test
-Obsoletes:      mysql-bench mysql-test
 AutoReqProv:    no
 AutoReq: 0
+Autoprov: 0
 
 %description test
 This package contains the MySQL regression test suite.
@@ -265,9 +266,8 @@ For a description of MySQL see the base MySQL RPM or http://www.mysql.com/
 %package devel
 Summary:        MySQL - Development header files and libraries
 Group:          Applications/Databases
-Provides:       mysql-devel MySQL-devel
-Obsoletes:      mysql-devel
 AutoReq: 0
+Autoprov: 0
 
 %description devel
 This package contains the development header files and libraries necessary
@@ -279,12 +279,52 @@ For a description of MySQL see the base MySQL RPM or http://www.mysql.com/
 %package shared
 Summary:        MySQL - Shared libraries
 Group:          Applications/Databases
-Provides:       mysql-shared MySQL-shared
 AutoReq: 0
+Autoprov: 0
 
 %description shared
 This package contains the shared libraries (*.so*) which certain languages
 and applications need to dynamically load and use MySQL.
+
+%package -n cl-MySQL-meta
+Summary: MySQL meta package
+Group: Applications/Databases
+Requires: cl-MySQL-meta-client
+Requires: %{name}-server
+Requires: %{name}-shared
+Provides: msqlormysql MySQL-server mysql MySQL mysql-libs
+Provides: mysql-bench MySQL-bench mysql-test MySQL-test mysql-server
+Provides: mysql-shared MySQL-shared
+Obsoletes: mysql-libs
+AutoReq: 0
+%ifarch %{ix86}
+Provides: libmysqlclient.so.18
+%else
+Provides: libmysqlclient.so.18()(64bit)
+%endif
+
+%description -n cl-MySQL-meta
+MySql-server meta package.
+
+%package -n cl-MySQL-meta-client
+Summary: MySQL - Client meta package
+Group: Applications/Databases
+Requires: %{name}-client
+Provides: mysql-client MySQL-client
+AutoReq: 0
+
+%description -n cl-MySQL-meta-client
+MySql-client meta package.
+
+%package -n cl-MySQL-meta-devel
+Summary: MySQL - Development header files and libraries meta package
+Group: Applications/Databases
+Requires: %{name}-devel
+Provides: mysql-devel MySQL-devel
+AutoReq: 0
+
+%description -n cl-MySQL-meta-devel
+MySql-devel meta package.
 
 ##############################################################################
 %prep
@@ -296,7 +336,13 @@ cd mysql-%{mysql_version}
 
 %patch1 -p3
 %patch2 -p1
+%patch3 -p1
+%patch5 -p3
+#%patch7 -p1
+#%patch8 -p1
+%patch9 -p1
 rm -f sql/sql_yacc.cc sql/sql_yacc.h
+#cp %{SOURCE8} libmysql/libmysql.version
 
 ##############################################################################
 %build
@@ -353,15 +399,18 @@ mkdir debug
                   -e 's/ $//'`
   # XXX: MYSQL_UNIX_ADDR should be in cmake/* but mysql_version is included before
   # XXX: install_layout so we can't just set it based on INSTALL_LAYOUT=RPM
+  #mkdir -p libmysql/
+  #cp %{SOURCE8} libmysql/libmysql.version
   ${CMAKE} ../%{src_dir} -DBUILD_CONFIG=mysql_release -DINSTALL_LAYOUT=RPM \
            -DCMAKE_BUILD_TYPE=Debug \
            -DWITH_EMBEDDED_SERVER=OFF \
            -DMYSQL_UNIX_ADDR="/var/lib/mysql/mysql.sock" \
            -DFEATURE_SET="%{feature_set}" \
            -DCOMPILATION_COMMENT="%{compilation_comment_debug}" \
+           -DENABLE_DTRACE='' \
            -DMYSQL_SERVER_SUFFIX="%{server_suffix}"
   echo BEGIN_DEBUG_CONFIG ; egrep '^#define' include/config.h ; echo END_DEBUG_CONFIG
-  make -j4 ${MAKE_JFLAG} VERBOSE=1
+  make -j1 ${MAKE_JFLAG} VERBOSE=1
 )
 # Build full release
 mkdir release
@@ -369,15 +418,18 @@ mkdir release
   cd release
   # XXX: MYSQL_UNIX_ADDR should be in cmake/* but mysql_version is included before
   # XXX: install_layout so we can't just set it based on INSTALL_LAYOUT=RPM
+  #mkdir -p libmysql/
+  #cp %{SOURCE8} libmysql/libmysql.version
   ${CMAKE} ../%{src_dir} -DBUILD_CONFIG=mysql_release -DINSTALL_LAYOUT=RPM \
            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
            -DWITH_EMBEDDED_SERVER=OFF \
            -DMYSQL_UNIX_ADDR="/var/lib/mysql/mysql.sock" \
            -DFEATURE_SET="%{feature_set}" \
            -DCOMPILATION_COMMENT="%{compilation_comment_release}" \
+           -DENABLE_DTRACE='' \
            -DMYSQL_SERVER_SUFFIX="%{server_suffix}"
   echo BEGIN_NORMAL_CONFIG ; egrep '^#define' include/config.h ; echo END_NORMAL_CONFIG
-  make -j4 ${MAKE_JFLAG} VERBOSE=1
+  make -j1 ${MAKE_JFLAG} VERBOSE=1
 )
 
 # Use the build root for temporary storage of the shared libraries.
@@ -395,7 +447,7 @@ RBR=$RPM_BUILD_ROOT
   then
     mkdir -p $RBR%{_libdir}/mysql
     install -m 644 $libgcc $RBR%{_libdir}/mysql/libmygcc.a
-    echo "%{_libdir}/mysql/libmygcc.a" >>optional-files-devel
+    #echo "%{_libdir}/mysql/libmygcc.a" >>optional-files-devel
     echo "$libgcc" > libgcc_t.log
   fi
 #fi
@@ -407,9 +459,9 @@ RBR=$RPM_BUILD_ROOT
 MBD=$RPM_BUILD_DIR/%{src_dir}
 
 mkdir -p $RBR%{_libdir}/mysql
-install -m 644 `echo libgcc_t.log` $RBR%{_libdir}/mysql/libmygcc.a
+#install -m 644 `echo libgcc_t.log` $RBR%{_libdir}/mysql/libmygcc.a
 #install -m 644 $RPM_BUILD_DIR/%{src_dir}/libmygcc.a $RBR%{_libdir}/mysql/libmygcc.a
-echo "%{_libdir}/mysql/libmygcc.a" >>optional-files-devel
+#echo "%{_libdir}/mysql/libmygcc.a" >>optional-files-devel
 
 # Ensure that needed directories exists
 install -d $RBR%{_sysconfdir}/{logrotate.d,init.d}
@@ -459,6 +511,7 @@ install -m 644 "%{malloc_lib_source}" \
 # Remove man pages we explicitly do not want to package, avoids 'unpackaged
 # files' warning.
 rm -f $RBR%{_mandir}/man1/make_win_bin_dist.1*
+rm -f $RBR%{_libdir}/mysql/libmygcc.a
 
 ##############################################################################
 #  Post processing actions, i.e. when installed
@@ -843,7 +896,7 @@ echo "====="                                     >> $STATUS_HISTORY
 %doc release/Docs/INFO_BIN*
 %doc release/support-files/my-*.cnf
 
-%doc %attr(644, root, root) %{_infodir}/mysql.info*
+#%doc %attr(644, root, root) %{_infodir}/mysql.info*
 
 %doc %attr(644, root, man) %{_mandir}/man1/mysql_plugin.1*
 %doc %attr(644, root, man) %{_mandir}/man1/innochecksum.1*
@@ -1007,6 +1060,14 @@ echo "====="                                     >> $STATUS_HISTORY
 %doc %attr(644, root, man) %{_mandir}/man1/mysql_client_test_embedded.1*
 %doc %attr(644, root, man) %{_mandir}/man1/mysqltest_embedded.1*
 
+%files -n cl-MySQL-meta
+%defattr(-, root, root, 0755)
+
+%files -n cl-MySQL-meta-client
+%defattr(-, root, root, 0755)
+
+%files -n cl-MySQL-meta-devel
+%defattr(-, root, root, 0755)
 
 ##############################################################################
 # The spec file changelog only includes changes made to the spec file
