@@ -1,5 +1,5 @@
 %define g_version   1.0
-%define g_release   69
+%define g_release   70
 %define g_key_library 1
 
 Name: governor-mysql
