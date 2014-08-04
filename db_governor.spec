@@ -1,5 +1,5 @@
 %define g_version   1.0
-%define g_release   70
+%define g_release   71
 %define g_key_library 1
 
 Name: governor-mysql
@@ -242,6 +242,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Mon Aug 04 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-71
+- Added logging before restrict
+
 * Fri Jul 18 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-68
 - Percona removing
 

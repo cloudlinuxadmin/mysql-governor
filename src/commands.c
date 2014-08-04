@@ -136,6 +136,7 @@ void account_restrict(Account * ac, stats_limit_cfg * limit) {
 				pthread_mutex_lock(&mtx_commands);
 				command_list = g_list_append(command_list, cmd);
 				pthread_mutex_unlock(&mtx_commands);
+				if( data_cfg.logqueries_use == 2 ) log_user_queries( cmd->username, data_cfg.log_mode );
 			}
 		}
 	}
@@ -205,7 +206,7 @@ void send_commands(Command * cmd, void *data) {
 						data_cfg.log_mode);
 			if(data_cfg.killuser==1) kill_connection(cmd->username, data_cfg.log_mode);*/
 			//lve_connection(cmd->username, data_cfg.log_mode);
-			if( data_cfg.logqueries_use ) log_user_queries( cmd->username, data_cfg.log_mode );
+			if( data_cfg.logqueries_use == 1 ) log_user_queries( cmd->username, data_cfg.log_mode );
 		}
 			break;
 		case UNFREEZE:

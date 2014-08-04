@@ -389,6 +389,10 @@ config_init (const char *path)
       {
         cfg->logqueries_use = 1;
       }
+      if( !strcasecmp( ezxml_attr( tmp_xml, "use" ), "Before" ) )
+      {
+        cfg->logqueries_use = 2;
+      }
     }
   }
 
