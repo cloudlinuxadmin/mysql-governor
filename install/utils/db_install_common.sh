@@ -66,6 +66,11 @@ function installDb(){
 	  yum install cl-MariaDB-meta cl-MariaDB-meta-client cl-MariaDB-meta-devel libaio --nogpgcheck -y
 	fi
 
+	if [ "$SQL_VERSION" == "mariadb100" ]; then
+	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqlmeta/cl-mariadb-5.5-common.repo
+	  yum install cl-MariaDB-meta cl-MariaDB-meta-client cl-MariaDB-meta-devel libaio --nogpgcheck -y
+	fi
+
 	if [ ! -e /etc/my.cnf.bkp ]; then
 	    cp -f /etc/my.cnf /etc/my.cnf.bkp
 	fi
@@ -136,6 +141,11 @@ function installDbTest(){
 	  ln -sf /etc/init.d/mysql /etc/init.d/mysqld
 	fi
 	if [ "$SQL_VERSION" == "mariadb55" ]; then
+	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqlmeta/cl-mariadb-5.5-common.repo
+	  yum install cl-MariaDB-meta cl-MariaDB-meta-client cl-MariaDB-meta-devel libaio --nogpgcheck -y --enablerepo=cloudlinux-updates-testing
+	fi
+
+	if [ "$SQL_VERSION" == "mariadb100" ]; then
 	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqlmeta/cl-mariadb-5.5-common.repo
 	  yum install cl-MariaDB-meta cl-MariaDB-meta-client cl-MariaDB-meta-devel libaio --nogpgcheck -y --enablerepo=cloudlinux-updates-testing
 	fi

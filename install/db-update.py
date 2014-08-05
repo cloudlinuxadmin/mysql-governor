@@ -83,6 +83,8 @@ def upd_mysql():
 			exec_command_out("/usr/bin/yum update -y "+clMySQL_list+" --nogpgcheck --disableexcludes=all")
 		    elif fline=="mariadb55":
 			exec_command_out("/usr/bin/yum update -y "+clMySQL_list+" --nogpgcheck --disableexcludes=all")
+		    elif fline=="mariadb100":
+			exec_command_out("/usr/bin/yum update -y "+clMySQL_list+" --nogpgcheck --disableexcludes=all")
 		    else:
 			exec_command_out("/usr/bin/yum update "+clCleanMySQL_list+" --nogpgcheck -y --disableexcludes=all")
 		else:
@@ -93,6 +95,8 @@ def upd_mysql():
 		    if fline=="mysql50" or fline=="mysql51" or fline=="mysql55":
 			exec_command_out("/usr/bin/yum update -y "+clMySQL_list+" --nogpgcheck --disableexcludes=all")
 		    elif fline=="mariadb55":
+			exec_command_out("/usr/bin/yum update -y "+clMariaDB_list+" --nogpgcheck --disableexcludes=all")
+		    elif fline=="mariadb100":
 			exec_command_out("/usr/bin/yum update -y "+clMariaDB_list+" --nogpgcheck --disableexcludes=all")
 		    else:
 			exec_command_out("/usr/bin/yum update -y "+clMySQL_list+" --nogpgcheck --disableexcludes=all")
@@ -105,6 +109,8 @@ def upd_mysql():
 			exec_command_out("/usr/bin/yum update -y "+clMySQL_list+" --nogpgcheck --disableexcludes=all")
 		    elif fline=="mariadb55":
 			exec_command_out("/usr/bin/yum update -y "+clMySQL_list+" --nogpgcheck --disableexcludes=all")
+		    elif fline=="mariadb100":
+			exec_command_out("/usr/bin/yum update -y "+clMySQL_list+" --nogpgcheck --disableexcludes=all")
 		    else:
 			exec_command_out("/usr/bin/yum update "+clCleanMySQL_list+" --nogpgcheck -y --disableexcludes=all")
 		else:
@@ -115,6 +121,8 @@ def upd_mysql():
 		    if fline=="mysql50" or fline=="mysql51" or fline=="mysql55":
 			exec_command_out("/usr/bin/yum update -y "+clMySQL_list+" --nogpgcheck --disableexcludes=all")
 		    elif fline=="mariadb55":
+			exec_command_out("/usr/bin/yum update -y "+clMySQL_list+" --nogpgcheck --disableexcludes=all")
+		    elif fline=="mariadb100":
 			exec_command_out("/usr/bin/yum update -y "+clMySQL_list+" --nogpgcheck --disableexcludes=all")
 		    else:
 			exec_command_out("/usr/bin/yum update "+clCleanMySQL_list+" --nogpgcheck -y --disableexcludes=all")
@@ -127,6 +135,8 @@ def upd_mysql():
 			exec_command_out("/usr/bin/yum update -y "+clMySQL_list+" --nogpgcheck --disableexcludes=all")
 		    elif fline=="mariadb55":
 			exec_command_out("/usr/bin/yum update -y "+clMariaDB_list+" --nogpgcheck --disableexcludes=all")
+		    elif fline=="mariadb100":
+			exec_command_out("/usr/bin/yum update -y "+clMariaDB_list+" --nogpgcheck --disableexcludes=all")
 		    else:
 			exec_command_out("/usr/bin/yum update -y "+clMySQL_list+" --nogpgcheck --disableexcludes=all")
 		else:
@@ -137,6 +147,8 @@ def upd_mysql():
 		    if fline=="mysql50" or fline=="mysql51" or fline=="mysql55":
 			exec_command_out("/usr/bin/yum update -y "+clMySQL_list+" --nogpgcheck --disableexcludes=all")
 		    elif fline=="mariadb55":
+			exec_command_out("/usr/bin/yum update -y "+clMySQL_list+" --nogpgcheck --disableexcludes=all")
+		    elif fline=="mariadb100":
 			exec_command_out("/usr/bin/yum update -y "+clMySQL_list+" --nogpgcheck --disableexcludes=all")
 		    else:
 			exec_command_out("/usr/bin/yum update "+clCleanMySQL_list+" --nogpgcheck -y --disableexcludes=all")

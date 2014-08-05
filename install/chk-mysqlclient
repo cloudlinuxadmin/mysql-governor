@@ -42,6 +42,11 @@ if( substr( lc( $type_db[ 0 ] ), 0, 7 ) eq "mariadb" )
     $ver_cli = "16";
     $ver_cli2 = "15";
   }
+  if( $ver_db eq "10.0" )
+  {
+    $ver_cli = "16";
+    $ver_cli2 = "15";
+  }
 }
 
 _install_client( $ver_cli, $ver_cli2 );
@@ -137,6 +142,11 @@ if( open( my $mysql_db, "<", $mysqlTypeFileSet ) )
     if( $type_db eq "mariadb55" )
     {
       $mysql_ver="5.5.0";
+      $mysql_name="mariadb";
+    }
+    if( $type_db eq "mariadb100" )
+    {
+      $mysql_ver="10.0.11";
       $mysql_name="mariadb";
     }
   }
