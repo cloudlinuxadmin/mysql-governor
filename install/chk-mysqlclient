@@ -42,7 +42,7 @@ if( substr( lc( $type_db[ 0 ] ), 0, 7 ) eq "mariadb" )
     $ver_cli = "16";
     $ver_cli2 = "15";
   }
-  if( $ver_db eq "10.0" )
+  if( $ver_db eq "10." )
   {
     $ver_cli = "16";
     $ver_cli2 = "15";
@@ -146,7 +146,7 @@ if( open( my $mysql_db, "<", $mysqlTypeFileSet ) )
     }
     if( $type_db eq "mariadb100" )
     {
-      $mysql_ver="10.0.11";
+      $mysql_ver="10.0.0";
       $mysql_name="mariadb";
     }
   }
