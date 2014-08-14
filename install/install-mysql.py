@@ -340,6 +340,7 @@ def remove_mysql_justdb_cl():
         remove_sepcific_mysql('cl-MySQL55', yb)
         remove_sepcific_mysql('cl-MySQL56', yb)
         remove_sepcific_mysql('cl-MariaDB55', yb)
+        remove_sepcific_mysql('cl-MariaDB100', yb)
 
         print "Cleaning of cl-MySQL packages completed"
 
