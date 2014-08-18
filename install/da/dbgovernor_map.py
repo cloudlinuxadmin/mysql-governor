@@ -62,7 +62,10 @@ def get_account_list():
 
 
     try:
-        con = MySQLdb.connect( host = host_, user = user_, passwd = passwd_, db = "mysql" )
+        if 'socket' in params:
+            con = MySQLdb.connect( unix_socket = params[ 'socket' ], user = user_, passwd = passwd_, db = "mysql" )
+    else:
+            con = MySQLdb.connect( host = host_, user = user_, passwd = passwd_, db = "mysql" )
         cur = con.cursor()
         cur.execute( 'set names `utf8`' )
         cur.execute( 'select `user` from db group by `user` order by `user`' )
