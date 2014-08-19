@@ -453,17 +453,57 @@ def remove_percona_justdb():
 
         print "Cleaning of Percona-Server packages completed"
 
+def check_specific_package(pname, yb):
+	if yb.rpmdb.searchNevra(name=pname):
+	    print "Percona package deteced:" + pname 
+	    print "You are running Percona, which is not supported by MySQL Governor. If you want to run MySQL governor, we would have to uninstall Percona,and substitute it for MariaDB. Run installator with --force option"
+	    sys.exit(2)
+	else:
+	    return
 
+def detect_percona(f):
+	if f==0:
+	    yb = yum.YumBase()
+	    check_sepcific_mysql('Percona-Server', yb)
+    	    check_sepcific_mysql('Percona-Server-shared', yb)
+
+    	    check_sepcific_mysql('percona-server', yb)
+    	    check_sepcific_mysql('percona-server-shared', yb)
+
+    	    check_sepcific_mysql('Percona-Server-51', yb)
+    	    check_sepcific_mysql('Percona-Server-shared-51', yb)
+    	    check_sepcific_mysql('Percona-Server-client-51', yb)
+    	    check_sepcific_mysql('Percona-Server-server-51', yb)
+    	    check_sepcific_mysql('Percona-Server-devel-51', yb)
+
+    	    check_sepcific_mysql('Percona-Server-55', yb)
+    	    check_sepcific_mysql('Percona-Server-shared-55', yb)
+    	    check_sepcific_mysql('Percona-Server-client-55', yb)
+    	    check_sepcific_mysql('Percona-Server-server-55', yb)
+    	    check_sepcific_mysql('Percona-Server-devel-55', yb)
+
+    	    check_sepcific_mysql('Percona-Server-56', yb)
+    	    check_sepcific_mysql('Percona-Server-shared-56', yb)
+    	    check_sepcific_mysql('Percona-Server-client-56', yb)
+    	    check_sepcific_mysql('Percona-Server-server-56', yb)
+    	    check_sepcific_mysql('Percona-Server-devel-56', yb)
 		
 
 cp = get_cp()
+
 try:
-	opts, args = getopt.getopt(sys.argv[1:], "hidcmut", ["help", "install", "delete", "install-beta", "clean-mysql", "clean-mysql-delete", "upgrade", "dbupdate", "update-mysql-beta"])
+	opts, args = getopt.getopt(sys.argv[1:], "hidcmut", ["help", "install", "delete", "install-beta", "clean-mysql", "clean-mysql-delete", "upgrade", "dbupdate", "update-mysql-beta", "force"])
 except getopt.GetoptError, err:
 	# print help information and exit:
 	print str(err) # will print something like "option -a not recognized"
 	usage()
 	sys.exit(2)
+
+force_percona = 0
+for o, a in opts:
+	if o in ("--force",):
+		force_percona = 1
+
 	                                                          
 for o, a in opts:
 	if o in ("-h", "--help"):
@@ -471,6 +511,7 @@ for o, a in opts:
 		sys.exit()
 	elif o in ("-i", "--install"):
                 warn_message()
+                detect_percona(force_percona)
                 remove_mysqlclients()
             	remove_mysql_justdb()
                 remove_mysql_justdb_cl()
@@ -484,6 +525,7 @@ for o, a in opts:
 		fix_libmygcc()
 	elif o in ("-u", "--upgrade"):
                 warn_message()
+                detect_percona(force_percona)
 		remove_mysqlclients()
 		remove_mysql_justdb_cl()
                 remove_percona_justdb()
@@ -506,6 +548,7 @@ for o, a in opts:
                 delete_governor_rpm()
 	elif o in ("--install-beta",):
     		warn_message()
+    		detect_percona(force_percona)
                 remove_mysqlclients()
                 remove_mysql_justdb_cl()
                 remove_mysql_justdb()
