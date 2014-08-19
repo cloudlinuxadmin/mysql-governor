@@ -453,10 +453,12 @@ def remove_percona_justdb():
 
         print "Cleaning of Percona-Server packages completed"
 
-def check_specific_package(pname, yb):
+def check_sepcific_mysql(pname, yb):
 	if yb.rpmdb.searchNevra(name=pname):
 	    print "Percona package deteced:" + pname 
-	    print "You are running Percona, which is not supported by MySQL Governor. If you want to run MySQL governor, we would have to uninstall Percona,and substitute it for MariaDB. Run installator with --force option"
+	    print "You are running Percona, which is not supported by MySQL Governor. If you want to run MySQL governor, we would have to uninstall Percona,and substitute it for MariaDB or MySQL. Run installator next commands for install:"
+	    print "/usr/share/lve/dbgovernor/db-select-mysql --mysql-version=mysql56 (or mysql50, mysql51, mysql55, mariadb55, mariadb100)"
+	    print "/usr/share/lve/dbgovernor/mysqlgovernor.py --install --force"
 	    sys.exit(2)
 	else:
 	    return
@@ -567,6 +569,8 @@ for o, a in opts:
 		remove_mysql_justdb_cl()
         elif o in ("t", "--dbupdate"):
 		update_user_map_file()
+	elif o in ("--force",):
+		force_percona = 1
 	else:
 		usage()
 		sys.exit(2)

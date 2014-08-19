@@ -1,5 +1,5 @@
 %define g_version   1.0
-%define g_release   74
+%define g_release   75
 %define g_key_library 1
 
 Name: governor-mysql
@@ -242,8 +242,11 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Tue Aug 19 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-75
+- Added --force command for deleting Percona packages
+
 * Tue Aug 19 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-74
-- Ask before Percona delete
+- Ask before Percona packages delete 
 
 * Tue Aug 19 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-73
 - read socket option from mysql.conf, if exists
