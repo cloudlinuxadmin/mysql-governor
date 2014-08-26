@@ -68,7 +68,7 @@ function installDb(){
 
 	if [ "$SQL_VERSION" == "mariadb100" ]; then
 	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqlmeta/cl-mariadb-10.0-common.repo
-	  yum install cl-MariaDB-meta cl-MariaDB-meta-client cl-MariaDB-meta-devel libaio --nogpgcheck -y
+	  yum install cl-MariaDB-meta cl-MariaDB-meta-client cl-MariaDB-meta-devel libaio --nogpgcheck -y --enablerepo=cloudlinux-updates-testing
 	fi
 
 	if [ ! -e /etc/my.cnf.bkp ]; then

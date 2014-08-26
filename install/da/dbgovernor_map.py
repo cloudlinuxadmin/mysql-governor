@@ -64,7 +64,7 @@ def get_account_list():
     try:
         if 'socket' in params:
             con = MySQLdb.connect( unix_socket = params[ 'socket' ], user = user_, passwd = passwd_, db = "mysql" )
-    else:
+        else:
             con = MySQLdb.connect( host = host_, user = user_, passwd = passwd_, db = "mysql" )
         cur = con.cursor()
         cur.execute( 'set names `utf8`' )

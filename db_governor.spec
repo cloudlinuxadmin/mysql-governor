@@ -1,5 +1,5 @@
 %define g_version   1.0
-%define g_release   75
+%define g_release   76
 %define g_key_library 1
 
 Name: governor-mysql
@@ -242,6 +242,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Tue Aug 26 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-76
+- Fixed dbuser map file for DA error
+
 * Tue Aug 19 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-75
 - Added --force command for deleting Percona packages
 
