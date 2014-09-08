@@ -1,4 +1,4 @@
-# Copyright (C) 2000-2007 MySQL AB
+# Copyright 2000-2008 MySQL AB, 2008 Sun Microsystems, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,28 +14,22 @@
 # Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston
 # MA  02110-1301  USA.
 
-%define mysql_version   5.0.96
-%define mysql_vendor    MySQL AB
+%define mysql_version		5.1.73
 
-# use "rpmbuild --with static" or "rpm --define '_with_static 1'" (for RPM 3.x)
-# to enable static linking (off by default)
-%{?_with_static:%define STATIC_BUILD 1}
-%{!?_with_static:%define STATIC_BUILD 0}
+# NOTE: "vendor" is used in upgrade/downgrade check, so you can't
+# change these, has to be exactly as is.
+%define mysql_old_vendor	MySQL AB
+%define mysql_vendor		Sun Microsystems, Inc.
 
-# use "rpmbuild --with yassl" or "rpm --define '_with_yassl 1'" (for RPM 3.x)
-# to build with yaSSL support (off by default)
-%{?_with_yassl:%define YASSL_BUILD 1}
-%{!?_with_yassl:%define YASSL_BUILD 0}
+%define release 13%{?dist}.cloudlinux
+%define mysql_license	GPL
+%define mysqld_user	mysql
+%define mysqld_group	mysql
+%define server_suffix -standard
+%define mysqldatadir /var/lib/mysql
 
-%define license GPL
-%define mysqld_user     mysql
-%define mysqld_group    mysql
-%define server_suffix   -community
-%define mysqldatadir    /var/lib/mysql
-
-# We don't package all files installed into the build root by intention -
-# See BUG#998 for details.
-%define _unpackaged_files_terminate_build 0
+# all unpackaged files removed
+#%define _unpackaged_files_terminate_build 0
 
 %define see_base For a description of MySQL see the base MySQL RPM or http://www.mysql.com
 
@@ -56,25 +50,26 @@
 
 %define __os_install_post /usr/lib/rpm/brp-compress
 
-Name: cl-MySQL50
-Summary:	MySQL: a very fast and reliable SQL database server
+Name:       cl-MySQL51
+Summary:	MySQL - a very fast and reliable SQL database server
 Group:		Applications/Databases
-Version:	5.0.96
-Release:	14%{?dist}.cloudlinux
-License:	%{license}4
-Source:		http://downloads.mysql.com/archives/mysql-5.0/mysql-%{mysql_version}.tar.gz
+Version:	%{mysql_version}
+Release:	%{release}
+License:	Copyright 2000-2008 MySQL AB, 2009 Sun Microsystems, Inc.  All rights reserved.  Use is subject to license terms.  Under %{mysql_license} license as shown in the Description field.
+Source:		http://www.mysql.com/Downloads/MySQL-5.1/mysql-%{mysql_version}.tar.gz
 
-Patch1:     0001-cpanel-perl.patch
-Patch100:   userstats2_5_0_95.patch
-Patch101:   max_connection2_mysql_5_0_96_b407.patch
-Patch102:   mysql-test__db_test.patch
+Patch1:     0001-pointer-patch-centos-4.patch
+Patch2:     0002-Cloud-Linux-userstat_mysql.patch
+Patch3:     max_connection2_mysql_5_1_73_b409.patch
+#Patch4:     0004-cpanel-perl.patch
+#Patch5:     0005-autogen.patch
+Patch6:     mysql-test__db_test.1.patch
 
 URL:		http://www.mysql.com/
-Packager:	MySQL Production Engineering Team <build@mysql.com>
+Packager:	Sun Microsystems, Inc. Product Engineering Team <build@mysql.com>
 Vendor:		%{mysql_vendor}
 BuildRequires: ncurses-devel bison
-#Requires:       cpanel-perl
-AutoReq: 0
+AutoReq:       0
 Autoprov: 0
 
 # Think about what you use here since the first step is to
@@ -87,9 +82,11 @@ The MySQL(TM) software delivers a very fast, multi-threaded, multi-user,
 and robust SQL (Structured Query Language) database server. MySQL Server
 is intended for mission-critical, heavy-load production systems as well
 as for embedding into mass-deployed software. MySQL is a trademark of
-MySQL AB.
+Sun Microsystems, Inc.
 
-Copyright (C) 2000-2007 MySQL AB
+Copyright 2000-2008 MySQL AB, 2009 Sun Microsystems, Inc.  All rights reserved.
+Use is subject to license terms.
+
 This software comes with ABSOLUTELY NO WARRANTY. This is free software,
 and you are welcome to modify and redistribute it under the GPL license.
 
@@ -98,13 +95,13 @@ news and information about the MySQL software. Also please see the
 documentation and the manual for more information.
 
 %package server
-Summary:	MySQL: a very fast and reliable SQL database server
+Summary:	MySQL - a very fast and reliable SQL database server
 Group:		Applications/Databases
 Requires: coreutils grep procps /usr/sbin/useradd /usr/sbin/groupadd /sbin/chkconfig
 # Needed to give access to mysql client for %post calls.
 Requires(post): %{name}-client
 Requires: %{name}-client
-AutoReq: 0
+AutoReq:       0
 Autoprov: 0
 
 %description server
@@ -112,9 +109,11 @@ The MySQL(TM) software delivers a very fast, multi-threaded, multi-user,
 and robust SQL (Structured Query Language) database server. MySQL Server
 is intended for mission-critical, heavy-load production systems as well
 as for embedding into mass-deployed software. MySQL is a trademark of
-MySQL AB.
+Sun Microsystems, Inc.
 
-Copyright (C) 2000-2007 MySQL AB
+Copyright 2000-2008 MySQL AB, 2009 Sun Microsystems, Inc.  All rights reserved.
+Use is subject to license terms.
+
 This software comes with ABSOLUTELY NO WARRANTY. This is free software,
 and you are welcome to modify and redistribute it under the GPL license.
 
@@ -126,12 +125,12 @@ This package includes the MySQL server binary (incl. InnoDB) as well
 as related utilities to run and administrate a MySQL server.
 
 If you want to access and work with the database, you have to install
-the package "MySQL-client" as well!
+package "MySQL-client" as well!
 
 %package client
 Summary: MySQL - Client
 Group: Applications/Databases
-AutoReq: 0
+AutoReq:       0
 Autoprov: 0
 
 %description client
@@ -139,22 +138,22 @@ This package contains the standard MySQL clients and administration tools.
 
 %{see_base}
 
-%package bench
-Summary: MySQL - Benchmarks and test system
+%package test
+Summary: MySQL - Test suite
 Group: Applications/Databases
 AutoReqProv: no
-AutoReq: 0
+AutoReq:       0
 Autoprov: 0
 
-%description bench
-This package contains MySQL benchmark scripts and data.
+%description test
+This package contains the MySQL regression test suite.
 
 %{see_base}
 
 %package devel
 Summary: MySQL - Development header files and libraries
 Group: Applications/Databases
-AutoReq: 0
+AutoReq:       0
 Autoprov: 0
 
 %description devel
@@ -166,7 +165,7 @@ necessary to develop MySQL client applications.
 %package shared
 Summary: MySQL - Shared libraries
 Group: Applications/Databases
-AutoReq: 0
+AutoReq:       0
 Autoprov: 0
 
 %description shared
@@ -176,33 +175,36 @@ languages and applications need to dynamically load and use MySQL.
 %package -n cl-MySQL-meta
 Summary: MySQL meta package
 Group: Applications/Databases
-Provides: msqlormysql mysql MySQL
-Provides: MySQL-server mysql-server mysql-libs
 Requires: cl-MySQL-meta-client
 Requires: %{name}-server
-Requires: %{name}-bench
 Requires: %{name}-shared
+Provides:  msqlormysql mysql-server mysql-libs mysql MySQL MySQL-server
+Provides:  mysql-bench MySQL-bench mysql-test MySQL-test
+Provides:  mysql-shared MySQL-shared
 Obsoletes: mysql-libs
 AutoReq: 0
-Provides: mysql-bench MySQL-bench
-Provides: mysql-shared MySQL-shared
 %ifarch %{ix86}
-Provides: libmysqlclient.so.15
-Provides: libmysqlclient.so.15(libmysqlclient_15)
-Provides: libmysqlclient_r.so.15
-Provides: libmysqlclient_r.so.15(libmysqlclient_15)
 Provides: libtool(/usr/lib/mysql/libmysqlclient.la)
 Provides: libtool(/usr/lib/mysql/libmysqlclient_r.la)
 Provides: libtool(/usr/lib/mysql/libz.la)
+Provides: libtool(/usr/lib/mysql/plugin/ha_example.la)
+Provides: libtool(/usr/lib/mysql/plugin/ha_innodb_plugin.la)
+Provides: libmysqlclient.so.16
+Provides: libmysqlclient.so.16(libmysqlclient_16)
+Provides: libmysqlclient_r.so.16
+Provides: libmysqlclient_r.so.16(libmysqlclient_16)
 %else
-Provides: libmysqlclient.so.15()(64bit)
-Provides: libmysqlclient.so.15(libmysqlclient_15)(64bit)
-Provides: libmysqlclient_r.so.15()(64bit)
-Provides: libmysqlclient_r.so.15(libmysqlclient_15)(64bit)
 Provides: libtool(/usr/lib64/mysql/libmysqlclient.la)
 Provides: libtool(/usr/lib64/mysql/libmysqlclient_r.la)
 Provides: libtool(/usr/lib64/mysql/libz.la)
+Provides: libtool(/usr/lib64/mysql/plugin/ha_example.la)
+Provides: libtool(/usr/lib64/mysql/plugin/ha_innodb_plugin.la)
+Provides: libmysqlclient.so.16()(64bit)
+Provides: libmysqlclient.so.16(libmysqlclient_16)(64bit)
+Provides: libmysqlclient_r.so.16()(64bit)
+Provides: libmysqlclient_r.so.16(libmysqlclient_16)(64bit)
 %endif
+
 
 %description -n cl-MySQL-meta
 MySql-server meta package.
@@ -211,8 +213,8 @@ MySql-server meta package.
 Summary: MySQL - Client meta package
 Group: Applications/Databases
 Requires: %{name}-client
-AutoReq: 0
 Provides: mysql-client MySQL-client
+AutoReq: 0
 
 %description -n cl-MySQL-meta-client
 MySql-client meta package.
@@ -221,67 +223,57 @@ MySql-client meta package.
 Summary: MySQL - Development header files and libraries meta package
 Group: Applications/Databases
 Requires: %{name}-devel
-AutoReq: 0
 Provides: mysql-devel MySQL-devel
-
+AutoReq: 0
 
 %description -n cl-MySQL-meta-devel
 MySql-devel meta package.
 
 %prep
-%setup -q -n mysql-%{mysql_version}
-
 %define _default_patch_fuzz 0
-#%patch1 -p3
-%patch100 -p1
-%patch101 -p1
-%patch102 -p1
 
+# We unpack the source two times, for 'debug' and 'release' build.
+%setup -q -T -a 0 -c -n mysql-%{mysql_version}
+mv mysql-%{mysql_version} mysql-debug-%{mysql_version}
+cd mysql-debug-%{mysql_version}
+%patch1 -p3
+%patch2 -p3
+%patch3 -p1
+#%patch4 -p3
+#%patch5 -p3
+%patch6 -p2
+
+find . -exec touch -r Makefile.in '{}' ';'
+rm -f sql/sql_yacc.cc sql/sql_yacc.h
+cd ..
+
+%setup -q -D -T -a 0 -n mysql-%{mysql_version}
+mv mysql-%{mysql_version} mysql-release-%{mysql_version}
+cd mysql-release-%{mysql_version}
+%patch1 -p3
+%patch2 -p3
+%patch3 -p1
+#%patch4 -p3
+#%patch5 -p3
+%patch6 -p2
+
+find . -exec touch -r Makefile.in '{}' ';'
+rm -f sql/sql_yacc.cc sql/sql_yacc.h
+cd ..
 
 %build
 
 export MAKE_JFLAG=${MYSQL_BUILD_MAKE_JFLAG:-}
 
-BuildMySQL() {
-# The --enable-assembler simply does nothing on systems that does not
-# support assembler speedups.
-sh -c  "PATH=\"${MYSQL_BUILD_PATH:-$PATH}\" \
-	CC=\"${CC:-$MYSQL_BUILD_CC}\" \
-	CXX=\"${CXX:-$MYSQL_BUILD_CXX}\" \
-	CFLAGS=\"${MYSQL_BUILD_CFLAGS:-$RPM_OPT_FLAGS}\" \
-	CXXFLAGS=\"${MYSQL_BUILD_CXXFLAGS:-$RPM_OPT_FLAGS \
-	          -felide-constructors -fno-exceptions -fno-rtti \
-		  }\" \
-	LDFLAGS=\"$MYSQL_BUILD_LDFLAGS\" \
-	./configure \
- 	    $* \
-	    --enable-assembler \
-	    --enable-local-infile \
-            --with-mysqld-user=%{mysqld_user} \
-            --with-unix-socket-path=/var/lib/mysql/mysql.sock \
-	    --with-pic \
-            --prefix=/ \
-%if %{YASSL_BUILD}
-	    --with-yassl \
+# GCC 2.96 is failing on mandrake 8.2 because it's using -O3 and crashing the compiler. 
+# We think this is a 2.96 bug so we're forcing -O2 on all 2.96 compilers
+# Redhat 9 is compiling for some reason...
+%define is_gcc296 %(gcc --version 2>&1|grep -c "2\.96")
+%if %is_gcc296
+ RPM_OPT_FLAGS="$RPM_OPT_FLAGS -O2"
+ export RPM_OPT_FLAGS
+ echo gcc 2.96 detected. Lowering optimization to -O2
 %endif
-            --exec-prefix=%{_exec_prefix} \
-            --libexecdir=%{_sbindir} \
-            --libdir=%{_libdir} \
-            --sysconfdir=%{_sysconfdir} \
-            --datadir=%{_datadir} \
-            --localstatedir=%{mysqldatadir} \
-            --infodir=%{_infodir} \
-            --includedir=%{_includedir} \
-            --mandir=%{_mandir} \
-	    --enable-thread-safe-client \
-	    --with-readline ; \
-	    # Add this for more debugging support
-	    # --with-debug
-	    "
-
- # benchdir does not fit in above model. Maybe a separate bench distribution
- make ${MAKE_JFLAG} benchdir_root=/usr/share/
-}
 
 # Use our own copy of glibc
 
@@ -295,7 +287,6 @@ fi
 # Use the build root for temporary storage of the shared libraries.
 
 RBR=$RPM_BUILD_ROOT
-MBD=$RPM_BUILD_DIR/mysql-%{mysql_version}
 
 # Clean up the BuildRoot first
 [ "$RBR" != "/" ] && [ -d $RBR ] && rm -rf $RBR;
@@ -307,72 +298,127 @@ mkdir -p $RBR%{_libdir}/mysql
 PATH=${MYSQL_BUILD_PATH:-/bin:/usr/bin}
 export PATH
 
-# Use gcc for C and C++ code (to avoid a dependency on libstdc++ and
-# including exceptions into the code
-if [ -z "$CXX" -a -z "$CC" ]
-then
-	export CC="gcc"
-	export CXX="gcc"
-fi
+# Build the Debug binary.
 
+CC="gcc"
+CXX="gcc"
+export CC CXX
+
+# Prepare compiler flags
+
+##############################################################################
 #
-# Only link statically on our i386 build host (which has a specially
-# patched static glibc installed) - ia64 and x86_64 run glibc-2.3 (unpatched)
-# so don't link statically there
+#  Build the debug version
 #
-for servertype in '--with-debug=full' ' '
-do
-  BuildMySQL "\
-%if %{STATIC_BUILD}
-		--enable-shared \
-		--with-mysqld-ldflags='-all-static' \
-		--with-client-ldflags='-all-static' \
-		$USE_OTHER_LIBC_DIR \
-%else
-		--enable-shared \
-		--with-zlib-dir=bundled \
-%endif
-		--with-extra-charsets=complex \
-		--with-comment=\"MySQL Community Edition (GPL)\" \
-		--with-server-suffix='%{server_suffix}' \
-		--with-archive-storage-engine \
-		--with-innodb \
-		--without-ndbcluster \
-		--with-csv-storage-engine \
-		--with-example-storage-engine \
-		--with-blackhole-storage-engine \
-		--with-federated-storage-engine \
-		--with-big-tables $servertype"
-  if test "$servertype" != ' '
-  then
-    # if this is not the regular build, we save the server binary
-    ./libtool --mode=execute cp sql/mysqld sql/mysqld-debug
-    ./libtool --mode=execute nm --numeric-sort sql/mysqld-debug > sql/mysqld-debug.sym
-    echo "# debug"
-    make  ${MAKE_JFLAG}
-    make clean
-  fi
-done
+##############################################################################
+CFLAGS="$RPM_OPT_FLAGS"
+CXXFLAGS="$RPM_OPT_FLAGS -felide-constructors -fno-exceptions -fno-rtti -Wno-unused-parameter"
+CFLAGS=`echo   " $CFLAGS "   | \
+    sed -e 's/-O[0-9]*\b/ /g' -e 's/ -unroll2 / /' -e 's/ -ip / /' \
+        -e 's/^ //' -e 's/ $//'`
+CXXFLAGS=`echo " $CXXFLAGS " | \
+    sed -e 's/-O[0-9]*\b/ /g' -e 's/ -unroll2 / /' -e 's/ -ip / /' \
+        -e 's/^ //' -e 's/ $//'`
+export CFLAGS CXXFLAGS
 
-./libtool --mode=execute nm --numeric-sort sql/mysqld > sql/mysqld.sym
+cd mysql-debug-%{mysql_version}
+./configure \
+    --with-mysqld-ldflags='-static' \
+    --with-client-ldflags='-static' \
+    --with-mysqld-libs=-lrt \
+    --with-zlib-dir=bundled \
+    --enable-assembler \
+    --enable-local-infile \
+    --with-fast-mutexes \
+    --with-mysqld-user=%{mysqld_user} \
+    --with-unix-socket-path=/var/lib/mysql/mysql.sock \
+    --with-pic \
+    --prefix=/ \
+    --with-extra-charsets=all \
+    --with-ssl \
+    --exec-prefix=%{_exec_prefix} \
+    --libexecdir=%{_sbindir} \
+    --libdir=%{_libdir} \
+    --sysconfdir=%{_sysconfdir} \
+    --datadir=%{_datadir} \
+    --localstatedir=%{mysqldatadir} \
+    --infodir=%{_infodir} \
+    --includedir=%{_includedir} \
+    --mandir=%{_mandir} \
+    --enable-thread-safe-client \
+    --with-readline \
+    --with-big-tables \
+    --with-innodb \
+	--with-archive-storage-engine \
+	--with-csv-storage-engine \
+	--with-blackhole-storage-engine \
+	--with-federated-storage-engine \
+	--with-partition \
+    --without-plugin-daemon_example \
+    --without-plugin-ftexample \
+    --without-plugin-ndbcluster \
+    --enable-shared \
+		--with-debug \
+		--without-mysqlmanager \
+		--without-docs \
+		--without-man \
+		--with-comment="MySQL Community Server - Debug (%{mysql_license})"
+# Do a make separatley so rpm can detect a make failure.
+make -j10 ${MAKE_JFLAG}
 
-# Save the libraries
-(cd libmysql/.libs; tar cf $MBD/shared-libs.tar *.so*)
-(cd libmysql_r/.libs; tar rf $MBD/shared-libs.tar *.so*)
-#(cd ndb/src/.libs; tar rf $MBD/shared-libs.tar *.so*)
+##############################################################################
+#
+#  Build the release binary
+#
+##############################################################################
 
-# We might want to save the config log file
-if test -n "$MYSQL_CONFLOG_DEST"
-then
-  cp -fp config.log "$MYSQL_CONFLOG_DEST"
-fi
-
-echo "# standard"
-make ${MAKE_JFLAG}
+cd ../mysql-release-%{mysql_version}
+CFLAGS="$RPM_OPT_FLAGS"
+CXXFLAGS="$RPM_OPT_FLAGS -felide-constructors -fno-exceptions -fno-rtti"
+export CFLAGS CXXFLAGS
+./configure \
+    --with-mysqld-ldflags='-static' \
+    --with-client-ldflags='-static' \
+    --with-mysqld-libs=-lrt \
+    --with-zlib-dir=bundled \
+    --enable-assembler \
+    --enable-local-infile \
+    --with-fast-mutexes \
+    --with-mysqld-user=%{mysqld_user} \
+    --with-unix-socket-path=/var/lib/mysql/mysql.sock \
+    --with-pic \
+    --prefix=/ \
+    --with-extra-charsets=all \
+    --with-ssl \
+    --exec-prefix=%{_exec_prefix} \
+    --libexecdir=%{_sbindir} \
+    --libdir=%{_libdir} \
+    --sysconfdir=%{_sysconfdir} \
+    --datadir=%{_datadir} \
+    --localstatedir=%{mysqldatadir} \
+    --infodir=%{_infodir} \
+    --includedir=%{_includedir} \
+    --mandir=%{_mandir} \
+    --enable-thread-safe-client \
+    --with-readline \
+    --with-big-tables \
+    --with-innodb \
+	--with-archive-storage-engine \
+	--with-csv-storage-engine \
+	--with-blackhole-storage-engine \
+	--with-federated-storage-engine \
+	--with-partition \
+    --without-plugin-daemon_example \
+    --without-plugin-ftexample \
+    --without-plugin-ndbcluster \
+    --enable-shared \
+		--with-comment="MySQL Community Server (%{mysql_license})"
+# Do a make separatley so rpm can detect a make failure.
+make -j10 ${MAKE_JFLAG}
 
 %install
 RBR=$RPM_BUILD_ROOT
-MBD=$RPM_BUILD_DIR/mysql-%{mysql_version}
+MBD=$RPM_BUILD_DIR/mysql-%{mysql_version}/mysql-release-%{mysql_version}
 
 # Clean up the BuildRoot first - Fedora is doing this now and it's correct procedure...
 [ "$RBR" != "/" ] && [ -d $RBR ] && rm -rf $RBR;
@@ -380,19 +426,15 @@ MBD=$RPM_BUILD_DIR/mysql-%{mysql_version}
 # Ensure that needed directories exists
 install -d $RBR%{_sysconfdir}/{logrotate.d,init.d}
 install -d $RBR%{mysqldatadir}/mysql
-install -d $RBR%{_datadir}/{sql-bench,mysql-test}
+install -d $RBR%{_datadir}/mysql-test
 install -d $RBR%{_includedir}
-install -d $RBR%{_libdir}
 install -d $RBR%{_libdir}/mysql
 install -d $RBR%{_mandir}
 install -d $RBR%{_sbindir}
 
-# Install shared libraries (Disable for architectures that don't support it)
-(cd $RBR%{_libdir}; tar xf $MBD/shared-libs.tar)
-
 # Include libgcc.a in the devel subpackage (BUG 4921)
 CC="${CC:-gcc}" 
-if expr "$CC" : '.*gcc.*' > /dev/null
+if expr "$CC" : ".*gcc.*" > /dev/null ;
 then
   libgcc=`$CC $CFLAGS --print-libgcc-file`
   if [ -f $libgcc ]
@@ -402,35 +444,34 @@ then
   fi
 fi
 
-# Install all binaries stripped - Note have to complete above 2 sections for this to work.
-make install-strip DESTDIR=$RBR benchdir_root=%{_datadir}
+# Install all binaries 
+(cd $MBD && make install DESTDIR=$RBR testroot=%{_datadir})
+# Old packages put shared libs in %{_libdir}/ (not %{_libdir}/mysql), so do
+# the same here.
+mv $RBR/%{_libdir}/mysql/*.so* $RBR/%{_libdir}/
 
-# Install the ndb binaries
-#(cd ndb; make install DESTDIR=$RBR)
+# install "mysqld-debug"
+$MBD/libtool --mode=execute install -m 755 \
+                 $RPM_BUILD_DIR/mysql-%{mysql_version}/mysql-debug-%{mysql_version}/sql/mysqld \
+                 $RBR%{_sbindir}/mysqld-debug
 
-# Install the saved debug server
-install -s -m 755 $MBD/sql/mysqld-debug $RBR%{_sbindir}/mysqld-debug
-
-# install symbol files ( for stack trace resolution)
-# install -m 644 $MBD/sql/mysqld-max.sym $RBR%{_libdir}/mysql/mysqld-max.sym
-install -m 644 $MBD/sql/mysqld.sym $RBR%{_libdir}/mysql/mysqld.sym
-install -m 644 $MBD/sql/mysqld-debug.sym $RBR%{_libdir}/mysql/mysqld-debug.sym
+# install saved perror binary with NDB support (BUG#13740)
+install -m 755 $MBD/extra/perror $RBR%{_bindir}/perror
 
 # Install logrotate and autostart
 install -m 644 $MBD/support-files/mysql-log-rotate $RBR%{_sysconfdir}/logrotate.d/mysql
 install -m 755 $MBD/support-files/mysql.server $RBR%{_sysconfdir}/init.d/mysql
 
-# Install embedded server library in the build root
-# FIXME No libmysqld on 5.0 yet
-#install -m 644 libmysqld/libmysqld.a $RBR%{_libdir}/mysql/
+# in RPMs, it is unlikely that anybody should use "sql-bench"
+rm -rf $RBR%{_datadir}/sql-bench
+
+# Some SQL-bench files going to / ???
+rm -rf $RBR/sql-bench
+
 
 # Create a symlink "rcmysql", pointing to the init.script. SuSE users
 # will appreciate that, as all services usually offer this.
 ln -s %{_sysconfdir}/init.d/mysql $RPM_BUILD_ROOT%{_sbindir}/rcmysql
-
-# Create symbolic compatibility link safe_mysqld -> mysqld_safe
-# (safe_mysqld will be gone in MySQL 4.1)
-ln -sf ./mysqld_safe $RBR%{_bindir}/safe_mysqld
 
 # Touch the place where the my.cnf config file and mysqlmanager.passwd
 # (MySQL Instance Manager password file) might be located
@@ -439,28 +480,27 @@ touch $RBR%{_sysconfdir}/my.cnf
 touch $RBR%{_sysconfdir}/mysqlmanager.passwd
 
 # Prevent autodeps parsing of perl scripts that ship with MySQL-server and MySQL-client
-chmod 644 $RBR/usr/bin/mysql_convert_table_format $RBR/usr/bin/mysql_explain_log $RBR/usr/bin/mysql_fix_extensions $RBR/usr/bin/mysql_setpermission $RBR/usr/bin/mysql_zap $RBR/usr/bin/mysqld_multi $RBR/usr/bin/mysqldumpslow $RBR/usr/bin/mysqlhotcopy
-chmod 644 $RBR/usr/bin/mysql_find_rows $RBR/usr/bin/mysql_tableinfo $RBR/usr/bin/mysqlaccess
+chmod 644 $RBR/usr/bin/mysql_convert_table_format $RBR/usr/bin/mysql_fix_extensions $RBR/usr/bin/mysql_setpermission $RBR/usr/bin/mysql_zap $RBR/usr/bin/mysqld_multi $RBR/usr/bin/mysqldumpslow $RBR/usr/bin/mysqlhotcopy
+chmod 644 $RBR/usr/bin/mysql_find_rows $RBR/usr/bin/mysqlaccess
+
+%ifarch %{ix86}
+cat $RBR%{_bindir}/mysql_config | sed "s/pkglibdir='\/usr\/lib\/mysql'/pkglibdir='\/usr\/lib'/g" > $RBR%{_bindir}/mysql_config.tmp
+%else
+cat $RBR%{_bindir}/mysql_config | sed "s/pkglibdir='\/usr\/lib64\/mysql'/pkglibdir='\/usr\/lib64'/g" > $RBR%{_bindir}/mysql_config.tmp
+%endif
+mv -f $RBR%{_bindir}/mysql_config.tmp $RBR%{_bindir}/mysql_config
+chmod 755 $RBR%{_bindir}/mysql_config
+
 
 %pre server
 
 # Shut down a previously installed server first
-if test -x %{_sysconfdir}/init.d/mysql
-then
-  %{_sysconfdir}/init.d/mysql stop > /dev/null 2>&1
-  echo "Giving mysqld a couple of seconds to exit nicely"
-  sleep 5
-elif test -x %{_sysconfdir}/rc.d/init.d/mysql
-then
-  %{_sysconfdir}/rc.d/init.d/mysql stop > /dev/null 2>&1
-  echo "Giving mysqld a couple of seconds to exit nicely"
-  sleep 5
-fi
+/sbin/service mysql stop || /bin/true
+sleep 5
 
 %triggerpostun -n %{name}-server -- MySQL-server
 # Work around mysqld being stopped when MySQL-server which we replace gets uninstalled.
 /sbin/service mysql start || /bin/true
-/sbin/chkconfig --add mysql
 
 %post server
 mysql_datadir=%{mysqldatadir}
@@ -496,29 +536,31 @@ chown -R %{mysqld_user}:%{mysqld_group} $mysql_datadir
 # can read them.
 chmod -R og-rw $mysql_datadir/mysql
 
-# Restart in the same way that mysqld will be started normally.
-/sbin/service mysql start
+# Stop the service prior to running build_mysql_conf
+/sbin/service mysql stop
 
-# Allow safe_mysqld to start mysqld and print a message before we exit
+# Allow mysqld_safe to start mysqld and print a message before we exit
 sleep 2
 
-echo "Thank you for installing the MySQL Community Server! For Production
-systems, we recommend MySQL Enterprise, which contains enterprise-ready
-software, intelligent advisory services, and full production support with
-scheduled service packs and more.  Visit www.mysql.com/enterprise for more
-information." 
+#echo "Thank you for installing the MySQL Community Server! For Production
+#systems, we recommend MySQL Enterprise, which contains enterprise-ready
+#software, intelligent advisory services, and full production support with
+#scheduled service packs and more.  Visit www.mysql.com/enterprise for more
+#information." 
 
 if [ -x '/usr/local/cpanel/bin/build_mysql_conf' ]; then
   /usr/local/cpanel/bin/build_mysql_conf
 fi
 
-# Make sure mysql is up when we're done.
-/sbin/service mysql start
+/sbin/service mysql restart
 
 %preun server
+
+# Remove the service if no MySQL will be in place after we're done,
+# Stop and remove the service
 if test $1 = 0; then
-  /sbin/service mysql stop
-  /sbin/chkconfig --del mysql
+    /sbin/service mysql stop || /bin/true
+    /sbin/chkconfig --del mysql || /bin/true
 fi
 
 # We do not remove the mysql user since it may still own a lot of
@@ -531,9 +573,8 @@ fi
 %files server
 %defattr(-,root,root,0755)
 
-%doc COPYING README 
-%doc support-files/my-*.cnf
-#%doc support-files/ndb-*.ini
+%doc mysql-release-%{mysql_version}/COPYING mysql-release-%{mysql_version}/README 
+%doc mysql-release-%{mysql_version}/support-files/my-*.cnf
 
 %doc %attr(644, root, root) %{_infodir}/mysql.info*
 
@@ -543,7 +584,6 @@ fi
 %doc %attr(644, root, man) %{_mandir}/man1/myisamchk.1*
 %doc %attr(644, root, man) %{_mandir}/man1/myisamlog.1*
 %doc %attr(644, root, man) %{_mandir}/man1/myisampack.1*
-%doc %attr(644, root, man) %{_mandir}/man1/mysql_explain_log.1*
 %doc %attr(644, root, man) %{_mandir}/man8/mysqld.8*
 %doc %attr(644, root, man) %{_mandir}/man1/mysqld_multi.1*
 %doc %attr(644, root, man) %{_mandir}/man1/mysqld_safe.1*
@@ -560,7 +600,7 @@ fi
 %doc %attr(644, root, man) %{_mandir}/man1/mysqlbug.1*
 %doc %attr(644, root, man) %{_mandir}/man1/perror.1*
 %doc %attr(644, root, man) %{_mandir}/man1/replace.1*
-%doc %attr(644, root, man) %{_mandir}/man1/safe_mysqld.1*
+%doc %attr(644, root, man) %{_mandir}/man1/comp_err.1*
 %doc %attr(644, root, man) %{_mandir}/man1/mysql_convert_table_format.1*
 %doc %attr(644, root, man) %{_mandir}/man1/mysql_fix_extensions.1*
 %doc %attr(644, root, man) %{_mandir}/man1/mysql_secure_installation.1*
@@ -569,6 +609,7 @@ fi
 %doc %attr(644, root, man) %{_mandir}/man1/mysqldumpslow.1*
 %doc %attr(644, root, man) %{_mandir}/man1/resolve_stack_dump.1*
 %doc %attr(644, root, man) %{_mandir}/man1/resolveip.1*
+
 
 %ghost %config(noreplace,missingok) %{_sysconfdir}/my.cnf
 %ghost %config(noreplace,missingok) %{_sysconfdir}/mysqlmanager.passwd
@@ -580,7 +621,6 @@ fi
 %attr(755, root, root) %{_bindir}/myisamlog
 %attr(755, root, root) %{_bindir}/myisampack
 %attr(755, root, root) %{_bindir}/mysql_convert_table_format
-%attr(755, root, root) %{_bindir}/mysql_explain_log
 %attr(755, root, root) %{_bindir}/mysql_fix_extensions
 %attr(755, root, root) %{_bindir}/mysql_fix_privilege_tables
 %attr(755, root, root) %{_bindir}/mysql_install_db
@@ -599,13 +639,14 @@ fi
 %attr(755, root, root) %{_bindir}/replace
 %attr(755, root, root) %{_bindir}/resolve_stack_dump
 %attr(755, root, root) %{_bindir}/resolveip
-%attr(755, root, root) %{_bindir}/safe_mysqld
+
+%attr(755, root, root) %{_libdir}/mysql/plugin/ha_example.so*
+%attr(755, root, root) %{_libdir}/mysql/plugin/ha_innodb_plugin.so*
 
 %attr(755, root, root) %{_sbindir}/mysqld
 %attr(755, root, root) %{_sbindir}/mysqld-debug
 %attr(755, root, root) %{_sbindir}/mysqlmanager
 %attr(755, root, root) %{_sbindir}/rcmysql
-%attr(644, root, root) %{_libdir}/mysql/mysqld.sym
 
 %attr(644, root, root) %config(noreplace,missingok) %{_sysconfdir}/logrotate.d/mysql
 %attr(755, root, root) %{_sysconfdir}/init.d/mysql
@@ -617,8 +658,6 @@ fi
 %attr(755, root, root) %{_bindir}/msql2mysql
 %attr(755, root, root) %{_bindir}/mysql
 %attr(755, root, root) %{_bindir}/mysql_find_rows
-%attr(755, root, root) %{_bindir}/mysql_tableinfo
-%attr(755, root, root) %{_bindir}/mysql_upgrade_shell
 %attr(755, root, root) %{_bindir}/mysql_waitpid
 %attr(755, root, root) %{_bindir}/mysqlaccess
 %attr(755, root, root) %{_bindir}/mysqladmin
@@ -627,14 +666,11 @@ fi
 %attr(755, root, root) %{_bindir}/mysqldump
 %attr(755, root, root) %{_bindir}/mysqlimport
 %attr(755, root, root) %{_bindir}/mysqlshow
-
-%attr(644, root, root) %{_libdir}/mysql/libmysqlclient.so*
-%attr(644, root, root) %{_libdir}/mysql/libmysqlclient_r.so*
+%attr(755, root, root) %{_bindir}/mysqlslap
 
 %doc %attr(644, root, man) %{_mandir}/man1/msql2mysql.1*
 %doc %attr(644, root, man) %{_mandir}/man1/mysql.1*
 %doc %attr(644, root, man) %{_mandir}/man1/mysql_find_rows.1*
-%doc %attr(644, root, man) %{_mandir}/man1/mysql_tableinfo.1*
 %doc %attr(644, root, man) %{_mandir}/man1/mysqlaccess.1*
 %doc %attr(644, root, man) %{_mandir}/man1/mysqladmin.1*
 %doc %attr(644, root, man) %{_mandir}/man1/mysqlbinlog.1*
@@ -642,6 +678,7 @@ fi
 %doc %attr(644, root, man) %{_mandir}/man1/mysqldump.1*
 %doc %attr(644, root, man) %{_mandir}/man1/mysqlimport.1*
 %doc %attr(644, root, man) %{_mandir}/man1/mysqlshow.1*
+%doc %attr(644, root, man) %{_mandir}/man1/mysqlslap.1*
 
 %post shared
 /sbin/ldconfig
@@ -649,56 +686,14 @@ fi
 %postun shared
 /sbin/ldconfig
 
-#%files ndb-storage
-#%defattr(-,root,root,0755)
-#%attr(755, root, root) %{_sbindir}/ndbd
-
-#%files ndb-management
-#%defattr(-,root,root,0755)
-#%attr(755, root, root) %{_sbindir}/ndb_mgmd
-
-#%files ndb-tools
-#%defattr(-,root,root,0755)
-#%attr(755, root, root) %{_bindir}/ndb_config
-#%attr(755, root, root) %{_bindir}/ndb_desc
-#%attr(755, root, root) %{_bindir}/ndb_error_reporter
-#%attr(755, root, root) %{_bindir}/ndb_mgm
-#%attr(755, root, root) %{_bindir}/ndb_restore
-#%attr(755, root, root) %{_bindir}/ndb_select_all
-#%attr(755, root, root) %{_bindir}/ndb_select_count
-#%attr(755, root, root) %{_bindir}/ndb_show_tables
-#%attr(755, root, root) %{_bindir}/ndb_size.pl
-#%attr(755, root, root) %{_bindir}/ndb_test_platform
-#%attr(755, root, root) %{_bindir}/ndb_waiter
-#%attr(-, root, root) %{_datadir}/mysql/ndb_size.tmpl
-#%doc %attr(644, root, man) %{_mandir}/man1/ndb_config.1*
-#%doc %attr(644, root, man) %{_mandir}/man1/ndb_desc.1*
-#%doc %attr(644, root, man) %{_mandir}/man1/ndb_error_reporter.1*
-#%doc %attr(644, root, man) %{_mandir}/man1/ndb_select_all.1*
-#%doc %attr(644, root, man) %{_mandir}/man1/ndb_select_count.1*
-#%doc %attr(644, root, man) %{_mandir}/man1/ndb_show_tables.1*
-#%doc %attr(644, root, man) %{_mandir}/man1/ndb_size.pl.1*
-#%doc %attr(644, root, man) %{_mandir}/man1/ndb_waiter.1*
-
-#%files ndb-extra
-#%defattr(-,root,root,0755)
-#%attr(755, root, root) %{_bindir}/ndb_delete_all
-#%attr(755, root, root) %{_bindir}/ndb_drop_index
-#%attr(755, root, root) %{_bindir}/ndb_drop_table
-#%doc %attr(644, root, man) %{_mandir}/man1/ndb_delete_all.1*
-#%doc %attr(644, root, man) %{_mandir}/man1/ndb_drop_index.1*
-#%doc %attr(644, root, man) %{_mandir}/man1/ndb_drop_table.1*
-
 %files devel
 %defattr(-, root, root, 0755)
-%doc %attr(644, root, man) %{_mandir}/man1/comp_err.1*
 %doc %attr(644, root, man) %{_mandir}/man1/mysql_config.1*
-%attr(755, root, root) %{_bindir}/comp_err
 %attr(755, root, root) %{_bindir}/mysql_config
 %dir %attr(755, root, root) %{_includedir}/mysql
 %dir %attr(755, root, root) %{_libdir}/mysql
 %{_includedir}/mysql/*
-%attr(644, root, root) %{_libdir}/mysql/mysqld-debug.sym
+%{_datadir}/aclocal/mysql.m4
 %{_libdir}/mysql/libdbug.a
 %{_libdir}/mysql/libheap.a
 %if %{have_libgcc}
@@ -713,25 +708,22 @@ fi
 %{_libdir}/mysql/libmystrings.a
 %{_libdir}/mysql/libmysys.a
 %{_libdir}/mysql/libvio.a
-%if %{STATIC_BUILD}
-%else
 %{_libdir}/mysql/libz.a
 %{_libdir}/mysql/libz.la
-%endif
+%{_libdir}/mysql/plugin/ha_example.a
+%{_libdir}/mysql/plugin/ha_example.la
+%{_libdir}/mysql/plugin/ha_innodb_plugin.a
+%{_libdir}/mysql/plugin/ha_innodb_plugin.la
 
 %files shared
 %defattr(-, root, root, 0755)
 # Shared libraries (omit for architectures that don't support them)
-%{_libdir}/*.so*
+%{_libdir}/libmysql*.so*
 
-%files bench
+%files test
 %defattr(-, root, root, 0755)
-%attr(-, root, root) %{_datadir}/sql-bench
 %attr(-, root, root) %{_datadir}/mysql-test
 %attr(755, root, root) %{_bindir}/mysql_client_test
-%attr(755, root, root) %{_bindir}/mysqltestmanager
-%attr(755, root, root) %{_bindir}/mysqltestmanager-pwgen
-%attr(755, root, root) %{_bindir}/mysqltestmanagerc
 %doc %attr(644, root, man) %{_mandir}/man1/mysql_client_test.1*
 %doc %attr(644, root, man) %{_mandir}/man1/mysql-stress-test.pl.1*
 %doc %attr(644, root, man) %{_mandir}/man1/mysql-test-run.pl.1*
@@ -745,99 +737,253 @@ fi
 %files -n cl-MySQL-meta-devel
 %defattr(-, root, root, 0755)
 
-#%files embedded
-#%defattr(-, root, root, 0755)
-# %attr(644, root, root) %{_libdir}/mysql/libmysqld.a
-
+# The spec file changelog only includes changes made to the spec file
+# itself - note that they must be ordered by date (important when
+# merging BK trees)
 %changelog
-* Wed Oct 23 2012 Kyle Lafkoff <kyle.lafkoff@cpanel.net> - 5.0.96-2.cp1136
-- remove pre and post hook scripts as we now use Cpanel::Hooks
-- Add trigger for MySQL-server so mysqld is restarted when MySQL-server is removed
-- Simplify service start/stop logic given support range is only CentHat
+* Tue Feb 5 2013 Nicolas Rochelemagne <nicolas.rochelemagne@cpanel.net> 5.1.68-1.cp1136
+- New upstream release
 
-* Mon Sep 1 2012 Todd Rinaldo <toddr@cpanel.net> 5.0.96-1.cp1136
-- Update release to have cp1136 in it
-- Rename package from MySQL to MySQL50 to prevent packaging system confusion
-- Remove legacy platform support.
-- Remove perl dependencies from the build since they are being detected incorrectly
-- Add pre and post installation steps
+* Thu Dec 27 2012 Rikus Goodell <rikus.goodell@cpanel.net> 5.1.67-1.cp1136
+- New upstream release
+- Remove previous patch, as CVE-2012-5611 is addressed in 5.1.67.
+- Put MySQL back into init system when RPM is renamed to MySQL51
+
+* Tue Dec 11 2012 Nicolas Rochelemagne <nicolas.rochelemagne@cpanel.net> 5.1.66-2.cp1136
+- patch for CVE-2012-5611 mysql: acl_get() stack-based buffer overflow
+
+* Wed Oct 23 2012 Kyle Lafkoff <kyle.lafkoff@cpanel.net> - 5.1.66-1.cp1136
+- Rename package from MySQL to MySQL51 to prevent packaging system confusion
+- Obsolete MySQL package names
 - Patch scripts to use /usr/local/cpanel/3rdparty/bin/perl
+- add parallel build to default at -j6
+- remove detection of perl dependencies during build.
+- Add trigger for MySQL-server so mysqld is restarted when MySQL-server is removed
 
-* Tue Aug 07 2012 Nicolas Rochelemagne <nicolas.rochelemagne@cpanel.net> 5.0.96-0.cp1130
+* Mon Oct 15 2012 brian m. carlson <brian.carlson@cpanel.net> 5.1.66-0.cloud
+- New upstream release
+- Rebased previous patches from last update.
+- Removed YaSSL patch since the bug has been fixed upstream.
+
+* Fri Aug 10 2012 brian m. carlson <brian.carlson@cpanel.net> 5.1.65-0.cloud
+- New upstream release
+- Rebased previous patches from last update.
+
+* Thu May 7 2012 brian m. carlson <brian.carlson@cpanel.net> 5.1.63-0.cloud
+- New upstream release
+- Rebased previous patches from last update.
+
+* Thu Apr 19 2012 brian m. carlson <brian.carlson@cpanel.net> 5.1.62-2.cloud
+- Disabled inclusion of conflicting libcrypto symbols.
+
+* Mon Apr 16 2012 brian m. carlson <brian.carlson@cpanel.net> 5.1.62-1.cloud
+- Disabled userstats by default.
+
+* Fri Mar 23 2012 John Lightsey <jd@cpanel.net> 5.1.62-0.cloud
+- New upstream release
+- Rebased previous patches from last update.
+
+* Thu Jan 19 2012 Kyle Lafkoff <kyle.lafkoff@cpanel.net> 5.1.61-0.cloud
+- New upstream release
+- Rebased previous patches from last update.
+
+* Fri Sep 23 2011 Kyle Lafkoff <kyle.lafkoff@cpanel.net> 5.1.59-0.cloud
+- New upstream release
+- Rename revision to reflect cloud linux patches
+- Because this build will have cloud linux patches, it will only be built for CentHat 4-6. As a result,
+  legacy compatibility patches have been removed (gcc_296_operator_delete.patch, SYS_gettid-constant.patch)
+- Applied Cloud Linux patches: 
+-  0002-Cloud-Linux-userstat_mysql.patch
+-  0003-Cloud-Linux-max_connection2.patch
+-  Auto Generated: 0004-autogen.patch
+
+* Fri Jul 8 2011 Todd Rinaldo <toddr@cpanel.net> 5.1.58-0
 - New upstream release
 
-* Wed Feb 22 2012 Todd Rinaldo <toddr@cpanel.net> 5.0.95-0.cp1130
-- New upstream maintenance release mostly to fix CVE-2012-0113
-
-* Fri Feb 18 2011 Todd Rinaldo <toddr@cpanel.net> 5.0.92-0
-- New upstream maintenance release
-- New libraries and man pages added to distro
-- Drop file EXCEPTIONS-CLIENT
-
-* Wed Jan 12 2011 Todd Rinaldo <toddr@cpanel.net> 5.0.91-1
-- Fix CVE 2010-1626
-
-* Fri May 21 2010 Todd Rinaldo <toddr@cpanel.net> 5.0.91-0
-- New upstream maintenance release 
-
-* Mon Jan 29 2010 Todd Rinaldo <toddr@cpanel.net> 5.0.90-0
-- New upstream release (FINAL... This time its personal!)
-
-* Mon Dec 21 2009 Todd Rinaldo <toddr@cpanel.net> 5.0.89-0
-- New upstream release (FINAL)
-
-* Tue Dec 2 2009 Todd Rinaldo <toddr@cpanel.net> 5.0.88-1
-- Disable ndbcluster for all builds. Was breaking on Trustix 2 and Redhat 9 and Ken says this is no longer officially supported. Also it's not advisable to use this feature on any cPanel install
-- Comment out all ndb lines so install doesn't break.
-- Bump version since we released to beta
-
-* Fri Nov 20 2009 Todd Rinaldo <toddr@cpanel.net> 5.0.88-0
+* Thu May 12 2011 Todd Rinaldo <toddr@cpanel.net> 5.1.57-0
 - New upstream release
-- Patching via Git now
-- Building via VMWare now
-- move install items into install from build
-- Cleanup install dir at beginning of install like Fedora is doing now.
 
-* Tue Oct 27 2009 Todd Rinaldo <toddr@cpanel.net> 5.0.87-0
+* Tue Mar 7 2011 Todd Rinaldo <toddr@cpanel.net> 5.1.56-0
 - New upstream release
-- Update gcc_296_operator_delete.patch
-- Added GCC 2.96 test. Force -O2 to prevent compiler crash on mandrake 8.2
- 
-* Wed Sep 23 2009 John Lightsey <jd@cpanel.net> 5.0.86-0
-- New upstream release
-- Update gcc_296_operator_delete.patch
- 
-* Mon Aug 24 2009 John Lightsey <jd@cpanel.net> 5.0.85-0
-- New upstream release
-- Update gcc_296_operator_delete.patch
- 
-* Wed Jul 29 2009 John Lightsey <jd@cpanel.net> 5.0.84-0
-- New upstream release
-- Update gcc_296_operator_delete.patch
- 
-* Fri Jun 12 2009 John Lightsey <jd@cpanel.net> 5.0.83-0
-- New upstream release
-- Update gcc_296_operator_delete.patch
- 
-* Fri May 29 2009 John Lightsey <jd@cpanel.net> 5.0.82-0
-- New upstream release
-- Update gcc_296_operator_delete.patch
- 
-* Mon May 04 2009 John Lightsey <jd@cpanel.net> 5.0.81-0
-- New upstream release
-- Update gcc_296_operator_delete.patch
- 
-* Mon Feb 23 2009 John Lightsey <jd@cpanel.net> 5.0.77-0
-- New upstream release
- 
-* Tue Aug 12 2008 John Lightsey <jd@cpanel.net> 5.0.67-0
-- New upstream release
-- Remove 32202_order_by_group_by.patch
-- Add gcc_296_operator_delete.patch to fix G++ 2.96 build errors
 
-* Fri May 30 2008 John Lightsey <jd@cpanel.net>
+* Tue Feb 8 2011 Todd Rinaldo <toddr@cpanel.net> 5.1.55-0
+- New upstream release
+- upstream started using SYS_gettid stacktrace.c which isn't present
+  in pre-AS3. Patch it back off in pre-AS3 - MySQL bug 60171
 
-- Change benchdir_root to fix build errors on Fedora 9
+* Tue Dec 15 2010 Todd Rinaldo <toddr@cpanel.net> 5.1.54-0
+- New upstream release
+- Add -Wno-unused-parameter to CXXFLAGS per \#mysql-dev
+- Add patch pointer_patch_5154.patch for Mysql bug 57990
+
+* Tue Dec 14 2010 Todd Rinaldo <toddr@cpanel.net> 5.1.53-0
+- New upstream release
+- Build never succeeded: storage/archive/ha_archive.cc
+
+* Tue Nov 3 2010 Todd Rinaldo <toddr@cpanel.net> 5.1.52-0
+- New upstream release
+
+* Tue Sep 28 2010 Todd Rinaldo <toddr@cpanel.net> 5.1.51-0
+- New upstream release
+- Patch for bug 55846 accepted upstream and removed from this release
+
+* Thu Sep 23 2010 John Lightsey <jd@cpanel.net> 5.1.50-1
+- Apply patch for http://bugs.mysql.com/bug.php?id=55846
+
+* Tue Aug 31 2010 Todd Rinaldo <toddr@cpanel.net> 5.1.50-0
+- New upstream release
+
+* Tue Aug 3 2010 Todd Rinaldo <toddr@cpanel.net> 5.1.49-0
+- New upstream release
+
+* Thu Jun 17 2010 Todd Rinaldo <toddr@cpanel.net> 5.1.48-0
+- New upstream release
+
+* Fri May 21 2010 Todd Rinaldo <toddr@cpanel.net> 5.1.47-0
+- New upstream release
+- Upstream seems to have absorbed patch gcc_init_vars_before_code.mysql.5.1.46.patch
+
+* Mon Apr 26 2010 Todd Rinaldo <toddr@cpanel.net> 5.1.46-0
+- New upstream release
+- mysql 5.1.46 - patch 2 new c files that declare variables mid-function which breaks older compilers
+
+* Mon Mar 22 2010 Todd Rinaldo <toddr@cpanel.net> 5.1.45-0
+- New upstream release
+- Quiet tar extract
+
+* Thu Feb 18 2010 Todd Rinaldo <toddr@cpanel.net> 5.1.44-0
+- New upstream release
+- all unpackaged files removed
+- define _unpackaged_files_terminate_build 0 turned off so we can see when files are added.
+
+* Mon Feb 1 2010 Todd Rinaldo <toddr@cpanel.net> 5.1.43-0
+- New upstream release
+- patch mysql-5.1-gcc-2.95.patch absorbed by upstream
+- patch gcc_296_operator_delete.patch will remain: "5.1 has dropped support for GCC 2.96 (not that they won't work) which means that fixes for old compilers won't be included"
+- Removed support for optional CLUSTER/YASSL/EMBEDDED/NDB. Hard coded to the cpanel way in spec file.
+- Trustix 2 segfaults during build. We're going to exclude it from this build run and see how it goes next time around.
+- Build wrapper was causing breaks. spec file simplified. Should be more clear how the build process works for this.
+- tried and failed --with-plugin= this caused innodb not to be built with the binary.
+
+* Wed Dec 2 2009 Todd Rinaldo <toddr@cpanel.net> 5.1.41-0
+- New upstream release
+- Update patching via git now.
+- Patches standard -p1 now.
+- Pull spec file from upstream as of 5.1.41 force charsets for be all regardless of cluster build
+- Monitoring MySQL bug giving bogus configure warning messages: http://bugs.mysql.com/bug.php?id=42872
+- innodb plugin hardcoded on
+- zlib always bundled.
+- gcc_296_operator_delete.patch from MySQL 5.0 now seems to be required for gcc 2.96 envs.
+- add --without-mysqlmanager to debug build since not only do we never use the code, but it's breaking on gcc 2.96
+- mandrake 8.2 is breaking for compile due to -O3 option. Switching to -O2 for ALL gcc 2.96
+
+* Mon Oct 26 2009 Todd Rinaldo <toddr@cpanel.net> 5.1.40-0
+- New upstream release
+- Patch submitted to mysql folks for gcc fix
+
+* Mon Sep 23 2009 John Lightsey <jd@cpanel.net> 5.1.39-0
+- New upstream release
+- Update mysql-5.1-gcc-2.95.patch
+
+* Mon Sep 08 2009 John Lightsey <jd@cpanel.net> 5.1.38-0
+- New upstream release
+- Update mysql-5.1.38-gcc-2.95.patch
+
+* Mon Aug 24 2009 Jonathan Perkin <jperkin@sun.com>
+
+- Add conditionals for bundled zlib and innodb plugin
+
+* Fri Aug 21 2009 Jonathan Perkin <jperkin@sun.com>
+
+- Install plugin libraries in appropriate packages.
+- Disable libdaemon_example and ftexample plugins.
+
+* Thu Aug 20 2009 Jonathan Perkin <jperkin@sun.com>
+
+- Update variable used for mysql-test suite location to match source.
+
+* Mon Aug 03 2009 John Lightsey <jd@cpanel.net> 5.1.37-0
+- New upstream release
+- Update mysql-5.1.37-gcc-2.95.patch
+
+* Thu Jul 02 2009 John Lightsey <jd@cpanel.net> 5.1.36-0
+- New upstream release
+- Update mysql-5.1.36-gcc-2.95.patch
+
+* Mon Jun 08 2009 John Lightsey <jd@cpanel.net> 5.1.35-0
+- New upstream release
+- Update mysql-5.1.35-gcc-2.95.patch
+
+* Tue Apr 21 2009 John Lightsey <jd@cpanel.net> 5.1.34-0
+- New upstream release
+- Update mysql-5.1.34-gcc-2.95.patch
+
+* Mon Apr 06 2009 John Lightsey <jd@cpanel.net> 5.1.33-0
+- New upstream release
+- Update mysql-5.1.33-gcc-2.95.patch
+
+* Tue Mar 17 2009 John Lightsey <jd@cpanel.net> 5.1.32-0
+- New upstream release
+- Update mysql-5.1.32-gcc-2.95.patch
+
+* Mon Dec 15 2008 John Lightsey <jd@cpanel.net> 5.1.30-0
+- New upstream release
+- Add conditional compilation of embedded package
+- Switch conditional logic to build with YASSL support by default
+- Suppress testing during RPM build process
+- Add mysql-5.1.30-gcc-2.95.patch to remove C99 syntax
+
+* Fri Nov 07 2008 Joerg Bruehe <joerg@mysql.com>
+
+- Correct yesterday's fix, so that it also works for the last flag,
+  and fix a wrong quoting: un-quoted quote marks must not be escaped.
+  
+* Thu Nov 06 2008 Kent Boortz <kent.boortz@sun.com>
+
+- Removed "mysql_upgrade_shell"
+- Removed some copy/paste between debug and normal build
+
+* Thu Nov 06 2008 Joerg Bruehe <joerg@mysql.com>
+
+- Modify CFLAGS and CXXFLAGS such that a debug build is not optimized.
+  This should cover both gcc and icc flags.  Fixes bug#40546.
+  
+* Fri Aug 29 2008 Kent Boortz <kent@mysql.com>
+
+- Removed the "Federated" storage engine option, and enabled in all
+
+* Tue Aug 26 2008 Joerg Bruehe <joerg@mysql.com>
+
+- Get rid of the "warning: Installed (but unpackaged) file(s) found:"
+  Some generated files aren't needed in RPMs:
+  - the "sql-bench/" subdirectory
+  Some files were missing:
+  - /usr/share/aclocal/mysql.m4  ("devel" subpackage)
+  - Manual "mysqlbug" ("server" subpackage)
+  - Program "innochecksum" and its manual ("server" subpackage)
+  - Manual "mysql_find_rows" ("client" subpackage)
+  - Script "mysql_upgrade_shell" ("client" subpackage)
+  - Program "ndb_cpcd" and its manual ("ndb-extra" subpackage)
+  - Manuals "ndb_mgm" + "ndb_restore" ("ndb-tools" subpackage)
+
+* Mon Mar 31 2008 Kent Boortz <kent@mysql.com>
+
+- Made the "Federated" storage engine an option
+- Made the "Cluster" storage engine and sub packages an option
+
+* Wed Mar 19 2008 Joerg Bruehe <joerg@mysql.com>
+
+- Add the man pages for "ndbd" and "ndb_mgmd".
+
+* Mon Feb 18 2008 Timothy Smith <tim@mysql.com>
+
+- Require a manual upgrade if the alread-installed mysql-server is
+  from another vendor, or is of a different major version.
+
+* Wed May 02 2007 Joerg Bruehe <joerg@mysql.com>
+
+- "ndb_size.tmpl" is not needed any more, 
+  "man1/mysql_install_db.1" lacked the trailing '*'.
 
 * Sat Apr 07 2007 Kent Boortz <kent@mysql.com>
 
@@ -856,11 +1002,9 @@ fi
 
 - Add several man pages for NDB which are now created.
 
-* Wed Jan 31 2007 Daniel Fischer <df@mysql.com>
-
-- add MTR_BUILD_THREAD=auto to test runs.
-
 * Fri Jan 05 2007 Kent Boortz <kent@mysql.com>
+
+- Put back "libmygcc.a", found no real reason it was removed.
 
 - Add CFLAGS to gcc call with --print-libgcc-file, to make sure the
   correct "libgcc.a" path is returned for the 32/64 bit architecture.
@@ -875,16 +1019,27 @@ fi
   in the server RPM.
 - The "mysqlmanager" man page got moved from section 1 to 8.
 
+* Thu Nov 30 2006 Joerg Bruehe <joerg@mysql.com>
+
+- Call "make install" using "benchdir_root=%{_datadir}", 
+  because that is affecting the regression test suite as well.
+
 * Thu Nov 16 2006 Joerg Bruehe <joerg@mysql.com>
 
 - Explicitly note that the "MySQL-shared" RPMs (as built by MySQL AB) 
   replace "mysql-shared" (as distributed by SuSE) to allow easy upgrading
   (bug#22081).
 
-* Wed Nov 15 2006 Joerg Bruehe <joerg@mysql.com>
+* Mon Nov 13 2006 Joerg Bruehe <joerg@mysql.com>
 
-- Switch from "make test*" to explicit calls of the test suite,
-  so that "report features" can be used.
+- Add "--with-partition" to all server builds.
+
+- Use "--report-features" in one test run per server build.
+
+* Tue Aug 15 2006 Joerg Bruehe <joerg@mysql.com>
+
+- The "max" server is removed from packages, effective from 5.1.12-beta.
+  Delete all steps to build, package, or install it.
 
 * Mon Jul 10 2006 Joerg Bruehe <joerg@mysql.com>
 
@@ -920,9 +1075,9 @@ fi
 
 * Wed May 10 2006 Kent Boortz <kent@mysql.com>
 
-- Use character set "all" for the "max", to make Cluster nodes
-  independent on the character set directory, and the problem that
-  two RPM sub packages both wants to install this directory.
+- Use character set "all" when compiling with Cluster, to make Cluster
+  nodes independent on the character set directory, and the problem
+  that two RPM sub packages both wants to install this directory.
 
 * Mon May 01 2006 Kent Boortz <kent@mysql.com>
 
@@ -933,25 +1088,52 @@ fi
 
 - Install and run "mysql_upgrade"
 
+* Wed Apr 12 2006 Jim Winstead <jimw@mysql.com>
+
+- Remove sql-bench, and MySQL-bench RPM (will be built as an independent
+  project from the mysql-bench repository)
+
+* Tue Apr 11 2006 Jim Winstead <jimw@mysql.com>
+
+- Remove old mysqltestmanager and related programs
 * Sat Apr 01 2006 Kent Boortz <kent@mysql.com>
 
 - Set $LDFLAGS from $MYSQL_BUILD_LDFLAGS
 
-* Fri Mar 03 2006 Kent Boortz <kent@mysql.com>
+* Wed Mar 07 2006 Kent Boortz <kent@mysql.com>
 
-- Don't output an embedded package as it is empty
-- Can't use bundled zlib when doing static build. Might be a
-  automake/libtool problem, having two .la files, "libmysqlclient.la"
-  and "libz.la", on the same command line to link "thread_test"
-  expands to too many "-lc", "-lpthread" and other libs giving hard
-  to nail down duplicate symbol defintion problems.
+- Changed product name from "Community Edition" to "Community Server"
 
-* Fri Jan 10 2006 Joerg Bruehe <joerg@mysql.com>
+* Mon Mar 06 2006 Kent Boortz <kent@mysql.com>
+
+- Fast mutexes is now disabled by default, but should be
+  used in Linux builds.
+
+* Mon Feb 20 2006 Kent Boortz <kent@mysql.com>
+
+- Reintroduced a max build
+- Limited testing of 'debug' and 'max' servers
+- Berkeley DB only in 'max'
+
+* Mon Feb 13 2006 Joerg Bruehe <joerg@mysql.com>
 
 - Use "-i" on "make test-force";
   this is essential for later evaluation of this log file.
 
-* Fri Dec 12 2005 Rodrigo Novo <rodrigo@mysql.com>
+* Thu Feb 09 2006 Kent Boortz <kent@mysql.com>
+
+- Pass '-static' to libtool, link static with our own libraries, dynamic
+  with system libraries.  Link with the bundled zlib.
+
+* Wed Feb 08 2006 Kristian Nielsen <knielsen@mysql.com>
+
+- Modified RPM spec to match new 5.1 debug+max combined community packaging.
+
+* Sun Dec 18 2005 Kent Boortz <kent@mysql.com>
+
+- Added "client/mysqlslap"
+
+* Mon Dec 12 2005 Rodrigo Novo <rodrigo@mysql.com>
 
 - Added zlib to the list of (static) libraries installed
 - Added check against libtool wierdness (WRT: sql/mysqld || sql/.libs/mysqld)
@@ -1053,6 +1235,10 @@ fi
 * Wed May 25 2005 Joerg Bruehe <joerg@mysql.com>
 
 - Added a "make clean" between separate calls to "BuildMySQL".
+
+* Thu May 12 2005 Guilhem Bichot <guilhem@mysql.com>
+
+- Removed the mysql_tableinfo script made obsolete by the information schema
 
 * Wed Apr 20 2005 Lenz Grimmer <lenz@mysql.com>
 
