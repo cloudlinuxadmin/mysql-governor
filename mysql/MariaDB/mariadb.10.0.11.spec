@@ -1,6 +1,6 @@
 Name: cl-MariaDB100
 Version: 10.0.11
-Release: 6%{?dist}.cloudlinux
+Release: 7%{?dist}.cloudlinux
 
 Summary: A community developed branch of MySQL
 Group: Applications/Databases
@@ -58,7 +58,7 @@ Patch12: mariadb-covscan-stroverflow.patch
 Patch13: mariadb-config.patch
 Patch14: mariadb-ssltest.patch
 Patch15: mariadb-skip-test-list.patch
-Patch100: max_connection2_mariadb_10_0_11_b407.patch
+Patch100: max_connection2_mariadb_10_0_11_b408.patch
 
 # Not on left
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root

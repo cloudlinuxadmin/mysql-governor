@@ -1,6 +1,6 @@
 Name: cl-MariaDB55
 Version: 5.5.38
-Release: 2%{?dist}.cloudlinux
+Release: 3%{?dist}.cloudlinux
 
 Summary: A community developed branch of MySQL
 Group: Applications/Databases
@@ -40,7 +40,7 @@ Source16: mysql_plugin.1
 Source999: filter-requires-mysql.sh
 
 # Comments for these patches are in the patch files.
-Patch100: max_connection2_mariadb_5_5_34_b408.patch
+Patch100: max_connection2_mariadb_5_5_34_b409.patch
 
 # Not on left
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root

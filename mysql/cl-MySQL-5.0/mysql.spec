@@ -60,13 +60,13 @@ Name: cl-MySQL50
 Summary:	MySQL: a very fast and reliable SQL database server
 Group:		Applications/Databases
 Version:	5.0.96
-Release:	14%{?dist}.cloudlinux
+Release:	15%{?dist}.cloudlinux
 License:	%{license}4
 Source:		http://downloads.mysql.com/archives/mysql-5.0/mysql-%{mysql_version}.tar.gz
 
 Patch1:     0001-cpanel-perl.patch
-Patch100:   userstats2_5_0_95.patch
-Patch101:   max_connection2_mysql_5_0_96_b407.patch
+#Patch100:   userstats2_5_0_95.patch
+Patch101:   max_connection2_mysql_5_0_96_b408.patch
 Patch102:   mysql-test__db_test.patch
 
 URL:		http://www.mysql.com/
@@ -233,7 +233,7 @@ MySql-devel meta package.
 
 %define _default_patch_fuzz 0
 #%patch1 -p3
-%patch100 -p1
+#%patch100 -p1
 %patch101 -p1
 %patch102 -p1
 
