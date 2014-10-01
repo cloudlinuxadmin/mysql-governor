@@ -30,6 +30,9 @@ int governor_enter_lve_light(uint32_t *cookie);
 void governor_lve_exit_null();
 int governor_lve_enter_pid(pid_t pid);
 int governor_lve_enter_pid_user(pid_t pid, char *username);
-
+void ensble_lve_mutex();
+void disable_lve_mutex();
+void is_in_lve_set( int is_in_lve_ );
+int deny_lve_enter_get();
 
 #endif /* GOVERNOR_WRITE_DATA_H_ */

@@ -1074,6 +1074,27 @@ void dbctl_restrict_set( gpointer key, Account * ac, void *data )
 
 }
 
+void reset_user_stats( gpointer ignored, User_stats *us )
+{
+  Stats *st_curr = fifo_stats_get( us->stats, 0 );
+  st_curr->cpu = 0.0;
+  st_curr->write = 0;
+  st_curr->read = 0;
+
+  us->short_average.cpu = 0.0;
+  us->mid_average.write = 0;
+  us->long_average.read = 0;
+
+  fifo_stats_push( us->stats, st_curr );
+}
+
+void resetting_user_stats( Account *ac )
+{
+  //g_hash_table_foreach( ac->users, (GHFunc)free_user_stats, NULL );
+  g_hash_table_foreach( ac->users, (GHFunc)reset_user_stats, NULL );
+  g_hash_table_unref( ac->users );
+}
+
 void dbctl_unrestrict_set( gpointer key, Account * ac, void *data ) 
 {
   char tmp_buf[ _DBGOVERNOR_BUFFER_8192 ];
@@ -1084,45 +1105,47 @@ void dbctl_unrestrict_set( gpointer key, Account * ac, void *data )
 //  User_stats *us = (User_stats *)g_hash_table_lookup( users, command->options.username );
 //  if( !us ) us = add_user_stats( command->options.username, accounts, users );
 
-    if( strcmp( ac->id, command->options.username ) == 0 )
+  if( strcmp( ac->id, command->options.username ) == 0 )
+  {
+    ac->timeout = 0;
+    ac->start_count = 0;
+    ac->restricted = 0;
+
+    ac->current.cpu = 0;
+    ac->current.read = 0;
+    ac->current.write = 0;
+
+    ac->long_average.cpu = 0;
+    ac->long_average.read = 0;
+    ac->long_average.write = 0;
+
+    ac->mid_average.cpu = 0;
+    ac->mid_average.read = 0;
+    ac->mid_average.write = 0;
+
+    ac->short_average.cpu = 0;
+    ac->short_average.read = 0;
+    ac->short_average.write = 0;
+
+    ac->info.field_restrict = 0;
+    ac->info.field_level_restrict = 0;
+
+    resetting_user_stats( ac );
+
+    if( !check_restrict( ac ) )
     {
- 	  ac->timeout = 0;
-	  ac->start_count = 0;
-	  ac->restricted = 0;
-
-      ac->current.cpu = 0;
-      ac->current.read = 0;
-      ac->current.write = 0;
-    
-      ac->long_average.cpu = 0;
-      ac->long_average.read = 0;
-      ac->long_average.write = 0;
-    
-      ac->mid_average.cpu = 0;
-      ac->mid_average.read = 0;
-      ac->mid_average.write = 0;
-    
-      ac->short_average.cpu = 0;
-      ac->short_average.read = 0;
-      ac->short_average.write = 0;
-    
-      ac->info.field_restrict = 0;
-	  ac->info.field_level_restrict = 0;
-	  if( !check_restrict( ac ) )
-      {
-        account_unrestrict( ac );
-      }
-      else 
-      {
-		sprintf( tmp_buf, "No unrestrict yet for %s %d %d\n",
-                          ac->id, ac->timeout, ac->start_count
-               );
-        WRITE_LOG( NULL, 1, tmp_buf, _DBGOVERNOR_BUFFER_8192,
-                   tmp_buf, data_cfg.log_mode
-                 );
-      }
+      account_unrestrict( ac );
     }
-
+    else 
+    {
+      sprintf( tmp_buf, "No unrestrict yet for %s %d %d\n",
+               ac->id, ac->timeout, ac->start_count
+             );
+      WRITE_LOG( NULL, 1, tmp_buf, _DBGOVERNOR_BUFFER_8192,
+                  tmp_buf, data_cfg.log_mode
+               );
+    }
+  }
 }
 
 void dbctl_unrestrict_all_set( gpointer key, Account * ac, void *data ) 
@@ -1130,33 +1153,34 @@ void dbctl_unrestrict_all_set( gpointer key, Account * ac, void *data )
   char tmp_buf[ _DBGOVERNOR_BUFFER_8192 ];
   struct governor_config data_cfg;
   get_config_data( &data_cfg );
-  
+
   if( ac->timeout )
-        account_unrestrict( ac );
+    account_unrestrict( ac );
 
-	ac->timeout = 0;
-	ac->start_count = 0;
-	ac->restricted = 0;
-    
-    ac->current.cpu = 0;
-    ac->current.read = 0;
-    ac->current.write = 0;
-    
-    ac->long_average.cpu = 0;
-    ac->long_average.read = 0;
-    ac->long_average.write = 0;
-    
-    ac->mid_average.cpu = 0;
-    ac->mid_average.read = 0;
-    ac->mid_average.write = 0;
-    
-    ac->short_average.cpu = 0;
-    ac->short_average.read = 0;
-    ac->short_average.write = 0;
-    
-	ac->info.field_restrict = 0;
-	ac->info.field_level_restrict = 0;
+  ac->timeout = 0;
+  ac->start_count = 0;
+  ac->restricted = 0;
 
+  ac->current.cpu = 0;
+  ac->current.read = 0;
+  ac->current.write = 0;
+
+  ac->long_average.cpu = 0;
+  ac->long_average.read = 0;
+  ac->long_average.write = 0;
+
+  ac->mid_average.cpu = 0;
+  ac->mid_average.read = 0;
+  ac->mid_average.write = 0;
+
+  ac->short_average.cpu = 0;
+  ac->short_average.read = 0;
+  ac->short_average.write = 0;
+
+  ac->info.field_restrict = 0;
+  ac->info.field_level_restrict = 0;
+
+  resetting_user_stats( ac );
 }
 
 void add_all_users_to_list( gpointer key, Account *ac, void *data ) 

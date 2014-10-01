@@ -30,7 +30,7 @@
 %define mysqld_group    mysql
 %define mysqldatadir    /var/lib/mysql
 
-%define release         24%{?dist}.cloudlinux
+%define release         25%{?dist}.cloudlinux
 
 #
 # Macros we use which are not available in all supported versions of RPM
@@ -171,7 +171,7 @@ AutoReq: 0
 Autoprov: 0
 
 #Patch1: 0001-Cloud-Linux-userstat.patch
-Patch2: max_connection2_mysql_5_5_39_b406.patch
+Patch2: max_connection2_mysql_5_5_39_b407.patch
 Patch3: 0003_1-Clean-up-stale-pid-files-in-datadir-when-stopping-to.patch
 #Patch5: 0005-Use-accessors-and-fix-type-errors.patch
 #Patch7: mysql-versioning.patch
