@@ -36,7 +36,6 @@
 #define SEC2NANO 1000000000
 
 pthread_mutex_t mtx_write = PTHREAD_MUTEX_INITIALIZER;
-//pthread_mutex_t mtx_disable_lve = PTHREAD_MUTEX_INITIALIZER;
 sock_data sd;
 
 static int try_lock2(pthread_mutex_t *mtx) {
@@ -449,13 +448,9 @@ void governor_destroy_lve() {
 }
 
 __thread uint32_t lve_uid = 0;
-__thread int deny_lve_enter = 0;
-__thread int is_in_lve = 0;
 
 int governor_enter_lve(uint32_t *cookie, char *username) {
 	lve_uid = 0;
-//	if (pthread_mutex_trylock(&mtx_disable_lve) == EBUSY) return -1;
-//	else pthread_mutex_unlock(&mtx_disable_lve);
 	int container_lve = is_user_in_bad_list_cleint_persistent(username);
 	if (container_lve && lve_enter_flags
 			&& lve) {
@@ -469,6 +464,7 @@ int governor_enter_lve(uint32_t *cookie, char *username) {
 				//return -1;
 				return 0;
 			}
+
 			return -1;
 		}
 		lve_uid = container_lve;
@@ -478,8 +474,6 @@ int governor_enter_lve(uint32_t *cookie, char *username) {
 }
 
 int governor_enter_lve_light(uint32_t *cookie) {
-//	if (pthread_mutex_trylock(&mtx_disable_lve) == EBUSY) return -1;
-//	else pthread_mutex_unlock(&mtx_disable_lve);
 	if (lve_enter_flags && lve && lve_uid) {
                 errno = 0;
 		int rc = lve_enter_flags(lve, lve_uid, cookie, ((int) ((1 << 2) | (1
@@ -491,6 +485,7 @@ int governor_enter_lve_light(uint32_t *cookie) {
 				//return -1;
                                 return 0;
 			}
+
 			return -1;
 		}
 		return 0;
@@ -510,48 +505,20 @@ void governor_lve_exit_null() {
 }
 
 int governor_lve_enter_pid(pid_t pid){
-//	if (pthread_mutex_trylock(&mtx_disable_lve) == EBUSY) return -1;
-//	else pthread_mutex_unlock(&mtx_disable_lve);
 	if(lve_enter_pid){
-	    if(lve_enter_pid(lve, BAD_LVE, pid)) {
-		return -1;
-	    }
+	    if(lve_enter_pid(lve, BAD_LVE, pid)) return -1;
 	}
 	return 0;
 }
 
 int governor_lve_enter_pid_user(pid_t pid, char *username){
-//	if (pthread_mutex_trylock(&mtx_disable_lve) == EBUSY) return -1;
-//	else pthread_mutex_unlock(&mtx_disable_lve);
 	if(lve_enter_pid && username){
 		int container_lve = is_user_in_bad_list_cleint_persistent(username);
 		if(container_lve){
-			if(lve_enter_pid(lve, container_lve, pid)) {
-				return -1;
-			}
+			if(lve_enter_pid(lve, container_lve, pid)) return -1;
 		}
 	}
 	return 0;
 }
 
-void enable_lve_mutex() {
-  deny_lve_enter = 1;
-  if( is_in_lve == 1 ) {
-     governor_lve_exit_null();
-  }
-}
 
-void disable_lve_mutex( pid_t pid ) {
-   if( is_in_lve == 1 ) {
-     governor_lve_enter_pid( pid );
-     deny_lve_enter = 0;
-   }
-}
-
-void is_in_lve_set( int is_in_lve_ ){
-  is_in_lve = is_in_lve_;
-}
-
-int deny_lve_enter_get() {
-  return deny_lve_enter;
-}
