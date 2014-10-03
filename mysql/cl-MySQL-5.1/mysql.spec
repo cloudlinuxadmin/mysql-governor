@@ -21,7 +21,7 @@
 %define mysql_old_vendor	MySQL AB
 %define mysql_vendor		Sun Microsystems, Inc.
 
-%define release 14%{?dist}.cloudlinux
+%define release 15%{?dist}.cloudlinux
 %define mysql_license	GPL
 %define mysqld_user	mysql
 %define mysqld_group	mysql
@@ -60,7 +60,7 @@ Source:		http://www.mysql.com/Downloads/MySQL-5.1/mysql-%{mysql_version}.tar.gz
 
 Patch1:     0001-pointer-patch-centos-4.patch
 #Patch2:     0002-Cloud-Linux-userstat_mysql.patch
-Patch3:     max_connection2_mysql_5_1_73_b410.patch
+Patch3:     max_connection2_mysql_5_1_73_b411.patch
 #Patch4:     0004-cpanel-perl.patch
 #Patch5:     0005-autogen.patch
 Patch6:     mysql-test__db_test.1.patch
