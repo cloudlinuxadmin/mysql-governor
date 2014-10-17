@@ -32,6 +32,7 @@
 
 #define SEC2NANO 1000000000
 
+int break_thread = 0;
 int global_socket = 0;
 struct pollfd *fds = NULL;
 nfds_t nfds;
@@ -174,6 +175,10 @@ void *proceed_data_every_second(void *data) {
 	return NULL;
 }
 
+void term_handler( int i ){
+	break_thread++;
+}
+
 void *get_data_from_client(void *data) {
 	char buffer[_DBGOVERNOR_BUFFER_2048];
 	int ret;
@@ -188,11 +193,25 @@ void *get_data_from_client(void *data) {
 	fds->events = POLLIN;
 	reinit_command_list();
 
-    struct governor_config data_cfg;
+	struct governor_config data_cfg;
+
+	struct sigaction sa;
+	sigset_t newset;
+	sigemptyset( &newset );
+	sigaddset( &newset, SIGHUP );
+	sigprocmask( SIG_BLOCK, &newset, 0 );
+	sa.sa_handler = term_handler;
+	sigaction( SIGTERM, &sa, 0 );
+	sigaction( SIGKILL, &sa, 0 );
 
 	for (;;) {
-        get_config_data( &data_cfg );
-        
+
+		if( break_thread ){
+			return NULL;
+		}
+
+		get_config_data( &data_cfg );
+
 		int i;
 #ifdef TEST
         //print_tid_data();
