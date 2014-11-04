@@ -96,6 +96,9 @@ if( open( my $mysql_db, "<", $mysqlTypeFileSet ) ){
     if( $type_db eq "mariadb100" ){
       $sql_version="10.0";
     }
+    if( $type_db eq "mariadb101" ){
+      $sql_version="10.1";
+    }
   }
   close( $mysql_db );
 }

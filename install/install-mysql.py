@@ -341,6 +341,7 @@ def remove_mysql_justdb_cl():
         remove_sepcific_mysql('cl-MySQL56', yb)
         remove_sepcific_mysql('cl-MariaDB55', yb)
         remove_sepcific_mysql('cl-MariaDB100', yb)
+        remove_sepcific_mysql('cl-MariaDB101', yb)
 
         print "Cleaning of cl-MySQL packages completed"
 
@@ -457,7 +458,7 @@ def check_sepcific_mysql(pname, yb):
 	if yb.rpmdb.searchNevra(name=pname):
 	    print "Percona package deteced:" + pname 
 	    print "You are running Percona, which is not supported by MySQL Governor. If you want to run MySQL governor, we would have to uninstall Percona,and substitute it for MariaDB or MySQL. Run installator next commands for install:"
-	    print "/usr/share/lve/dbgovernor/db-select-mysql --mysql-version=mysql56 (or mysql50, mysql51, mysql55, mariadb55, mariadb100)"
+	    print "/usr/share/lve/dbgovernor/db-select-mysql --mysql-version=mysql56 (or mysql50, mysql51, mysql55, mariadb55, mariadb100, mariadb101)"
 	    print "/usr/share/lve/dbgovernor/mysqlgovernor.py --install --force"
 	    sys.exit(2)
 	else:

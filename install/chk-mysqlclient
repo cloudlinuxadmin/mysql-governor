@@ -149,6 +149,11 @@ if( open( my $mysql_db, "<", $mysqlTypeFileSet ) )
       $mysql_ver="10.0.0";
       $mysql_name="mariadb";
     }
+    if( $type_db eq "mariadb101" )
+    {
+      $mysql_ver="10.1.1";
+      $mysql_name="mariadb";
+    }
   }
   close( $mysql_db );
 }

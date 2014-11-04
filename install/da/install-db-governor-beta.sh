@@ -45,6 +45,13 @@ fi
 if [ "$MYSQL_VER" == "5.6" ]; then
     MYSQL_VER="mysql56"
 fi 
+if [ "$MYSQL_VER" == "10.0.0" ]; then
+    MYSQL_VER="mariadb100"
+fi 
+if [ "$MYSQL_VER" == "10.1.1" ]; then
+    MYSQL_VER="mariadb101"
+fi 
+
 
 /sbin/service mysql stop
 
