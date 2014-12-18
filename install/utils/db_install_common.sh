@@ -67,6 +67,7 @@ function installDb(){
 	fi
 
 	if [ "$SQL_VERSION" == "mariadb100" ]; then
+	  rm -rf /usr/include/mysql
 	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqlmeta/cl-mariadb-10.0-common.repo
 	  yum install cl-MariaDB-meta cl-MariaDB-meta-client cl-MariaDB-meta-devel libaio --nogpgcheck -y --enablerepo=cloudlinux-updates-testing
 	fi
@@ -151,6 +152,7 @@ function installDbTest(){
 	fi
 
 	if [ "$SQL_VERSION" == "mariadb100" ]; then
+	  rm -rf /usr/include/mysql
 	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqlmeta/cl-mariadb-10.0-common.repo
 	  yum install cl-MariaDB-meta cl-MariaDB-meta-client cl-MariaDB-meta-devel libaio --nogpgcheck -y --enablerepo=cloudlinux-updates-testing
 	fi
@@ -175,4 +177,30 @@ function installDbTest(){
 	fi
 
 	echo "Installation mysql for db_governor completed"
+}
+
+
+
+function installDbDevel(){
+	SQL_VERSION=$1
+	
+        yum clean all
+	if [ "$SQL_VERSION" == "mariadb100" ]; then
+	  rm -rf /usr/include/mysql
+	  yum reinstall cl-MariaDB100-devel --nogpgcheck -y --enablerepo=cloudlinux-updates-testing
+	fi
+
+	echo "ReInstallation mysql-devel completed"
+}
+
+function installDbTestDevel(){
+	SQL_VERSION=$1
+	
+    yum clean all
+	if [ "$SQL_VERSION" == "mariadb100" ]; then
+	  rm -rf /usr/include/mysql
+	  yum reinstall cl-MariaDB100-devel --nogpgcheck -y --enablerepo=cloudlinux-updates-testing
+	fi
+
+	echo "ReInstallation mysql-devel completed"
 }
