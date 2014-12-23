@@ -1,5 +1,5 @@
 %define g_version   1.0
-%define g_release   79
+%define g_release   80
 %define g_key_library 1
 
 Name: governor-mysql
@@ -88,8 +88,8 @@ install -D -m 755 install/cpanel/check_mysql_leave_pid.sh $RPM_BUILD_ROOT/usr/sh
 install -D -m 755 install/cpanel/db_governor-clear-old-hook $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/db_governor-clear-old-hook
 install -D -m 755 install/cpanel/install-db-governor $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/install-db-governor
 
-install -D -m 755 install/cpanel/install-db-governor $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/fix-db-governor
-install -D -m 755 install/cpanel/install-db-governor $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/fix-db-governor.sh
+install -D -m 755 install/cpanel/fix-db-governor $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/fix-db-governor
+install -D -m 755 install/cpanel/fix-db-governor.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/fix-db-governor.sh
 
 install -D -m 755 install/cpanel/install-db-governor-beta $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/install-db-governor-beta
 install -D -m 755 install/cpanel/cpanel-common-lve $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/cpanel-common-lve
@@ -246,6 +246,10 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Thu Dec 18 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-80
+- Added fix for MariaDB 10.0-devel package
+- Added detection mysql55w
+
 * Thu Dec 18 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-79
 - Added fix for MariaDB 10.0-devel package
 
