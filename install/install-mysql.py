@@ -322,6 +322,7 @@ def remove_mysql_justdb():
         remove_sepcific_mysql('MariaDB', yb)
         remove_sepcific_mysql('mariadb', yb)
         remove_sepcific_mysql('mysql55w', yb)
+        remove_sepcific_mysql('compat-MySQL50-shared', yb);
         print "Cleaning of MySQL packages completed"
 
 def remove_mysql_justdb_cl():

@@ -1,5 +1,5 @@
 %define g_version   1.0
-%define g_release   81
+%define g_release   82
 %define g_key_library 1
 
 Name: governor-mysql
@@ -246,6 +246,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Thu Dec 25 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-82
+- Fixed conflict with compat-MySQL50-shared
+
 * Thu Dec 25 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-81
 - Preparing MySQL install script to release
 
