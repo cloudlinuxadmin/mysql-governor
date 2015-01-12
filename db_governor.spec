@@ -1,5 +1,5 @@
 %define g_version   1.0
-%define g_release   84
+%define g_release   85
 %define g_key_library 1
 
 Name: governor-mysql
@@ -246,6 +246,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Mon Jan 12 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-85
+- Added logging of dbuser-map file reading
+
 * Fri Jan 09 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-84
 - Added fix for MariaDB 10.1-devel package
 

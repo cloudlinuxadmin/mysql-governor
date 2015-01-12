@@ -57,6 +57,7 @@ int get_map_file(struct governor_config *data_cfg)
 {
   FILE *map;
   char buf[ 1024 ];
+  char buffer[ _DBGOVERNOR_BUFFER_2048 ];
   username_t username, account_name;
   parameter_t uid;
 
@@ -119,6 +120,12 @@ int get_map_file(struct governor_config *data_cfg)
         strcpy( UserMap_->username, username );
         strcpy( UserMap_->account_name, account_name );
         int tmp_uid = data_cfg->separate_lve?atoi(uid):BAD_LVE;
+
+        if(data_cfg->log_mode == DEBUG_MODE){
+        	WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048, "Added user %s account %s with uid %d",
+        								data_cfg->log_mode, UserMap_->username, UserMap_->account_name, tmp_uid);
+        }
+
         if(tmp_uid>=1){
         	UserMap_->uid = tmp_uid;
         	g_hash_table_insert( userMap, username, UserMap_ );
