@@ -2,9 +2,6 @@
 Description=MySQL watcher service
 After=syslog.target
 After=network.target
-After=mysql.service
-After=mysqld.service
-After=mariadb.service
 
 [Service]
 Environment="G_SLICE=always-malloc" "HOME=/root"
