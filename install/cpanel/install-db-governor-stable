@@ -104,7 +104,12 @@ if( open( my $mysql_db, "<", $mysqlTypeFileSet ) ){
 }
 
 #stop mysql beffore reinstall (need for mysql 5.5)
-system '/sbin/service', 'mysql', 'stop';
+if ( -e '/usr/lib/systemd/system/mysql.service' ){
+  system '/bin/systemctl', 'stop', 'mysql.service'
+} else {
+  system '/sbin/service', 'mysql', 'stop';
+}
+
 
 
 if ($sql_version_2=="5.0"){

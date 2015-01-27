@@ -1,5 +1,5 @@
 %define g_version   1.0
-%define g_release   86
+%define g_release   87
 %define g_key_library 1
 
 Name: governor-mysql
@@ -28,6 +28,18 @@ Conflicts: db-governor-mysql
 Conflicts: db_governor
 Conflicts: cpanel-db-governor
 AutoReq: 0
+
+%if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
+Requires: systemd-units
+Requires(post): systemd-units
+Requires(preun): systemd-units
+Requires(postun): systemd-units
+Requires(post): systemd-sysv
+%else
+Requires(preun): initscripts
+Requires(postun): initscripts
+%endif
+
 %description
 This package provides dbtop, db_governor utilities.
 
@@ -61,7 +73,7 @@ make DESTDIR=$RPM_BUILD_ROOT install
 cd -
 mkdir -p $RPM_BUILD_ROOT/var/lve/dbgovernor/
 mkdir -p $RPM_BUILD_ROOT/var/lve/dbgovernor-store/
-mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/
+
 mkdir -p $RPM_BUILD_ROOT%{_sbindir}/
 mkdir -p $RPM_BUILD_ROOT%{_libdir}/
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/container/
@@ -75,7 +87,15 @@ mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/tmp
 mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/logs
 mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/tmp
 mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils
+%if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
+# install systemd unit files and scripts for handling server startup
+mkdir -p ${RPM_BUILD_ROOT}%{_unitdir}
+install -m 644 db_governor.service ${RPM_BUILD_ROOT}%{_unitdir}/
+%else
+mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/
 install -D -m 755 script/db_governor $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/
+%endif
+
 install -D -m 755 bin/db_governor $RPM_BUILD_ROOT%{_sbindir}/
 install -D -m 755 bin/dbtop $RPM_BUILD_ROOT%{_sbindir}/
 install -D -m 755 bin/mysql_unfreeze $RPM_BUILD_ROOT%{_sbindir}/
@@ -157,21 +177,41 @@ if [ $1 -eq 2 ] ; then
             touch /etc/container/dbgovernor-libcheck
             echo "U" > /etc/container/dbgovernor-libcheck
             echo "Stop MySQL for safe installation"
+%if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
+            if [ -e /etc/init.d/mysql ]; then
+                /etc/init.d/mysql stop
+             elif [ -e /etc/init.d/mysqld ]; then
+                /etc/init.d/mysqld stop
+             else
+                /bin/systemctl stop mysqld.service
+            fi      
+%else
             if [ -e /etc/init.d/mysql ]; then
                 /etc/init.d/mysql stop
              elif [ -e /etc/init.d/mysqld ]; then
                 /etc/init.d/mysqld stop
             fi      
+%endif
         fi
    else
         touch /etc/container/dbgovernor-libcheck
         echo "U" > /etc/container/dbgovernor-libcheck
         echo "Stop MySQL for safe installation"
-        if [ -e /etc/init.d/mysql ]; then
+%if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
+            if [ -e /etc/init.d/mysql ]; then
                 /etc/init.d/mysql stop
-        elif [ -e /etc/init.d/mysqld ]; then
+             elif [ -e /etc/init.d/mysqld ]; then
                 /etc/init.d/mysqld stop
-        fi
+             else
+                /bin/systemctl stop mysqld.service
+            fi      
+%else
+            if [ -e /etc/init.d/mysql ]; then
+                /etc/init.d/mysql stop
+             elif [ -e /etc/init.d/mysqld ]; then
+                /etc/init.d/mysqld stop
+            fi      
+%endif
    fi
 fi
 
@@ -181,14 +221,32 @@ if [ $1 -gt 0 ] ; then
   /usr/share/lve/dbgovernor/other/set_fs_suid_dumpable.sh
  fi
 fi
-/sbin/chkconfig --add db_governor
-/sbin/chkconfig --level 35 db_governor on
+
+%if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
+if [ $1 = 1 ]; then
+    # Initial installation
+    /bin/systemctl daemon-reload >/dev/null 2>&1 || :
+fi
+%else
+if [ $1 = 1 ]; then
+    /sbin/chkconfig --add db_governor
+    /sbin/chkconfig --level 35 db_governor on
+fi
+%endif
 
 %preun
+%if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
+if [ $1 = 0 ]; then
+    # Package removal, not upgrade
+    /bin/systemctl --no-reload disable db_governor.service >/dev/null 2>&1 || :
+    /bin/systemctl stop db_governor.service >/dev/null 2>&1 || :
+fi
+%else
 if [ $1 -eq 0 ]; then
     /sbin/service db_governor stop > /dev/null 2>&1
     /sbin/chkconfig --del db_governor
 fi
+%endif
 
 %posttrans
 /sbin/ldconfig
@@ -201,6 +259,30 @@ if [ -e "/etc/container/dbgovernor-libcheck" ]; then
     rKEY=`cat /etc/container/dbgovernor-libcheck | tr -d '\n'`
         if [ "$rKEY" == "U" ]; then
     	     echo "Start MySQL for safe installation"
+%if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
+             if [ -e /etc/init.d/mysql ]; then
+                /etc/init.d/mysql status
+                if [ "$?" != "0" ]; then
+                    /etc/init.d/mysql start
+                else
+                    echo "MySQL already started"
+                fi
+             elif [ -e /etc/init.d/mysqld ]; then
+                /etc/init.d/mysqld status
+                if [ "$?" != "0" ]; then
+                    /etc/init.d/mysqld start
+                else
+                    echo "MySQL already started"
+                fi
+             else
+                /bin/systemctl status mysqld.service
+                if [ "$?" != "0" ]; then
+                    /bin/systemctl start mysqld.service
+                else
+                    echo "MySQL already started"
+                fi
+             fi  
+%else
              if [ -e /etc/init.d/mysql ]; then
                 /etc/init.d/mysql status
                 if [ "$?" != "0" ]; then
@@ -216,6 +298,7 @@ if [ -e "/etc/container/dbgovernor-libcheck" ]; then
                     echo "MySQL already started"
                 fi
              fi  
+%endif
              echo "$gKEY" > /etc/container/dbgovernor-libcheck
         fi
 fi
@@ -237,7 +320,11 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 %{_libdir}/libgovernor.so
 %{_libdir}/libgovernor.so.%{version}
 %config(noreplace) %{_sysconfdir}/container/mysql-governor.xml
+%if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
+%{_unitdir}/db_governor.service
+%else
 %{_sysconfdir}/rc.d/init.d/*
+%endif
 /usr/share/lve/dbgovernor/*
 %{_sysconfdir}/cron.d/lvedbgovernor-utils-cron
 /var/lve/dbgovernor
@@ -246,13 +333,16 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
-* Tue Jan 13 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-86
+* Fri Jan 23 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-87
+- CloudLinux7 adaptation
+
+* Tue Jan 13 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-86
 - Added fix of dbuser-map file reading
 
-* Mon Jan 12 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-85
+* Mon Jan 12 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-85
 - Added logging of dbuser-map file reading
 
-* Fri Jan 09 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-84
+* Fri Jan 09 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-84
 - Added fix for MariaDB 10.1-devel package
 
 * Thu Dec 25 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-83

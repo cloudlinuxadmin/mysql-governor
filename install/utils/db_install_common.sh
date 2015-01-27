@@ -14,8 +14,16 @@ function installDb(){
 	
 	CL=`echo -n "cl5"`
 	CL6=`uname -a | grep "\.el6\."`
+	CL7=`uname -a | grep "\.el7\."`
 	if [ -n "$CL6" ]; then
 	    CL=`echo -n "cl6"`
+	    if [ -e /etc/my.cnf ]; then
+        	sed '/userstat/d' -i /etc/my.cnf
+	        sed '/userstat_running/d' -i /etc/my.cnf
+	    fi
+	fi
+	if [ -n "$CL7" ]; then
+	    CL=`echo -n "cl7"`
 	    if [ -e /etc/my.cnf ]; then
         	sed '/userstat/d' -i /etc/my.cnf
 	        sed '/userstat_running/d' -i /etc/my.cnf
@@ -82,7 +90,11 @@ function installDb(){
 	    cp -f /etc/my.cnf /etc/my.cnf.bkp
 	fi
 	sed /userstat/d -i /etc/my.cnf
-	/sbin/service mysqld restart
+	if [ -e /usr/lib/systemd/system/mysql.service ]; then
+	    /bin/systemctl restart mysql.service
+	else
+	    /sbin/service mysql restart
+	fi
 	echo "Giving mysqld a few seconds to start up...";
 	sleep 5;
 
@@ -168,7 +180,11 @@ function installDbTest(){
 	    cp -f /etc/my.cnf /etc/my.cnf.bkp
 	fi
 	sed /userstat/d -i /etc/my.cnf
-	/sbin/service mysqld restart
+	if [ -e /usr/lib/systemd/system/mysql.service ]; then
+	    /bin/systemctl restart mysql.service
+	else
+	    /sbin/service mysql restart
+	fi
 	echo "Giving mysqld a few seconds to start up...";
 	sleep 5;
 

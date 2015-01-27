@@ -52,8 +52,11 @@ if [ "$MYSQL_VER" == "10.1.1" ]; then
     MYSQL_VER="mariadb101"
 fi 
 
-
+if [ -e /usr/lib/systemd/system/mysql.service ]; then
+/bin/systemctl stop mysql.service
+else
 /sbin/service mysql stop
+fi
 
 installDbTest "$MYSQL_VER"
 

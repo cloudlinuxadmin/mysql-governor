@@ -1,0 +1,20 @@
+[Unit]
+Description=MySQL watcher service
+After=syslog.target
+After=network.target
+After=mysql.service
+After=mysqld.service
+After=mariadb.service
+
+[Service]
+Environment="G_SLICE=always-malloc" "HOME=/root"
+Type=forking
+PIDFile=/var/run/db-governor.pid
+
+ExecStartPre=ulimit -c unlimited >/dev/null 2>&1
+ExecStart=/usr/sbin/db_governor
+ExecStopPost=/usr/bin/killall -9 /usr/sbin/mysql_connector 2>/dev/null
+ExecStopPost=/usr/bin/killall -SIGTERM /usr/sbin/db_governor 2>/dev/null
+
+[Install]
+WantedBy=multi-user.target
