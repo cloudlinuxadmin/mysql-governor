@@ -27,7 +27,6 @@ BuildRequires: glib2-devel
 BuildRequires: autoconf
 BuildRequires: tar
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
-BuildRequires: systemd-rpm-macros
 BuildRequires: systemd
 %endif
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
