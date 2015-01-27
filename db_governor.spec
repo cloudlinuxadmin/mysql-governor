@@ -2,6 +2,10 @@
 %define g_release   87
 %define g_key_library 1
 
+%if %{undefined _unitdir}
+%define _unitdir /usr/lib/systemd/system
+%endif
+
 Name: governor-mysql
 Version: %{g_version}
 Release: %{g_release}%{?dist}.cloudlinux
