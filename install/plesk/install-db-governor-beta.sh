@@ -27,7 +27,7 @@ if [ "$1" == "--delete" ]; then
 		sed -e "s/\[mysqld\]/\[mysqld\]\nuserstat_running=0\n/" -i /etc/my.cnf
 	    fi
 	fi
-	if [ -e /usr/lib/systemd/system/mysqld.service ]; then
+	if [ -e /usr/lib/systemd/system/mysql.service ] || [ -e /etc/systemd/system/mysql.service ]; then
 	    /bin/systemctl restart mysqld.service
 	else
 	    /sbin/service mysqld restart
@@ -67,7 +67,11 @@ fi
 
 IS_GOVERNOR=`rpm -qa governor-mysql`
 if [ -n "$IS_GOVERNOR" ]; then
-	/sbin/service db_governor restart
+	if [ -e /usr/lib/systemd/system/db_governor.service ] || [ -e /etc/systemd/system/db_governor.service ]; then
+	    /bin/systemctl restart db_governor.service
+	else
+	    /sbin/service db_governor restart
+	fi
 	echo "DB-Governor installed/updated...";
 fi
 

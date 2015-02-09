@@ -27,7 +27,11 @@ if [ "$1" == "--delete" ]; then
 		sed -e "s/\[mysqld\]/\[mysqld\]\nuserstat_running=0\n/" -i /etc/my.cnf
 	    fi
 	fi
-	/sbin/service mysqld restart
+	if if [ -e /usr/lib/systemd/system/mysqld.service ] || [ -e /etc/systemd/system/mysqld.service ]; then
+	    /bin/systemctl restart  mysqld.service
+	else
+	    /sbin/service mysqld restart
+	fi
         mv -f /etc/yum.repos.d/cl-mysql.repo /etc/yum.repos.d/cl-mysql.repo.bak
 	echo "Removing mysql for db_governor completed"
 	

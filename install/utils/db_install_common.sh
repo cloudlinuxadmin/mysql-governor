@@ -9,6 +9,19 @@ function checkFile(){
 	fi
 }
 
+function checkIfMySQL(){
+	IS_MYSQL=`/bin/ps uax | /bin/grep mysqld | /bin/grep datadir`
+	if [ -n "$IS_MYSQL" ]; then
+	    echo "Stop hunging MySQL"
+	    /usr/bin/killall -SIGTERM mysqld_safe
+	    echo "Waiting for mysqld_safe stop"
+	    sleep 10
+	    /usr/bin/killall -SIGTERM mysqld
+	    echo "Waiting for mysqld stop"
+	    sleep 10
+	fi
+}
+
 function installDb(){
 	SQL_VERSION=$1
 	
@@ -29,7 +42,8 @@ function installDb(){
 	        sed '/userstat_running/d' -i /etc/my.cnf
 	    fi
 	fi
-    yum clean all
+	yum clean all
+	checkIfMySQL
 	if [ "$SQL_VERSION" == "auto" ]; then
 	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqlmeta/mysql-common.repo
 	  if [ -e /usr/libexec/mysqld ]; then
@@ -180,13 +194,14 @@ function installDbTest(){
 	    cp -f /etc/my.cnf /etc/my.cnf.bkp
 	fi
 	sed /userstat/d -i /etc/my.cnf
-	if [ -e /usr/lib/systemd/system/mysql.service ]; then
-	    /bin/systemctl restart mysql.service
+	if if [ -e /usr/lib/systemd/system/mysql.service ] || [ -e /etc/systemd/system/mysql.service ]; then
+	    /bin/systemctl restart  mysql.service
 	else
 	    /sbin/service mysql restart
 	fi
 	echo "Giving mysqld a few seconds to start up...";
-	sleep 5;
+	sleep 10;
+	
 
 	IS_GOVERNOR=`rpm -qa governor-mysql`
 	if [ -n "$IS_GOVERNOR" ]; then

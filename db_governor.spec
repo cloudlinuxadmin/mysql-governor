@@ -1,5 +1,5 @@
 %define g_version   1.0
-%define g_release   87
+%define g_release   88
 %define g_key_library 1
 
 %if %{undefined _unitdir}
@@ -340,6 +340,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Mon Feb 09 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-88
+- Fixed MySQL stopping on version update
+
 * Fri Jan 23 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-87
 - CloudLinux7 adaptation
 
