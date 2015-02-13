@@ -8,7 +8,7 @@ mysql --silent --host=localhost --user=root --execute "grant all privileges on *
 sleep 5
 
 echo "creating a new database..."
-mysqladmin -umysqldd -pWRT56GL create mybbdd; >/dev/null 2>&1
+mysqladmin -umysqldd -pTTT create mybbdd; >/dev/null 2>&1
 sleep 5
 
 echo "creating a new table..."
@@ -24,7 +24,7 @@ mysql --silent --host=localhost --user=root --execute "grant all privileges on *
 sleep 5
 
 echo "creating a new database..."
-mysqladmin -umytestsqld -pWRT56GL create mybdd; >/dev/null 2>&1
+mysqladmin -umytestsqld -pTTT create mybdd; >/dev/null 2>&1
 sleep 5
 
 echo "creating a new table..."
@@ -41,7 +41,7 @@ mysql --silent --host=localhost --user=root --execute "grant all privileges on *
 sleep 5
 
 echo "creating a new database..."
-mysqladmin -umysqlslaptest -pWRT56GL create pont;
+mysqladmin -umysqlslaptest -pTTT create pont;
 sleep 5
 
 echo "creating a new table..."
