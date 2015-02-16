@@ -1,5 +1,5 @@
 %define g_version   1.0
-%define g_release   89
+%define g_release   90
 %define g_key_library 1
 
 %if %{undefined _unitdir}
@@ -340,6 +340,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Mon Feb 16 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-90
+- Removing MariaDB-common in db-governor installation for preventing conflict
+
 * Wed Feb 11 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-89
 - Fixed MySQL installation for OTHER panel
 
