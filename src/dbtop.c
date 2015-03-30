@@ -755,8 +755,6 @@ screen_regenerate() {
 	client_type_t ctt = DBTOPCL;
 	fwrite(&ctt, sizeof(client_type_t), 1, out);
 	fflush(out);
-	accounts = NULL;
-	recv_accounts = NULL;
 	read_info();
 	printOneScreen();
 
