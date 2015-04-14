@@ -223,15 +223,15 @@ class DirectAdmin(CP):
     def __init__(self):
 	super(DirectAdmin, self).__init__()
 	self.name = "DirectAdmin"
-	tmp = myExec('/usr/local/directadmin/custombuild/build versions')
+	tmp = myExec('/usr/local/directadmin/directadmin v')
 	tmp = tmp.split('\n')
 	self.version = 'Unknown'
 	self.apache = ApacheInfo('/usr/sbin/apachectl')
 	for item in tmp:
-	    if (item.find('Installed version of DirectAdmin:')!=-1):
-		self.version = item.split(':')[1].strip()
+	    if (item.find('Version: DirectAdmin v.')!=-1):
+		self.version = item.split('v.')[1].strip()
 		break
-		
+
 class HSphere(CP):
     def __init__(self):
 	super(HSphere, self).__init__()
@@ -312,7 +312,7 @@ def get_cp():
         cp = CPanel()
     elif os.path.isfile('/usr/local/psa/version'):
         cp = Plesk()
-    elif os.path.isdir('/usr/local/directadmin') and os.path.isfile('/usr/local/directadmin/custombuild/build'):
+    elif os.path.isdir('/usr/local/directadmin') and os.path.isfile('/usr/local/directadmin/directadmin'):
 	cp = DirectAdmin()
     elif os.path.isfile('/hsphere/local/home/cpanel/shiva/psoft_config/HS_VERSION'):
 	cp = HSphere()
