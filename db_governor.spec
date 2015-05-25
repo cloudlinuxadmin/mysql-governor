@@ -1,5 +1,5 @@
 %define g_version   1.0
-%define g_release   91
+%define g_release   92
 %define g_key_library 1
 
 %if %{undefined _unitdir}
@@ -340,6 +340,10 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Mon May 25 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-92
+- Use DirectAdmin without custombuild (Sander Hoentjen <shoentjen@antagonist.nl>)
+- Fixed stats hash table corruption on lve-mode switching (with dbctl)
+
 * Mon Mar 30 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-91
 - Fixed memory leak in dbtop
 - Added patch for MariaDB 5.5.41 for CL7

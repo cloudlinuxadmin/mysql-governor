@@ -1091,8 +1091,9 @@ void reset_user_stats( gpointer ignored, User_stats *us )
 void resetting_user_stats( Account *ac )
 {
   //g_hash_table_foreach( ac->users, (GHFunc)free_user_stats, NULL );
-  g_hash_table_foreach( ac->users, (GHFunc)reset_user_stats, NULL );
-  g_hash_table_unref( ac->users );
+  //g_hash_table_foreach( ac->users, (GHFunc)reset_user_stats, NULL );
+  //g_hash_table_unref( ac->users );
+	return;
 }
 
 void dbctl_unrestrict_set( gpointer key, Account * ac, void *data ) 
