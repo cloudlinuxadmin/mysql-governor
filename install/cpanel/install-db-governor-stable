@@ -187,6 +187,9 @@ sub getSystemType(){
     if(index($tp,".el6.")!=-1){
         return "cl6";
     }
+    if(index($tp,".el7.")!=-1){
+        return "cl7";
+    }
     if(-e '/etc/redhat-release'){
 	my $redhat_rel5 = `cat /etc/redhat-release | grep "CloudLinux Server release 5."`;
 	if ($redhat_rel5 ne "" ){
@@ -196,12 +199,19 @@ sub getSystemType(){
 	if ($redhat_rel6 ne "" ){
 	    return "cl6";
     	}
+	my $redhat_rel7 = `cat /etc/redhat-release | grep "CloudLinux Server release 7."`;
+	if ($redhat_rel7 ne "" ){
+	    return "cl7";
+    	}
     }
     if(index($tp2,".el5.")!=-1){
         return "cl5";
     }
     if(index($tp2,".el6.")!=-1){
         return "cl6";
+    }
+    if(index($tp2,".el7.")!=-1){
+        return "cl7";
     }
     return "";
 }

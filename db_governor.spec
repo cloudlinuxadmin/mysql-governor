@@ -1,5 +1,5 @@
 %define g_version   1.0
-%define g_release   92
+%define g_release   93
 %define g_key_library 1
 
 %if %{undefined _unitdir}
@@ -340,6 +340,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Tue May 26 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-93
+- Fixed error on CloudLinux 7 + cPanel installation
+
 * Mon May 25 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-92
 - Use DirectAdmin without custombuild (Sander Hoentjen <shoentjen@antagonist.nl>)
 - Fixed stats hash table corruption on lve-mode switching (with dbctl)
