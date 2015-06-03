@@ -134,6 +134,18 @@ function checkHookString(){
     fi
 }
 
+function checkHookStringParam(){
+    #1 - hook name
+    #2 - pattern string
+    #3 - comment srting
+    if [ -e "$1" ];then
+	tmp=`cat "$1" | grep "$2"`
+	if [ -z "$tmp" ];then
+	    echo "$2 \"\$1\"   #$3" >> $1
+	fi
+    fi
+}
+
 function addHookStringFirst(){
     #1 - hook name
     #2 - pattern string
@@ -143,5 +155,18 @@ function addHookStringFirst(){
 	cat $1 | sed /$4/d | sed 1a"$2   #$3" > "$common_path_of_cpanel/tmp/future_hook.tmp.$$"
 	cat "$common_path_of_cpanel/tmp/future_hook.tmp.$$" > "$1"
 	rm -f "$common_path_of_cpanel/tmp/future_hook.tmp.$$"
+    fi
+}
+
+function rewriteDBUserHook(){
+    #1 - hook name
+    if [ -e "$1" ]; then 
+	correct=`cat "$1" | grep '/usr/share/lve/dbgovernor/utils/dbgovernor_map "$1"'`
+	if [ -z "$correct" ]; then
+	    is_hook=`cat "$1" | grep "/usr/share/lve/dbgovernor/utils/dbgovernor_map"`
+	    if [ -n "$is_hook" ]; then
+		sed "s/dbgovernor_map/dbgovernor_map \"\$1\"/" -i "$1"
+	    fi
+	fi
     fi
 }

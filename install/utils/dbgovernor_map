@@ -29,6 +29,8 @@ my @old = ();
 my @new = ();
 my @copy_new = ();
 
+my $numArgs = $#ARGV + 1;
+
 if (-e $mapfilename) {
     open(FILENAME, $mapfilename);
     while ( <FILENAME> )
@@ -38,6 +40,34 @@ if (-e $mapfilename) {
     }
 }
 
+if($numArgs>0){
+my $mb = $ARGV[0]+0;
+if($mb>0){
+my $uname_1 = getpwuid($mb);
+@new = get_map_list_user_($uname_1);
+
+foreach my $item (@new){
+    my $fnd = 0;
+    foreach my $item2 (@old){
+	if (($$item[0] eq $$item2[0]) && ($$item[1] eq $$item2[1])){
+	    $fnd = 1;
+	    last;
+	} 
+    }
+    if($fnd==0){
+	push @old, $item;
+    } 
+}
+
+
+open (MAPFILE, ">$mapfilename"); 
+foreach my $item (@old){
+    print MAPFILE $$item[0], " ", $$item[1], " ", $$item[2], "\n";
+}
+close(MAPFILE);
+}
+
+} else {
 @new = get_map_list_();
 @copy_new = map { [@$_] } @new;
 
@@ -81,6 +111,7 @@ if($cnt_old>0 || $cnt_new>0){
     }
     close(MAPFILE);
 }
+}
 
 sub get_map_list_ {
     my @arr = ();
@@ -99,6 +130,26 @@ sub get_map_list_ {
 	    for my $key (keys %{$$user_map1{'stash'}{'MYSQL'}{'dbusers'}}) { 
 		push @arr, [ $key, $user, "$uid" ];
 	    }
+	}
+    }
+    return @arr;
+}
+
+sub get_map_list_user_ {
+    my @arr = ();
+    my $user = shift;
+    my $user_map1 = Cpanel::DB::get_map ( {'cpuser' => $user} );
+    my $name = "";
+    my $uid = -1;
+    my $dummy;
+    ($name, $dummy, $uid, $dummy, $dummy, $dummy, $dummy, $dummy, $dummy) = getpwnam($user);
+    if ($uid>=0){
+        push @arr, [ $user, $user, "$uid" ];
+    }
+
+    if ($uid>=0 && exists($$user_map1{'stash'}{'MYSQL'}{'dbusers'})){
+        for my $key (keys %{$$user_map1{'stash'}{'MYSQL'}{'dbusers'}}) { 
+	    push @arr, [ $key, $user, "$uid" ];
 	}
     }
     return @arr;

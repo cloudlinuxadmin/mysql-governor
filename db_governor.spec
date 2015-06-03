@@ -1,5 +1,5 @@
 %define g_version   1.0
-%define g_release   93
+%define g_release   94
 %define g_key_library 1
 
 %if %{undefined _unitdir}
@@ -340,6 +340,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Wed Jun 04 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-94
+- Optimized dbgovernor_map script for cPanel
+
 * Tue May 26 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-93
 - Fixed error on CloudLinux 7 + cPanel installation
 

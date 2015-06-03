@@ -36,11 +36,13 @@ checkHookString "$mysqluserkill" "$postupcp_hook" "dbgovernor"
 removeEmptyStringsFromFile "$mysqluserkill"
 
 createHookHeader "$mysqluserupdate1"
-checkHookString "$mysqluserupdate1" "$mysqlupdate_hook" "dbgovernor"
+checkHookStringParam "$mysqluserupdate1" "$mysqlupdate_hook" "dbgovernor"
+rewriteDBUserHook "$mysqluserupdate1"
 removeEmptyStringsFromFile "$mysqluserupdate1"
 
 createHookHeader "$mysqluserupdate2"
-checkHookString "$mysqluserupdate2" "$mysqlupdate_hook" "dbgovernor"
+checkHookStringParam "$mysqluserupdate2" "$mysqlupdate_hook" "dbgovernor"
+rewriteDBUserHook "$mysqluserupdate2"
 removeEmptyStringsFromFile "$mysqluserupdate2"
 
 /usr/local/cpanel/bin/register_hooks
