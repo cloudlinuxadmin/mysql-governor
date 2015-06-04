@@ -124,6 +124,7 @@ def usage():
 	print " -m | --clean-mysql-delete  : clean cl-MySQL packages list (after governor deletion)"
 	print " -u | --upgrade             : install MySQL with mysql_upgrade_command"
         print " -t | --dbupdate            : update UserMap file"
+        print "    | --fix-cpanel-hooks    : fix adduser and deluser hooks for cPanel"
 
 def check_leave_pid():
 	if cp.name == "Plesk" and verCompare (cp.version, "10") >= 0:
@@ -249,6 +250,21 @@ def install_mysql_beta_testing():
                 check_leave_pid()
                 exec_command_out(SOURCE+"other/install-db-governor-beta.sh --install")
                 install_db_user_mapfile_cron()
+                
+def install_mysql_beta_testing_hooks():
+        exec_command_out(SOURCE+"other/set_fs_suid_dumpable.sh")
+	if cp.name == "Plesk" and verCompare (cp.version, "10") >= 0:
+		print "No need in fix"
+	elif cp.name == "cPanel":
+                exec_command_out(SOURCE+"cpanel/cpanel-install-hooks")		
+	elif cp.name == "InterWorx":
+		print "No need in fix"
+	elif cp.name == "ISPManager":
+		print "No need in fix"
+	elif cp.name == "DirectAdmin":
+		print "No need in fix"
+	else:
+		print "No need in fix"
 
 
 def delete_mysql():
@@ -499,7 +515,7 @@ def detect_percona(f):
 cp = get_cp()
 
 try:
-	opts, args = getopt.getopt(sys.argv[1:], "hidcmut", ["help", "install", "delete", "install-beta", "clean-mysql", "clean-mysql-delete", "upgrade", "dbupdate", "update-mysql-beta", "force"])
+	opts, args = getopt.getopt(sys.argv[1:], "hidcmut", ["help", "install", "delete", "install-beta", "clean-mysql", "clean-mysql-delete", "upgrade", "dbupdate", "update-mysql-beta", "force", "fix-cpanel-hooks"])
 except getopt.GetoptError, err:
 	# print help information and exit:
 	print str(err) # will print something like "option -a not recognized"
@@ -576,6 +592,8 @@ for o, a in opts:
 		update_user_map_file()
 	elif o in ("--force",):
 		force_percona = 1
+	elif o in ("--fix-cpanel-hooks",):
+		install_mysql_beta_testing_hooks()
 	else:
 		usage()
 		sys.exit(2)
