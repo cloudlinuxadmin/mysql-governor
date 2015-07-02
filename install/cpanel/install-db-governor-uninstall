@@ -74,35 +74,6 @@ my $cPPkg      =  eval $pckg_name . "::cPPkgs->new( 'MySQL', '$baseurl' );";
 my $sql_version = $CPCONF{'mysql-version'};
 my $sql_version_2 = $sql_version;
 
-if( open( my $mysql_db, "<", $mysqlTypeFileSet ) ){
-  my $type_db = <$mysql_db>;
-  if( $type_db ne "auto" ){
-    $sql_version_2=$type_db;
-    if( $type_db eq "mysql50" ){
-      $sql_version="5.0";
-    }
-    if( $type_db eq "mysql51" ){
-      $sql_version="5.1";
-    }
-    if( $type_db eq "mysql55" ){
-      $sql_version="5.5";
-    }
-    if( $type_db eq "mysql56" ){
-      $sql_version="5.6";
-    }
-    if( $type_db eq "mariadb55" ){
-      $sql_version="5.5";
-    }
-    if( $type_db eq "mariadb100" ){
-      $sql_version="10.0";
-    }
-    if( $type_db eq "mariadb101" ){
-      $sql_version="10.1";
-    }
-  }
-  close( $mysql_db );
-}
-
 #stop mysql beffore reinstall (need for mysql 5.5)
 if ( -e '/usr/lib/systemd/system/mysql.service' ){
   system '/bin/systemctl', 'stop', 'mysql.service'
@@ -110,44 +81,22 @@ if ( -e '/usr/lib/systemd/system/mysql.service' ){
   system '/sbin/service', 'mysql', 'stop';
 }
 
-if ($sql_version_2=="5.0"){
-    $sql_version_2="mysql50";
-    if ( -e '/usr/libexec/mysqld' ) {
-        rename '/usr/libexec/mysqld', '/usr/libexec/mysqld.bak'
-    }  
-} 
-
-if ($sql_version_2=="5.1"){
-    $sql_version_2="mysql51";
-    if ( -e '/usr/libexec/mysqld' ) {
-        rename '/usr/libexec/mysqld', '/usr/libexec/mysqld.bak'
-    }                          
-} 
-
-if ($sql_version_2=="5.5"){
-    $sql_version_2="mysql55";
-    if ( -e '/usr/libexec/mysqld' ) {
-	rename '/usr/libexec/mysqld', '/usr/libexec/mysqld.bak'
-    }  
-} 
-
-if ($sql_version_2=="5.6"){
-    $sql_version_2="mysql56";
-    if ( -e '/usr/libexec/mysqld' ) {
-	rename '/usr/libexec/mysqld', '/usr/libexec/mysqld.bak'
-    }  
-}
 
 if ($sql_version_2=="10.0"){
     $sql_version_2="mariadb100";
     if ( -e '/usr/libexec/mysqld' ) {
         rename '/usr/libexec/mysqld', '/usr/libexec/mysqld.bak'
     }  
-} 
+    system '/usr/share/lve/dbgovernor/cpanel/check_mysql_leave_pid.sh';
+    system "yum install MariaDB -y";
+}
 
-system '/usr/share/lve/dbgovernor/cpanel/check_mysql_leave_pid.sh';
-system "/usr/share/lve/dbgovernor/cpanel/install-db-governor.sh $sql_version_2 --install --beta";
-resmysql();
+if ( -e '/usr/lib/systemd/system/mysql.service' ){
+  system '/bin/systemctl', 'restart', 'mysql.service'
+} else {
+  system '/sbin/service', 'restart', 'stop';
+}
+
 
 sub do_command
 {
@@ -169,7 +118,6 @@ sub check_package {
 	return 1;
     }
 }
-
 
 sub resmysql {
     if ( -e '/var/cpanel/useapt' && -e '/usr/bin/apt-get' ) {

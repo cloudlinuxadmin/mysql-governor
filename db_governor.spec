@@ -150,6 +150,7 @@ install -D -m 755 install/other/install-db-governor-beta.sh $RPM_BUILD_ROOT/usr/
 install -D -m 755 install/cpanel/install-db-governor.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/install-db-governor.sh
 install -D -m 755 install/da/dbgovernor_map.py $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/da/dbgovernor_map.py 
 install -D -m 755 install/utils/check_mysql_leave_pid_other.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/check_mysql_leave_pid_other.sh
+install -D -m 755 install/cpanel/install-db-governor-uninstall $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/install-db-governor-uninstall
 
 #install cron utility
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/cron.d/
@@ -340,6 +341,10 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Thu Jul 02 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-95
+- Fixed MariaDB detect for cPanel
+- Fixed MariaDB package restoring on governor uninstall
+
 * Wed Jun 04 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-94
 - Optimized dbgovernor_map script for cPanel
 

@@ -74,6 +74,7 @@ my $cPPkg      =  eval $pckg_name . "::cPPkgs->new( 'MySQL', '$baseurl' );";
 my $sql_version = $CPCONF{'mysql-version'};
 my $sql_version_2 = $sql_version;
 
+
 if( open( my $mysql_db, "<", $mysqlTypeFileSet ) ){
   my $type_db = <$mysql_db>;
   if( $type_db ne "auto" ){
@@ -135,7 +136,14 @@ if ($sql_version_2=="5.6"){
     if ( -e '/usr/libexec/mysqld' ) {
         rename '/usr/libexec/mysqld', '/usr/libexec/mysqld.bak'
     }  
-} 
+}
+ 
+if ($sql_version_2=="10.0"){
+    $sql_version_2="mariadb100";
+    if ( -e '/usr/libexec/mysqld' ) {
+        rename '/usr/libexec/mysqld', '/usr/libexec/mysqld.bak'
+    }  
+}
 
 system '/usr/share/lve/dbgovernor/cpanel/check_mysql_leave_pid.sh';
 system "/usr/share/lve/dbgovernor/cpanel/install-db-governor.sh $sql_version_2 --install --stable";

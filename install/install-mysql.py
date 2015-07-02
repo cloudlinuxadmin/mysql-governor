@@ -282,12 +282,13 @@ def delete_mysql():
                         if os.path.exists("/etc/cpupdate.conf"):
                                 os.remove("/etc/cpupdate.conf")
                         os.rename("/etc/cpupdate.conf.governor", "/etc/cpupdate.conf")
+                exec_command_out(SOURCE+"cpanel/install-db-governor-uninstall")
                 if version.LooseVersion(cp.version) < version.LooseVersion("11.36"):
 		        exec_command_out("/scripts/mysqlup --force")
                 else:
                         exec_command_out("/scripts/upcp --force")
                 if os.path.exists("/scripts/check_cpanel_rpms"):
-                        exec_command_out("/scripts/check_cpanel_rpms --fix --targets=MySQL50,MySQL51,MySQL55,MySQL56")
+                        exec_command_out("/scripts/check_cpanel_rpms --fix --targets=MySQL50,MySQL51,MySQL55,MySQL56,MariaDB")
 	elif cp.name == "InterWorx":		
                 delete_db_user_mapfile_cron()
                 exec_command_out(SOURCE+"iworx/install-db-governor.sh --delete")
