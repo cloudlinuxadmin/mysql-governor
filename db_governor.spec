@@ -1,5 +1,5 @@
 %define g_version   1.0
-%define g_release   95
+%define g_release   96
 %define g_key_library 1
 
 %if %{undefined _unitdir}
@@ -313,6 +313,14 @@ fi
 
 
 ldconfig
+
+if [ $1 -eq 0 ]; then
+%if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
+/bin/systemctl restart db_governor.service >/dev/null 2>&1 || :
+%else
+/etc/init.d/db_governor restart
+%endif
+fi
 echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
 echo "!!!Before making any changing with database make sure that you have reserve copy of users data!!!"
 echo "Instruction: how to create whole database backup - http://docs.cloudlinux.com/index.html?backing_up_mysql.html"
@@ -341,6 +349,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Fri Jul 10 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-96
+- Restart governor service on package update
+
 * Thu Jul 02 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-95
 - Fixed MariaDB detect for cPanel
 - Fixed MariaDB package restoring on governor uninstall
