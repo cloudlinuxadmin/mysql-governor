@@ -1,5 +1,5 @@
-%define g_version   1.0
-%define g_release   96
+%define g_version   1.1
+%define g_release   1
 %define g_key_library 1
 
 %if %{undefined _unitdir}
@@ -349,6 +349,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Mon Aug 03 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-1
+- Fixed installation script (disabled cloudlinux-updates-testing)
+
 * Fri Jul 10 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-96
 - Restart governor service on package update
 
