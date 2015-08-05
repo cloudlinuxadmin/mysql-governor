@@ -49,7 +49,12 @@ function installDb(){
 	  if [ -e /usr/libexec/mysqld ]; then
 	   mv -f /usr/libexec/mysqld /usr/libexec/mysqld.bak
           fi
+          if [ -z "$CL7" ]; then
 	  yum install mysql mysql-server mysql-libs mysql-devel mysql-bench  --nogpgcheck -y
+          else
+          yum install mariadb mariadb-server mariadb-libs mariadb-devel mariadb-bench  --nogpgcheck -y
+          fi
+
 	fi
 	if [ "$SQL_VERSION" == "mysql50" ]; then
 	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqlmeta/cl-mysql-5.0-common.repo
