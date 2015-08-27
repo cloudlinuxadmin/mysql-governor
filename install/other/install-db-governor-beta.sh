@@ -40,7 +40,7 @@ if [ "$1" == "--delete" ]; then
 	exit
 fi
 
-echo "Installation mysql for db_governor start"
+echo "The installation of MySQL for db_governor has started"
 
 if [ -f "$mysqlTypeFileSet" ]; then
   SQL_VERSION_=`cat $mysqlTypeFileSet`

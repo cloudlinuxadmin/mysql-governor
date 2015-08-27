@@ -37,7 +37,7 @@ if [ "$1" == "--delete" ]; then
 	exit
 fi
 
-echo "Installation mysql for db_governor start"
+echo "The installation of MySQL for db_governor has started"
 if [ "$3" == "--stable" ]; then
   installDb "$1"
 else
@@ -64,4 +64,4 @@ if [ -n "$IS_GOVERNOR" ]; then
 	echo "DB-Governor installed/updated...";
 fi
 
-echo "Installation mysql for db_governor completed"
+echo "The installation of MySQL for db_governor completed"

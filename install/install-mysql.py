@@ -95,13 +95,13 @@ def verCompare (base, test):
 
 def installPythonMysql():
 	if cp.name == "Plesk" and verCompare (cp.version, "10") >= 0:
-		print "No need in MySQL-python"
+		print "There is no need for MySQL-python"
 	elif cp.name == "cPanel":
-		print "No need in MySQL-python"
+		print "There is no need for MySQL-python"
 	elif cp.name == "InterWorx":
-		print "No need in MySQL-python"
+		print "There is no need for MySQL-python"
 	elif cp.name == "ISPManager":	
-		print "No need in MySQL-python"
+		print "There is no need for MySQL-python"
 	elif cp.name == "DirectAdmin":
 		yb = yum.YumBase()
                 if yb.rpmdb.searchNevra(name="MySQL-python"):

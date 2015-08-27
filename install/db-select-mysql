@@ -98,7 +98,7 @@ sub _set_mysql_type
   print( $mysql_db $type_db_ );
   close( $mysql_db );
 
-  print "now set MySql type '$type_db_'\n";
+  print "Now set MySQL to type '$type_db_'\n";
   if( $install_now )
   {
     print "install now...\n";

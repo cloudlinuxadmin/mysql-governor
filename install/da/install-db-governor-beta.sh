@@ -14,7 +14,7 @@ if [ "$1" == "--delete" ]; then
 
 fi
 
-echo "Installation mysql for db_governor start"
+echo "The installation of MySQL for db_governor has started"
 
 checkFile "/usr/local/directadmin/custombuild/build"
 /usr/local/directadmin/custombuild/build set mysql_inst no
@@ -92,5 +92,5 @@ if [ -n "$IS_GOVERNOR" ]; then
 	echo "DB-Governor installed/updated...";
 fi
 
-echo "Installation mysql for db_governor completed"
+echo "The installation of MySQL for db_governor completed"
 echo "Rebuild php please... /usr/local/directadmin/custombuild/build php"
