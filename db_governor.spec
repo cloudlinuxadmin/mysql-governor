@@ -1,6 +1,6 @@
 %define g_version   1.1
-%define g_release   3
-%define g_key_library 1
+%define g_release   4
+%define g_key_library 2
 
 %if %{undefined _unitdir}
 %define _unitdir /usr/lib/systemd/system
@@ -325,6 +325,13 @@ echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
 echo "!!!Before making any changing with database make sure that you have reserve copy of users data!!!"
 echo "Instruction: how to create whole database backup - http://docs.cloudlinux.com/index.html?backing_up_mysql.html"
 
+%triggerin -- cl-MariaDB100-server, cl-MariaDB101-server, cl-MariaDB55-server, cl-MySQL50-server, cl-MySQL51-server, cl-MySQL55-server, cl-MySQL56-server
+if [ -e /usr/share/lve/dbgovernor/mysqlgovernor.py ]; then
+    /usr/share/lve/dbgovernor/mysqlgovernor.py --fix-cpanel-cl-mysql
+fi
+exit 0
+
+
 %files
 %defattr(-,root,root)
 %doc LICENSE.TXT
@@ -349,6 +356,11 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Mon Sep 14 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-4
+- Added is_in_lve support
+- Fixed install-beta for CloudLinux 7 detection error
+- Added fixing of mysqld service for CloudLinux 7
+
 * Thu Aug 27 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-3
 - Grammatical fixes
 

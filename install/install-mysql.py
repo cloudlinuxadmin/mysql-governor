@@ -125,6 +125,7 @@ def usage():
 	print " -u | --upgrade             : install MySQL with mysql_upgrade_command"
         print " -t | --dbupdate            : update UserMap file"
         print "    | --fix-cpanel-hooks    : fix adduser and deluser hooks for cPanel"
+	print "    | --fix-cpanel-cl-mysql : fix mysqld service for cPanel(CL7)"
 
 def check_leave_pid():
 	if cp.name == "Plesk" and verCompare (cp.version, "10") >= 0:
@@ -265,6 +266,27 @@ def install_mysql_beta_testing_hooks():
 		print "No need in fix"
 	else:
 		print "No need in fix"
+
+def fix_cl7_mysql():
+	clver = get_cl_num()
+	if cp.name == "Plesk" and verCompare (cp.version, "10") >= 0:
+		print "No need in MySQL fix"
+	elif cp.name == "cPanel":
+		if clver=="7":
+            	    if os.path.exists("/etc/init.d/mysqld"):
+			os.remove("/etc/init.d/mysqld")
+		    if os.path.exists("/etc/rc.d/init.d/mysqld"):
+			os.remove("/etc/rc.d/init.d/mysqld")
+		else:
+		    print "No need in MySQL fix"
+	elif cp.name == "InterWorx":
+		print "No need in MySQL fix"
+	elif cp.name == "ISPManager":
+		print "No need in MySQL fix"
+	elif cp.name == "DirectAdmin":
+		print "No need in MySQL fix"
+	else:
+		print "No need in MySQL fix"
 
 
 def delete_mysql():
@@ -516,7 +538,7 @@ def detect_percona(f):
 cp = get_cp()
 
 try:
-	opts, args = getopt.getopt(sys.argv[1:], "hidcmut", ["help", "install", "delete", "install-beta", "clean-mysql", "clean-mysql-delete", "upgrade", "dbupdate", "update-mysql-beta", "force", "fix-cpanel-hooks"])
+	opts, args = getopt.getopt(sys.argv[1:], "hidcmut", ["help", "install", "delete", "install-beta", "clean-mysql", "clean-mysql-delete", "upgrade", "dbupdate", "update-mysql-beta", "force", "fix-cpanel-hooks", "fix-cpanel-cl-mysql"])
 except getopt.GetoptError, err:
 	# print help information and exit:
 	print str(err) # will print something like "option -a not recognized"
@@ -547,6 +569,7 @@ for o, a in opts:
                 installPythonMysql()
                 install_dbmap_update()
 		fix_libmygcc()
+		fix_cl7_mysql()
 	elif o in ("-u", "--upgrade"):
                 warn_message()
                 detect_percona(force_percona)
@@ -564,6 +587,7 @@ for o, a in opts:
                     exec_command_out("/usr/bin/alt-php-mysql-reconfigure") 
                 install_dbmap_update()
 		fix_libmygcc()
+		fix_cl7_mysql()
 	elif o in ("-d", "--delete"):
                 remove_repo_file()
 		remove_mysql_justdb_cl()
@@ -583,6 +607,7 @@ for o, a in opts:
                 installPythonMysql()
                 install_dbmap_update()
 		fix_libmygcc()
+		fix_cl7_mysql()
 	elif o in ("--update-mysql-beta",):
 		print "Option is deprecated. Use --install-beta instead"
 	elif o in ("c", "--clean-mysql"):
@@ -595,6 +620,8 @@ for o, a in opts:
 		force_percona = 1
 	elif o in ("--fix-cpanel-hooks",):
 		install_mysql_beta_testing_hooks()
+	elif o in ("--fix-cpanel-cl-mysql",):
+		fix_cl7_mysqld()
 	else:
 		usage()
 		sys.exit(2)

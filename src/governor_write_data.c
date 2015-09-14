@@ -354,6 +354,7 @@ int (*destroy_lve)(void *) = NULL;
 int (*lve_enter_flags)(void *, uint32_t, uint32_t *, int) = NULL;
 int (*lve_exit)(void *, uint32_t *) = NULL;
 int (*lve_enter_pid) (void *, uint32_t, pid_t) = NULL;
+int (*is_in_lve) (void *) = NULL;
 
 void *governor_load_lve_library() {
 	lve_library_handle = NULL;
@@ -370,6 +371,7 @@ void *governor_load_lve_library() {
 				lve_enter_flags = NULL;
 				lve_exit = NULL;
 				lve_enter_pid = NULL;
+				is_in_lve = NULL;
 				break;
 			}
 			destroy_lve = (int(*)(void *)) dlsym(lve_library_handle,
@@ -380,6 +382,7 @@ void *governor_load_lve_library() {
 				lve_enter_flags = NULL;
 				lve_exit = NULL;
 				lve_enter_pid = NULL;
+				is_in_lve = NULL;
 				break;
 			}
 			lve_enter_flags
@@ -391,6 +394,7 @@ void *governor_load_lve_library() {
 				lve_enter_flags = NULL;
 				lve_exit = NULL;
 				lve_enter_pid = NULL;
+				is_in_lve = NULL;
 				break;
 			}
 			lve_exit = (int(*)(void *, uint32_t *)) dlsym(lve_library_handle,
@@ -401,6 +405,7 @@ void *governor_load_lve_library() {
 				lve_enter_flags = NULL;
 				lve_exit = NULL;
 				lve_enter_pid = NULL;
+				is_in_lve = NULL;
 				break;
 			}
 			lve_enter_pid = (int(*)(void *, uint32_t, pid_t)) dlsym(lve_library_handle,
@@ -411,6 +416,13 @@ void *governor_load_lve_library() {
 				lve_enter_flags = NULL;
 				lve_exit = NULL;
 				lve_enter_pid = NULL;
+				is_in_lve = NULL;
+				break;
+			}
+			is_in_lve = (int(*)(void *)) dlsym(lve_library_handle,
+								"is_in_lve");
+			if ((error_dl = dlerror()) != NULL) {
+				is_in_lve = NULL;
 				break;
 			}
 			break;
@@ -519,6 +531,13 @@ int governor_lve_enter_pid_user(pid_t pid, char *username){
 		}
 	}
 	return 0;
+}
+
+int governor_is_in_lve(){
+	if (is_in_lve && lve) {
+		return is_in_lve(lve);
+	}
+	return -1;
 }
 
 

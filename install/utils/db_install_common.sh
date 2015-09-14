@@ -26,8 +26,8 @@ function installDb(){
 	SQL_VERSION=$1
 	
 	CL=`echo -n "cl5"`
-	CL6=`uname -a | grep "\.el6\."`
-	CL7=`uname -a | grep "\.el7\."`
+	CL6=`uname -a | grep "\.el6"`
+	CL7=`uname -a | grep "\.el7"`
 	if [ -n "$CL6" ]; then
 	    CL=`echo -n "cl6"`
 	    if [ -e /etc/my.cnf ]; then
@@ -130,9 +130,17 @@ function installDbTest(){
 	SQL_VERSION=$1
 	
 	CL=`echo -n "cl5"`
-	CL6=`uname -a | grep "\.el6\."`
+	CL6=`uname -a | grep "\.el6"`
+	CL7=`uname -a | grep "\.el7"`
 	if [ -n "$CL6" ]; then
 	    CL=`echo -n "cl6"`
+	    if [ -e /etc/my.cnf ]; then
+        	sed '/userstat/d' -i /etc/my.cnf
+	        sed '/userstat_running/d' -i /etc/my.cnf
+	    fi
+	fi
+	if [ -n "$CL7" ]; then
+	    CL=`echo -n "cl7"`
 	    if [ -e /etc/my.cnf ]; then
         	sed '/userstat/d' -i /etc/my.cnf
 	        sed '/userstat_running/d' -i /etc/my.cnf
