@@ -621,7 +621,7 @@ for o, a in opts:
 	elif o in ("--fix-cpanel-hooks",):
 		install_mysql_beta_testing_hooks()
 	elif o in ("--fix-cpanel-cl-mysql",):
-		fix_cl7_mysqld()
+		fix_cl7_mysql()
 	else:
 		usage()
 		sys.exit(2)
