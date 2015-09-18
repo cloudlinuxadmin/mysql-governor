@@ -441,6 +441,10 @@ def remove_mysqlclients():
 	if os.path.exists("/usr/share/lve/dbgovernor/remove-mysqlclient"):
 	    exec_command_out("/usr/share/lve/dbgovernor/remove-mysqlclient")
 
+def rerun_ldconfig():
+	if os.path.exists("/sbin/ldconfig"):
+	    exec_command_out("/sbin/ldconfig")
+
 class bcolors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -534,6 +538,18 @@ def detect_percona(f):
     	    check_sepcific_mysql('Percona-Server-server-56', yb)
     	    check_sepcific_mysql('Percona-Server-devel-56', yb)
 		
+def fix_mysqllib():
+    if os.path.exists("/usr/bin/alt-php-mysql-reconfigure.py"):
+	exec_command_out("/usr/bin/alt-php-mysql-reconfigure.py --php 44")
+	exec_command_out("/usr/bin/alt-php-mysql-reconfigure.py --php 51")
+	exec_command_out("/usr/bin/alt-php-mysql-reconfigure.py --php 52")
+	exec_command_out("/usr/bin/alt-php-mysql-reconfigure.py --php 53")
+	exec_command_out("/usr/bin/alt-php-mysql-reconfigure.py --php 54")
+	exec_command_out("/usr/bin/alt-php-mysql-reconfigure.py --php 55")
+	exec_command_out("/usr/bin/alt-php-mysql-reconfigure.py --php 56")
+	exec_command_out("/usr/bin/alt-php-mysql-reconfigure.py --php 70")
+    elif os.path.exists("/usr/bin/alt-php-mysql-reconfigure"):                                                                                                                                                                     
+	exec_command_out("/usr/bin/alt-php-mysql-reconfigure") 
 
 cp = get_cp()
 
@@ -570,6 +586,8 @@ for o, a in opts:
                 install_dbmap_update()
 		fix_libmygcc()
 		fix_cl7_mysql()
+		rerun_ldconfig()
+		fix_mysqllib()
 	elif o in ("-u", "--upgrade"):
                 warn_message()
                 detect_percona(force_percona)
@@ -583,11 +601,11 @@ for o, a in opts:
 		    exec_command_out("/usr/bin/mysql_upgrade")
 		if os.path.exists("/usr/share/lve/dbgovernor/chk-mysqlclient"):
 		    exec_command_out("/usr/share/lve/dbgovernor/chk-mysqlclient")
-                if os.path.exists("/usr/bin/alt-php-mysql-reconfigure"):                                                                                                                                                                     
-                    exec_command_out("/usr/bin/alt-php-mysql-reconfigure") 
                 install_dbmap_update()
 		fix_libmygcc()
 		fix_cl7_mysql()
+		rerun_ldconfig()
+		fix_mysqllib()
 	elif o in ("-d", "--delete"):
                 remove_repo_file()
 		remove_mysql_justdb_cl()
@@ -608,6 +626,8 @@ for o, a in opts:
                 install_dbmap_update()
 		fix_libmygcc()
 		fix_cl7_mysql()
+		rerun_ldconfig()
+		fix_mysqllib()
 	elif o in ("--update-mysql-beta",):
 		print "Option is deprecated. Use --install-beta instead"
 	elif o in ("c", "--clean-mysql"):

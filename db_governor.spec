@@ -360,6 +360,7 @@ exit 0
 - Added is_in_lve support
 - Fixed install-beta for CloudLinux 7 detection error
 - Added fixing of mysqld service for CloudLinux 7
+- rerun ldconfig for fixing endless loop
 
 * Thu Aug 27 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-3
 - Grammatical fixes
