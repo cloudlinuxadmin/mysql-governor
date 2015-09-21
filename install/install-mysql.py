@@ -30,7 +30,8 @@ SOURCE="/usr/share/lve/dbgovernor/"
 
 def get_cl_num():
     result = exec_command("rpm -q --qf \"%{version}\n\" `rpm -q --whatprovides /etc/redhat-release`")
-    return result[0]
+    res = result[0].split(".")[0]
+    return res
 
 def recursive_file_permissions(path,uid=-1,gid=-1):
 	for item in glob.glob(path+'/*'):
@@ -273,9 +274,9 @@ def fix_cl7_mysql():
 		print "No need in MySQL fix"
 	elif cp.name == "cPanel":
 		if clver=="7":
-            	    if os.path.exists("/etc/init.d/mysqld"):
+            	    if os.path.lexists("/etc/init.d/mysqld"):
 			os.remove("/etc/init.d/mysqld")
-		    if os.path.exists("/etc/rc.d/init.d/mysqld"):
+		    if os.path.lexists("/etc/rc.d/init.d/mysqld"):
 			os.remove("/etc/rc.d/init.d/mysqld")
 		else:
 		    print "No need in MySQL fix"
