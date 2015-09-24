@@ -588,7 +588,6 @@ for o, a in opts:
 		fix_libmygcc()
 		fix_cl7_mysql()
 		rerun_ldconfig()
-		fix_mysqllib()
 	elif o in ("-u", "--upgrade"):
                 warn_message()
                 detect_percona(force_percona)
@@ -606,7 +605,6 @@ for o, a in opts:
 		fix_libmygcc()
 		fix_cl7_mysql()
 		rerun_ldconfig()
-		fix_mysqllib()
 	elif o in ("-d", "--delete"):
                 remove_repo_file()
 		remove_mysql_justdb_cl()
@@ -628,7 +626,6 @@ for o, a in opts:
 		fix_libmygcc()
 		fix_cl7_mysql()
 		rerun_ldconfig()
-		fix_mysqllib()
 	elif o in ("--update-mysql-beta",):
 		print "Option is deprecated. Use --install-beta instead"
 	elif o in ("c", "--clean-mysql"):
