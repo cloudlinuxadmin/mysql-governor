@@ -325,12 +325,6 @@ echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
 echo "!!!Before making any changing with database make sure that you have reserve copy of users data!!!"
 echo "Instruction: how to create whole database backup - http://docs.cloudlinux.com/index.html?backing_up_mysql.html"
 
-%triggerin -- cl-MariaDB100-server, cl-MariaDB101-server, cl-MariaDB55-server, cl-MySQL50-server, cl-MySQL51-server, cl-MySQL55-server, cl-MySQL56-server
-if [ -e /usr/share/lve/dbgovernor/mysqlgovernor.py ]; then
-    /usr/share/lve/dbgovernor/mysqlgovernor.py --fix-cpanel-cl-mysql
-fi
-exit 0
-
 
 %files
 %defattr(-,root,root)
