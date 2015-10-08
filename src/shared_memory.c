@@ -412,3 +412,43 @@ int32_t is_user_in_bad_list_cleint_persistent(char *username) {
 
 	return fnd;
 }
+
+void printf_bad_list_cleint_persistent(void) {
+	printf( " USER             NUMBER\n" );
+	sem_t *sem_client = sem_open(SHARED_MEMORY_SEM, 0, 0777, 1);
+	int trys = 1, sem_reopen = 0;
+
+	if (sem_client != SEM_FAILED) {
+		while (trys) {
+			if (sem_trywait(sem_client) == 0) {
+				if (bad_list_clents_global && (bad_list_clents_global != MAP_FAILED)) {
+					long index = 0;
+					for (index = 0; index < bad_list_clents_global->numbers; index++) {
+						printf( " %-16s %ld\n",
+								bad_list_clents_global->items[index].username,
+						        index);
+					}
+				}
+				trys = 0;
+			} else {
+				if (errno == EAGAIN) {
+					trys++;
+					if (trys == 100) {
+						trys = 1;
+						sem_close(sem_client);
+						sem_client = sem_open(SHARED_MEMORY_SEM, 0, 0777, 1);
+						sem_reopen++;
+						if (sem_reopen==4) break;
+					}
+				} else {
+					trys = 0;
+				}
+
+			}
+		}
+		sem_post(sem_client);
+		sem_close(sem_client);
+	}
+
+	return;
+}

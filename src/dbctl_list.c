@@ -30,6 +30,7 @@
 #include "stats.h"
 #include "wrappers.h"
 #include "governor_config.h"
+#include "shared_memory.h"
 
 #include "dbctl_list.h"
 #include "dbctl_conn.h"
@@ -355,6 +356,12 @@ void list_restricted( void )
     print_list_rest( in );
     closesock( _socket, in, out );
   }
+}
+
+void list_restricted_shm( void )
+{
+	init_bad_users_list_client();
+	printf_bad_list_cleint_persistent();
 }
 
 

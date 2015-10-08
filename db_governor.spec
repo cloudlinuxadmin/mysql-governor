@@ -1,6 +1,6 @@
 %define g_version   1.1
-%define g_release   4
-%define g_key_library 3
+%define g_release   5
+%define g_key_library 4
 
 %if %{undefined _unitdir}
 %define _unitdir /usr/lib/systemd/system
@@ -135,6 +135,7 @@ install -D -m 755 install/utils/dbgovernor_map $RPM_BUILD_ROOT/usr/share/lve/dbg
 install -D -m 755 install/utils/empty_action.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/empty_action.sh
 install -D -m 755 install/utils/db_install_common.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/db_install_common.sh
 install -D -m 755 install/utils/mysql_export $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/mysql_export
+install -D -m 755 install/utils/debug_mysql.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/debug_mysql.sh
 
 install -D -m 755 install/chk-mysqlclient $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/chk-mysqlclient
 install -D -m 755 install/db-select-mysql $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/db-select-mysql
@@ -350,6 +351,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Thu Oct 08 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-5
+- Adde LVE_NO_UBC on enter
+
 * Mon Sep 14 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-4
 - Added is_in_lve support
 - Fixed install-beta for CloudLinux 7 detection error

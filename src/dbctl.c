@@ -39,7 +39,7 @@ int valid_comm( int argc, char **argv )
 {
   name_comm level_111[] = { "set", "restrict" };
   name_comm level_110[] = { "ignore", "monitor", "delete", "unrestrict" };
-  name_comm level_100[] = { "list", "list-restricted", "unrestrict-all" };
+  name_comm level_100[] = { "list", "list-restricted", "unrestrict-all", "list-restricted-shm" };
   
   char _tmp_arg[ 11 ]; _tmp_arg[ 0 ] = '\0';
   strlcpy( _tmp_arg, argv[ 1 ], sizeof( _tmp_arg ) );
@@ -53,7 +53,7 @@ int valid_comm( int argc, char **argv )
     
   int val_comm = 0;
   int i = 0;
-  for( i = 0; i < 3; i++ )
+  for( i = 0; i < 4; i++ )
     if( strcmp( level_100[ i ], argv[ 1 ] ) == 0 )
       val_comm++;
   for( i = 0; i < 4; i++ )
@@ -65,7 +65,7 @@ int valid_comm( int argc, char **argv )
 
   if( !val_comm ) return 0; 
 
-  for( i = 0; i < 3; i++ )
+  for( i = 0; i < 4; i++ )
   {
     if( strcmp( level_100[ i ], argv[ 1 ] ) == 0 )
       if( argc > 2 )
@@ -416,9 +416,9 @@ int GetCmd( int argc, char **argv )
   {
     list();
   }
-  else if( strcmp( "list-restricted", argv[ 1 ] ) == 0 )
+  else if( strcmp( "list-restricted-shm", argv[ 1 ] ) == 0 )
   {
-    list_restricted();
+      list_restricted_shm();
   }
   else if( strcmp( "restrict", argv[ 1 ] ) == 0 )
   {

@@ -17,5 +17,6 @@
 void list( void );
 void list_restricted( void );
 void show_uids( void );
+void list_restricted_shm( void );
 
 #endif /* __DBCTL_LIST__ */

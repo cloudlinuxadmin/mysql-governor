@@ -33,5 +33,6 @@ int user_in_bad_list_cleint_show();
 int init_bad_users_list_utility();
 int remove_bad_users_list_utility();
 int init_bad_users_list_if_not_exitst();
+void printf_bad_list_cleint_persistent(void);
 
 #endif /* SHARED_MEMORY_H_ */
