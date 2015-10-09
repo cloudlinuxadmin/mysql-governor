@@ -135,7 +135,7 @@ install -D -m 755 install/utils/dbgovernor_map $RPM_BUILD_ROOT/usr/share/lve/dbg
 install -D -m 755 install/utils/empty_action.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/empty_action.sh
 install -D -m 755 install/utils/db_install_common.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/db_install_common.sh
 install -D -m 755 install/utils/mysql_export $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/mysql_export
-install -D -m 755 install/utils/debug_mysql.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/debug_mysql.sh
+install -D -m 755 install/utils/debug-mysql.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/debug-mysql.sh
 
 install -D -m 755 install/chk-mysqlclient $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/chk-mysqlclient
 install -D -m 755 install/db-select-mysql $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/db-select-mysql
