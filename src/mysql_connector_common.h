@@ -73,7 +73,7 @@ enum mysql_option
 #define QUERY_LVE_USER_CONNECTION "LVECMD '%s'"
 #define QUERY_KILL_USER_QUERY "KILL QUERY '%s'"
 //При долгом запросе - убить соединение, раньше было - убить запрос
-#define QUERY_KILL_USER_QUERY_ID "KILL CONNECTION %d"
+#define QUERY_KILL_USER_QUERY_ID "KILL CONNECTION %ld"
 //Получение версии mysql
 #define QUERY_GET_SERVER_INFO "SELECT VERSION()"
 #define QUERY_GET_PLUGIN_INFO "show plugins"

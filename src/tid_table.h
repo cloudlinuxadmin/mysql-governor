@@ -47,6 +47,8 @@ void increment_counters(char *username, long long cpu, long long read, long long
 GHashTable* get_counters_table();
 void add_tid_to_bad_list(pid_t pid);
 long get_tid_size();
+void unlock_tid_data();
+void lock_tid_data();
 
 int get_cnt_threads( const char *username );
 #ifdef TEST

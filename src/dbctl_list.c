@@ -36,7 +36,6 @@
 #include "dbctl_conn.h"
 #include "dbctl_cfg.h"
 
-DbCtlFoundTag *found_tag_list = NULL;
 DbCtlLimitAttr *dbctl_l_attr_list = NULL;
 
 GList *read_info( FILE *in ) 
@@ -83,38 +82,6 @@ GList *read_info( FILE *in )
   return recv_accounts;
 }
 
-struct governor_config *read_config( FILE *in ) 
-{
-  GList *recv_accounts = NULL;
-  Account *ac;
-  int new_record;
-  int tester = 1;
-
-  struct governor_config *cfg = NULL;
-
-  while( fread_wrapper( &new_record, sizeof( int ), 1, in ) ) 
-  {
-    if( new_record == 1 ) 
-    {
-      fwrite_wrapper( &tester, sizeof(int), 1, in );
-    } 
-    else if( new_record == 0 ) 
-    {  
-      if( fread_wrapper( cfg, sizeof( struct governor_config ), 1, in ) ) 
-      {
-      } 
-      else 
-      {
-        perror("Done");
-        exit( 0 );
-      }
-    }
-    else
-      return cfg;
-  }
-  return cfg;
-}
-
 gint CompareAccountByUsername( gconstpointer ptr_a, gconstpointer ptr_b ) 
 {
   Account *a, *b;
@@ -124,25 +91,26 @@ gint CompareAccountByUsername( gconstpointer ptr_a, gconstpointer ptr_b )
   return strncmp( a->id, b->id, USERNAMEMAXLEN );
 }
 
-GArray *addMemoryUser( FILE *in, GArray *tags )
+GPtrArray *addMemoryUser( FILE *in, GPtrArray *tags )
 {
+  DbCtlFoundTag *found_tag_list = NULL;
   GList *ac = NULL;
   GList *list = read_info( in );
-  GArray *Tags = tags;
+  GPtrArray *Tags = tags;
   
   
   for( ac = g_list_first( list ); ac != NULL; ac = g_list_next( ac ) )
   {
     found_tag_list = (DbCtlFoundTag*)malloc( sizeof( DbCtlFoundTag ) );
     strcpy( found_tag_list->tag, "user" );
-    found_tag_list->attr = g_hash_table_new( g_str_hash, g_str_equal );
-    found_tag_list->limit_attr = g_array_new( FALSE, FALSE, sizeof( DbCtlLimitAttr* ) );
+    found_tag_list->attr =  g_hash_table_new_full( g_str_hash, g_str_equal,(GDestroyNotify)found_tag_key_destroyed, (GDestroyNotify)found_tag_data_destroyed );
+    found_tag_list->limit_attr = g_ptr_array_new();
 
     Account *_ac = (Account *)ac->data;
     int found_user = 0, i = 0;
     for( ; i < Tags->len; i++ )
     {
-      DbCtlFoundTag *found_tag_ = g_array_index( Tags, DbCtlFoundTag*, i );
+      DbCtlFoundTag *found_tag_ = g_ptr_array_index( Tags, i );
       char *name_list = GetUserName( found_tag_->attr );
       if( name_list )
         if( strcmp( name_list, _ac->id ) == 0 ) 
@@ -153,7 +121,11 @@ GArray *addMemoryUser( FILE *in, GArray *tags )
     {
       g_hash_table_insert( found_tag_list->attr, "name", _ac->id );
       g_hash_table_insert( found_tag_list->attr, "mode", "restrict" );
-      g_array_append_val( Tags, found_tag_list );
+      g_ptr_array_add( Tags, found_tag_list );
+    } else {
+    	g_hash_table_destroy(found_tag_list->attr);
+    	g_ptr_array_free(found_tag_list->limit_attr, TRUE);
+    	free(found_tag_list);
     }
   }
   return Tags;
@@ -167,28 +139,28 @@ void print_list( FILE *in )
   printf( " user             cpu(%)                     read(MB/s)                        write(MB/s)\n" );
   GetDefault( GetCfg() );
   
-  DbCtlFoundTag *found_tag_ = g_array_index( GetCfg(), DbCtlFoundTag*, 0 );
+  DbCtlFoundTag *found_tag_ = g_ptr_array_index( GetCfg(), 0 );
   
-  strcpy( cpu_def.l_current, GetLimitAttr( found_tag_->limit_attr, "cpu", "current" ) );
-  strcpy( cpu_def.l_short, GetLimitAttr( found_tag_->limit_attr, "cpu", "short" ) );
-  strcpy( cpu_def.l_mid, GetLimitAttr( found_tag_->limit_attr, "cpu", "mid" ) );
-  strcpy( cpu_def.l_long, GetLimitAttr( found_tag_->limit_attr, "cpu", "long" ) );
+  strncpy( cpu_def.l_current, GetLimitAttr( found_tag_->limit_attr, "cpu", "current" ), sizeof(cpu_def.l_current)-1 );
+  strncpy( cpu_def.l_short, GetLimitAttr( found_tag_->limit_attr, "cpu", "short" ), sizeof(cpu_def.l_short)-1 );
+  strncpy( cpu_def.l_mid, GetLimitAttr( found_tag_->limit_attr, "cpu", "mid" ), sizeof(cpu_def.l_mid)-1 );
+  strncpy( cpu_def.l_long, GetLimitAttr( found_tag_->limit_attr, "cpu", "long" ), sizeof(cpu_def.l_long)-1 );
                         
-  strcpy( read_def.l_current, GetLimitAttr( found_tag_->limit_attr, "read", "current" ) );
-  strcpy( read_def.l_short, GetLimitAttr( found_tag_->limit_attr, "read", "short" ) );
-  strcpy( read_def.l_mid, GetLimitAttr( found_tag_->limit_attr, "read", "mid" ) );
-  strcpy( read_def.l_long, GetLimitAttr( found_tag_->limit_attr, "read", "long" ) );
+  strncpy( read_def.l_current, GetLimitAttr( found_tag_->limit_attr, "read", "current" ), sizeof(read_def.l_current)-1 );
+  strncpy( read_def.l_short, GetLimitAttr( found_tag_->limit_attr, "read", "short" ), sizeof(read_def.l_short)-1 );
+  strncpy( read_def.l_mid, GetLimitAttr( found_tag_->limit_attr, "read", "mid" ), sizeof(read_def.l_mid)-1 );
+  strncpy( read_def.l_long, GetLimitAttr( found_tag_->limit_attr, "read", "long" ), sizeof(read_def.l_long)-1 );
                         
-  strcpy( write_def.l_current, GetLimitAttr( found_tag_->limit_attr, "write", "current" ) );
-  strcpy( write_def.l_short, GetLimitAttr( found_tag_->limit_attr, "write", "short" ) );
-  strcpy( write_def.l_mid, GetLimitAttr( found_tag_->limit_attr, "write", "mid" ) );
-  strcpy( write_def.l_long, GetLimitAttr( found_tag_->limit_attr, "write", "long" ) );
+  strncpy( write_def.l_current, GetLimitAttr( found_tag_->limit_attr, "write", "current" ), sizeof(write_def.l_current)-1 );
+  strncpy( write_def.l_short, GetLimitAttr( found_tag_->limit_attr, "write", "short" ), sizeof(write_def.l_short)-1 );
+  strncpy( write_def.l_mid, GetLimitAttr( found_tag_->limit_attr, "write", "mid" ), sizeof(write_def.l_mid)-1 );
+  strncpy( write_def.l_long, GetLimitAttr( found_tag_->limit_attr, "write", "long" ), sizeof(write_def.l_long)-1 );
   FreeCfg();
 
   DbCtlLimitAttr limit_attr_def;
   ReadCfg( CONFIG_PATH, "user" );
-  GArray *tags = addMemoryUser( in, GetCfg() );
-  GetDefaultForUsers( tags, cpu_def, read_def, write_def );
+  GPtrArray *tags = addMemoryUser( in, GetCfg() );
+  GetDefaultForUsers( tags, &cpu_def, &read_def, &write_def );
   FreeCfg();
 }
 
@@ -300,9 +272,9 @@ void print_list_rest( FILE *in )
 
 void list( void )
 {
-  FILE *in;
-  FILE *out;
-  int socket;
+  FILE *in = NULL;
+  FILE *out = NULL;
+  int socket = -1;
   if( opensock( &socket, &in, &out ) )
   {
     client_type_t ctt = DBCTL;
@@ -325,14 +297,17 @@ void list( void )
     
     print_list( in );
     closesock( socket, in, out );
+  } else {
+
+	  closesock( socket, in, out );
   }
 }
 
 void list_restricted( void )
 {
-  FILE *in;
-  FILE *out;
-  int _socket;
+  FILE *in = NULL;
+  FILE *out = NULL;
+  int _socket = -1;
 
   if( opensock( &_socket, &in, &out ) )
   {
@@ -355,6 +330,9 @@ void list_restricted( void )
     
     print_list_rest( in );
     closesock( _socket, in, out );
+  } else {
+
+	  closesock( _socket, in, out );
   }
 }
 

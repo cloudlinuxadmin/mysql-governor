@@ -128,8 +128,7 @@ void *parse_slow_query( void *data )
 #endif
         while( ( row = (*_mysql_fetch_row)( res ) ) )
         {
-          if( row )
-          {
+
             lengths = (*_mysql_fetch_lengths)(res);
 #ifdef TEST
 /*
@@ -177,13 +176,7 @@ void *parse_slow_query( void *data )
                 WRITE_LOG( NULL, 2, buffer, _DBGOVERNOR_BUFFER_2048, log_buffer, data_cfg.log_mode );
               }
             }
-          }
-          else
-          {
-            (*_mysql_free_result)( res );
-            WRITE_LOG( NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,  "No queries retrieved", data_cfg.log_mode );
-            break;
-          }
+
         }
       }
       (*_mysql_free_result)( res );

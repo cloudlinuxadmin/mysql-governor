@@ -18,23 +18,12 @@
 #include "dbctl_cfg.h"
 #include "dbctl_rest.h"
 
-int restrict_def( DbCtlRestLevels levels, char *timeout, char *user_max_connections )
-{
-  printf( "restrict_def level1=%c\n", levels.level1 );
-}
-
 int restrict_user( char *user, char *level )
 {
-  FILE *in;
-  FILE *out;
-  int _socket;
+  FILE *in = NULL;
+  FILE *out = NULL;
+  int _socket = -1;
   
-  if( level == NULL )
-  {
-    level = (char*)malloc( 2 * sizeof( char ) );
-    strcpy( level, "-1" );
-  }
-
   if( opensock( &_socket, &in, &out ) )
   {
     client_type_t ctt = DBCTL;
@@ -43,9 +32,9 @@ int restrict_user( char *user, char *level )
     DbCtlCommand command;
     command.command = RESTRICT;
     strcpy( command.parameter, "" );
-    strcpy( command.options.username, user );
+    strncpy( command.options.username, user, sizeof(command.options.username)-1 );
     command.options.cpu = 0;
-    command.options.level = atoi( level );
+    command.options.level = atoi( (level ? level : "-1") );
     command.options.read = 0;
     command.options.write = 0;
     command.options.timeout = 0;
@@ -55,6 +44,10 @@ int restrict_user( char *user, char *level )
     fflush( out );
     
     closesock( _socket, in, out );
+  }  else {
+
+	closesock( _socket, in, out );
+
   }
 
   return 1;
@@ -62,9 +55,9 @@ int restrict_user( char *user, char *level )
 
 int unrestrict( char *user )
 {
-  FILE *in;
-  FILE *out;
-  int _socket;
+  FILE *in = NULL;
+  FILE *out = NULL;
+  int _socket = -1;
 
   if( opensock( &_socket, &in, &out ) )
   {
@@ -74,7 +67,7 @@ int unrestrict( char *user )
     DbCtlCommand command;
     command.command = UNRESTRICT;
     strcpy( command.parameter, "" );
-    strcpy( command.options.username, user );
+    strncpy( command.options.username, user, sizeof(command.options.username)-1 );
     command.options.cpu = 0;
     command.options.level = 0;
     command.options.read = 0;
@@ -86,6 +79,8 @@ int unrestrict( char *user )
     fflush( out );
     
     closesock( _socket, in, out );
+  } else {
+	  closesock( _socket, in, out );
   }
 
   return 1;
@@ -93,9 +88,9 @@ int unrestrict( char *user )
 
 int unrestrict_all( void )
 {
-  FILE *in;
-  FILE *out;
-  int _socket;
+  FILE *in = NULL;
+  FILE *out = NULL;
+  int _socket = -1;
 
   if( opensock( &_socket, &in, &out ) )
   {
@@ -117,6 +112,8 @@ int unrestrict_all( void )
     fflush( out );
     
     closesock( _socket, in, out );
+  } else {
+	closesock( _socket, in, out );
   }
 
   return 1;

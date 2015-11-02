@@ -50,7 +50,7 @@ int split( SplitStr **s_s, char *str, char t )
   {
     for( ; i < strlen( str ); i++ )
     {
-      if( str[ i ] == t ) 
+      if( str[ i ] == t )
       {
         str_ind[ ind ] = i;
         ind++;
@@ -60,7 +60,7 @@ int split( SplitStr **s_s, char *str, char t )
   }
   else
     str_ind[ ind ] = strlen( str );
-  
+
   int ind_pre = 0;
   for( ind = 0; ind < cnt; ind++ )
   {
@@ -71,6 +71,16 @@ int split( SplitStr **s_s, char *str, char t )
   }
 
   return cnt;
+}
+
+void release_split(SplitStr *data, int cnt){
+	if(cnt && data){
+		int index = 0;
+		for(index=0; index<cnt; index++){
+			if(data[index].str) free(data[index].str);
+		}
+		free(data);
+	}
 }
 
 int checkCorrectAttrs( ezxml_t child, char *s )
@@ -112,10 +122,12 @@ ezxml_t removeBadLimit( ezxml_t child, char *s )
 
 ezxml_t setLimitAttr( ezxml_t limit, char *s )
 {
+  int cnt = 0;
   if( !s ) return limit;
 
   SplitStr *data = NULL;
-  if( split( &data, s, ',' ) )
+  int res = 0;
+  if( cnt = split( &data, s, ',' ) )
   {
     if( strcmp( ezxml_attr( limit, "name" ), "read" ) == 0 || 
         strcmp( ezxml_attr( limit, "name" ), "write" ) == 0 )
@@ -133,13 +145,23 @@ ezxml_t setLimitAttr( ezxml_t limit, char *s )
       limit = ezxml_set_attr( limit, "mid", data[ 2 ].str );
     if( isprint( data[ 3 ].str[ 0 ] ) )
       limit = ezxml_set_attr( limit, "long", data[ 3 ].str );
+    int index = 0;
+    for(index=1; index<cnt; index++){
+       	if(data[index].str) free(data[index].str);
+    }
+
   }
   else if( strcmp( ezxml_attr( limit, "name" ), "slow" ) == 0 )
   {
-    if( split( &data, s, '\n' ) )
+    if( cnt = split( &data, s, '\n' ) )
     {
       if( isprint( data[ 0 ].str[ 0 ] ) )
         limit = ezxml_set_attr( limit, "current", data[ 0 ].str );
+      int index = 0;
+      for(index=1; index<cnt; index++){
+      	if(data[index].str) free(data[index].str);
+      }
+
     }
     else
       puts( "Error format parameter!" );
@@ -147,6 +169,8 @@ ezxml_t setLimitAttr( ezxml_t limit, char *s )
   else
     puts( "Error format parameter!" );
   
+  free(data);
+
   return limit;
   
 }
@@ -161,7 +185,7 @@ ezxml_t addLimit( ezxml_t child, char *n, char *s )
 
 int setDefault( char *cpu, char *read, char *write, char *slow )
 {
-  ezxml_t cfg = (ezxml_t)ParseXmlCfg( CONFIG_PATH );
+  ezxml_t cfg = (ezxml_t)ParseXmlCfg( (char *)CONFIG_PATH );
 
   if( cfg == NULL )
   {
@@ -257,7 +281,9 @@ int setDefault( char *cpu, char *read, char *write, char *slow )
     }
   }
   
-  rewrite_cfg( ezxml_toxml( cfg ) );
+  char *xml_tmp = ezxml_toxml( cfg );
+  rewrite_cfg( xml_tmp );
+  free(xml_tmp);
   ezxml_free( cfg );
   reread_cfg_cmd();
 
@@ -266,7 +292,7 @@ int setDefault( char *cpu, char *read, char *write, char *slow )
 
 int setUser( char *para, char *cpu, char *read, char *write, char *slow )
 {
-  ezxml_t cfg = (ezxml_t)ParseXmlCfg( CONFIG_PATH );
+  ezxml_t cfg = (ezxml_t)ParseXmlCfg( (char *)CONFIG_PATH );
 
   if( cfg == NULL )
   {
@@ -364,96 +390,18 @@ int setUser( char *para, char *cpu, char *read, char *write, char *slow )
     }
   }
   
-  rewrite_cfg( ezxml_toxml( cfg ) );
+  char *xml_tmp = ezxml_toxml( cfg );
+  rewrite_cfg( xml_tmp );
+  free(xml_tmp);
   ezxml_free( cfg );
   reread_cfg_cmd();
 
   return 1;
 }
 
-/*
-int setDefault( char *cpu, char *read, char *write )
-{
-  return setUser( NULL, cpu, read, write );
-}
-
-int setUser( char *para, char *cpu, char *read, char *write )
-{
-  ezxml_t cfg = ParseXmlCfg( CONFIG_PATH );
-
-  if( cfg == NULL )
-  {
-    fprintf( stderr, "Error reading config file %s\n", CONFIG_PATH );
-    return 0;
-  }
-  
-  char *tag;
-  if( para == NULL )
-    //tag = (char*)malloc( ( strlen( "default" ) + 1 ) * sizeof( char ) );
-    tag = (char*)malloc( strlen( "default" ) * sizeof( char ) );
-  else  
-    //tag = (char*)malloc( ( strlen( "user" ) + 1 ) * sizeof( char ) );
-    tag = (char*)malloc( strlen( "user" ) * sizeof( char ) );
-    
-  ezxml_t child = SearchTagByName( cfg, tag, para );
-  ezxml_t limit = NULL;
-  
-  if( child == NULL )
-  {
-    child = ezxml_add_child( cfg, tag, strlen( tag ) );
-    
-    if( strcmp( tag, "user" ) == 0 )
-    {
-      child = ezxml_set_attr( child, "name", para );
-      child = ezxml_set_attr( child, "mode", "restrict" );
-    }
-
-    if( cpu )
-    {
-      limit = ezxml_add_child( child, "limit", strlen( "limit" ) );
-      limit = ezxml_set_attr( limit, "name", "cpu" );
-      limit = addLimitArrt( limit, cpu );
-    }
-    
-    if( read )
-    {
-      limit = ezxml_add_child( child, "limit", strlen( "limit" ) );
-      limit = ezxml_set_attr( limit, "name", "read" );
-      limit = addLimitArrt( limit, read );
-    }
-    
-    if( write )
-    {
-      limit = ezxml_add_child( child, "limit", strlen( "limit" ) );
-      limit = ezxml_set_attr( limit, "name", "write" );
-      limit = addLimitArrt( limit, write );
-    }
-  }
-  else
-  {
-    for( limit = ezxml_child( child, "limit" ); limit; limit = limit->next ) 
-    {
-      if( strcmp( ezxml_attr( limit, "name" ), "cpu" ) == 0 )
-        limit = setLimitAttr( limit, cpu );
-      else if( strcmp( ezxml_attr( limit, "name" ), "read" ) == 0 )
-        limit = setLimitAttr( limit, read );
-      else if( strcmp( ezxml_attr( limit, "name" ), "write" ) == 0 )
-        limit = setLimitAttr( limit, write );
-    }
-  }
-  
-  rewrite_cfg( ezxml_toxml( cfg ) );
-  ezxml_free( cfg );
-  reread_cfg_cmd();
-  
-  free( tag );
-
-  return 1;
-}
-*/
 int deleteUser( char *user )
 {
-  ezxml_t cfg = (ezxml_t)ParseXmlCfg( CONFIG_PATH );
+  ezxml_t cfg = (ezxml_t)ParseXmlCfg( (char *)CONFIG_PATH );
 
   if( cfg == NULL )
   {
@@ -464,13 +412,11 @@ int deleteUser( char *user )
   ezxml_t child = (ezxml_t)SearchTagByName( cfg, "user", user );
   if( child != NULL )
   {
-    /*ezxml_t limit = NULL;
-    for( limit = ezxml_child( child, "limit" ); limit; limit = limit->next ) 
-      ezxml_cut( limit );*/
     ezxml_cut(child);
 
-
-    rewrite_cfg( ezxml_toxml( cfg ) );
+    char *xml_tmp = ezxml_toxml( cfg );
+    rewrite_cfg( xml_tmp );
+    free(xml_tmp);
     ezxml_free( cfg );
     reread_cfg_cmd();
   }
@@ -482,7 +428,7 @@ int ignoreUser( char *user )
 {
   unrestrict( user );
   //sleep( 1 );
-  ezxml_t cfg = (ezxml_t)ParseXmlCfg( CONFIG_PATH );
+  ezxml_t cfg = (ezxml_t)ParseXmlCfg( (char *)CONFIG_PATH );
 
   if( cfg == NULL )
   {
@@ -500,7 +446,9 @@ int ignoreUser( char *user )
 
   child = ezxml_set_attr( child, "mode", "ignore" );
   
-  rewrite_cfg( ezxml_toxml( cfg ) );
+  char *xml_tmp = ezxml_toxml( cfg );
+  rewrite_cfg( xml_tmp );
+  free(xml_tmp);
   ezxml_free( cfg );
   reread_cfg_cmd();
 
@@ -509,7 +457,7 @@ int ignoreUser( char *user )
 
 int watchUser( char *user )
 {
-  ezxml_t cfg = (ezxml_t)ParseXmlCfg( CONFIG_PATH );
+  ezxml_t cfg = (ezxml_t)ParseXmlCfg( (char *)CONFIG_PATH );
 
   if( cfg == NULL )
   {
@@ -527,7 +475,9 @@ int watchUser( char *user )
 
   child = ezxml_set_attr( child, "mode", "restrict" );
   
-  rewrite_cfg( ezxml_toxml( cfg ) );
+  char *xml_tmp = ezxml_toxml( cfg );
+  rewrite_cfg( xml_tmp );
+  free(xml_tmp);
   ezxml_free( cfg );
   reread_cfg_cmd();
   
@@ -536,7 +486,7 @@ int watchUser( char *user )
 
 int setLveMode( char *mode )
 {
-  ezxml_t cfg = (ezxml_t)ParseXmlCfg( CONFIG_PATH );
+  ezxml_t cfg = (ezxml_t)ParseXmlCfg( (char *)CONFIG_PATH );
 
   if( cfg == NULL )
   {
@@ -561,7 +511,9 @@ int setLveMode( char *mode )
 
   child = ezxml_set_attr( child, "use", mode );
   
-  rewrite_cfg( ezxml_toxml( cfg ) );
+  char *xml_tmp = ezxml_toxml( cfg );
+  rewrite_cfg( xml_tmp );
+  free(xml_tmp);
   ezxml_free( cfg );
 
   reinit_users_list_cmd();

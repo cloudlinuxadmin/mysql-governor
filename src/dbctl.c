@@ -273,11 +273,13 @@ GList *GetOptList( int argc, char **argv, int *ret )
         _opts->val = optarg;
         
         SplitStr *data = NULL;
-        if( !split( &data, optarg, ',' ) )
+        int res = split( &data, optarg, ',' );
+        if( !res )
         {
           puts( "Error format parameter!" );
           exit( 0 );
         }
+        release_split(data, res);
 
         opts = g_list_append( opts, _opts );
       }
@@ -317,8 +319,8 @@ GList *GetOptList( int argc, char **argv, int *ret )
       case 0:
         break;
       case ':':
-        return opts;
         *ret = 1;
+        return opts;
         break;
       case '?':
         *ret = 1;
@@ -362,8 +364,8 @@ char *GetVal( char opt, GList *list )
 
 int GetCmd( int argc, char **argv )
 {
-  int *ret = (int*)malloc( sizeof( int ) ); 
-  *ret = 0;
+  int ret;
+  ret = 0;
   
   char _tmp_arg[ 11 ]; _tmp_arg[ 0 ] = '\0';
   strlcpy( _tmp_arg, argv[ 1 ], sizeof( _tmp_arg ) );
@@ -375,7 +377,7 @@ int GetCmd( int argc, char **argv )
     if( argc > 2  )
     {
       char *_argv = argv[ 2 ];
-      GList *list = (GList *)GetOptList( argc, argv, ret );
+      GList *list = (GList *)GetOptList( argc, argv, &ret );
       
       if( strcmp( "default", _argv ) == 0 )
         setDefault( (char*)GetVal( 'c', list ), (char*)GetVal( 'r', list ), (char*)GetVal( 'w', list ), (char*)GetVal( 's', list ) );
@@ -425,7 +427,7 @@ int GetCmd( int argc, char **argv )
     if( argc > 2  )
     {
       char *_argv = argv[ 2 ];
-      GList *list = (GList *)GetOptList( argc, argv, ret );
+      GList *list = (GList *)GetOptList( argc, argv, &ret );
   
       restrict_user( _argv, (char*)GetVal( 'l', list ) );
     }
@@ -448,18 +450,17 @@ int GetCmd( int argc, char **argv )
   else if( strcmp( "--lve-mode", _tmp_arg ) == 0 )
   {
     char *_argv = argv[ 2 ];
-    GList *list = (GList *)GetOptList( argc, argv, ret );
+    GList *list = (GList *)GetOptList( argc, argv, &ret );
     setLveMode( (char*)GetVal( 100, list ) );
   }
   else
   {
-    GetOptList( argc, argv, ret );
+    GetOptList( argc, argv, &ret );
 
-    int _ret = *ret; free( ret );
+    int _ret = ret;
     return _ret;
   }
   
-  free( ret );  
   return 0;
 }
 

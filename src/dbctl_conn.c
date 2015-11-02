@@ -46,6 +46,7 @@ int connect_to_server_dbctl()
   len = sizeof( saun.sun_family ) + strlen( saun.sun_path );
   if( connect( s, (struct sockaddr *)&saun, len ) < 0 ) 
   {
+	close(s);
     return -2;
   }
 
@@ -54,9 +55,11 @@ int connect_to_server_dbctl()
 
 int opensock( int *_socket, FILE **in, FILE **out )
 {
-  _socket = connect_to_server_dbctl();
-  *in = fdopen( _socket, "r+");
-  *out = fdopen( _socket, "w");
+  *_socket = connect_to_server_dbctl();
+  if(*_socket>=0){
+	  *in = fdopen( *_socket, "r+");
+	  *out = fdopen( *_socket, "w");
+  }
 
   if( !*in || !*out ) 
   {

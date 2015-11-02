@@ -53,10 +53,10 @@ void g_list_free_full_my(GList *list, GDestroyNotify free_func) {
 	g_list_free(list);
 }
 
-/*Печать дампа параметров в буыер*/
+/*Печать дампа параметров в буфер*/
 void print_stats_to_buffer(char *buffer, stats_limit * s, int size) {
 	if (s) {
-		snprintf(buffer, size, "cpu=%lld read=%lld write=%lld", s->cpu,
+		snprintf(buffer, size, "cpu=%f read=%lld write=%lld", s->cpu,
 				s->read, s->write);
 	} else {
 		snprintf(buffer, size, "Not found");
@@ -156,7 +156,7 @@ void account_restrict(Account * ac, stats_limit_cfg * limit) {
 		snprintf(varValue, _DBGOVERNOR_BUFFER_128, "%ld", getRestrictValue(ac));
 		snprintf(limValue, _DBGOVERNOR_BUFFER_128, "%ld", getLimitValue(ac,
 				limit));
-		snprintf(penValue, _DBGOVERNOR_BUFFER_128, "%ld", ac->restricted + 1);
+		snprintf(penValue, _DBGOVERNOR_BUFFER_128, "%d", ac->restricted + 1);
 		getloadavggov(loadAvg);
 		getvmstat(vmStat);
 		print_stats_to_buffer(dump, getRestrictDump(ac),

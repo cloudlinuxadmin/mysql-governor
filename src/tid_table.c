@@ -216,7 +216,7 @@ void func_remove(gpointer key, tid_table * item, gpointer fd) {
 
 void remove_tid_data_by_fd(int fd) {
 	pthread_mutex_lock(&mtx_tid);
-	g_hash_table_foreach(threads_list, (GFunc) func_remove, (gpointer) &fd);
+	g_hash_table_foreach(threads_list, (GHFunc) func_remove, (gpointer) &fd);
 	pthread_mutex_unlock(&mtx_tid);
 }
 
@@ -306,14 +306,22 @@ int get_cnt_threads( const char *username )
 {
   cnt_user_threads CntUserThreads;
   
-  strcpy( CntUserThreads.username, username );
+  strncpy( CntUserThreads.username, username, USERNAMEMAXLEN-1 );
   CntUserThreads.max_simultaneous_requests = 0;
 
   pthread_mutex_lock( &mtx_tid );
-  g_hash_table_foreach( threads_list, (GFunc)func_calc_threads, (gpointer)&CntUserThreads );
+  g_hash_table_foreach( threads_list, (GHFunc)func_calc_threads, (gpointer)&CntUserThreads );
   pthread_mutex_unlock( &mtx_tid );
 
   return CntUserThreads.max_simultaneous_requests;
+}
+
+void lock_tid_data(){
+	pthread_mutex_lock(&mtx_tid);
+}
+
+void unlock_tid_data(){
+	pthread_mutex_unlock(&mtx_tid);
 }
 
 #ifdef TEST

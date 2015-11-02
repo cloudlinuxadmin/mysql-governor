@@ -186,7 +186,7 @@ void *get_data_from_client(void *data) {
 	struct sockaddr_un fsaun;
 	struct timespec cur_tm;
 	double old_tm = 0.0, new_tm = 0.0;
-	int fromlen = sizeof((struct sockaddr *) &fsaun);
+	int fromlen = sizeof(fsaun);
 	nfds = 1;
 	fds = (struct pollfd *) calloc(1, nfds * sizeof(struct pollfd));
 	fds->fd = get_soket();
@@ -195,7 +195,7 @@ void *get_data_from_client(void *data) {
 
 	struct governor_config data_cfg;
 
-	struct sigaction sa;
+	struct sigaction sa = {0};
 	sigset_t newset;
 	sigemptyset( &newset );
 	sigaddset( &newset, SIGHUP );
@@ -333,13 +333,13 @@ void *get_data_from_client(void *data) {
 #endif
 				client_data message;
 				//TODO check this code twice
-				fcntl((fds + i)->fd, F_SETFL,
+				int retval, retval_fcntl;
+				retval_fcntl = fcntl((fds + i)->fd, F_SETFL,
 						fcntl((fds + i)->fd, F_GETFL) | O_NONBLOCK);
-				int retval;
 				//retval = recv((fds + i)->fd, &message, sizeof(message), 0);
 				retval = recv_wrapper((fds + i)->fd, &message, sizeof(message),
 						0);
-				if (retval <= 0) {
+				if (retval <= 0 || retval_fcntl<0) {
 					remove_tid_data_by_fd((fds + i)->fd);
 					if (retval == 0) {
 #ifdef TEST
@@ -367,7 +367,7 @@ void *get_data_from_client(void *data) {
 								_DBGOVERNOR_BUFFER_2048,
 								"Received info descriptor %d TYPE %d, WATCH TID %d, USER NAME %s, CPU %ld, WRITE %ld, READ %ld",
 								data_cfg.log_mode,
-								(fds + nfds)->fd, message.type, message.tid, message.username, message.cpu, message.write, message.read);
+								(fds + i)->fd, message.type, message.tid, message.username, message.cpu, message.write, message.read);
 					}
 #ifdef TEST
 					//printf("Get cpu %ld, tid %d, tm %f, type %d\n", message.cpu, message.tid, (double)message.update_time + (double)message.naoseconds /(double) SEC2NANO, message.type);
@@ -462,6 +462,7 @@ void chek_user_perf(gpointer key, tid_table * item, gpointer user_data) {
 		//printf("Get cpu1 %ld, tid %d, tm %f\n", item1.utime + item1.stime, kkey, new_tm);
 #endif
 
+		lock_tid_data();
 		clac_stats_difference_inner_add_to_counters(item1.utime + item1.stime,
 				item2.read_bytes, item2.write_bytes, item);
 		//add_new_stats(item->username, &st, get_current_tick());
@@ -470,6 +471,7 @@ void chek_user_perf(gpointer key, tid_table * item, gpointer user_data) {
 		item->write = item2.write_bytes;
 		item->update_time = cur_tm.tv_sec;
 		item->naoseconds = cur_tm.tv_nsec;
+		unlock_tid_data();
 
 		//add_new_tid_data2(*kkey, item);
 
@@ -488,10 +490,11 @@ void monitor_data_from_client(void *data) {
 	struct timespec cur_tm;
 	clock_gettime(CLOCK_REALTIME, &cur_tm);
 	struct timespec *tm = malloc(sizeof(struct timespec));
-	tm->tv_sec = cur_tm.tv_sec;
-	tm->tv_nsec = cur_tm.tv_nsec;
-	if (tm)
+	if (tm) {
+		tm->tv_sec = cur_tm.tv_sec;
+		tm->tv_nsec = cur_tm.tv_nsec;
 		proceed_tid_data((GHFunc) chek_user_perf, (gpointer) tm);
+	}
 	free(tm);
 }
 

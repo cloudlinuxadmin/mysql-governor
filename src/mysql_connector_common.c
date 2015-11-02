@@ -295,8 +295,8 @@ int db_close() {
 //Unfreaze all accounts.
 void unfreaze_all(MODE_TYPE debug_mode) {
 	char sql_buffer[_DBGOVERNOR_BUFFER_8192];
-	snprintf(sql_buffer, _DBGOVERNOR_BUFFER_2048,
-			QUERY_USER_CONN_LIMIT_UNFREEZE, (unsigned int) -1);
+	snprintf(sql_buffer, _DBGOVERNOR_BUFFER_2048-1,
+			QUERY_USER_CONN_LIMIT_UNFREEZE, (unsigned long) -1);
 	if (db_mysql_exec_query(sql_buffer, &mysql_do_command,
 			debug_mode))
 		return;
@@ -315,8 +315,8 @@ void unfreaze_lve(MODE_TYPE debug_mode) {
 void unfreaze_daily(MODE_TYPE debug_mode) {
 	char buffer[_DBGOVERNOR_BUFFER_2048];
 	if(mysql_do_command == NULL) return;
-	snprintf(buffer, _DBGOVERNOR_BUFFER_2048,
-			QUERY_USER_CONN_LIMIT_UNFREEZE_DAILY, (unsigned int) -1);
+	snprintf(buffer, _DBGOVERNOR_BUFFER_2048-1,
+			QUERY_USER_CONN_LIMIT_UNFREEZE_DAILY, (unsigned long) -1);
 	if (db_mysql_exec_query(buffer, &mysql_do_command, debug_mode))
 		return;
 	flush_user_priv(debug_mode);
@@ -397,8 +397,8 @@ void update_user_limit_no_flush(char *user_name, unsigned int limit,
 
 	(*_mysql_real_escape_string)(mysql_do_command, user_name_alloc, user_name,
 			strlen(user_name));
-	snprintf(sql_buffer, _DBGOVERNOR_BUFFER_8192, QUERY_USER_CONN_LIMIT,
-			(int) limit, user_name_alloc);
+	snprintf(sql_buffer, _DBGOVERNOR_BUFFER_8192-1, QUERY_USER_CONN_LIMIT,
+			(unsigned long)limit, user_name_alloc);
 	if (db_mysql_exec_query(sql_buffer, &mysql_do_command, debug_mode)) {
 		if (debug_mode != DEBUG_MODE) {
 			WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
@@ -491,7 +491,7 @@ void kill_query_by_id(long id, MODE_TYPE debug_mode, MYSQL ** mysql_internal) {
     get_config_data( &data_cfg );
     if(*mysql_internal==NULL) return;
 
-	snprintf(sql_buffer, _DBGOVERNOR_BUFFER_8192, QUERY_KILL_USER_QUERY_ID, id);
+	snprintf(sql_buffer, _DBGOVERNOR_BUFFER_8192-1, QUERY_KILL_USER_QUERY_ID, id);
 	if (db_mysql_exec_query(sql_buffer, mysql_internal, debug_mode)) {
 
 		if (debug_mode != DEBUG_MODE) {
@@ -768,22 +768,22 @@ int check_mysql_version(MODE_TYPE debug_mode) {
 			lengths = (*_mysql_fetch_lengths)(res);
 			db_mysql_get_string(buffer, row[0], lengths[0], _DBGOVERNOR_BUFFER_2048);
 			if (strstr(buffer, "-cll-lve")) {
-				sprintf(outbuffer, "MySQL version correct %s", buffer);
+				snprintf(outbuffer, _DBGOVERNOR_BUFFER_2048 - 1, "MySQL version correct %s", buffer);
 				WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
 						outbuffer,
 						data_cfg.log_mode);
 				(*_mysql_free_result)(res);
 				if(strstr(buffer, "-cll-lve-plg")){
 					is_plugin_version = 1;
-					sprintf(outbuffer, "Governor with plugin mode enabled", buffer);
+					snprintf(outbuffer, _DBGOVERNOR_BUFFER_2048 - 1, "Governor with plugin mode enabled");
 								WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
 								outbuffer,
 								data_cfg.log_mode);
 				}
 				return 1;
 			} else {
-				sprintf(
-						outbuffer,
+				snprintf(
+						outbuffer, _DBGOVERNOR_BUFFER_2048 - 1,
 						"Update your MySQL to CLL version from repo.cloudlinux.com. Current is %s",
 						buffer);
 				WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
@@ -899,28 +899,25 @@ void log_user_queries( char *user_name, MODE_TYPE debug_mode )
 
   if( create_dir() && counts > 0 )
   {
-    snprintf( file_name, USERNAMEMAXLEN + 1 + 10, "%s.%d", user_name, timestamp );
+    snprintf( file_name, USERNAMEMAXLEN + 1 + 10, "%s.%lld", user_name, timestamp );
     log_queries = fopen( file_name, "w" );
+    if(log_queries!=NULL){
     while( ( row = (*_mysql_fetch_row)( res ) ) )
     {
-      if( row )
-      {
-        if( strcmp( row[ 1 ], user_name ) == 0 )
+         if( strcmp( row[ 1 ], user_name ) == 0 )
         {
           lengths = (*_mysql_fetch_lengths)( res );
           db_mysql_get_string( buffer, row[ 7 ], lengths[ 7 ], _DBGOVERNOR_BUFFER_8192 );
           fprintf( log_queries, "%s\n", buffer );
         }
-      }
-      else
-      {
-        (*_mysql_free_result)( res );
-        WRITE_LOG( NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,  "No queries retrieved", data_cfg.log_mode );
-        fclose( log_queries );
-        return;
-      }
+
     }
     fclose( log_queries );
+  } else {
+	  (*_mysql_free_result)( res );
+	  WRITE_LOG( NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,  "Can't open file %s", data_cfg.log_mode, file_name );
+	  return;
+  }
   }
   (*_mysql_free_result)( res );
 }

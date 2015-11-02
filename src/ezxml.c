@@ -359,7 +359,7 @@ short ezxml_internal_dtd(ezxml_root_t root, char *s, size_t len)
             if (! *t) { ezxml_err(root, t, "unclosed <!ATTLIST"); break; }
             if (*(s = t + strcspn(t, EZXML_WS ">")) == '>') continue;
             else *s = '\0'; // null terminate tag name
-            for (i = 0; root->attr[i] && strcmp(n, root->attr[i][0]); i++);
+            for (i = 0; root->attr[i] && strcmp((n?n:""), root->attr[i][0]); i++);
 
             while (*(n = ++s + strspn(s, EZXML_WS)) && *n != '>') {
                 if (*(s = n + strcspn(n, EZXML_WS))) *s = '\0'; // attr name
@@ -641,11 +641,11 @@ ezxml_t ezxml_parse_fd(int fd)
 {
     ezxml_root_t root;
     struct stat st;
-    size_t l;
-    void *m;
+    int l;
+    void *m = NULL;
 
     if (fd < 0) return NULL;
-    fstat(fd, &st);
+    if(fstat(fd, &st) < 0) return NULL;
 
 #ifndef EZXML_NOMMAP
     l = (st.st_size + sysconf(_SC_PAGESIZE) - 1) & ~(sysconf(_SC_PAGESIZE) -1);
@@ -658,10 +658,18 @@ ezxml_t ezxml_parse_fd(int fd)
     }
     else { // mmap failed, read file into memory
 #endif // EZXML_NOMMAP
-        l = read(fd, m = malloc(st.st_size), st.st_size);
-  	    
-        root = (ezxml_root_t)ezxml_parse_str(m, l);
-        root->len = -1; // so we know to free s in ezxml_free()
+    	m = malloc(st.st_size);
+    	if(m){
+         l = read(fd, m, st.st_size);
+
+         if(l>=0){
+           root = (ezxml_root_t)ezxml_parse_str(m, (size_t)l);
+           root->len = -1; // so we know to free s in ezxml_free()
+         } else {
+        	 free(m);
+        	 return NULL;
+         }
+    	} else return NULL;
 #ifndef EZXML_NOMMAP
     }
 #endif // EZXML_NOMMAP

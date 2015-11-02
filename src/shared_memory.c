@@ -196,7 +196,7 @@ int delete_user_from_list(char *username) {
 					sem_post(sem);
 					return 0;
 				}
-				sem_post(sem);
+				//sem_post(sem);
 			}
 		}
 	}

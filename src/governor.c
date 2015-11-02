@@ -110,29 +110,36 @@ int createPidFile_III(const char *pidFile_III, int flags_III) {
 	 fcntl() to set the close-on-exec flag after opening the file */
 
 	flags_III = fcntl(fd, F_GETFD); /* Fetch flags */
-	if (flags_III == -1)
+	if (flags_III == -1){
+		close(fd);
 		return -1;
+	}
 
 	flags_III |= FD_CLOEXEC; /* Turn on FD_CLOEXEC */
 
-	if (fcntl(fd, F_SETFD, flags_III) == -1) /* Update flags */
+	if (fcntl(fd, F_SETFD, flags_III) == -1) {/* Update flags */
+		close(fd);
 		return -1;
+	}
 
 	if (lockRegion_III(fd, F_WRLCK, SEEK_SET, 0, 0) == -1) {
-		if (errno == EAGAIN || errno == EACCES)
-			return -1;
-		else
+			close(fd);
 			return -1;
 	}
 
-	if (ftruncate(fd, 0) == -1)
+	if (ftruncate(fd, 0) == -1){
+		close(fd);
 		return -1;
+	}
 
 	snprintf(buf, BUF_SIZE_III, "%ld\n", (long) getpid());
-	if (write(fd, buf, strlen(buf)) != strlen(buf))
+	if (write(fd, buf, strlen(buf)) != strlen(buf)){
+		close(fd);
 		return -1;
+	}
 
-	return fd;
+	close(fd);
+	return 0;
 }
 
 void becameDaemon( int self_supporting ) {

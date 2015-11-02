@@ -22,7 +22,6 @@ typedef struct rest_levels
   char level4;
 }DbCtlRestLevels;
 
-int restrict_def( DbCtlRestLevels levels, char *timeout, char *user_max_connections );
 int restrict_user( char *user, char *level );
 int unrestrict( char *user );
 int unrestrict_all( void );

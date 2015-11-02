@@ -17,14 +17,12 @@
 
 #include "dbctl_cfg.h"
 
-GArray *FoundTag = NULL;
-DbCtlFoundTag *found_tag = NULL;
-DbCtlLimitAttr *dbctl_l_attr = NULL;
-char *key_ = NULL, *val_ = NULL,
-     *key_l = NULL, *val_l = NULL;
+GPtrArray *FoundTag = NULL;
+#define SIZEOF_OUTPUT_BUFFER 512
 
-char *get_mb_str( char *s )
+char *get_mb_str( char *s, char *buf )
 {
+  int alloc = 0;
   int _len = strlen( s );
   if( _len > 6 )
     s[ _len - 6 ] = '\0';
@@ -35,9 +33,14 @@ char *get_mb_str( char *s )
     s = (char*)malloc( sizeof( char ) * 2 );
     s[ 0 ] = '0';
     s[ 1 ] = '\0';
+    alloc = 1;
   }
   
-  return s;
+  strncpy(buf, s, SIZEOF_OUTPUT_BUFFER - 1);
+
+  if(alloc) free(s);
+
+  return buf;
 }
 
 char *GetAttr( GHashTable *attr, char *name_attr )
@@ -49,13 +52,13 @@ char *GetAttr( GHashTable *attr, char *name_attr )
     return NULL;
 }
 
-char *GetLimitAttr( GArray *limit_attr, char *name_limit, char *name_attr )
+char *GetLimitAttr( GPtrArray *limit_attr, char *name_limit, char *name_attr )
 {
   int i = 0;
 
   for( ; i < limit_attr->len; i++ )
   {
-    DbCtlLimitAttr *attr = g_array_index( limit_attr, DbCtlLimitAttr*, i );
+    DbCtlLimitAttr *attr = g_ptr_array_index( limit_attr, i );
     if( strcmp( attr->l_name, name_limit ) == 0 )
     {
       if( strcmp( name_attr, "current" ) == 0 ) return attr->l_current;
@@ -91,9 +94,21 @@ ezxml_t ParseXmlCfg( char *file_name )
   return ezxml_parse_file( file_name );
 }
 
+void found_tag_key_destroyed(gpointer data) {
+ free(data);
+}
+
+void found_tag_data_destroyed(gpointer data) {
+ free(data);
+}
+
 void ReadCfg( char *file_name, char *tag )
 {
-  FoundTag = g_array_new( FALSE, FALSE, sizeof( DbCtlFoundTag* ) );
+  char *key_ = NULL, *val_ = NULL;
+  char *key_l = NULL, *val_l = NULL;
+  DbCtlFoundTag *found_tag = NULL;
+  DbCtlLimitAttr *dbctl_l_attr = NULL;
+  FoundTag = g_ptr_array_new();
   
   ezxml_t cfg, child, limit;
   cfg = ezxml_parse_file( file_name );
@@ -106,8 +121,8 @@ void ReadCfg( char *file_name, char *tag )
   for( child = ezxml_child( cfg, tag ); child; child = child->next ) 
   {
     found_tag = (DbCtlFoundTag*)malloc( sizeof( DbCtlFoundTag ) );
-    strcpy( found_tag->tag, tag );
-    found_tag->attr = g_hash_table_new( g_str_hash, g_str_equal );
+    strncpy( found_tag->tag, tag, sizeof(found_tag->tag)-1 );
+    found_tag->attr = g_hash_table_new_full( g_str_hash, g_str_equal,(GDestroyNotify)found_tag_key_destroyed, (GDestroyNotify)found_tag_data_destroyed );
     found_tag->limit_attr = NULL;
     
     char **attr_ = child->attr;
@@ -117,21 +132,24 @@ void ReadCfg( char *file_name, char *tag )
       {
         key_ = malloc( 50 * sizeof( char ) );
         val_ = malloc( 50 * sizeof( char ) );
-        strcpy( key_, *attr_ ); attr_++;
+        strncpy( key_, *attr_, 49 ); attr_++;
         if( *attr_ )
         {
-          strcpy( val_, *attr_ );
+          strncpy( val_, *attr_ , 49 );
           g_hash_table_insert( found_tag->attr, key_, val_ );
         }
-        else  
+        else {
+          free(key_);
+          free(val_);
           break;
+        }
         attr_++;
       }
       else  
         break;
     }
 
-    found_tag->limit_attr = g_array_new( FALSE, FALSE, sizeof( DbCtlLimitAttr* ) );
+    found_tag->limit_attr = g_ptr_array_new();
     for( limit = ezxml_child( child, "limit" ); limit; limit = limit->next ) 
     {
       dbctl_l_attr = (DbCtlLimitAttr*)malloc( sizeof( DbCtlLimitAttr ) );
@@ -141,21 +159,21 @@ void ReadCfg( char *file_name, char *tag )
       {
         if( *attr_l )
         {
-          key_l = malloc( 50 * sizeof( char ) );
-          val_l = malloc( 50 * sizeof( char ) );
+          key_l = alloca( 50 * sizeof( char ) );
+          val_l = alloca( 50 * sizeof( char ) );
           strcpy( key_l, *attr_l ); attr_l++;
           if( *attr_l )
           {
             if( strcmp( key_l, "name" ) == 0 ) 
-              strcpy( dbctl_l_attr->l_name, *attr_l );
+              strncpy( dbctl_l_attr->l_name, *attr_l, sizeof(dbctl_l_attr->l_name)-1 );
             else if( strcmp( key_l, "current" ) == 0 ) 
-              strcpy( dbctl_l_attr->l_current, *attr_l );
+              strncpy( dbctl_l_attr->l_current, *attr_l , sizeof(dbctl_l_attr->l_current)-1);
             else if( strcmp( key_l, "short" ) == 0 ) 
-              strcpy( dbctl_l_attr->l_short, *attr_l );
+              strncpy( dbctl_l_attr->l_short, *attr_l, sizeof(dbctl_l_attr->l_short)-1 );
             else if( strcmp( key_l, "mid" ) == 0 ) 
-              strcpy( dbctl_l_attr->l_mid, *attr_l );
+              strncpy( dbctl_l_attr->l_mid, *attr_l, sizeof(dbctl_l_attr->l_mid)-1 );
             else if( strcmp( key_l, "long" ) == 0 ) 
-              strcpy( dbctl_l_attr->l_long, *attr_l );
+              strncpy( dbctl_l_attr->l_long, *attr_l, sizeof(dbctl_l_attr->l_long)-1 );
           }
           else  
             break;
@@ -164,9 +182,9 @@ void ReadCfg( char *file_name, char *tag )
         else
           break;
       }
-      g_array_append_val( found_tag->limit_attr, dbctl_l_attr );
+      g_ptr_array_add( found_tag->limit_attr, dbctl_l_attr );
     }
-    g_array_append_val( FoundTag, found_tag );
+    g_ptr_array_add( FoundTag, found_tag );
   }
   
   ezxml_free( cfg );
@@ -174,14 +192,22 @@ void ReadCfg( char *file_name, char *tag )
 //  ezxml_free( limit );
 }
 
-GArray *GetCfg()
+GPtrArray *GetCfg()
 {
   return FoundTag;
 }
 
 void FreeCfg( void )
 {
-  g_array_free( FoundTag, FALSE );
+  int i = 0;
+  for( ; i < FoundTag->len; i++ ){
+	DbCtlFoundTag *found_tag_ = g_ptr_array_index( FoundTag, i );
+	if(found_tag_->attr) g_hash_table_destroy(found_tag_->attr);
+	if(found_tag_->limit_attr){
+		g_ptr_array_free(found_tag_->limit_attr, TRUE);
+	}
+  }
+  g_ptr_array_free( FoundTag, TRUE );
 }
 
 //-------------------------------------------------
@@ -193,16 +219,17 @@ gint ComparePrintByName( gpointer a, gpointer b )
   return strcmp( x->name, y->name );
 }
 
-char *GetDefault( GArray *tags )
+char *GetDefault( GPtrArray *tags )
 {
-  char *buffer= (char*)malloc( 120 * sizeof( char ) );
+  char mb_buffer[SIZEOF_OUTPUT_BUFFER] = {0};
+  char *buffer= (char*)alloca( 120 * sizeof( char ) );
 
-  DbCtlFoundTag *found_tag_ = g_array_index( tags, DbCtlFoundTag*, 0 );
+  DbCtlFoundTag *found_tag_ = g_ptr_array_index( tags, 0 );
   if( !found_tag_->limit_attr ) return "Error\n";
   
-  char *buffer_cpu = (char*)malloc( 25 * sizeof( char ) );
-  char *buffer_read = (char*)malloc( 29 * sizeof( char ) );
-  char *buffer_write = (char*)malloc( 29 * sizeof( char ) );
+  char *buffer_cpu = (char*)alloca( 25 * sizeof( char ) );
+  char *buffer_read = (char*)alloca( 29 * sizeof( char ) );
+  char *buffer_write = (char*)alloca( 29 * sizeof( char ) );
   char digit_buf_c[ G_ASCII_DTOSTR_BUF_SIZE ];
   char digit_buf_s[ G_ASCII_DTOSTR_BUF_SIZE ];
   char digit_buf_m[ G_ASCII_DTOSTR_BUF_SIZE ];
@@ -213,15 +240,15 @@ char *GetDefault( GArray *tags )
       cpu_mid = atoi( GetLimitAttr( found_tag_->limit_attr, "cpu", "mid" ) ),
       cpu_long = atoi( GetLimitAttr( found_tag_->limit_attr, "cpu", "long" ) );
 
-  int read_curr = atoi( get_mb_str( GetLimitAttr( found_tag_->limit_attr, "read", "current" ) ) ),
-      read_short = atoi( get_mb_str( GetLimitAttr( found_tag_->limit_attr, "read", "short" ) ) ),
-      read_mid = atoi( get_mb_str( GetLimitAttr( found_tag_->limit_attr, "read", "mid" ) ) ),
-      read_long = atoi( get_mb_str( GetLimitAttr( found_tag_->limit_attr, "read", "long" ) ) );
+  int read_curr = atoi( get_mb_str( GetLimitAttr( found_tag_->limit_attr, "read", "current" ), mb_buffer ) ),
+      read_short = atoi( get_mb_str( GetLimitAttr( found_tag_->limit_attr, "read", "short" ), mb_buffer ) ),
+      read_mid = atoi( get_mb_str( GetLimitAttr( found_tag_->limit_attr, "read", "mid" ), mb_buffer ) ),
+      read_long = atoi( get_mb_str( GetLimitAttr( found_tag_->limit_attr, "read", "long" ), mb_buffer ) );
 
-  int write_curr = atoi( get_mb_str( GetLimitAttr( found_tag_->limit_attr, "write", "current" ) ) ),
-      write_short = atoi( get_mb_str( GetLimitAttr( found_tag_->limit_attr, "write", "short" ) ) ),
-      write_mid = atoi( get_mb_str( GetLimitAttr( found_tag_->limit_attr, "write", "mid" ) ) ),
-      write_long = atoi( get_mb_str( GetLimitAttr( found_tag_->limit_attr, "write", "long" ) ) );
+  int write_curr = atoi( get_mb_str( GetLimitAttr( found_tag_->limit_attr, "write", "current" ), mb_buffer ) ),
+      write_short = atoi( get_mb_str( GetLimitAttr( found_tag_->limit_attr, "write", "short" ), mb_buffer ) ),
+      write_mid = atoi( get_mb_str( GetLimitAttr( found_tag_->limit_attr, "write", "mid" ), mb_buffer ) ),
+      write_long = atoi( get_mb_str( GetLimitAttr( found_tag_->limit_attr, "write", "long" ), mb_buffer ) );
 
   snprintf( buffer_cpu, 25, "%s/%s/%s/%s",
                         g_strdup_printf( "%i", cpu_curr ),
@@ -248,19 +275,20 @@ char *GetDefault( GArray *tags )
   return NULL;
 }
 
-char *GetDefaultForUsers( GArray *tags, DbCtlLimitAttr cpu_def,
-                          DbCtlLimitAttr read_def,
-                          DbCtlLimitAttr write_def )
+char *GetDefaultForUsers( GPtrArray *tags, DbCtlLimitAttr *cpu_def,
+                          DbCtlLimitAttr *read_def,
+                          DbCtlLimitAttr *write_def )
 {
+  char mb_buffer[SIZEOF_OUTPUT_BUFFER] = {0};
   int i = 0, cnt_line = 1;
   
   DbCtlPrintList *print_list_t = NULL;
   GList *arr_print_list = NULL;
   for( ; i < tags->len; i++ )
   {
-    char *buffer_name = (char*)malloc( 16 * sizeof( char ) ),
-	       *buffer_data = (char*)malloc( 90 * sizeof( char ) );
-    DbCtlFoundTag *found_tag_ = g_array_index( tags, DbCtlFoundTag*, i );
+    char *buffer_name = (char*)alloca( 16 * sizeof( char ) ),
+	       *buffer_data = (char*)alloca( 90 * sizeof( char ) );
+    DbCtlFoundTag *found_tag_ = g_ptr_array_index( tags, i );
     char *name = GetUserName( found_tag_->attr );
     char *mode = GetAttr( found_tag_->attr, "mode" );
     char digit_buf_c[ G_ASCII_DTOSTR_BUF_SIZE ];
@@ -275,57 +303,74 @@ char *GetDefaultForUsers( GArray *tags, DbCtlLimitAttr cpu_def,
           cpu_mid = atoi( GetLimitAttr( found_tag_->limit_attr, "cpu", "mid" ) ),
           cpu_long = atoi( GetLimitAttr( found_tag_->limit_attr, "cpu", "long" ) );
 
-      int read_curr = atoi( get_mb_str( GetLimitAttr( found_tag_->limit_attr, "read", "current" ) ) ),
-          read_short = atoi( get_mb_str( GetLimitAttr( found_tag_->limit_attr, "read", "short" ) ) ),
-          read_mid = atoi( get_mb_str( GetLimitAttr( found_tag_->limit_attr, "read", "mid" ) ) ),
-          read_long = atoi( get_mb_str( GetLimitAttr( found_tag_->limit_attr, "read", "long" ) ) );
+      int read_curr = atoi( get_mb_str( GetLimitAttr( found_tag_->limit_attr, "read", "current" ), mb_buffer ) ),
+          read_short = atoi( get_mb_str( GetLimitAttr( found_tag_->limit_attr, "read", "short" ), mb_buffer ) ),
+          read_mid = atoi( get_mb_str( GetLimitAttr( found_tag_->limit_attr, "read", "mid" ), mb_buffer ) ),
+          read_long = atoi( get_mb_str( GetLimitAttr( found_tag_->limit_attr, "read", "long" ), mb_buffer ) );
 
-      int write_curr = atoi( get_mb_str( GetLimitAttr( found_tag_->limit_attr, "write", "current" ) ) ),
-          write_short = atoi( get_mb_str( GetLimitAttr( found_tag_->limit_attr, "write", "short" ) ) ),
-          write_mid = atoi( get_mb_str( GetLimitAttr( found_tag_->limit_attr, "write", "mid" ) ) ),
-          write_long = atoi( get_mb_str( GetLimitAttr( found_tag_->limit_attr, "write", "long" ) ) );
+      int write_curr = atoi( get_mb_str( GetLimitAttr( found_tag_->limit_attr, "write", "current" ), mb_buffer ) ),
+          write_short = atoi( get_mb_str( GetLimitAttr( found_tag_->limit_attr, "write", "short" ), mb_buffer ) ),
+          write_mid = atoi( get_mb_str( GetLimitAttr( found_tag_->limit_attr, "write", "mid" ), mb_buffer ) ),
+          write_long = atoi( get_mb_str( GetLimitAttr( found_tag_->limit_attr, "write", "long" ), mb_buffer ) );
 
-      if( cpu_curr == 0 ) cpu_curr = atoi( cpu_def.l_current );
-      if( cpu_short == 0 ) cpu_short = atoi( cpu_def.l_short );
-      if( cpu_mid == 0 ) cpu_mid = atoi( cpu_def.l_mid );
-      if( cpu_long == 0 ) cpu_long = atoi( cpu_def.l_long );
+      if( cpu_curr == 0 ) cpu_curr = atoi( cpu_def->l_current );
+      if( cpu_short == 0 ) cpu_short = atoi( cpu_def->l_short );
+      if( cpu_mid == 0 ) cpu_mid = atoi( cpu_def->l_mid );
+      if( cpu_long == 0 ) cpu_long = atoi( cpu_def->l_long );
 
-      if( read_curr == 0 ) read_curr = atoi( read_def.l_current );
-      if( read_short == 0 ) read_short = atoi( read_def.l_short );
-      if( read_mid == 0 ) read_mid = atoi( read_def.l_mid );
-      if( read_long == 0 ) read_long = atoi( read_def.l_long );
+      if( read_curr == 0 ) read_curr = atoi( read_def->l_current );
+      if( read_short == 0 ) read_short = atoi( read_def->l_short );
+      if( read_mid == 0 ) read_mid = atoi( read_def->l_mid );
+      if( read_long == 0 ) read_long = atoi( read_def->l_long );
 
-      if( write_curr == 0 ) write_curr = atoi( write_def.l_current );
-      if( write_short == 0 ) write_short = atoi( write_def.l_short );
-      if( write_mid == 0 ) write_mid = atoi( write_def.l_mid );
-      if( write_long == 0 ) write_long = atoi( write_def.l_long );
+      if( write_curr == 0 ) write_curr = atoi( write_def->l_current );
+      if( write_short == 0 ) write_short = atoi( write_def->l_short );
+      if( write_mid == 0 ) write_mid = atoi( write_def->l_mid );
+      if( write_long == 0 ) write_long = atoi( write_def->l_long );
 
       if( name == NULL ) name = GetUserMysqlName( found_tag_->attr );
 
-      print_list_t = (DbCtlPrintList*)malloc( sizeof( DbCtlPrintList ) );
-      print_list_t->name = (char*)malloc( 16 * sizeof( char ) );
-      print_list_t->data = (char*)malloc( 90 * sizeof( char ) );
+      print_list_t = (DbCtlPrintList*)alloca( sizeof( DbCtlPrintList ) );
+      print_list_t->name = (char*)alloca( 16 * sizeof( char ) );
+      print_list_t->data = (char*)alloca( 90 * sizeof( char ) );
 
-      char *buffer_cpu = (char*)malloc( 25 * sizeof( char ) );
-      char *buffer_read = (char*)malloc( 29 * sizeof( char ) );
-      char *buffer_write = (char*)malloc( 29 * sizeof( char ) );
+      char *buffer_cpu = (char*)alloca( 25 * sizeof( char ) );
+      char *buffer_read = (char*)alloca( 29 * sizeof( char ) );
+      char *buffer_write = (char*)alloca( 29 * sizeof( char ) );
 
       snprintf( buffer_cpu, 25,  "%d/%d/%d/%d",
                              cpu_curr,                    //cpu
                              cpu_short,
                              cpu_mid,
                              cpu_long );
+      gchar *tmp_param[4] = {0};
+      tmp_param[0] = g_strdup_printf( "%i", read_curr );
+      tmp_param[1] = g_strdup_printf( "%i", read_short );
+      tmp_param[2] = g_strdup_printf( "%i", read_mid );
+      tmp_param[3] = g_strdup_printf( "%i", read_long );
       snprintf( buffer_read, 29, "%s/%s/%s/%s",
-                            read_curr < 1 ? "<1" : g_strdup_printf( "%i", read_curr ),
-                            read_short < 1 ? "<1" : g_strdup_printf( "%i", read_short ),
-                            read_mid < 1 ? "<1" : g_strdup_printf( "%i", read_mid ),
-                            read_long < 1 ? "<1" : g_strdup_printf( "%i", read_long ) );
+                            read_curr < 1 ? "<1" : tmp_param[0],
+                            read_short < 1 ? "<1" : tmp_param[1],
+                            read_mid < 1 ? "<1" : tmp_param[2],
+                            read_long < 1 ? "<1" : tmp_param[3] );
+      g_free(tmp_param[0]);
+      g_free(tmp_param[1]);
+      g_free(tmp_param[2]);
+      g_free(tmp_param[3]);
+      tmp_param[0] = g_strdup_printf( "%i", write_curr );
+      tmp_param[1] = g_strdup_printf( "%i", write_short );
+      tmp_param[2] = g_strdup_printf( "%i", write_mid );
+      tmp_param[3] = g_strdup_printf( "%i", write_long );
 
       snprintf( buffer_write, 29, "%s/%s/%s/%s",
-                             write_curr < 1 ? "<1" : g_strdup_printf( "%i", write_curr ),
-                             write_short < 1 ? "<1" : g_strdup_printf( "%i", write_short ),
-                             write_mid < 1 ? "<1" : g_strdup_printf( "%i", write_mid ),
-                             write_long < 1 ? "<1" : g_strdup_printf( "%i", write_long ) );
+                             write_curr < 1 ? "<1" : tmp_param[0],
+                             write_short < 1 ? "<1" : tmp_param[1],
+                             write_mid < 1 ? "<1" : tmp_param[2],
+                             write_long < 1 ? "<1" : tmp_param[3] );
+      g_free(tmp_param[0]);
+      g_free(tmp_param[1]);
+      g_free(tmp_param[2]);
+      g_free(tmp_param[3]);
 
       snprintf( print_list_t->name, 16, "%-16s", name );
       snprintf( print_list_t->data, 90, "  %-25s  %-29s     %-29s", buffer_cpu, buffer_read, buffer_write );
@@ -341,12 +386,17 @@ char *GetDefaultForUsers( GArray *tags, DbCtlLimitAttr cpu_def,
 	printf( "%s%s\n", print_list_l_->name, print_list_l_->data );
   }
   
+  if(arr_print_list){
+	  g_list_free(arr_print_list);
+  }
+
   return NULL;
 }
 
 ezxml_t SearchTagByName( ezxml_t cfg, char *name_tag, char *name )
 {
   ezxml_t child;
+  char *key_ = NULL, *val_ = NULL;
   
   for( child = ezxml_child( cfg, name_tag ); child; child = child->next ) 
   {
@@ -357,12 +407,12 @@ ezxml_t SearchTagByName( ezxml_t cfg, char *name_tag, char *name )
     {
       if( *attr_ )
       {
-        key_ = malloc( ( strlen( *attr_ ) + 1 ) * sizeof( char ) );
+        key_ = alloca( ( strlen( *attr_ ) + 1 ) * sizeof( char ) );
         
         strcpy( key_, *attr_ ); attr_++;
         if( *attr_ )
         {
-          val_ = malloc( ( strlen( *attr_ ) + 1 ) * sizeof( char ) );
+          val_ = alloca( ( strlen( *attr_ ) + 1 ) * sizeof( char ) );
           strcpy( val_, *attr_ );
           if( strcmp( key_, "name" ) == 0 && strcmp( val_, name ) == 0 )
             return child;
@@ -397,9 +447,9 @@ void rewrite_cfg( char *data )
 
 void reread_cfg_cmd( void )
 {
-  FILE *in;
-  FILE *out;
-  int _socket;
+  FILE *in = NULL;
+  FILE *out = NULL;
+  int _socket = -1;
 
   if( opensock( &_socket, &in, &out ) )
   {
@@ -421,14 +471,17 @@ void reread_cfg_cmd( void )
     fflush( out );
     
     closesock( _socket, in, out );
+  } else {
+	  closesock( _socket, in, out );
   }
 }
 
+
 void reinit_users_list_cmd( void )
 {
-  FILE *in;
-  FILE *out;
-  int _socket;
+  FILE *in = NULL;
+  FILE *out = NULL;
+  int _socket = -1;
 
   if( opensock( &_socket, &in, &out ) )
   {
@@ -450,5 +503,8 @@ void reinit_users_list_cmd( void )
     fflush( out );
     
     closesock( _socket, in, out );
+  } else {
+
+	  closesock( _socket, in, out );
   }
 }

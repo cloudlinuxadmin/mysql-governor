@@ -245,7 +245,7 @@ void print_stats_cfg(FILE * f, stats_limit_cfg * s) {
 
 static void print_account_limits(gpointer key, gpointer value,
 		gpointer user_data) {
-	fprintf(log, "%s -- ", key);
+	fprintf(log, "%s -- ", (char *)key);
 	print_stats(log, value);
 	fprintf(log, "\n");
 }

@@ -236,7 +236,7 @@ void IncNumberOfRestricts( const char *username , int cause)
     DbGovNumberOfRestricts_ = (statistics_restrict_info*)malloc( sizeof( statistics_restrict_info ) );
     DbGovNumberOfRestricts_->number_of_restricts = 1;
     DbGovNumberOfRestricts_->cause_of_restricts = cause;
-    g_hash_table_insert( DbGovNumberOfRestricts, username, DbGovNumberOfRestricts_ );
+    g_hash_table_insert( DbGovNumberOfRestricts, (gpointer)username, (gpointer)DbGovNumberOfRestricts_ );
   }
 }
 
@@ -507,7 +507,7 @@ static int check_restrict_limit(Account * ac) {
 	return 0;
 }
 
-static account_analyze_limit(gpointer * key, Account * ac, void *data){
+static void account_analyze_limit(gpointer * key, Account * ac, void *data){
 	stats_limit_cfg cfg_buf;
 	stats_limit_cfg *sl = config_get_account_limit(ac->id, &cfg_buf);
 	int restrict_period = 0;
@@ -551,6 +551,7 @@ static account_analyze_limit(gpointer * key, Account * ac, void *data){
 		}
 
 	}
+	return;
 }
 
 void account_analyze(gpointer * key, Account * ac, void *data) {
@@ -583,7 +584,7 @@ void account_analyze(gpointer * key, Account * ac, void *data) {
 				if (!check_restrict(ac))
 					account_unrestrict(ac);
 				else {
-					sprintf(tmp_buf, "No unrestrict yet for %s %d %d\n",
+					sprintf(tmp_buf, "No unrestrict yet for %s %d %ld\n",
 							ac->id, ac->timeout, ac->start_count);
 					WRITE_LOG( NULL,
 							1,
@@ -600,7 +601,7 @@ void account_analyze(gpointer * key, Account * ac, void *data) {
 				ac->info.field_restrict = NO_PERIOD;
 				ac->info.field_level_restrict = NORESTRICT_PARAM2;
 				ac->timeout = 0;
-				sprintf(tmp_buf, "Penalty period is over %s %d %d\n", ac->id,
+				sprintf(tmp_buf, "Penalty period is over %s %d %ld\n", ac->id,
 						ac->timeout, ac->start_count);
 				WRITE_LOG( NULL,
 						1,
@@ -685,8 +686,8 @@ int WriteDbGovStatitrics( void )
   int _size;
 
   time_t timestamp = time( NULL );
-  sprintf( file, "%sgovernor_%d.incomplete", PATH_TO_GOVERNOR_STATS, timestamp );
-  sprintf( file_ts, "%sgovernor.%d", PATH_TO_GOVERNOR_STATS, timestamp );
+  sprintf( file, "%sgovernor_%ld.incomplete", PATH_TO_GOVERNOR_STATS, timestamp );
+  sprintf( file_ts, "%sgovernor.%ld", PATH_TO_GOVERNOR_STATS, timestamp );
 
   dbgov_stats = fopen( file, "w" );
   
@@ -726,7 +727,7 @@ void dbstat_add_to_table( gpointer key, Account *ac, void *data )
   {
     dbgov_statitrics__ = (dbgov_statitrics*)malloc( sizeof( dbgov_statitrics ) );
         
-    strcpy( dbgov_statitrics__->username, ac->id );
+    strncpy( dbgov_statitrics__->username, ac->id, USERNAMEMAXLEN-1 );
     dbgov_statitrics__->max_simultaneous_requests = max_simultaneous_requests;
   
     dbgov_statitrics__->sum_cpu = ac->current.cpu;
@@ -1019,7 +1020,7 @@ void dbctl_restrict_set( gpointer key, Account * ac, void *data )
   }
 
   if(first==1){
-	  us = (User_stats *)g_hash_table_lookup( users, command->options.username );
+	  //us = (User_stats *)g_hash_table_lookup( users, command->options.username );
       if(us) ac = us->account;
   }
 
@@ -1139,7 +1140,7 @@ void dbctl_unrestrict_set( gpointer key, Account * ac, void *data )
     }
     else 
     {
-      sprintf( tmp_buf, "No unrestrict yet for %s %d %d\n",
+      sprintf( tmp_buf, "No unrestrict yet for %s %d %ld\n",
                ac->id, ac->timeout, ac->start_count
              );
       WRITE_LOG( NULL, 1, tmp_buf, _DBGOVERNOR_BUFFER_8192,

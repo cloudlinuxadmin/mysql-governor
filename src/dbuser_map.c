@@ -122,8 +122,8 @@ int get_map_file(struct governor_config *data_cfg) {
 					}
 					UserMap_->uid = 0;
 
-					strcpy(UserMap_->username, username);
-					strcpy(UserMap_->account_name, account_name);
+					strncpy(UserMap_->username, username, sizeof(UserMap_->username)-1);
+					strncpy(UserMap_->account_name, account_name, sizeof(UserMap_->account_name)-1);
 					int tmp_uid = data_cfg->separate_lve ? atoi(uid) : BAD_LVE;
 
 					if (data_cfg->log_mode == DEBUG_MODE) {

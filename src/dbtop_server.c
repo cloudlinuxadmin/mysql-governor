@@ -67,6 +67,7 @@ void *run_server(void *data) {
 				"Can't server bind(DBTOP)", data_cfg.log_mode);
 		close_log();
 		close_restrict_log();
+		close(s);
 		exit(EXIT_FAILURE);
 	}
 
@@ -75,10 +76,12 @@ void *run_server(void *data) {
 				"Can't server listen(DBTOP)", data_cfg.log_mode);
 		close_log();
 		close_restrict_log();
+		close(s);
 		exit(EXIT_FAILURE);
 	}
 	/* Start daemon accept cycle */
 	accept_connections(s);
+	close(s);
 
 	return NULL;
 }
@@ -97,8 +100,21 @@ void *run_dbtop_command(void *data) {
 		}
 	}
 	int new_record = 1, get_response;
-	fwrite_wrapper(&new_record, sizeof(int), 1, out);
-	fread_wrapper(&get_response, sizeof(int), 1, out);
+	size_t resp = 0;
+	resp = fwrite_wrapper(&new_record, sizeof(int), 1, out);
+	if(!resp){
+		fflush(out);
+		fclose(out);
+		close(ns);
+		return NULL;
+	}
+	resp = fread_wrapper(&get_response, sizeof(int), 1, out);
+	if(!resp){
+		fflush(out);
+		fclose(out);
+		close(ns);
+		return NULL;
+	}
 	g_hash_table_foreach((GHashTable *) get_accounts(), (GHFunc) send_account,
 			out);
 	new_record = 2;
@@ -112,7 +128,7 @@ void *run_dbtop_command(void *data) {
 void accept_connections(int s) {
 	int ns, result;
 	struct sockaddr_un fsaun;
-	int fromlen = sizeof((struct sockaddr *) &fsaun);
+	int fromlen = sizeof(fsaun);
 	pthread_t thread;
 	int ret;
 	FILE *in, *out;
@@ -199,7 +215,10 @@ void *run_dbctl_command( void *data )
   else if( command.command == RESTRICT )
   {
     if( !data_cfg.is_gpl ){
-      if( data_cfg.all_lve || !data_cfg.use_lve ) return; //lve use=all or off
+      if( data_cfg.all_lve || !data_cfg.use_lve ) {
+    	  close(ns);
+    	  return NULL; //lve use=all or off
+      }
       lock_acc();
       g_hash_table_foreach( (GHashTable *)get_accounts(), (GHFunc)dbctl_restrict_set, &command );
       unlock_acc();
@@ -208,7 +227,7 @@ void *run_dbctl_command( void *data )
   else if( command.command == UNRESTRICT )
   {
     if( !data_cfg.is_gpl ) {
-      if( data_cfg.all_lve || !data_cfg.use_lve ) return; //lve use=all or off
+      if( data_cfg.all_lve || !data_cfg.use_lve ) return NULL; //lve use=all or off
       lock_acc();
       g_hash_table_foreach( (GHashTable *)get_accounts(), (GHFunc)dbctl_unrestrict_set, &command );
       unlock_acc();
@@ -217,7 +236,7 @@ void *run_dbctl_command( void *data )
   else if( command.command == UNRESTRICT_A )
   {
     if( !data_cfg.is_gpl ) {
-      if( data_cfg.all_lve || !data_cfg.use_lve ) return; //lve use=all or off
+      if( data_cfg.all_lve || !data_cfg.use_lve ) return NULL; //lve use=all or off
       lock_acc();
       g_hash_table_foreach( (GHashTable *)get_accounts(), (GHFunc)dbctl_unrestrict_all_set, NULL );
       unlock_acc();
@@ -258,7 +277,7 @@ void *run_writer(void *data) {
 		out = fdopen((int) ns, "w+");
 		if(!out) {
 			close(ns);
-			return;
+			return NULL;
 		}
 	}
 	int new_record = 1, get_response;
@@ -288,7 +307,7 @@ void send_account(const char *key, Account * ac, FILE * out) {
 			return;
 		dbtop_exch dt;
 		lock_acc();	
-		strncpy(dt.id, ac->id, sizeof(username_t));
+		strncpy(dt.id, ac->id, sizeof(username_t)-1);
 		memcpy(&dt.current, &ac->current, sizeof(Stats));
 		memcpy(&dt.short_average, &ac->short_average, sizeof(Stats));
 		memcpy(&dt.mid_average, &ac->mid_average, sizeof(Stats));

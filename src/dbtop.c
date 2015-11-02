@@ -93,6 +93,7 @@ int connect_to_server_dbtop() {
 	len = sizeof(saun.sun_family) + strlen(saun.sun_path);
 
 	if (connect(s, (struct sockaddr *) &saun, len) < 0) {
+		close(s);
 		return -2;
 	}
 
@@ -343,13 +344,13 @@ void formatIntNumber(long long int number, char *formatString, int len) {
 		tmpNumber /= 10;
 	};
 	if (needChars < len) {
-		sprintf(formatString, "%d", number);
+		sprintf(formatString, "%lld", number);
 	} else if ((needChars - 3) < (len - 1)) {
-		sprintf(formatString, "%dK", (number + 500) / 1000);
+		sprintf(formatString, "%lldK", (number + 500) / 1000);
 	} else if ((needChars - 6) < (len - 1)) {
-		sprintf(formatString, "%dM", (number + 500000) / 1000000);
+		sprintf(formatString, "%lldM", (number + 500000) / 1000000);
 	} else if ((needChars - 9) < (len - 1)) {
-		sprintf(formatString, "%dG", (number + 500000000) / 1000000000);
+		sprintf(formatString, "%lldG", (number + 500000000) / 1000000000);
 	} else {
 		sprintf(formatString, "Ovf");
 	}
@@ -620,7 +621,7 @@ void printHeader()
 
 	sprintf(
 			  header_buf,
-			  " +User%c          .+cpu(%)  %c         . +read(B/s)%c        . +write(B/s)   %c . CAUSE    ",
+			  " +User%c          .+cpu(%%)  %c         . +read(B/s)%c        . +write(B/s)   %c . CAUSE    ",
 			  sort_type == 3 ? '*' : ' ', !sort_type ? '*' : ' ', sort_type
 				  	    == 1 ? '*' : ' ', sort_type == 2 ? '*' : ' ' );
 	printString( header_buf, (is_colorize) ? A_NORMAL : A_REVERSE, getW(),
@@ -748,6 +749,7 @@ read_keys() {
         }
 
 	}
+	return NULL;
 }
 
 void *
@@ -761,8 +763,11 @@ screen_regenerate() {
 	fclose(in);
 	fclose(out);
 	_socket = connect_to_server_dbtop();
-	in = fdopen(_socket, "r+");
-	out = fdopen(_socket, "w");
+	if(_socket>=0){
+		in = fdopen(_socket, "r+");
+		out = fdopen(_socket, "w");
+	}
+	return NULL;
 }
 
 static void end_pgm(int sig) {
@@ -806,8 +811,10 @@ int main(int argc, char *argv[]) {
 		}
 	}
 	_socket = connect_to_server_dbtop();
-	in = fdopen(_socket, "r+");
-	out = fdopen(_socket, "w");
+	if(_socket>=0){
+		in = fdopen(_socket, "r+");
+		out = fdopen(_socket, "w");
+	}
 	if (!in || !out) {
 		printf("Can't connect to socket. Maybe governor is not started\n");
 		exit(-1);

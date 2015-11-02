@@ -31,7 +31,7 @@ typedef struct dbctl_found_tag
 {
   char tag[ 256 ];
   GHashTable *attr;
-  GArray *limit_attr;
+  GPtrArray *limit_attr;
 }DbCtlFoundTag;
 
 typedef struct dbctl_print_list
@@ -42,22 +42,26 @@ typedef struct dbctl_print_list
 
 void ReadCfg( char *file_name, char *tag );
 void FreeCfg( void );
-GArray *GetCfg();
+GPtrArray *GetCfg();
 
 //---------------------------------------------------
 ezxml_t SearchTagByName( ezxml_t cfg, char *name_tag, char *name );
 
 char *GetUserName( GHashTable *attr );
 char *GetAttr( GHashTable *attr, char *name_attr );
-char *GetLimitAttr( GArray *limit_attr, char *name_limit, char *name_attr );
-char *GetDefault( GArray *tags );
-char *GetDefaultForUsers( GArray *tags, DbCtlLimitAttr cpu_def,
-DbCtlLimitAttr read_def,
-DbCtlLimitAttr write_def );
+char *GetLimitAttr( GPtrArray *limit_attr, char *name_limit, char *name_attr );
+char *GetDefault( GPtrArray *tags );
+char *GetDefaultForUsers( GPtrArray *tags, DbCtlLimitAttr *cpu_def,
+DbCtlLimitAttr *read_def,
+DbCtlLimitAttr *write_def );
+ezxml_t ParseXmlCfg( char *file_name );
 
 //---------------------------------------------------
 void rewrite_cfg( char *data );
 void reread_cfg_cmd( void );
 void reinit_users_list_cmd( void );
+
+void found_tag_data_destroyed(gpointer data);
+void found_tag_key_destroyed(gpointer data);
 
 #endif // _CFG_H
