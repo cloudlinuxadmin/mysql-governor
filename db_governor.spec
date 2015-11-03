@@ -1,5 +1,5 @@
 %define g_version   1.1
-%define g_release   5
+%define g_release   6
 %define g_key_library 5
 
 %if %{undefined _unitdir}
@@ -373,6 +373,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Tue Nov 03 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-6
+- MYSQLG-82: fixed bugs reported by coverity
+
 * Thu Oct 08 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-5
 - Adde LVE_NO_UBC on enter
 
