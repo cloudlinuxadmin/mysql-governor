@@ -360,7 +360,7 @@ short ezxml_internal_dtd(ezxml_root_t root, char *s, size_t len)
             if (*(s = t + strcspn(t, EZXML_WS ">")) == '>') continue;
             else *s = '\0'; // null terminate tag name
             for (i = 0; root->attr[i] && strcmp((n?n:""), root->attr[i][0]); i++);
-
+            //coverity[read_write_order]
             while (*(n = ++s + strspn(s, EZXML_WS)) && *n != '>') {
                 if (*(s = n + strcspn(n, EZXML_WS))) *s = '\0'; // attr name
                 else { ezxml_err(root, t, "malformed <!ATTLIST"); break; }

@@ -227,7 +227,7 @@ void *get_data_from_client(void *data) {
 					"Error on polling socket. Recreating socket",
 					data_cfg.log_mode);
 			for (i = 0; (i < nfds) && (ret); i++) {
-				cleanup(0, (fds + nfds)->fd, 1);
+				cleanup(0, (fds + i)->fd, 1);
 			}
 			create_socket();
 
@@ -466,10 +466,15 @@ void chek_user_perf(gpointer key, tid_table * item, gpointer user_data) {
 		clac_stats_difference_inner_add_to_counters(item1.utime + item1.stime,
 				item2.read_bytes, item2.write_bytes, item);
 		//add_new_stats(item->username, &st, get_current_tick());
+		//coverity[missing_lock]
 		item->cpu = item1.utime + item1.stime;
+		//coverity[missing_lock]
 		item->read = item2.read_bytes;
+		//coverity[missing_lock]
 		item->write = item2.write_bytes;
+		//coverity[missing_lock]
 		item->update_time = cur_tm.tv_sec;
+		//coverity[missing_lock]
 		item->naoseconds = cur_tm.tv_nsec;
 		unlock_tid_data();
 
