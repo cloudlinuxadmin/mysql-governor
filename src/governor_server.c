@@ -462,7 +462,6 @@ void chek_user_perf(gpointer key, tid_table * item, gpointer user_data) {
 		//printf("Get cpu1 %ld, tid %d, tm %f\n", item1.utime + item1.stime, kkey, new_tm);
 #endif
 
-		lock_tid_data();
 		clac_stats_difference_inner_add_to_counters(item1.utime + item1.stime,
 				item2.read_bytes, item2.write_bytes, item);
 		//add_new_stats(item->username, &st, get_current_tick());
@@ -476,7 +475,7 @@ void chek_user_perf(gpointer key, tid_table * item, gpointer user_data) {
 		item->update_time = cur_tm.tv_sec;
 		//coverity[missing_lock]
 		item->naoseconds = cur_tm.tv_nsec;
-		unlock_tid_data();
+
 
 		//add_new_tid_data2(*kkey, item);
 
