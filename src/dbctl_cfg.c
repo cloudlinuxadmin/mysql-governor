@@ -199,15 +199,21 @@ GPtrArray *GetCfg()
 
 void FreeCfg( void )
 {
-  int i = 0;
+  int i = 0, j = 0;
   for( ; i < FoundTag->len; i++ ){
 	DbCtlFoundTag *found_tag_ = g_ptr_array_index( FoundTag, i );
 	if(found_tag_->attr) g_hash_table_destroy(found_tag_->attr);
 	if(found_tag_->limit_attr){
+		for( j=0; j < found_tag_->limit_attr->len; j++ ){
+			DbCtlLimitAttr* ptr = g_ptr_array_index( found_tag_->limit_attr, j );
+			free(ptr);
+		}
 		g_ptr_array_free(found_tag_->limit_attr, TRUE);
 	}
+	free(found_tag_);
   }
   g_ptr_array_free( FoundTag, TRUE );
+  FoundTag = NULL;
 }
 
 //-------------------------------------------------
@@ -250,25 +256,57 @@ char *GetDefault( GPtrArray *tags )
       write_mid = atoi( get_mb_str( GetLimitAttr( found_tag_->limit_attr, "write", "mid" ), mb_buffer ) ),
       write_long = atoi( get_mb_str( GetLimitAttr( found_tag_->limit_attr, "write", "long" ), mb_buffer ) );
 
-  snprintf( buffer_cpu, 25, "%s/%s/%s/%s",
-                        g_strdup_printf( "%i", cpu_curr ),
-                        g_strdup_printf( "%i", cpu_short ),
-                        g_strdup_printf( "%i", cpu_mid ),
-                        g_strdup_printf( "%i", cpu_long ) 
-         );
-  snprintf( buffer_read, 29, "%s/%s/%s/%s",
-                         read_curr < 1 ? "<1" : g_strdup_printf( "%i", read_curr ),
-                         read_short < 1 ? "<1" : g_strdup_printf( "%i", read_short ),
-                         read_mid < 1 ? "<1" : g_strdup_printf( "%i", read_mid ),
-                         read_long < 1 ? "<1" : g_strdup_printf( "%i", read_long ) 
+  gchar *buf_tmp1 = g_strdup_printf( "%i", cpu_curr );
+  gchar *buf_tmp2 = g_strdup_printf( "%i", cpu_short );
+  gchar *buf_tmp3 = g_strdup_printf( "%i", cpu_mid );
+  gchar *buf_tmp4 = g_strdup_printf( "%i", cpu_long );
+
+  snprintf( buffer_cpu, 24, "%s/%s/%s/%s",
+		  	  	  	  	  buf_tmp1,
+		  	  	  	      buf_tmp2,
+		  	  	  	      buf_tmp3,
+		  	  	  	      buf_tmp4
          );
 
-  snprintf( buffer_write, 29, "%s/%s/%s/%s",
-                         write_curr < 1 ? "<1" : g_strdup_printf( "%i", write_curr ),
-                         write_short < 1 ? "<1" : g_strdup_printf( "%i", write_short ),
-                         write_mid < 1 ? "<1" : g_strdup_printf( "%i", write_mid ),
-                         write_long < 1 ? "<1" : g_strdup_printf( "%i", write_long )
+  g_free(buf_tmp1);
+  g_free(buf_tmp2);
+  g_free(buf_tmp3);
+  g_free(buf_tmp4);
+
+  buf_tmp1 = g_strdup_printf( "%i", read_curr );
+  buf_tmp2 = g_strdup_printf( "%i", read_short );
+  buf_tmp3 = g_strdup_printf( "%i", read_mid );
+  buf_tmp4 = g_strdup_printf( "%i", read_long );
+
+  snprintf( buffer_read, 28, "%s/%s/%s/%s",
+                         read_curr < 1 ? "<1" : buf_tmp1,
+                         read_short < 1 ? "<1" : buf_tmp2,
+                         read_mid < 1 ? "<1" : buf_tmp3,
+                         read_long < 1 ? "<1" : buf_tmp4
+         );
+
+  g_free(buf_tmp1);
+  g_free(buf_tmp2);
+  g_free(buf_tmp3);
+  g_free(buf_tmp4);
+
+  buf_tmp1 = g_strdup_printf( "%i", write_curr );
+  buf_tmp2 = g_strdup_printf( "%i", write_short );
+  buf_tmp3 = g_strdup_printf( "%i", write_mid );
+  buf_tmp4 = g_strdup_printf( "%i", write_long );
+
+  snprintf( buffer_write, 28, "%s/%s/%s/%s",
+                         write_curr < 1 ? "<1" : buf_tmp1,
+                         write_short < 1 ? "<1" : buf_tmp2,
+                         write_mid < 1 ? "<1" : buf_tmp3,
+                         write_long < 1 ? "<1" : buf_tmp4
         );
+
+  g_free(buf_tmp1);
+  g_free(buf_tmp2);
+  g_free(buf_tmp3);
+  g_free(buf_tmp4);
+
   snprintf( buffer, 120, "default          %-25s  %-29s     %-29s", buffer_cpu, buffer_read, buffer_write );
   printf( "%s\n", buffer );
 
@@ -338,7 +376,7 @@ char *GetDefaultForUsers( GPtrArray *tags, DbCtlLimitAttr *cpu_def,
       char *buffer_read = (char*)alloca( 29 * sizeof( char ) );
       char *buffer_write = (char*)alloca( 29 * sizeof( char ) );
 
-      snprintf( buffer_cpu, 25,  "%d/%d/%d/%d",
+      snprintf( buffer_cpu, 24,  "%d/%d/%d/%d",
                              cpu_curr,                    //cpu
                              cpu_short,
                              cpu_mid,
@@ -348,7 +386,7 @@ char *GetDefaultForUsers( GPtrArray *tags, DbCtlLimitAttr *cpu_def,
       tmp_param[1] = g_strdup_printf( "%i", read_short );
       tmp_param[2] = g_strdup_printf( "%i", read_mid );
       tmp_param[3] = g_strdup_printf( "%i", read_long );
-      snprintf( buffer_read, 29, "%s/%s/%s/%s",
+      snprintf( buffer_read, 28, "%s/%s/%s/%s",
                             read_curr < 1 ? "<1" : tmp_param[0],
                             read_short < 1 ? "<1" : tmp_param[1],
                             read_mid < 1 ? "<1" : tmp_param[2],
@@ -362,7 +400,7 @@ char *GetDefaultForUsers( GPtrArray *tags, DbCtlLimitAttr *cpu_def,
       tmp_param[2] = g_strdup_printf( "%i", write_mid );
       tmp_param[3] = g_strdup_printf( "%i", write_long );
 
-      snprintf( buffer_write, 29, "%s/%s/%s/%s",
+      snprintf( buffer_write, 28, "%s/%s/%s/%s",
                              write_curr < 1 ? "<1" : tmp_param[0],
                              write_short < 1 ? "<1" : tmp_param[1],
                              write_mid < 1 ? "<1" : tmp_param[2],
@@ -372,8 +410,8 @@ char *GetDefaultForUsers( GPtrArray *tags, DbCtlLimitAttr *cpu_def,
       g_free(tmp_param[2]);
       g_free(tmp_param[3]);
 
-      snprintf( print_list_t->name, 16, "%-16s", name );
-      snprintf( print_list_t->data, 90, "  %-25s  %-29s     %-29s", buffer_cpu, buffer_read, buffer_write );
+      snprintf( print_list_t->name, 15, "%-16s", name );
+      snprintf( print_list_t->data, 89, "  %-25s  %-29s     %-29s", buffer_cpu, buffer_read, buffer_write );
       arr_print_list = g_list_append( arr_print_list, print_list_t );
     }
   }

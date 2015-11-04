@@ -417,8 +417,10 @@ int GetCmd( int argc, char **argv )
   else if( strcmp( "list", argv[ 1 ] ) == 0 )
   {
     list();
-  }
-  else if( strcmp( "list-restricted-shm", argv[ 1 ] ) == 0 )
+  } else if( strcmp( "list-restricted", argv[ 1 ] ) == 0 )
+  {
+      list_restricted();
+  } else if( strcmp( "list-restricted-shm", argv[ 1 ] ) == 0 )
   {
       list_restricted_shm();
   }

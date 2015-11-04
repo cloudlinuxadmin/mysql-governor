@@ -119,15 +119,24 @@ GPtrArray *addMemoryUser( FILE *in, GPtrArray *tags )
     
     if( !found_user )
     {
-      g_hash_table_insert( found_tag_list->attr, "name", _ac->id );
-      g_hash_table_insert( found_tag_list->attr, "mode", "restrict" );
+      char *key_ = g_strdup("name");
+      char *val_ = g_strdup(_ac->id);
+      g_hash_table_insert( found_tag_list->attr, key_, val_ );
+      key_ = g_strdup("mode");
+      val_ = g_strdup("restrict");
+      g_hash_table_insert( found_tag_list->attr, key_, val_ );
       g_ptr_array_add( Tags, found_tag_list );
     } else {
-    	g_hash_table_destroy(found_tag_list->attr);
-    	g_ptr_array_free(found_tag_list->limit_attr, TRUE);
+    	if(found_tag_list->attr) g_hash_table_destroy(found_tag_list->attr);
+    	if(found_tag_list->limit_attr) g_ptr_array_free(found_tag_list->limit_attr, TRUE);
     	free(found_tag_list);
     }
+
+    free(_ac->id);
+    free(_ac);
   }
+
+  g_list_free(list);
   return Tags;
 }
 
@@ -267,7 +276,10 @@ void print_list_rest( FILE *in )
                get_time_to_end( _ac )                  //time left
             );
 	} 
+    free(_ac->id);
+    free(_ac);
   }
+  g_list_free(list);
 }
 
 void list( void )
@@ -281,7 +293,7 @@ void list( void )
     fwrite( &ctt, sizeof( client_type_t ), 1, out ); 
     fflush( out );
 
-    DbCtlCommand command;
+    DbCtlCommand command = {0};
     command.command = LIST;
     strcpy( command.parameter, "" );
     strcpy( command.options.username, "" );
