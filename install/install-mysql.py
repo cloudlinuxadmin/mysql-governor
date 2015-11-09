@@ -27,6 +27,7 @@ from distutils import version
 from distutils.version import StrictVersion
 
 SOURCE="/usr/share/lve/dbgovernor/"
+safe_mysql = 0
 
 def get_cl_num():
     result = exec_command("rpm -q --qf \"%{version}\n\" `rpm -q --whatprovides /etc/redhat-release`")
@@ -127,6 +128,7 @@ def usage():
         print " -t | --dbupdate            : update UserMap file"
         print "    | --fix-cpanel-hooks    : fix adduser and deluser hooks for cPanel"
 	print "    | --fix-cpanel-cl-mysql : fix mysqld service for cPanel(CL7)"
+	print " -s | --safe-install        : show which vesrion of MySQL/MariaDB will be installed before installation"
 
 def check_leave_pid():
 	if cp.name == "Plesk" and verCompare (cp.version, "10") >= 0:
@@ -552,10 +554,80 @@ def fix_mysqllib():
     elif os.path.exists("/usr/bin/alt-php-mysql-reconfigure"):                                                                                                                                                                     
 	exec_command_out("/usr/bin/alt-php-mysql-reconfigure") 
 
+def query_yes_no(question, default="yes"):
+    """Ask a yes/no question via raw_input() and return their answer.
+
+    "question" is a string that is presented to the user.
+    "default" is the presumed answer if the user just hits <Enter>.
+        It must be "yes" (the default), "no" or None (meaning
+        an answer is required of the user).
+
+    The "answer" return value is True for "yes" or False for "no".
+    """
+    valid = {"yes": True, "y": True, "ye": True,
+             "no": False, "n": False}
+    if default is None:
+        prompt = " [y/n] "
+    elif default == "yes":
+        prompt = " [Y/n] "
+    elif default == "no":
+        prompt = " [y/N] "
+    else:
+        raise ValueError("invalid default answer: '%s'" % default)
+
+    while True:
+        sys.stdout.write(question + prompt)
+        choice = raw_input().lower()
+        if default is not None and choice == '':
+            return valid[default]
+        elif choice in valid:
+            return valid[choice]
+        else:
+            sys.stdout.write("Please respond with 'yes' or 'no' "
+                             "(or 'y' or 'n').\n")
+
+def safe_mysql_op():
+	result = "None"
+	print "Will be installed MySQL/MariaDB version(detected by governor): "
+	if cp.name == "Plesk" and verCompare (cp.version, "10") >= 0:
+		result = exec_command(SOURCE+"plesk/install-db-governor-version.sh")
+	elif cp.name == "cPanel":
+		result = exec_command(SOURCE+"cpanel/install-db-governor-version")
+	elif cp.name == "InterWorx":
+		result = exec_command(SOURCE+"iworx/install-db-governor-version.sh")
+	elif cp.name == "ISPManager":	
+		result = exec_command(SOURCE+"ispmanager/install-db-governor-version.sh")
+	elif cp.name == "DirectAdmin":
+		result = exec_command(SOURCE+"da/install-db-governor-version.sh")
+	else:
+                result = exec_command(SOURCE+"other/install-db-governor-version.sh")
+	if result[0] == "mysql50":
+		print "MySQL 5.0"
+	elif result[0] == "mysql51":
+		print "MySQL 5.1"
+	elif result[0] == "mysql55":
+		print "MySQL 5.5"
+	elif result[0] == "mysql56":
+		print "MySQL 5.6"
+	elif result[0] == "mariadb55":
+		print "MariaDB 5.5"
+	elif result[0] == "mariadb100":
+		print "MariaDB 10.0"
+	elif result[0] == "mariadb101":
+		print "MariaDB 10.1"
+	else:
+		print "Unknown"
+		print "Type please: /usr/share/lve/dbgovernor/db-select-mysql --mysql-version=<mysql50, mysql51, mysql55, mysql56, maridb55, maridb100, mariadb101>"
+		sys.exit(2)
+	print "auto means will be installed mysql-server package from CloudLinux repo"
+	print "If you don't agree - press n and type: /usr/share/lve/dbgovernor/db-select-mysql --mysql-version=<mysql50, mysql51, mysql55, mysql56, maridb55, maridb100, mariadb101>"
+	if query_yes_no("Should we continue installation?", "yes")==False:
+	    sys.exit(2)
+
 cp = get_cp()
 
 try:
-	opts, args = getopt.getopt(sys.argv[1:], "hidcmut", ["help", "install", "delete", "install-beta", "clean-mysql", "clean-mysql-delete", "upgrade", "dbupdate", "update-mysql-beta", "force", "fix-cpanel-hooks", "fix-cpanel-cl-mysql"])
+	opts, args = getopt.getopt(sys.argv[1:], "hidcmuts", ["help", "install", "delete", "install-beta", "clean-mysql", "clean-mysql-delete", "upgrade", "dbupdate", "update-mysql-beta", "force", "fix-cpanel-hooks", "fix-cpanel-cl-mysql", "safe-install"])
 except getopt.GetoptError, err:
 	# print help information and exit:
 	print str(err) # will print something like "option -a not recognized"
@@ -566,6 +638,8 @@ force_percona = 0
 for o, a in opts:
 	if o in ("--force",):
 		force_percona = 1
+	elif o in ("-s", "--safe-install"):
+		safe_mysql = 1
 
 	                                                          
 for o, a in opts:
@@ -574,6 +648,8 @@ for o, a in opts:
 		sys.exit()
 	elif o in ("-i", "--install"):
                 warn_message()
+                if safe_mysql == 1:
+    			safe_mysql_op()
                 detect_percona(force_percona)
                 remove_mysqlclients()
             	remove_mysql_justdb()
@@ -590,6 +666,8 @@ for o, a in opts:
 		rerun_ldconfig()
 	elif o in ("-u", "--upgrade"):
                 warn_message()
+                if safe_mysql == 1:
+    			safe_mysql_op()
                 detect_percona(force_percona)
 		remove_mysqlclients()
 		remove_mysql_justdb_cl()
@@ -613,6 +691,8 @@ for o, a in opts:
                 delete_governor_rpm()
 	elif o in ("--install-beta",):
     		warn_message()
+    		if safe_mysql == 1:
+    			safe_mysql_op()
     		detect_percona(force_percona)
                 remove_mysqlclients()
                 remove_mysql_justdb_cl()
@@ -636,6 +716,8 @@ for o, a in opts:
 		update_user_map_file()
 	elif o in ("--force",):
 		force_percona = 1
+	elif o in ("-s", "--safe-install"):
+		safe_mysql = 1
 	elif o in ("--fix-cpanel-hooks",):
 		install_mysql_beta_testing_hooks()
 	elif o in ("--fix-cpanel-cl-mysql",):

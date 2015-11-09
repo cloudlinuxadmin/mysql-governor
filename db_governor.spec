@@ -1,5 +1,5 @@
 %define g_version   1.1
-%define g_release   6
+%define g_release   7
 %define g_key_library 5
 
 %if %{undefined _unitdir}
@@ -114,6 +114,7 @@ ln -fs libgovernor.so.%{version} $RPM_BUILD_ROOT%{_libdir}/libgovernor.so
 install -D -m 755 install/cpanel/check_mysql_leave_pid.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/check_mysql_leave_pid.sh
 install -D -m 755 install/cpanel/db_governor-clear-old-hook $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/db_governor-clear-old-hook
 install -D -m 755 install/cpanel/install-db-governor $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/install-db-governor
+install -D -m 755 install/cpanel/install-db-governor-version $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/install-db-governor-version
 
 install -D -m 755 install/cpanel/fix-db-governor $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/fix-db-governor
 install -D -m 755 install/cpanel/fix-db-governor.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/fix-db-governor.sh
@@ -124,12 +125,17 @@ install -D -m 755 install/cpanel/cpanel-delete-hooks $RPM_BUILD_ROOT/usr/share/l
 install -D -m 755 install/cpanel/cpanel-install-hooks $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/cpanel-install-hooks
 install -D -m 755 install/cpanel/upgrade-mysql-disabler.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/upgrade-mysql-disabler.sh
 install -D -m 755 install/da/install-db-governor.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/da/install-db-governor.sh
+install -D -m 755 install/da/install-db-governor-version.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/da/install-db-governor-version.sh
 install -D -m 644 install/cpanel/cloudlinux.versions $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/cloudlinux.versions
 install -D -m 755 install/cpanel/install-mysql-disabler.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/install-mysql-disabler.sh
 install -D -m 755 install/plesk/install-db-governor.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/plesk/install-db-governor.sh
+install -D -m 755 install/plesk/install-db-governor-version.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/plesk/install-db-governor-version.sh
 install -D -m 755 install/iworx/install-db-governor.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/iworx/install-db-governor.sh
+install -D -m 755 install/iworx/install-db-governor-version.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/iworx/install-db-governor-version.sh
 install -D -m 755 install/ispmanager/install-db-governor.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/ispmanager/install-db-governor.sh
+install -D -m 755 install/ispmanager/install-db-governor-version.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/ispmanager/install-db-governor-version.sh
 install -D -m 755 install/other/install-db-governor.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/other/install-db-governor.sh
+install -D -m 755 install/other/install-db-governor-version.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/other/install-db-governor-version.sh
 install -D -m 755 install/other/set_fs_suid_dumpable.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/other/set_fs_suid_dumpable.sh
 install -D -m 755 install/utils/dbgovernor_map $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/dbgovernor_map
 install -D -m 755 install/utils/empty_action.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/empty_action.sh
@@ -373,6 +379,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Mon Nov 09 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-7
+- MYSQLG-85: added installation mode with MySQL/MariaDB version confirmation
+
 * Tue Nov 03 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-6
 - MYSQLG-82: fixed bugs reported by coverity
 
