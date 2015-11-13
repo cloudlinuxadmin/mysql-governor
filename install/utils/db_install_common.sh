@@ -77,6 +77,7 @@ function installDb(){
 	  if [ -e /usr/libexec/mysqld ]; then
 	   mv -f /usr/libexec/mysqld /usr/libexec/mysqld.bak
           fi
+	  yum install libaio --nogpgcheck -y
 	  yum install cl-MySQL-meta cl-MySQL-meta-client cl-MySQL-meta-devel libaio --nogpgcheck -y
 	  ln -sf /etc/init.d/mysql /etc/init.d/mysqld
 	fi
@@ -85,23 +86,27 @@ function installDb(){
 	  if [ -e /usr/libexec/mysqld ]; then
 	   mv -f /usr/libexec/mysqld /usr/libexec/mysqld.bak
           fi
+	  yum install libaio --nogpgcheck -y
 	  yum install cl-MySQL-meta cl-MySQL-meta-client cl-MySQL-meta-devel libaio --nogpgcheck -y
 	  ln -sf /etc/init.d/mysql /etc/init.d/mysqld
 	fi
 	if [ "$SQL_VERSION" == "mariadb55" ]; then
 	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqlmeta/cl-mariadb-5.5-common.repo
+	  yum install libaio --nogpgcheck -y
 	  yum install cl-MariaDB-meta cl-MariaDB-meta-client cl-MariaDB-meta-devel libaio --nogpgcheck -y
 	fi
 
 	if [ "$SQL_VERSION" == "mariadb100" ]; then
 	  rm -rf /usr/include/mysql
 	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqlmeta/cl-mariadb-10.0-common.repo
+	  yum install libaio --nogpgcheck -y
 	  yum install cl-MariaDB-meta cl-MariaDB-meta-client cl-MariaDB-meta-devel libaio --nogpgcheck -y
 	fi
 
 	if [ "$SQL_VERSION" == "mariadb101" ]; then
 	  rm -rf /usr/include/mysql
 	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqlmeta/cl-mariadb-10.1-common.repo
+	  yum install libaio --nogpgcheck -y
 	  yum install cl-MariaDB-meta cl-MariaDB-meta-client cl-MariaDB-meta-devel libaio --nogpgcheck -y
 	fi
 
@@ -175,6 +180,7 @@ function installDbTest(){
 	  if [ -e /usr/libexec/mysqld ]; then
 	   mv -f /usr/libexec/mysqld /usr/libexec/mysqld.bak
           fi
+	  yum install libaio --nogpgcheck -y
 	  yum install cl-MySQL-meta cl-MySQL-meta-client cl-MySQL-meta-devel libaio --nogpgcheck -y --enablerepo=cloudlinux-updates-testing
 	  ln -sf /etc/init.d/mysql /etc/init.d/mysqld
 	fi
@@ -183,7 +189,8 @@ function installDbTest(){
 	  if [ -e /usr/libexec/mysqld ]; then
 	   mv -f /usr/libexec/mysqld /usr/libexec/mysqld.bak
           fi
-      yum install cl-MySQL-meta cl-MySQL-meta-client cl-MySQL-meta-devel libaio --nogpgcheck -y --enablerepo=cloudlinux-updates-testing
+	  yum install libaio --nogpgcheck -y
+    	  yum install cl-MySQL-meta cl-MySQL-meta-client cl-MySQL-meta-devel libaio --nogpgcheck -y --enablerepo=cloudlinux-updates-testing
 	  ln -sf /etc/init.d/mysql /etc/init.d/mysqld
 	fi
 	if [ "$SQL_VERSION" == "mariadb55" ]; then
@@ -194,12 +201,14 @@ function installDbTest(){
 	if [ "$SQL_VERSION" == "mariadb100" ]; then
 	  rm -rf /usr/include/mysql
 	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqlmeta/cl-mariadb-10.0-common.repo
+	  yum install libaio --nogpgcheck -y
 	  yum install cl-MariaDB-meta cl-MariaDB-meta-client cl-MariaDB-meta-devel libaio --nogpgcheck -y --enablerepo=cloudlinux-updates-testing
 	fi
 
 	if [ "$SQL_VERSION" == "mariadb101" ]; then
 	  rm -rf /usr/include/mysql
 	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqlmeta/cl-mariadb-10.1-common.repo
+	  yum install libaio --nogpgcheck -y
 	  yum install cl-MariaDB-meta cl-MariaDB-meta-client cl-MariaDB-meta-devel libaio --nogpgcheck -y --enablerepo=cloudlinux-updates-testing
 	fi
 
