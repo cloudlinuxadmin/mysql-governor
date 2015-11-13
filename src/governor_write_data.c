@@ -467,8 +467,8 @@ int governor_enter_lve(uint32_t *cookie, char *username) {
 	if (container_lve && lve_enter_flags
 			&& lve) {
                 errno = 0;
-		int rc = lve_enter_flags(lve, container_lve, cookie, ((int) ((1 << 2) | (1
-				<< 3)))); //LVE_NO_MAXENTER|LVE_SILENCE
+		int rc = lve_enter_flags(lve, container_lve, cookie, ((int) ((1 << 0) | (1 << 2) | (1
+				<< 3)))); //LVE_NO_MAXENTER|LVE_SILENCE|LVE_NO_UBC
 		int keep_errno = errno;
 		if (rc) {
 			if (keep_errno == EPERM) { //if already inside LVE

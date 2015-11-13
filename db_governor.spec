@@ -1,6 +1,6 @@
 %define g_version   1.1
-%define g_release   7
-%define g_key_library 5
+%define g_release   8
+%define g_key_library 6
 
 %if %{undefined _unitdir}
 %define _unitdir /usr/lib/systemd/system
@@ -379,6 +379,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Fri Nov 13 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-8
+- Added NO_UBC one more place
+
 * Mon Nov 09 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-7
 - MYSQLG-85: added installation mode with MySQL/MariaDB version confirmation
 
