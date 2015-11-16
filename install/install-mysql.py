@@ -624,6 +624,34 @@ def safe_mysql_op():
 	if query_yes_no("Should we continue installation?", "yes")==False:
 	    sys.exit(2)
 
+def remove_mysql_target_for_cPanel():
+	if cp.name == "Plesk" and verCompare (cp.version, "10") >= 0:
+		print "No need in fix"
+	elif cp.name == "cPanel":
+                exec_command_out(SOURCE+"cpanel/chek_mysql_rpms_local -i")		
+	elif cp.name == "InterWorx":
+		print "No need in fix"
+	elif cp.name == "ISPManager":
+		print "No need in fix"
+	elif cp.name == "DirectAdmin":
+		print "No need in fix"
+	else:
+		print "No need in fix"
+
+def restore_mysql_target_for_cPanel():
+	if cp.name == "Plesk" and verCompare (cp.version, "10") >= 0:
+		print "No need in fix"
+	elif cp.name == "cPanel":
+                exec_command_out(SOURCE+"cpanel/chek_mysql_rpms_local -d")		
+	elif cp.name == "InterWorx":
+		print "No need in fix"
+	elif cp.name == "ISPManager":
+		print "No need in fix"
+	elif cp.name == "DirectAdmin":
+		print "No need in fix"
+	else:
+		print "No need in fix"
+
 cp = get_cp()
 
 try:
@@ -655,6 +683,7 @@ for o, a in opts:
             	remove_mysql_justdb()
                 remove_mysql_justdb_cl()
                 remove_percona_justdb()
+                remove_mysql_target_for_cPanel()
 		install_mysql_beta()
                 set_bad_lve_container()
                 if os.path.exists("/usr/share/lve/dbgovernor/chk-mysqlclient"):
@@ -687,6 +716,7 @@ for o, a in opts:
                 remove_repo_file()
 		remove_mysql_justdb_cl()
                 remove_percona_justdb()
+                restore_mysql_target_for_cPanel()
                 delete_mysql()
                 delete_governor_rpm()
 	elif o in ("--install-beta",):
@@ -697,6 +727,7 @@ for o, a in opts:
                 remove_mysqlclients()
                 remove_mysql_justdb_cl()
                 remove_mysql_justdb()
+                remove_mysql_target_for_cPanel()
 		install_mysql_beta_testing()
                 set_bad_lve_container()
                 if os.path.exists("/usr/share/lve/dbgovernor/chk-mysqlclient"):

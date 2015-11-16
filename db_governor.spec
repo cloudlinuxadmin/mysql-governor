@@ -1,5 +1,5 @@
 %define g_version   1.1
-%define g_release   8
+%define g_release   9
 %define g_key_library 6
 
 %if %{undefined _unitdir}
@@ -379,6 +379,10 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Mon Nov 16 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-9
+- Added local.version content analizing(cPanel)
+- Added MariaDB for DA identification
+
 * Fri Nov 13 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-8
 - Added NO_UBC one more place
 

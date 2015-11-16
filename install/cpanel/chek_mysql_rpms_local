@@ -1,0 +1,69 @@
+#!/bin/bash
+
+RESULT_COMMON=""
+
+function getMySQLTargets(){
+    target="$1"
+    if [ -n "$target" -a -e /scripts/update_local_rpm_versions ];then
+	result=`cat /var/cpanel/rpm.versions.d/local.versions | grep "$target:"`
+	if [ -n "$result" ];then
+	    result2=${result//[[:blank:]]/}
+	    /scripts/update_local_rpm_versions --del target_settings.$target
+	    RESULT_COMMON=`echo -e "$RESULT_COMMON\n$result2"`
+	else
+	    RESULT_COMMON=`echo -e "$RESULT_COMMON\n$target:empty"`
+	fi
+    fi
+}
+
+function setMySQLTargets(){
+    target="$1"
+    if [ -n "$target" -a -e /scripts/update_local_rpm_versions ];then
+	result=`cat /usr/share/lve/dbgovernor/old.rpms | grep "$target:"`
+	if [ -n "$result" ];then
+	    result2=${result//[[:blank:]]/}
+	    trg=`echo "$result2" | cut -d: -f1`
+	    val=`echo "$result2" | cut -d: -f2`
+	    if [ -n "$trg" -a -n "$val" -a "$val" != "empty" ]; then
+		/scripts/update_local_rpm_versions --add target_settings.$trg $val
+	    fi
+	fi
+    fi
+}
+
+action="none"
+
+if [ "$1" == "-i" ]; then
+    action="install"
+fi
+
+if [ "$1" == "-d" ]; then
+    action="delete"
+fi
+
+if [ "$action" == "install" ]; then
+    if [ -e /var/cpanel/rpm.versions.d/local.versions ]; then
+	if [ ! -e /usr/share/lve/dbgovernor/old.rpms ]; then
+	    getMySQLTargets MySQL50
+	    getMySQLTargets MySQL51
+	    getMySQLTargets MySQL55
+	    getMySQLTargets MySQL56
+	    getMySQLTargets MariaDB
+	    echo "$RESULT_COMMON" > /usr/share/lve/dbgovernor/old.rpms
+	fi
+    fi
+fi
+
+if [ "$action" == "delete" ]; then
+    if [ -e /var/cpanel/rpm.versions.d/local.versions ]; then
+	if [ -e /usr/share/lve/dbgovernor/old.rpms ]; then
+	    setMySQLTargets MySQL50
+	    setMySQLTargets MySQL51
+	    setMySQLTargets MySQL55
+	    setMySQLTargets MySQL56
+	    setMySQLTargets MariaDB
+	    rm -f /usr/share/lve/dbgovernor/old.rpms
+	fi
+    fi
+fi
+
