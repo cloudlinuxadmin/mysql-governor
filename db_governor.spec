@@ -115,6 +115,7 @@ install -D -m 755 install/cpanel/check_mysql_leave_pid.sh $RPM_BUILD_ROOT/usr/sh
 install -D -m 755 install/cpanel/db_governor-clear-old-hook $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/db_governor-clear-old-hook
 install -D -m 755 install/cpanel/install-db-governor $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/install-db-governor
 install -D -m 755 install/cpanel/install-db-governor-version $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/install-db-governor-version
+install -D -m 755 install/cpanel/chek_mysql_rpms_local $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/chek_mysql_rpms_local
 
 install -D -m 755 install/cpanel/fix-db-governor $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/fix-db-governor
 install -D -m 755 install/cpanel/fix-db-governor.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/fix-db-governor.sh
