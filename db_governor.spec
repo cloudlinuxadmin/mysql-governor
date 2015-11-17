@@ -383,6 +383,7 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 * Mon Nov 16 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-9
 - Added local.version content analizing(cPanel)
 - Added MariaDB for DA identification
+- Fixed ISPManager Bussines identification
 
 * Fri Nov 13 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-8
 - Added NO_UBC one more place

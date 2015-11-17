@@ -47,9 +47,18 @@ fi
 
 installDb "$SQL_VERSION_"
 
-
 MYSQLUSER="root"
-MYSQLPASSWORD=`cat /usr/local/ispmgr/etc/ispmgr.conf | sed -n '/DbServer "MySQL"/,/SupportCenterServer/p' | sed -n '/Password /p' | sed '/Change/d' | tr -d '\n' | cut -d" " -f2`
+MYSQLPASSWORD="Unknown"
+
+if [ -e /usr/local/ispmgr/etc/ispmgr.conf ]; then
+    MYSQLUSER="root"
+    MYSQLPASSWORD=`cat /usr/local/ispmgr/etc/ispmgr.conf | sed -n '/DbServer "MySQL"/,/SupportCenterServer/p' | sed -n '/Password /p' | sed '/Change/d' | tr -d '\n' | cut -d" " -f2`
+else
+    if [ -e /usr/local/mgr5/etc/ispmgr.conf.d/db.conf ]; then
+	MYSQLUSER=`cat /usr/local/mgr5/etc/ispmgr.conf.d/db.conf | grep DBUser | cut -d" " -f2 | tr -d '\n'`
+	MYSQLPASSWORD=`cat /usr/local/mgr5/etc/ispmgr.conf.d/db.conf | grep DBPassword | cut -d" " -f2 | tr -d '\n'`
+    fi
+fi
 
 if [ -e /usr/bin/mysql_upgrade ]; then
    /usr/bin/mysql_upgrade --user=${MYSQLUSER} --password=${MYSQLPASSWORD}

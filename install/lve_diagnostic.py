@@ -318,6 +318,8 @@ def get_cp():
 	cp = HSphere()
     elif os.path.isdir("/usr/local/ispmgr"):
 	cp = ISPMgr()
+    elif os.path.isdir("/usr/local/mgr5/bin/core"):
+	cp = ISPMgr()
     else:
 	rpmss = RPMChecker()
 	if not (rpmss.find_version("interworx") is None):
