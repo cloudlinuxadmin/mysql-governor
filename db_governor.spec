@@ -1,5 +1,5 @@
 %define g_version   1.1
-%define g_release   9
+%define g_release   10
 %define g_key_library 6
 
 %if %{undefined _unitdir}
@@ -380,6 +380,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Wed Nov 25 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-10
+- Fixed garbage on dbtop exit on CL7
+
 * Mon Nov 16 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-9
 - Added local.version content analizing(cPanel)
 - Added MariaDB for DA identification

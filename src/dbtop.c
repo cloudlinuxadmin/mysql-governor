@@ -668,7 +668,7 @@ void printOneScreenNoCurses() {
 	Account *tmp;
 	char header_buf[512];
 
-	printf("  User            . cpu(%)             .  read(B/s)          .  write(B/s)      . CAUSE  \n");
+	printf("  User            . cpu(%%)             .  read(B/s)          .  write(B/s)      . CAUSE  \n");
 
 	sort_type = 3;
 	sort_accounts();
@@ -716,16 +716,19 @@ read_keys() {
 			sort_accounts();
 			break;
 		case KEY_F (10):
+			fflush(stdout);
 			end_screen ();
 			//closesock();
 			exit(0);
 			break;
 		case CTRLC:
+			fflush(stdout);
 			end_screen ();
 			//closesock();
 			exit(0);
 			break;
 		case 'q':
+			fflush(stdout);
 			end_screen ();
 			//closesock();
 			exit(0);
@@ -771,6 +774,7 @@ screen_regenerate() {
 }
 
 static void end_pgm(int sig) {
+	fflush(stdout);
 	end_screen ();
 	exit(0);
 }

@@ -77,7 +77,7 @@ else
       MYSQL_VER="mariadb100"
     fi 
     if [ "$MYSQL_VER" == "5.5" ]; then
-      MYSQL_VER="mariadb55"
+      MYSQL_VER="mariadb100"
     fi
     if [ "$MYSQL_VER" == "10.0.0" ]; then
       MYSQL_VER="mariadb100"

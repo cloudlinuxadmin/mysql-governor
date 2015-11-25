@@ -232,7 +232,11 @@ void *get_data_from_client(void *data) {
 			create_socket();
 
 			nfds = 1;
-			fds = (struct pollfd *) realloc(fds, nfds * sizeof(struct pollfd));
+			struct pollfd *fds_tmp = NULL;
+			fds_tmp = (struct pollfd *) realloc(fds, nfds * sizeof(struct pollfd));
+			if(fds_tmp){
+				fds = fds_tmp;
+			}
 			fds->fd = get_soket();
 			fds->events = POLLIN;
 		}
@@ -250,8 +254,13 @@ void *get_data_from_client(void *data) {
 				 * Accept connection from socket:
 				 * accepted connection will be on socket (fds+nfds)->fd.
 				 */
-				fds = (struct pollfd *) realloc(fds,
+				struct pollfd *fds_tmp = NULL;
+				fds_tmp = (struct pollfd *) realloc(fds,
 						(nfds + 1) * sizeof(struct pollfd));
+				if(fds_tmp){
+					fds = fds_tmp;
+				}
+
 				(fds + nfds)->fd = accept(global_socket,
 						(struct sockaddr *) &fsaun, &fromlen);
 #ifdef TEST
@@ -262,8 +271,11 @@ void *get_data_from_client(void *data) {
 							"Error on polling socket. Accepting error",
 							data_cfg.log_mode);
 					cleanup(0, (fds + nfds)->fd, 1);
-					fds = (struct pollfd *) realloc(fds,
+					fds_tmp = (struct pollfd *) realloc(fds,
 							nfds * sizeof(struct pollfd));
+					if(fds_tmp){
+						fds = fds_tmp;
+					}
 					continue;
 				}
 				(fds + nfds)->events = POLLIN;
@@ -282,8 +294,12 @@ void *get_data_from_client(void *data) {
 				remove_tid_data_by_fd((fds + i)->fd);
 				nfds--;
 				memcpy(fds + i, fds + i + 1, (nfds - i) * sizeof(struct pollfd));
-				fds = (struct pollfd *) realloc(fds,
+				struct pollfd *fds_tmp = NULL;
+				fds_tmp = (struct pollfd *) realloc(fds,
 						nfds * sizeof(struct pollfd));
+				if(fds_tmp){
+					fds = fds_tmp;
+				}
 				continue;
 			}
 			//Disconnect
@@ -295,8 +311,12 @@ void *get_data_from_client(void *data) {
 				cleanup(0, (fds + i)->fd, 2);
 				nfds--;
 				memcpy(fds + i, fds + i + 1, (nfds - i) * sizeof(struct pollfd));
-				fds = (struct pollfd *) realloc(fds,
+				struct pollfd *fds_tmp = NULL;
+				fds_tmp = (struct pollfd *) realloc(fds,
 						nfds * sizeof(struct pollfd));
+				if(fds_tmp){
+					fds = fds_tmp;
+				}
 				continue;
 			}
 #ifdef _GNU_SOURCE
@@ -305,7 +325,11 @@ void *get_data_from_client(void *data) {
 				cleanup(1, (fds+i)->fd,2);
 				nfds--;
 				memcpy(fds + i, fds + i + 1, (nfds - i) * sizeof(struct pollfd));
-				fds = (struct pollfd *)realloc(fds, nfds*sizeof(struct pollfd));
+				struct pollfd *fds_tmp = NULL;
+				fds_tmp = (struct pollfd *)realloc(fds, nfds*sizeof(struct pollfd));
+				if(fds_tmp){
+					fds = fds_tmp;
+				}
 				continue;
 			}
 #endif
@@ -321,8 +345,12 @@ void *get_data_from_client(void *data) {
 				cleanup(0, (fds + i)->fd, 2);
 				nfds--;
 				memcpy(fds + i, fds + i + 1, (nfds - i) * sizeof(struct pollfd));
-				fds = (struct pollfd *) realloc(fds,
+				struct pollfd *fds_tmp = NULL;
+				fds_tmp = (struct pollfd *) realloc(fds,
 						nfds * sizeof(struct pollfd));
+				if(fds_tmp){
+					fds = fds_tmp;
+				}
 				continue;
 			}
 
@@ -355,8 +383,12 @@ void *get_data_from_client(void *data) {
 					}
 					nfds--;
 					memcpy(fds + i, fds + i + 1, (nfds - i) * sizeof(struct pollfd));
-					fds = (struct pollfd *) realloc(fds,
+					struct pollfd *fds_tmp = NULL;
+					fds_tmp = (struct pollfd *) realloc(fds,
 							nfds * sizeof(struct pollfd));
+					if(fds_tmp){
+						fds = fds_tmp;
+					}
 					continue;
 				} else {
 					if (data_cfg.restrict_format >= 4) {

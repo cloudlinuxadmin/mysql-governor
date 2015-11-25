@@ -75,13 +75,13 @@ void closesock( int _socket, FILE *in, FILE *out )
   if( in ) 
   {
     fclose( in );
-    in = NULL;
+    //in = NULL;
   }
 
   if( out ) 
   {
     fclose( out );
-    out = NULL;
+    //out = NULL;
   }
 
   if( _socket > 0 ) 

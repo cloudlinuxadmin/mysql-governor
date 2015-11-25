@@ -153,7 +153,7 @@ void account_restrict(Account * ac, stats_limit_cfg * limit) {
 		char dump[_DBGOVERNOR_BUFFER_8192];
 		getPeriodName(period_name, ac);
 		getParamName(varName, ac);
-		snprintf(varValue, _DBGOVERNOR_BUFFER_128, "%ld", getRestrictValue(ac));
+		snprintf(varValue, _DBGOVERNOR_BUFFER_128, "%lld", getRestrictValue(ac));
 		snprintf(limValue, _DBGOVERNOR_BUFFER_128, "%ld", getLimitValue(ac,
 				limit));
 		snprintf(penValue, _DBGOVERNOR_BUFFER_128, "%d", ac->restricted + 1);
