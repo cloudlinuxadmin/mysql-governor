@@ -1,5 +1,5 @@
 %define g_version   1.1
-%define g_release   10
+%define g_release   11
 %define g_key_library 6
 
 %if %{undefined _unitdir}
@@ -70,12 +70,12 @@ cd -
 %install
 %{__rm} -rf $RPM_BUILD_ROOT
 
-if [ -e autoconf ]; then                                                                                                                                                                                                                     
-# Yuck. We're using autoconf 2.1x.                                                                                                                                                                                                           
-  export PATH=.:$PATH                                                                                                                                                                                                                        
-fi                                                                                                                                                                                                                                           
+if [ -e autoconf ]; then
+# Yuck. We're using autoconf 2.1x.
+  export PATH=.:$PATH 
+fi
 
-cd install                                                                                                                                                                                                                                             
+cd install
 make DESTDIR=$RPM_BUILD_ROOT install
 cd -
 mkdir -p $RPM_BUILD_ROOT/var/lve/dbgovernor/
@@ -164,7 +164,7 @@ install -D -m 755 install/cpanel/install-db-governor-uninstall $RPM_BUILD_ROOT/u
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/cron.d/
 install -D -m 644 cron/lvedbgovernor-utils-cron $RPM_BUILD_ROOT%{_sysconfdir}/cron.d/
 
-touch $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/tmp/INFO                                                                                                                                                                                     
+touch $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/tmp/INFO
 echo "CloudLinux" > $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/tmp/INFO
 
 %clean
@@ -380,6 +380,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Mon Jan 04 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-11
+- MYSQLG-95: mysqlgovernor.py --dbupdate does not work (with conf parameter without =)
+
 * Wed Nov 25 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-10
 - Fixed garbage on dbtop exit on CL7
 

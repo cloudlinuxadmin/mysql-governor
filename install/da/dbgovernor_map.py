@@ -39,7 +39,8 @@ def get_account_list():
         f = open( conf_name )
         for line in f.readlines():
             p = line.split( '=' )
-            params[ p[ 0 ].strip() ] = p[ 1 ].strip()
+            if len(p)>1:
+                 params[ p[ 0 ].strip() ] = p[ 1 ].strip()
         f.close()
     except IOError:
         print( "No file " + conf_name )
