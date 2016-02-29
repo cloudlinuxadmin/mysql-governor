@@ -24,9 +24,10 @@ char *get_mb_str( char *s, char *buf )
 {
   int alloc = 0;
   int _len = strlen( s );
-  if( _len > 6 )
-    s[ _len - 6 ] = '\0';
-  else if( _len > 1 )
+  if( _len > 6 ) {
+    unsigned long long mb = (unsigned long long)(atol( s )) / (unsigned long long)(1024 * 1024);
+    sprintf( s, "%llu", mb );
+  } else if( _len > 1 )
     s[ 0 ] = '\0';
   else
   {
