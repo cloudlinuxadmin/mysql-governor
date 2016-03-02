@@ -53,7 +53,7 @@ extern M_mysql_error;
 extern M_mysql_real_escape_string;
 extern M_mysql_ping;
 
-char *_unix_socket_addres = NULL;
+extern char *unix_socket_address;
 
 static char work_user[USERNAMEMAXLEN];
 
@@ -119,7 +119,7 @@ int db_connect_common(MYSQL ** internal_db, const char *host,
 			&option_index)) != EOF) {
 		switch (c) {
 		case 'S':
-			_unix_socket_addres = optarg;
+			unix_socket_address = optarg;
 			break;
                 case 'r':
 			hst = optarg;
@@ -155,7 +155,7 @@ int db_connect_common(MYSQL ** internal_db, const char *host,
 	(*_mysql_options)(*internal_db, MYSQL_OPT_RECONNECT, &reconnect);
 	//Try to connect with options from goernor's config
 	if (!(*_mysql_real_connect)(*internal_db, host, user_name, user_password,
-			db_name, 0, _unix_socket_addres, 0)) {
+			db_name, 0, unix_socket_address, 0)) {
 		//Previous attempt failed, try with data from my.cnf, .my.cnf
 		WRITE_LOG(NULL, 0, buf, _DBGOVERNOR_BUFFER_512,
 				"Try to connect with no password under root",
@@ -164,7 +164,7 @@ int db_connect_common(MYSQL ** internal_db, const char *host,
 		if (user)
 			strlcpy(work_user, user, USERNAMEMAXLEN);
 		if (!(*_mysql_real_connect)(*internal_db, host, user, password,
-				db_name, 0, _unix_socket_addres, 0)) {
+				db_name, 0, unix_socket_address, 0)) {
 			//Error again, stop to try
 			WRITE_LOG(NULL, 0, buf, _DBGOVERNOR_BUFFER_512,
 					db_getlasterror (*internal_db),
@@ -217,7 +217,7 @@ static int local_reconnect(MYSQL **mysql_internal,	MODE_TYPE debug_mode){
 	//Еще разок соединимся
 	if (!(*_mysql_real_connect)(*mysql_internal, global_host,
 			unm, upwd, global_db_name, 0,
-			_unix_socket_addres, 0)) {
+			unix_socket_address, 0)) {
 		return -1;
 	}
 	return 0;
