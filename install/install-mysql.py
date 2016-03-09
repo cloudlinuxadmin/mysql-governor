@@ -351,6 +351,7 @@ def remove_sepcific_mysql(mname, yb):
         remove_specific_package(mname + "-client", yb)
         remove_specific_package(mname + "-libs", yb)
         remove_specific_package(mname + "-compat", yb)
+	remove_specific_package(mname + "-common", yb)
         remove_specific_package(mname + "", yb)
 
 def remove_mysql_justdb():
@@ -385,6 +386,7 @@ def remove_mysql_justdb_cl():
         remove_sepcific_mysql('cl-MySQL51', yb)
         remove_sepcific_mysql('cl-MySQL55', yb)
         remove_sepcific_mysql('cl-MySQL56', yb)
+	remove_sepcific_mysql('cl-MySQL57', yb)
         remove_sepcific_mysql('cl-MariaDB55', yb)
         remove_sepcific_mysql('cl-MariaDB100', yb)
         remove_sepcific_mysql('cl-MariaDB101', yb)
@@ -508,7 +510,7 @@ def check_sepcific_mysql(pname, yb):
 	if yb.rpmdb.searchNevra(name=pname):
 	    print "Percona package deteced:" + pname 
 	    print "You are running Percona, which is not supported by MySQL Governor. If you want to run MySQL governor, we would have to uninstall Percona,and substitute it for MariaDB or MySQL. Run installator next commands for install:"
-	    print "/usr/share/lve/dbgovernor/db-select-mysql --mysql-version=mysql56 (or mysql50, mysql51, mysql55, mariadb55, mariadb100, mariadb101)"
+	    print "/usr/share/lve/dbgovernor/db-select-mysql --mysql-version=mysql56 (or mysql50, mysql51, mysql55, mysql57, mariadb55, mariadb100, mariadb101)"
 	    print "/usr/share/lve/dbgovernor/mysqlgovernor.py --install --force"
 	    sys.exit(2)
 	else:
@@ -609,6 +611,8 @@ def safe_mysql_op():
 		print "MySQL 5.5"
 	elif result[0] == "mysql56":
 		print "MySQL 5.6"
+	elif result[0] == "mysql57":
+		print "MySQL 5.7"
 	elif result[0] == "mariadb55":
 		print "MariaDB 5.5"
 	elif result[0] == "mariadb100":
@@ -617,10 +621,10 @@ def safe_mysql_op():
 		print "MariaDB 10.1"
 	else:
 		print "Unknown"
-		print "Type please: /usr/share/lve/dbgovernor/db-select-mysql --mysql-version=<mysql50, mysql51, mysql55, mysql56, maridb55, maridb100, mariadb101>"
+		print "Type please: /usr/share/lve/dbgovernor/db-select-mysql --mysql-version=<mysql50, mysql51, mysql55, mysql56, mysql57, maridb55, maridb100, mariadb101>"
 		sys.exit(2)
 	print "auto means will be installed mysql-server package from CloudLinux repo"
-	print "If you don't agree - press n and type: /usr/share/lve/dbgovernor/db-select-mysql --mysql-version=<mysql50, mysql51, mysql55, mysql56, maridb55, maridb100, mariadb101>"
+	print "If you don't agree - press n and type: /usr/share/lve/dbgovernor/db-select-mysql --mysql-version=<mysql50, mysql51, mysql55, mysql56, mysql57, maridb55, maridb100, mariadb101>"
 	if query_yes_no("Should we continue installation?", "yes")==False:
 	    sys.exit(2)
 

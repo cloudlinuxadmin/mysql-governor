@@ -90,6 +90,15 @@ function installDb(){
 	  yum install cl-MySQL-meta cl-MySQL-meta-client cl-MySQL-meta-devel libaio --nogpgcheck -y
 	  ln -sf /etc/init.d/mysql /etc/init.d/mysqld
 	fi
+	if [ "$SQL_VERSION" == "mysql57" ]; then
+	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqlmeta/cl-mysql-5.7-common.repo
+	  if [ -e /usr/libexec/mysqld ]; then
+	   mv -f /usr/libexec/mysqld /usr/libexec/mysqld.bak
+          fi
+	  yum install libaio --nogpgcheck -y
+	  yum install cl-MySQL-meta cl-MySQL-meta-client cl-MySQL-meta-devel libaio --nogpgcheck -y
+	  ln -sf /etc/init.d/mysql /etc/init.d/mysqld
+	fi
 	if [ "$SQL_VERSION" == "mariadb55" ]; then
 	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqlmeta/cl-mariadb-5.5-common.repo
 	  yum install libaio --nogpgcheck -y
@@ -186,6 +195,15 @@ function installDbTest(){
 	fi
 	if [ "$SQL_VERSION" == "mysql56" ]; then
 	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqlmeta/cl-mysql-5.6-common.repo
+	  if [ -e /usr/libexec/mysqld ]; then
+	   mv -f /usr/libexec/mysqld /usr/libexec/mysqld.bak
+          fi
+	  yum install libaio --nogpgcheck -y
+    	  yum install cl-MySQL-meta cl-MySQL-meta-client cl-MySQL-meta-devel libaio --nogpgcheck -y --enablerepo=cloudlinux-updates-testing
+	  ln -sf /etc/init.d/mysql /etc/init.d/mysqld
+	fi
+	if [ "$SQL_VERSION" == "mysql57" ]; then
+	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqlmeta/cl-mysql-5.7-common.repo
 	  if [ -e /usr/libexec/mysqld ]; then
 	   mv -f /usr/libexec/mysqld /usr/libexec/mysqld.bak
           fi

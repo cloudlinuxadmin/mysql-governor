@@ -68,6 +68,9 @@ if [ "$MYSQL_TP" == "set" ]; then
   fi 
   if [ "$MYSQL_VER" == "5.6" ]; then
     MYSQL_VER="mysql56"
+  fi
+  if [ "$MYSQL_VER" == "5.7" ]; then
+    MYSQL_VER="mysql57"
   fi 
   if [ "$MYSQL_VER" == "10.0.0" ]; then
     MYSQL_VER="mariadb100"
@@ -88,6 +91,9 @@ else
     fi 
     if [ "$MYSQL_VER" == "5.6" ]; then
       MYSQL_VER="mysql56"
+    fi
+    if [ "$MYSQL_VER" == "5.7" ]; then
+      MYSQL_VER="mysql57"
     fi
     if [ "$MYSQL_VER" == "10.0.0" ]; then
       MYSQL_VER="mariadb100"

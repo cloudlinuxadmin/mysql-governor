@@ -1,5 +1,5 @@
 %define g_version   1.1
-%define g_release   11
+%define g_release   12
 %define g_key_library 6
 
 %if %{undefined _unitdir}
@@ -380,6 +380,12 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Mon Jan 04 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-12
+- MYSQLG-105: cl-MySQL57-5.7.11-1 requirements are broken on CL6.i386
+- MYSQLG-97: Add support by governor MySQL 5.7
+- MYSQLG-103: fix dbctl list output for read and write limits
+- MYSQLG-98: Make /dev/shm/governor_bad_users_list unreadable for users
+
 * Mon Jan 04 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-11
 - MYSQLG-95: mysqlgovernor.py --dbupdate does not work (with conf parameter without =)
 

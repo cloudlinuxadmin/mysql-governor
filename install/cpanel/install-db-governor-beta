@@ -90,6 +90,9 @@ if( open( my $mysql_db, "<", $mysqlTypeFileSet ) ){
     if( $type_db eq "mysql56" ){
       $sql_version="5.6";
     }
+    if( $type_db eq "mysql57" ){
+      $sql_version="5.7";
+    }
     if( $type_db eq "mariadb55" ){
       $sql_version="5.5";
     }
@@ -133,6 +136,13 @@ if ($sql_version_2=="5.5"){
 
 if ($sql_version_2=="5.6"){
     $sql_version_2="mysql56";
+    if ( -e '/usr/libexec/mysqld' ) {
+	rename '/usr/libexec/mysqld', '/usr/libexec/mysqld.bak'
+    }  
+}
+
+if ($sql_version_2=="5.7"){
+    $sql_version_2="mysql57";
     if ( -e '/usr/libexec/mysqld' ) {
 	rename '/usr/libexec/mysqld', '/usr/libexec/mysqld.bak'
     }  

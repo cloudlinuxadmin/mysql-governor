@@ -138,6 +138,11 @@ if( open( my $mysql_db, "<", $mysqlTypeFileSet ) )
     {
       $mysql_ver="5.5.0";
       $mysql_name="mysql";
+    }     
+    if( $type_db eq "mysql57" )
+    {
+      $mysql_ver="5.5.0";
+      $mysql_name="mysql";
     }
     if( $type_db eq "mariadb55" )
     {
