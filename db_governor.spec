@@ -55,7 +55,11 @@ This package provides dbtop, db_governor utilities.
 %setup -q
 
 %build
+%if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
+cmake . -DSYSTEMD_FLAG:BOOL=1
+%else
 cmake .
+%endif
 
 echo -e "#ifndef VERSION_H_\n#define VERSION_H_\n#define GOVERNOR_CUR_VER \"%{g_version}-%{g_release}\"\n#endif\n" > src/version.h
 
@@ -380,11 +384,12 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
-* Mon Jan 04 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-12
+* Mon Jan 04 2016 Alexey Berezhok <aberezhok@cloudlinux.com>, Mikhail Zhbankov <mzhbankov@cloudlinux.com> 1.1-12
 - MYSQLG-105: cl-MySQL57-5.7.11-1 requirements are broken on CL6.i386
 - MYSQLG-97: Add support by governor MySQL 5.7
 - MYSQLG-103: fix dbctl list output for read and write limits
 - MYSQLG-98: Make /dev/shm/governor_bad_users_list unreadable for users
+- MYSQLG-104: fix governor restart on CL7 under systemd
 
 * Mon Jan 04 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-11
 - MYSQLG-95: mysqlgovernor.py --dbupdate does not work (with conf parameter without =)

@@ -2,6 +2,17 @@
 
 mysqlTypeFileSet="/usr/share/lve/dbgovernor/mysql.type"
 
+function enableMariaDB(){
+	CL=`echo -n "cl5"`
+	CL6=`uname -a | grep "\.el6"`
+	CL7=`uname -a | grep "\.el7"`
+	if [ -n "$CL7" ]; then
+	    systemctl enable mariadb.service
+	    systemctl enable mysql.service
+	    systemctl enable mysqld.service
+	fi
+}
+
 function checkFile(){
 	if [ ! -e "$1" ]; then
 		echo "Installtion error file ---$1---- does not exists"
@@ -53,6 +64,7 @@ function installDb(){
 	  yum install mysql mysql-server mysql-libs mysql-devel mysql-bench  --nogpgcheck -y
           else
           yum install mariadb mariadb-server mariadb-libs mariadb-devel mariadb-bench  --nogpgcheck -y
+	  enableMariaDB
           fi
 
 	fi
@@ -103,6 +115,7 @@ function installDb(){
 	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqlmeta/cl-mariadb-5.5-common.repo
 	  yum install libaio --nogpgcheck -y
 	  yum install cl-MariaDB-meta cl-MariaDB-meta-client cl-MariaDB-meta-devel libaio --nogpgcheck -y
+	  enableMariaDB
 	fi
 
 	if [ "$SQL_VERSION" == "mariadb100" ]; then
@@ -110,6 +123,7 @@ function installDb(){
 	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqlmeta/cl-mariadb-10.0-common.repo
 	  yum install libaio --nogpgcheck -y
 	  yum install cl-MariaDB-meta cl-MariaDB-meta-client cl-MariaDB-meta-devel libaio --nogpgcheck -y
+	  enableMariaDB
 	fi
 
 	if [ "$SQL_VERSION" == "mariadb101" ]; then
@@ -117,6 +131,7 @@ function installDb(){
 	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqlmeta/cl-mariadb-10.1-common.repo
 	  yum install libaio --nogpgcheck -y
 	  yum install cl-MariaDB-meta cl-MariaDB-meta-client cl-MariaDB-meta-devel libaio --nogpgcheck -y
+	  enableMariaDB
 	fi
 
 	if [ ! -e /etc/my.cnf.bkp ]; then

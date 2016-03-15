@@ -7,6 +7,7 @@ After=network.target
 Environment="G_SLICE=always-malloc" "HOME=/root"
 Type=forking
 PIDFile=/var/run/db-governor.pid
+Restart=always
 
 ExecStartPre=ulimit -c unlimited >/dev/null 2>&1
 ExecStart=/usr/sbin/db_governor

@@ -416,6 +416,10 @@ int main(int argc, char *argv[]) {
   config_destroy_lock();
   initGovernor();
   get_config_data( &data_cfg );
+
+#ifdef SYSTEMD_FLAG
+  becameDaemon( 1 );
+#else
   if( data_cfg.daemon_monitor )
   {
     if( fork() == 0 ) trackingDaemon();
@@ -425,6 +429,7 @@ int main(int argc, char *argv[]) {
   {
     becameDaemon( 1 );
   }
+#endif
 #else
     config_destroy_lock();
   	initGovernor();
