@@ -65,7 +65,7 @@ int split( SplitStr **s_s, char *str, char t )
   for( ind = 0; ind < cnt; ind++ )
   {
     int len_m = ( ( str_ind[ ind ] - ind_pre ) + 1 );
-    (*s_s)[ ind ].str = (char*)сalloc(1, (len_m + 8) * sizeof( char ) );
+    (*s_s)[ ind ].str = (char*)calloc(1, (len_m + 8) * sizeof( char ) );
     strncpy( (*s_s)[ ind ].str, str + ind_pre, str_ind[ ind ] - ind_pre );
     ind_pre = str_ind[ ind ] + 1;
   }
