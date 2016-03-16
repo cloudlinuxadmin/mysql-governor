@@ -390,6 +390,7 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 - MYSQLG-103: fix dbctl list output for read and write limits
 - MYSQLG-98: Make /dev/shm/governor_bad_users_list unreadable for users
 - MYSQLG-104: fix governor restart on CL7 under systemd
+- MYSQLG-108: Fix dbctl set command bug
 
 * Mon Jan 04 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-11
 - MYSQLG-95: mysqlgovernor.py --dbupdate does not work (with conf parameter without =)
