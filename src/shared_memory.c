@@ -108,7 +108,23 @@ int init_bad_users_list() {
 			}
 		} else {
 			// log error - can`t find
-			fprintf(stderr, "stat error: %s\n", strerror(errno));
+			fprintf(stderr, "Use standard access to user's list\n");
+		}
+	} else {
+		// change permissions only for governor executable files
+		struct stat socket_stat;
+		if (stat(unix_socket_address, &socket_stat) == 0) {
+			// find socket change owner and permissions for shared memory
+			if (fchown(shm_fd, socket_stat.st_uid, socket_stat.st_gid) != 0) {
+				// log error
+				fprintf(stderr, "chown error: %s\n", strerror(errno));
+			} else if (fchmod(shm_fd, 0600) != 0) {
+				// log error
+				fprintf(stderr, "chmod error: %s\n", strerror(errno));
+			}
+		} else {
+			// log error - can`t find
+			fprintf(stderr, "Use standard access to user's list\n");
 		}
 	}
 
