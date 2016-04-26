@@ -1,5 +1,5 @@
 %define g_version   1.1
-%define g_release   12
+%define g_release   13
 %define g_key_library 6
 
 %if %{undefined _unitdir}
@@ -384,6 +384,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Tue Apr 26 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-13
+- Remove ulimt from service file
+
 * Mon Jan 04 2016 Alexey Berezhok <aberezhok@cloudlinux.com>, Mikhail Zhbankov <mzhbankov@cloudlinux.com> 1.1-12
 - MYSQLG-105: cl-MySQL57-5.7.11-1 requirements are broken on CL6.i386
 - MYSQLG-97: Add support by governor MySQL 5.7
