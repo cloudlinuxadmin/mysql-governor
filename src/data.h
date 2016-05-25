@@ -45,6 +45,7 @@ typedef char parameter_t[USERNAMEMAXLEN];
 #define PATH_TO_LOG_USER_QUERIES "/var/lve/dbgovernor-store/"
 
 #define DBUSER_MAP_FILE "/etc/container/dbuser-map"
+#define DUPLICATE_CONFIG_PATH "/var/run/mysql-governor-config.xml"
 
 #define BAD_LVE 3
 

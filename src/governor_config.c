@@ -608,10 +608,37 @@ config_init (const char *path)
 					       : account), l);
     }
 
+  if (save_duplicate_config(xml)) {
+    fprintf(stderr, "Error save duplicate config file %s\n", DUPLICATE_CONFIG_PATH);
+  }
+
   ezxml_free (xml);
   return cfg;
 }
 
+/**
+ * Save duplicate config file without connector tag
+ */
+int save_duplicate_config(ezxml_t xml) {
+  ezxml_t tmp_xml;
+  tmp_xml = ezxml_child (xml, "connector");
+  if (tmp_xml != NULL) {
+    ezxml_remove(tmp_xml);
+  } else {
+    fprintf(stderr, "No connector tag in xml struct\n");
+  }
+
+  FILE *db_governor_cfg;
+  if ((db_governor_cfg = fopen(DUPLICATE_CONFIG_PATH, "w+")) == NULL) {
+    fprintf(stderr, "Error reading config file %s\n", DUPLICATE_CONFIG_PATH);
+    return 1;
+  }
+
+  char *str = ezxml_toxml(xml);
+  fwrite(str, 1, strlen(str), db_governor_cfg);
+  fclose(db_governor_cfg);
+  return 0;
+}
 
 struct governor_config * get_config(){
 	return cfg;

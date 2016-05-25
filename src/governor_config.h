@@ -57,6 +57,7 @@ stats_limit_cfg *
 config_get_account_limit (const char *account_id, stats_limit_cfg *cfgin);
 void config_free ();
 struct governor_config *config_init (const char *path);
+int save_duplicate_config(ezxml_t xml);
 void reread_config();
 void config_destroy_lock();
 void config_add_work_user (const char *user_name);

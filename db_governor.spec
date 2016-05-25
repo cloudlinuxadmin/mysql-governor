@@ -1,5 +1,5 @@
 %define g_version   1.1
-%define g_release   13
+%define g_release   14
 %define g_key_library 6
 
 %if %{undefined _unitdir}
@@ -384,6 +384,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Wed May 25 2016 Alexey Berezhok <aberezhok@cloudlinux.com>, Mikhail Zhbankov <mzhbankov@cloudlinux.com> 1.1-14
+- Added creation of copy config file
+
 * Tue Apr 26 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-13
 - Remove ulimt from service file
 
