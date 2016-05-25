@@ -6,3 +6,5 @@ target_settings:
   MySQL51: unmanaged
   MySQL55: unmanaged
   MySQL56: unmanaged
+  MariaDB100: unmanaged
+  MariaDB101 unmanaged
