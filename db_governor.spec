@@ -1,5 +1,5 @@
 %define g_version   1.1
-%define g_release   14
+%define g_release   15
 %define g_key_library 6
 
 %if %{undefined _unitdir}
@@ -350,6 +350,7 @@ ldconfig
 
 if [ $1 -eq 0 ]; then
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
+/bin/systemctl daemon-reload >/dev/null 2>&1 || :
 /bin/systemctl restart db_governor.service >/dev/null 2>&1 || :
 %else
 /etc/init.d/db_governor restart
@@ -384,6 +385,10 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Fri Jun 03 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-15
+- Added reload-daemon for CL7 on update
+- Uncommented path to PID file in service for CL7
+
 * Wed May 25 2016 Alexey Berezhok <aberezhok@cloudlinux.com>, Mikhail Zhbankov <mzhbankov@cloudlinux.com> 1.1-14
 - Added creation of copy config file
 
