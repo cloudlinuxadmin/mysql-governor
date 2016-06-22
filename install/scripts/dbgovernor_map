@@ -1,0 +1,155 @@
+#!/bin/sh
+eval 'if [ -x /usr/local/cpanel/3rdparty/bin/perl ]; then exec /usr/local/cpanel/3rdparty/bin/perl -x -- $0 ${1+"$@"}; else exec /usr/bin/perl -x $0 ${1+"$@"}; fi;'
+if 0;
+
+#!/usr/bin/perl
+
+
+#BEGIN { unshift @INC, '/scripts'; }
+BEGIN { unshift @INC, '/usr/local/cpanel', '/scripts'; }
+
+my $pckg_name = 'Cpanel';
+use strict;
+use warnings;
+
+eval "use " .$pckg_name . "::Config::Users          ();";
+if ($@){
+    $pckg_name = 'cPScript';
+    eval "use " .$pckg_name . "::Config::Users       ();";
+}
+
+#eval "use " .$pckg_name . "::Config::Users         ();";
+eval "use  " .$pckg_name . "::DB::Map              ();";
+eval "use  " .$pckg_name . "::DB                   ();";
+
+use Data::Dumper;
+
+my $mapfilename = "/etc/container/dbuser-map";
+my @old = ();
+my @new = ();
+my @copy_new = ();
+
+my $numArgs = $#ARGV + 1;
+
+if (-e $mapfilename) {
+    open(FILENAME, $mapfilename);
+    while ( <FILENAME> )
+    {
+    	chomp;
+    	push @old, [ split / / ];
+    }
+}
+
+if ($numArgs>0) {
+    my $mb = $ARGV[0]+0;
+    if($mb>0){
+        my $uname_1 = getpwuid($mb);
+        @new = get_map_list_user_($uname_1);
+
+        foreach my $item (@new) {
+            my $fnd = 0;
+            foreach my $item2 (@old){
+            	if (($$item[0] eq $$item2[0]) && ($$item[1] eq $$item2[1])){
+            	    $fnd = 1;
+            	    last;
+            	} 
+            }
+            if($fnd==0){
+            	push @old, $item;
+            } 
+        }
+
+        open (MAPFILE, ">$mapfilename"); 
+        foreach my $item (@old){
+            print MAPFILE $$item[0], " ", $$item[1], " ", $$item[2], "\n";
+        }
+        close(MAPFILE);
+    }
+
+} else {
+    @new = get_map_list_();
+    @copy_new = map { [@$_] } @new;
+
+    my @del_list = ();
+    my @del_list2 = ();
+
+    my $i=0;
+    my $j=0;
+    foreach my $item (@new){
+        $j=0;
+        my $del = 0;
+        foreach my $item2 (@old){
+        	if (($$item[0] eq $$item2[0]) && ($$item[1] eq $$item2[1])){
+        	    push @del_list, $j;
+        	    $del = 1;
+        	} 
+        	$j++;
+        }
+        if($del==1){
+    	   push @del_list2, $i;
+        } 
+        $i++;
+    }
+
+    foreach my $item (@del_list){
+        delete $old[$item];
+    }
+    foreach my $item (@del_list2){
+        delete $new[$item];
+    }
+    @old = grep {$_} @old;
+    @new = grep {$_} @new;
+
+    my $cnt_old = @old;
+    my $cnt_new = @new;
+
+    if($cnt_old>0 || $cnt_new>0){
+        open (MAPFILE, ">$mapfilename"); 
+        foreach my $item (@copy_new){
+        	print MAPFILE $$item[0], " ", $$item[1], " ", $$item[2], "\n";
+        }
+        close(MAPFILE);
+    }
+}
+
+sub get_map_list_ {
+    my @arr = ();
+    my @users =Cpanel::Config::Users::getcpusers();
+    foreach my $user (@users) {
+    	my $user_map1 = Cpanel::DB::get_map ( {'cpuser' => $user} );
+    	my $name="";
+    	my $uid= -1;
+    	my $dummy;
+    	($name, $dummy, $uid, $dummy, $dummy, $dummy, $dummy, $dummy, $dummy) = getpwnam($user);
+        if ($uid>=0){
+            push @arr, [ $user, $user, "$uid" ];
+        }
+
+    	if ($uid>=0 && exists($$user_map1{'stash'}{'MYSQL'}{'dbusers'})){
+    	    for my $key (keys %{$$user_map1{'stash'}{'MYSQL'}{'dbusers'}}) { 
+    		  push @arr, [ $key, $user, "$uid" ];
+    	    }
+    	}
+    }
+    return @arr;
+}
+
+sub get_map_list_user_ {
+    my @arr = ();
+    my $user = shift;
+    my $user_map1 = Cpanel::DB::get_map ( {'cpuser' => $user} );
+    my $name = "";
+    my $uid = -1;
+    my $dummy;
+    ($name, $dummy, $uid, $dummy, $dummy, $dummy, $dummy, $dummy, $dummy) = getpwnam($user);
+    if ($uid>=0){
+        push @arr, [ $user, $user, "$uid" ];
+    }
+
+    if ($uid>=0 && exists($$user_map1{'stash'}{'MYSQL'}{'dbusers'})){
+        for my $key (keys %{$$user_map1{'stash'}{'MYSQL'}{'dbusers'}}) { 
+            push @arr, [ $key, $user, "$uid" ];
+        }
+    }
+    return @arr;
+}

@@ -1,0 +1,85 @@
+#!/bin/bash
+
+##################################################
+# Common fucntions                               #
+##################################################
+
+common_tmp_path="/usr/share/lve/dbgovernor/tmp"
+
+function removeEmptyStringsFromFile(){
+    filename="$1"
+    res=`sed -e '/^$/d' $filename`
+    echo "$res" > $filename
+}
+
+function deleteAllInclude(){
+    #1 - hook
+    #2 - tmp name
+    #3 - pattern
+    if [ ! -e "$common_tmp_path" ]; then
+        mkdir -p "$common_tmp_path"
+    fi
+    if [ -e "$1" ];then
+        cat "$1" | sed "$3" > "$common_tmp_path/$2.tmp.$$"
+        cat "$common_tmp_path/$2.tmp.$$" > "$1"
+        rm -f "$common_tmp_path/$2.tmp.$$"
+    fi
+}
+
+function createHookHeader(){
+	#1 - hook name
+	if [ ! -e "$common_tmp_path" ]; then
+		mkdir -p "$common_tmp_path"
+	fi
+	if [ ! -e "$1" ]; then
+		echo "#!/bin/bash" > "$1"
+		chmod 755 "$1"
+	else
+		chmod 755 "$1"
+		tmp=`cat "$1" | egrep "#!/bin/bash|#!/bin/sh"`
+		if [ -z "$tmp" ];then
+			rm -f "$1".governorh.bak
+			mv "$1" "$1".governorh.bak
+			echo "#!/bin/bash" > "$1"
+			echo "$1.governorh.bak"' "$@"' >> "$1"
+			chmod 755 "$1"
+		fi
+	fi
+}
+
+function checkHookString(){
+    #1 - hook name
+    #2 - pattern string
+    #3 - comment srting
+    if [ -e "$1" ];then
+	tmp=`cat "$1" | grep "$2"`
+	if [ -z "$tmp" ];then
+	    echo "$2   #$3" >> $1
+	fi
+    fi
+}
+
+function checkHookStringParam(){
+    #1 - hook name
+    #2 - pattern string
+    #3 - comment srting
+    if [ -e "$1" ];then
+	tmp=`cat "$1" | grep "$2"`
+	if [ -z "$tmp" ];then
+	    echo "$2 \"\$1\"   #$3" >> $1
+	fi
+    fi
+}
+
+function rewriteDBUserHook(){
+    #1 - hook name
+    if [ -e "$1" ]; then 
+	correct=`cat "$1" | grep '/usr/share/lve/dbgovernor/utils/dbgovernor_map "$1"'`
+	if [ -z "$correct" ]; then
+	    is_hook=`cat "$1" | grep "/usr/share/lve/dbgovernor/utils/dbgovernor_map"`
+	    if [ -n "$is_hook" ]; then
+		sed "s/dbgovernor_map/dbgovernor_map \"\$1\"/" -i "$1"
+	    fi
+	fi
+    fi
+}

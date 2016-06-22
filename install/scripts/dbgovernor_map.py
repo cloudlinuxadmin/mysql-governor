@@ -1,10 +1,9 @@
-#!/usr/bin/python
-
+#!/opt/alt/python27/bin/python
+import glob
 import os
 import pwd
-import glob
-import string
-import MySQLdb
+import sys
+
 
 def get_dauser( path ):
     users = {}
@@ -48,7 +47,7 @@ def get_account_list():
     try:
         import MySQLdb
     except:
-        print_error_message( 'Error: package "MySQL-python" is not installed.' )
+        print >>sys.stderr, 'Error: package "MySQL-python" is not installed.'
         return accountList
         
     if 'host' in params:
