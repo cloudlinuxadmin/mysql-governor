@@ -18,7 +18,7 @@ def build_parser():
                                      description="Use following syntax to manage DBGOVERNOR install utility:")
     parser.add_argument("--verbose", help="switch verbose level on",
                         dest="verbose", action="store_true", default=False)
-    parser.add_argument("--mysql-version", help="select MySQL version for db-governor",
+    parser.add_argument("--mysql-version", help="select MySQL version for db-governor. Available mysql types: auto, mysql50, mysql51, mysql55, mysql56, mysql57, mariadb55, mariadb100, mariadb101",
                         dest="mysql_version", required=False)
     parser.add_argument("-i", "--install", help="install MySQL for db-governor",
                         dest="install", action="store_true", default=False)
