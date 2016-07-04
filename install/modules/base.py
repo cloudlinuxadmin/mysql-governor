@@ -73,7 +73,7 @@ class InstallManager(object):
         # remove current mysql packages
         remove_packages(self._old_packages)
 
-    def install(self, beta):
+    def install(self, beta, no_confirm):
         """
         Install stable or beta packages
         @param `beta` bool: install beta or production
@@ -104,7 +104,9 @@ class InstallManager(object):
         self._kill_mysql()
 
         # new db version which will be installing
-        install_packages("new", beta)
+        if not install_packages("new", beta, no_confirm):
+            # if not install new packages - don`t do next actions
+            return False
 
         # fix for packages without /etc/my.cnf file
         if not os.path.exists("/etc/my.cnf"):

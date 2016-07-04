@@ -36,8 +36,6 @@ def build_parser():
                         dest="fix_cpanel_hooks", action="store_true", default=False)
     parser.add_argument("--fix-cpanel-cl-mysql", help="fix mysqld service for cPanel(CL7)",
                         dest="fix_cpanel_cl_mysql", action="store_true", default=False)
-    # parser.add_argument("-s", "--safe-install", help="show which vesrion of MySQL/MariaDB will be installed before installation",
-    #                     dest="safe_install", action="store_true", default=False)
     parser.add_argument("--force", help="Don`t exit if percona installation found",
                         dest="force", action="store_true", default=False)
     parser.add_argument("-u", "--upgrade", help="Option is deprecated. Use `yum update` instead",
@@ -45,6 +43,8 @@ def build_parser():
     parser.add_argument("--update-mysql-beta", help="Option is deprecated. Use --install-beta instead",
                         dest="update_mysql_beta", action="store_true", default=False)
     parser.add_argument("--fs-suid", help="Helper utility", dest="fs_suid",
+                        action="store_true", default=False)
+    parser.add_argument("--yes", help="Install without confirm", dest="yes",
                         action="store_true", default=False)
     return parser
 
@@ -65,12 +65,10 @@ def main(argv):
 
     if opts.install or opts.install_beta:
         warn_message()
-        # if opts.safe_install:
-        #     safe_mysql_op()
         detect_percona(opts.force)
 
         # remove current packages and install new packages
-        manager.install(opts.install_beta)
+        manager.install(opts.install_beta, opts.yes)
 
         # check mysqld service status
         if exec_command("ps -Af | grep -v grep | grep mysqld | grep datadir",
@@ -80,7 +78,8 @@ def main(argv):
         
         # if sql server failed to start ask user to restore old packages
         elif query_yes_no("Installation is failed. Restore previous version?"):
-            print "Installation mysql for db_governor was failed. Restore previous mysql version"
+            print ("Installation mysql for db_governor was failed. Restore "
+                   "previous mysql version")
             manager.install_rollback(opts.install_beta)
 
         manager.cleanup()
@@ -88,14 +87,6 @@ def main(argv):
     elif opts.delete:
         manager.delete()
         print "Deletion is complete"
-
-        # if exec_command("ps -Af | grep -v grep | grep mysqld | grep datadir",
-                        # True, silent=True):
-            # manager.cleanup()
-        # else:
-            # print "Deletion is failed"
-        # elif query_yes_no("Deletion is failed. Restore previous version?"):
-            # manager.delete_rollback()
 
         manager.cleanup()
 
@@ -134,50 +125,6 @@ def detect_percona(force):
         print InstallManager._rel("mysqlgovernor.py")+" --mysql-version=mysql56 (or mysql50, mysql51, mysql55, mysql57, mariadb55, mariadb100, mariadb101)"
         print InstallManager._rel("mysqlgovernor.py")+" --install --force"
         sys.exit(2)
-
-
-# def safe_mysql_op():
-#     result = "None"
-#     cp_name = cpapi.CP_NAME  
-#     print "Will be installed MySQL/MariaDB version(detected by governor): "
-#     if cp_name == "Plesk":  #  and verCompare(cp.version, "10") >= 0:
-#         result = exec_command(SOURCE+"plesk/install-db-governor-version.sh")
-#     elif cp_name == "cPanel":
-#         result = exec_command(SOURCE+"cpanel/install-db-governor-version")
-#     elif cp_name == "InterWorx":
-#         result = exec_command(SOURCE+"iworx/install-db-governor-version.sh")
-#     elif cp_name == "ISPManager":    
-#         result = exec_command(SOURCE+"ispmanager/install-db-governor-version.sh")
-#     elif cp_name == "DirectAdmin":
-#         result = exec_command(SOURCE+"da/install-db-governor-version.sh")
-#     else:
-#         result = exec_command(SOURCE+"other/install-db-governor-version.sh")
-
-#     if result[0] == "mysql50":
-#         print "MySQL 5.0"
-#     elif result[0] == "mysql51":
-#         print "MySQL 5.1"
-#     elif result[0] == "mysql55":
-#         print "MySQL 5.5"
-#     elif result[0] == "mysql56":
-#         print "MySQL 5.6"
-#     elif result[0] == "mysql57":
-#         print "MySQL 5.7"
-#     elif result[0] == "mariadb55":
-#         print "MariaDB 5.5"
-#     elif result[0] == "mariadb100":
-#         print "MariaDB 10.0"
-#     elif result[0] == "mariadb101":
-#         print "MariaDB 10.1"
-#     else:
-#         print "Unknown"
-#         print "Type please: "+SOURCE+"db-select-mysql --mysql-version=<mysql50, mysql51, mysql55, mysql56, mysql57, maridb55, maridb100, mariadb101>"
-#         sys.exit(2)
-
-#     print "auto means will be installed mysql-server package from CloudLinux repo"
-#     print "If you don't agree - press n and type: "+SOURCE+"db-select-mysql --mysql-version=<mysql50, mysql51, mysql55, mysql56, mysql57, maridb55, maridb100, mariadb101>"
-#     if query_yes_no("Should we continue installation?", "yes") == False:
-#         sys.exit(2)
 
 
 def warn_message():

@@ -4,6 +4,7 @@ import re
 import subprocess
 import sys
 from distutils.version import StrictVersion
+from glob import glob
 
 
 __all__ = ["mysql_version", "clean_whitespaces", "is_package_installed",
@@ -91,16 +92,27 @@ def remove_packages(packages_list):
     print exec_command("rpm -e --nodeps %s" % packages, True)
 
 
-def install_packages(rpm_dir, is_beta):
+def install_packages(rpm_dir, is_beta, no_confirm=None):
     """
     Install new packages from rpm files in directory
+    @param `no_confirm` bool|None: bool - show info about packages for install
+                                   if True - show confirm message. 
+                                   None - no additional info
     """
     repo = ""
     if is_beta:
         repo = "--enablerepo=cloudlinux-updates-testing"
 
-    pkg_path = os.path.join(RPM_TEMP_PATH, rpm_dir.strip("/"))
-    print exec_command("yum install %s --nogpgcheck -y %s/*.rpm" % (repo, pkg_path), True)
+    pkg_path = "%s/" % os.path.join(RPM_TEMP_PATH, rpm_dir.strip("/"))
+    if no_confirm is not None:
+        packages_list = sorted([x.replace(pkg_path, "") for x in glob("%s*.rpm" % pkg_path)])
+        print "New packages will be installed: \n    %s" % "\n    ".join(packages_list)
+        if not no_confirm:
+            if not query_yes_no("Continue?"):
+                return False
+
+    print exec_command("yum install %s --disableexcludes=all --nogpgcheck -y %s*.rpm" % (repo, pkg_path), True)
+    return True
 
 
 def new_lve_ctl(version1):
