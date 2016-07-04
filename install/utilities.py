@@ -12,10 +12,11 @@ __all__ = ["mysql_version", "clean_whitespaces", "is_package_installed",
            "new_lve_ctl", "num_proc", "service", "bcolors",
            "check_file", "exec_command", "exec_command_out", "get_cl_num",
            "remove_lines", "write_file", "read_file", "rewrite_file", "touch",
-           "add_line", "replace_lines", "getItem", "verCompare", "query_yes_no"]
+           "add_line", "replace_lines", "getItem", "verCompare", "query_yes_no",
+           "confirm_packages_installation"]
 
 
-RPM_TEMP_PATH = "/tmp/governor-tmp"
+RPM_TEMP_PATH = "/usr/share/lve/dbgovernor/tmp/governor-tmp"
 WHITESPACES_REGEX = re.compile("\s+")
 
 
@@ -75,7 +76,7 @@ def download_packages(names, dest, beta):
     if exec_command("yum repolist|grep mysql -c", True, True) != "0":
         repo = "%s --enablerepo=mysqclient" % repo
 
-    exec_command(("yumdownloader --destdir=%s --disableexcludes=all %s %s") 
+    exec_command(("yumdownloader --destdir=%s --disableexcludes=all %s %s")
                   % (path, repo, " ".join(names)), True, silent=True)
     return True
 
@@ -91,6 +92,23 @@ def remove_packages(packages_list):
     packages = " ".join(packages_list)
     print exec_command("rpm -e --nodeps %s" % packages, True)
 
+def confirm_packages_installation(rpm_dir,  no_confirm=None):
+    """
+    Confirm install new packages from rpm files in directory
+    @param `no_confirm` bool|None: bool - show info about packages for install
+                                   if True - show confirm message. 
+                                   None - no additional info
+    """
+
+    pkg_path = "%s/" % os.path.join(RPM_TEMP_PATH, rpm_dir.strip("/"))
+    if no_confirm is not None:
+        packages_list = sorted([x.replace(pkg_path, "") for x in glob("%s*.rpm" % pkg_path)])
+        print "New packages will be installed: \n    %s" % "\n    ".join(packages_list)
+        if not no_confirm:
+            if not query_yes_no("Continue?"):
+                return False
+
+    return True
 
 def install_packages(rpm_dir, is_beta, no_confirm=None):
     """
@@ -104,12 +122,6 @@ def install_packages(rpm_dir, is_beta, no_confirm=None):
         repo = "--enablerepo=cloudlinux-updates-testing"
 
     pkg_path = "%s/" % os.path.join(RPM_TEMP_PATH, rpm_dir.strip("/"))
-    if no_confirm is not None:
-        packages_list = sorted([x.replace(pkg_path, "") for x in glob("%s*.rpm" % pkg_path)])
-        print "New packages will be installed: \n    %s" % "\n    ".join(packages_list)
-        if not no_confirm:
-            if not query_yes_no("Continue?"):
-                return False
 
     print exec_command("yum install %s --disableexcludes=all --nogpgcheck -y %s*.rpm" % (repo, pkg_path), True)
     return True

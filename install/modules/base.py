@@ -11,7 +11,7 @@ sys.path.append("../")
 from utilities import get_cl_num, exec_command, exec_command_out, new_lve_ctl, \
     num_proc, grep, add_line, service, install_packages, touch, \
     remove_packages, read_file, download_packages, write_file, RPM_TEMP_PATH, \
-    is_package_installed, check_file, mysql_version
+    is_package_installed, check_file, mysql_version, confirm_packages_installation
 
 
 class InstallManager(object):
@@ -91,6 +91,9 @@ class InstallManager(object):
 
         if os.path.exists("/etc/my.cnf"):
             shutil.copy2("/etc/my.cnf", "/etc/my.cnf.prev")
+
+        if not confirm_packages_installation("new", no_confirm):
+            return False
 
         # first remove installed mysql packages
         self.remove_current_packages()
@@ -360,7 +363,7 @@ class InstallManager(object):
         if download:
             # arch = ".x86_64" if os.uname()[-1] == "x86_64" else ""
             # download_pkgs = ["%s%s" % (x.split(" ")[0], arch) for x in packages]
-            download_packages(packages, folder, False)
+            download_packages(packages, folder, True)
 
         return packages
         # return [x.replace(" ", "-") for x in packages]
