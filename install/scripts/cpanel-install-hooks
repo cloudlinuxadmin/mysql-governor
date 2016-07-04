@@ -3,7 +3,7 @@
 ###################################################
 # Utils for hooks installation or removing        #
 ###################################################
-. /usr/share/lve/dbgovernor/cpanel/cpanel-common-lve
+. /usr/share/lve/dbgovernor/scripts/cpanel-common-lve
 
 
 ####################################################

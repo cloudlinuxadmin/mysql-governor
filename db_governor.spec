@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   0
+%define g_release   1
 %define g_key_library 6
 
 %if %{undefined _unitdir}
@@ -153,7 +153,7 @@ install -D -m 644 install/utils/cloudlinux.versions $RPM_BUILD_ROOT/usr/share/lv
 # install -D -m 755 install/cpanel/cpanel-common-lve $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/cpanel-common-lve
 # install -D -m 755 install/cpanel/cpanel-delete-hooks $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/cpanel-delete-hooks
 # install -D -m 755 install/cpanel/cpanel-install-hooks $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/cpanel-install-hooks
-# install -D -m 755 install/cpanel/upgrade-mysql-disabler.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/upgrade-mysql-disabler.sh
+install -D -m 755 install/cpanel/upgrade-mysql-disabler.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/upgrade-mysql-disabler.sh
 # install -D -m 755 install/da/install-db-governor.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/da/install-db-governor.sh
 # install -D -m 755 install/da/install-db-governor-version.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/da/install-db-governor-version.sh
 # install -D -m 644 install/cpanel/cloudlinux.versions $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/cloudlinux.versions
@@ -188,6 +188,7 @@ install -D -m 644 install/utils/cloudlinux.versions $RPM_BUILD_ROOT/usr/share/lv
 # install -D -m 755 install/da/dbgovernor_map.py $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/da/dbgovernor_map.py 
 # install -D -m 755 install/utils/check_mysql_leave_pid_other.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/check_mysql_leave_pid_other.sh
 # install -D -m 755 install/cpanel/install-db-governor-uninstall $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/install-db-governor-uninstall
+ln -s ../scripts/dbgovernor_map $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/dbgovernor_map
 
 #install cron utility
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/cron.d/

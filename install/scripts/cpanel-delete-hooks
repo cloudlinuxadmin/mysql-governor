@@ -1,6 +1,6 @@
 #!/bin/bash
 
-. /usr/share/lve/dbgovernor/cpanel/cpanel-common-lve
+. /usr/share/lve/dbgovernor/scripts/cpanel-common-lve
 
 postupcp="/scripts/postupcp"
 mysqluserupdate1="/usr/local/cpanel/hooks/mysql/adduser"
