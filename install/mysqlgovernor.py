@@ -6,7 +6,7 @@ import time
 
 from clcommon import cpapi
 
-from modules import InstallManager
+from modules import InstallManager, Storage
 from utilities import exec_command, bcolors, query_yes_no
 
 
@@ -46,6 +46,18 @@ def build_parser():
                         action="store_true", default=False)
     parser.add_argument("--yes", help="Install without confirm", dest="yes",
                         action="store_true", default=False)
+    parser.add_argument("--list-saved-files", help="Show list of saved MySQL old files in storage",
+                        dest="store_list", action="store_true", default=False)
+    parser.add_argument("--save-file-to-storage", help="Save file to storage",
+                        dest="store_save", required=False)
+    parser.add_argument("--restore-file-from-storage", help="Restore file from storage",
+                        dest="store_restore", required=False)
+    parser.add_argument("--save-files-from-list", help="Save file to storage according to files list /usr/share/lve/dbgovernor/list_problem_files.txt",
+                        dest="store_list_files", action="store_true", default=False)
+    parser.add_argument("--restore-all-files", help="Restore all files from storage",
+                        dest="restore_list_all", action="store_true", default=False)
+    parser.add_argument("--clean-storage", help="Clean up storage",
+                        dest="store_clean", action="store_true", default=False)
     return parser
 
 
@@ -60,6 +72,9 @@ def main(argv):
 
     opts = parser.parse_args(argv)
 
+
+    storage_holder = Storage()
+    storage_holder.check_root_permissions()
     # create install manager instance for current cp
     manager = InstallManager.factory(cpapi.CP_NAME)
 
@@ -109,6 +124,18 @@ def main(argv):
         print "Option is deprecated. Use --install-beta instead."
     elif opts.fs_suid:
         manager.set_fs_suid_dumpable()
+    elif opts.store_list:
+        storage_holder.list_files_from_storage(False)
+    elif opts.store_save:
+        storage_holder.save_file_to_storage(opts.store_save)
+    elif opts.store_restore:
+        storage_holder.restore_file_from_storage(opts.store_restore)
+    elif opts.store_list_files:
+        storage_holder.apply_files_from_list("/usr/share/lve/dbgovernor/list_problem_files.txt")
+    elif opts.restore_list_all:
+        storage_holder.list_files_from_storage(True)
+    elif opts.store_clean:
+        storage_holder.empty_storage()
     else:
         parser.print_help()
         sys.exit(2)

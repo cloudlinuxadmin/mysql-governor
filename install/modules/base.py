@@ -334,8 +334,8 @@ class InstallManager(object):
 
             # server package name
             # pkg_name = exec_command("""rpm -qf --qf "%%{name} %%{version}\n" %s """ % mysqld_path, True, silent=True)
-            pkg_name = exec_command("""rpm -qf %s """ % mysqld_path, True, silent=True)
-            if pkg_name.endswith("is not owned by any package"):
+            pkg_name = exec_command("""rpm -qf %s """ % mysqld_path, True, silent=True, return_code=True)
+            if pkg_name==False:
                 print "No mysql packages installed, but mysqld file presents on system"
                 pkg_name = None
                 # return False

@@ -19,6 +19,7 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <math.h>
+#include <pwd.h>
 
 #include "stats.h"
 #include "user_account.h"
@@ -645,12 +646,32 @@ static int dbgov_was_user_activity(dbgov_statitrics *dbgovst){
 void dbstat_print_table( gpointer key, dbgov_statitrics *dbgov_statitrics__, void *data )
 {
   FILE *dbgov_stats = (FILE*)data;
+  struct passwd *result = NULL;
+  struct passwd pwd = {0};
+  char *buf_pwd = NULL;
+  size_t bufsize = 0;
+  int res = 0;
+  uid_t need_uid = 0;
   
   int number_of_iterations = dbgov_statitrics__->number_of_iterations,
       mb_s = 1000000;
+
+
+  bufsize = sysconf(_SC_GETPW_R_SIZE_MAX);
+  if (bufsize == -1) bufsize = 16384;
+
+  buf_pwd = malloc(bufsize);
+  if (buf_pwd != NULL) {
+	  res = getpwnam_r(dbgov_statitrics__->username, &pwd, buf_pwd, bufsize, &result);
+	  if (result != NULL){
+		  need_uid = pwd.pw_uid;
+	  }
+	  free(buf_pwd);
+  }
+
   if(dbgov_was_user_activity(dbgov_statitrics__)){
   
-	  fprintf( dbgov_stats, "%s;%d;%f;%f;%f;%f;%f;%f;%d;%ld;%ld;%ld;%d\n",
+	  fprintf( dbgov_stats, "%s;%d;%f;%f;%f;%f;%f;%f;%d;%ld;%ld;%ld;%d;%lu\n",
                          dbgov_statitrics__->username,
                          (int)ceil((double)dbgov_statitrics__->max_simultaneous_requests / (double)number_of_iterations),
                          fabs( ( dbgov_statitrics__->sum_cpu   / number_of_iterations ) * 100 ),
@@ -663,7 +684,7 @@ void dbstat_print_table( gpointer key, dbgov_statitrics *dbgov_statitrics__, voi
                          dbgov_statitrics__->limit_cpu_on_period_end,
                          (long)( dbgov_statitrics__->limit_read_on_period_end / mb_s ),
                          (long)( dbgov_statitrics__->limit_write_on_period_end / mb_s ),
-                        		 dbgov_statitrics__->cause
+                        		 dbgov_statitrics__->cause, need_uid
          );
   }
 }

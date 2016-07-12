@@ -102,14 +102,7 @@ mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/modules
 mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts
 mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils
 mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/tmp
-# mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/da
-# mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel
-# mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/plesk
-# mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/iworx
-# mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/ispmanager
-# mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/logs
-# mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/tmp
-# mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils
+mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/storage
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
 # install systemd unit files and scripts for handling server startup
 mkdir -p ${RPM_BUILD_ROOT}%{_unitdir}
@@ -138,56 +131,9 @@ install -D -m 755 install/scripts/dbgovernor_map $RPM_BUILD_ROOT/usr/share/lve/d
 install -D -m 755 install/scripts/dbgovernor_map.py $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/dbgovernor_map.py
 
 install -D -m 644 install/utils/cloudlinux.versions $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/cloudlinux.versions
+install -D -m 600 install/list_problem_files.txt $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/
 
-
-# install -D -m 755 install/cpanel/check_mysql_leave_pid.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/check_mysql_leave_pid.sh
-# install -D -m 755 install/cpanel/db_governor-clear-old-hook $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/db_governor-clear-old-hook
-# install -D -m 755 install/cpanel/install-db-governor $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/install-db-governor
-# install -D -m 755 install/cpanel/install-db-governor-version $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/install-db-governor-version
-# install -D -m 755 install/cpanel/chek_mysql_rpms_local $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/chek_mysql_rpms_local
-
-# install -D -m 755 install/cpanel/fix-db-governor $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/fix-db-governor
-# install -D -m 755 install/cpanel/fix-db-governor.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/fix-db-governor.sh
-
-# install -D -m 755 install/cpanel/install-db-governor-beta $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/install-db-governor-beta
-# install -D -m 755 install/cpanel/cpanel-common-lve $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/cpanel-common-lve
-# install -D -m 755 install/cpanel/cpanel-delete-hooks $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/cpanel-delete-hooks
-# install -D -m 755 install/cpanel/cpanel-install-hooks $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/cpanel-install-hooks
 install -D -m 755 install/cpanel/upgrade-mysql-disabler.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/upgrade-mysql-disabler.sh
-# install -D -m 755 install/da/install-db-governor.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/da/install-db-governor.sh
-# install -D -m 755 install/da/install-db-governor-version.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/da/install-db-governor-version.sh
-# install -D -m 644 install/cpanel/cloudlinux.versions $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/cloudlinux.versions
-# install -D -m 755 install/cpanel/install-mysql-disabler.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/install-mysql-disabler.sh
-# install -D -m 755 install/plesk/install-db-governor.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/plesk/install-db-governor.sh
-# install -D -m 755 install/plesk/install-db-governor-version.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/plesk/install-db-governor-version.sh
-# install -D -m 755 install/iworx/install-db-governor.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/iworx/install-db-governor.sh
-# install -D -m 755 install/iworx/install-db-governor-version.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/iworx/install-db-governor-version.sh
-# install -D -m 755 install/ispmanager/install-db-governor.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/ispmanager/install-db-governor.sh
-# install -D -m 755 install/ispmanager/install-db-governor-version.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/ispmanager/install-db-governor-version.sh
-# install -D -m 755 install/other/install-db-governor.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/other/install-db-governor.sh
-# install -D -m 755 install/other/install-db-governor-version.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/other/install-db-governor-version.sh
-# install -D -m 755 install/other/set_fs_suid_dumpable.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/other/set_fs_suid_dumpable.sh
-# install -D -m 755 install/utils/dbgovernor_map $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/dbgovernor_map
-# install -D -m 755 install/utils/empty_action.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/empty_action.sh
-# install -D -m 755 install/utils/db_install_common.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/db_install_common.sh
-# install -D -m 755 install/utils/mysql_export $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/mysql_export
-# install -D -m 755 install/utils/debug-mysql.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/debug-mysql.sh
-
-# install -D -m 755 install/chk-mysqlclient $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/chk-mysqlclient
-# install -D -m 755 install/db-select-mysql $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/db-select-mysql
-# install -D -m 755 install/remove-mysqlclient $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/remove-mysqlclient
-
-# install -D -m 755 install/cpanel/install-db-governor-stable $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/install-db-governor-stable
-# install -D -m 755 install/da/install-db-governor-beta.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/da/install-db-governor-beta.sh
-# install -D -m 755 install/plesk/install-db-governor-beta.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/plesk/install-db-governor-beta.sh
-# install -D -m 755 install/iworx/install-db-governor-beta.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/iworx/install-db-governor-beta.sh
-# install -D -m 755 install/ispmanager/install-db-governor-beta.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/ispmanager/install-db-governor-beta.sh
-# install -D -m 755 install/other/install-db-governor-beta.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/other/install-db-governor-beta.sh
-
-# install -D -m 755 install/cpanel/install-db-governor.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/install-db-governor.sh
-# install -D -m 755 install/da/dbgovernor_map.py $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/da/dbgovernor_map.py 
-# install -D -m 755 install/utils/check_mysql_leave_pid_other.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/check_mysql_leave_pid_other.sh
-# install -D -m 755 install/cpanel/install-db-governor-uninstall $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/install-db-governor-uninstall
 ln -s ../scripts/dbgovernor_map $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/dbgovernor_map
 
 #install cron utility
@@ -290,7 +236,7 @@ fi
 
 %preun
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
-if [ $1 = 0 ]; then
+if [ $1 -eq 0 ]; then
     # Package removal, not upgrade
     /bin/systemctl --no-reload disable db_governor.service >/dev/null 2>&1 || :
     /bin/systemctl stop db_governor.service >/dev/null 2>&1 || :
@@ -301,11 +247,17 @@ if [ $1 -eq 0 ]; then
     /sbin/chkconfig --del db_governor
 fi
 %endif
+if [ $1 -eq 1 -o $1 -eq 0 ] ; then
+ if [ -e /var/run/mysql-governor-config.xml ]; then
+    rm -f /var/run/mysql-governor-config.xml
+ fi
+fi
 
 %posttrans
 /sbin/ldconfig
 rm -rf /%{_libdir}/liblve.so.1
 ln -s /%{_libdir}/liblve.so.0.9.0 /%{_libdir}/liblve.so.1
+/sbin/ldconfig
 
 #check if in signal file saved U, than need to start mysql
 gKEY=`echo -n "%{g_key_library}"`
@@ -407,10 +359,15 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 %{_sysconfdir}/cron.d/lvedbgovernor-utils-cron
 /var/lve/dbgovernor
 /var/lve/dbgovernor-store
-# /usr/share/lve/dbgovernor/cpanel/logs
-# /usr/share/lve/dbgovernor/cpanel/tmp
+%dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Mon Jul 11 2016 Alexey Berezhok <aberezhok@cloudlinux.com>, Mikhail Zhbankov <mzhbankov@cloudlinux.com> 1.2-1
+- MYSQLG-130: Add uid to statistic file(end of each string)
+- MYSQLG-126: Add automatic removal /var/run/mysql-governor-config.xml file with remove/downgrade
+- MYSQLG-131: After update cl-MySQL(cl-MariaDB) cleint can't start mysql process because old process didn't stop
+- MYSQLG-122: Reserch ability to remove unneeded files on governor's migration from one MySQL type to another
+
 * Fri Jun 03 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-15
 - Added reload-daemon for CL7 on update
 - Uncommented path to PID file in service for CL7

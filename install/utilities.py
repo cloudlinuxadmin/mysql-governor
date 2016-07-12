@@ -13,7 +13,7 @@ __all__ = ["mysql_version", "clean_whitespaces", "is_package_installed",
            "check_file", "exec_command", "exec_command_out", "get_cl_num",
            "remove_lines", "write_file", "read_file", "rewrite_file", "touch",
            "add_line", "replace_lines", "getItem", "verCompare", "query_yes_no",
-           "confirm_packages_installation"]
+           "confirm_packages_installation", "is_file_owned_by_package"]
 
 
 RPM_TEMP_PATH = "/usr/share/lve/dbgovernor/tmp/governor-tmp"
@@ -30,9 +30,12 @@ def mysql_version():
         return None
 
     output = exec_command("""rpm -qf --qf="%%{name} %%{version}" %s""" % path,
-                          True, silent=True)
-    if not output or "is not owned by any package" in output:
+                          True, silent=True, return_code=True)
+    if output==False:
         return None
+
+    output = exec_command("""rpm -qf --qf="%%{name} %%{version}" %s""" % path,
+                          True, silent=True)
 
     name, version = output.lower().split(" ")
     if name.startswith("cl-mariadb"):
@@ -57,9 +60,15 @@ def is_package_installed(name):
     """
     Check is package installed
     """
-    out = exec_command("rpm -q %s" % name, True, silent=True).strip()
-    return out and out != ("package %s is not installed" % name)
+    out = exec_command("rpm -q %s" % name, True, silent=True, return_code=True)
+    return out==0
 
+def is_file_owned_by_package(file_path):
+    """
+    Check is file owned by package
+    """
+    out = exec_command("rpm -qf %s" % file_path, True, silent=True, return_code=True)
+    return out==0
 
 def download_packages(names, dest, beta):
     """
@@ -79,7 +88,6 @@ def download_packages(names, dest, beta):
     exec_command(("yumdownloader --destdir=%s --disableexcludes=all %s %s")
                   % (path, repo, " ".join(names)), True, silent=True)
     return True
-
 
 def remove_packages(packages_list):
     """
@@ -162,12 +170,15 @@ def check_file(path):
     return True
 
 
-def exec_command(command, as_string=False, silent=False):
+def exec_command(command, as_string=False, silent=False, return_code=False):
     """
     """
     p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE)
     out, err = p.communicate()
+    if return_code==True:
+        return p.returncode
+
     if p.returncode != 0 and not silent:
         print >>sys.stderr, "Execution command: %s error" % command
         raise RuntimeError("%s\n%s" % (out, err))

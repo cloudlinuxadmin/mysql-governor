@@ -1,0 +1,9 @@
+/usr/lib64/libmysqlclient_r.so.15
+/usr/lib64/libmysqlclient_r.so.15.0.0
+/usr/lib64/libmysqlclient_r.so.16
+/usr/lib64/libmysqlclient_r.so.16.0.0
+/usr/lib64/libmysqlclient.so.15
+/usr/lib64/libmysqlclient.so.15.0.0
+/usr/lib64/libmysqlclient.so.16
+/usr/lib64/libmysqlclient.so.16.0.0
+/usr/lib/systemd/system/mysqld.service
