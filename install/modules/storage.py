@@ -10,7 +10,7 @@ import errno
 
 sys.path.append("../")
 
-from utilities import is_file_owned_by_package
+from utilities import is_file_owned_by_package, exec_command_out
 
 class Storage(object):
     """
@@ -74,6 +74,13 @@ class Storage(object):
                 shutil.rmtree(dir_name)
             result = list(self._find_empty_dirs_in_storage_one_iteration())
 
+    def _check_systemd_service(self, name, path_to_file):
+        """
+        If it is service. It should be disabled before moving
+        """
+        srv = name + ".service"
+        if srv in path_to_file and os.path.exists("/usr/bin/systemctl"):
+                exec_command_out("systemctl disable " + srv)
 
     def save_file_to_storage(self, path_to_file):
         """
@@ -82,6 +89,9 @@ class Storage(object):
         if self._file_from_list_exists(path_to_file, False)==True and self._is_writable(self.STORE_PATH) == True and self._is_file_not_owned_by_package(path_to_file)==True:
             print("File %s moved to storage" % path_to_file)
             self._mkdir_p(self.STORE_PATH + path_to_file)
+            self._check_systemd_service("mysql", path_to_file)
+            self._check_systemd_service("mysqld", path_to_file)
+            self._check_systemd_service("mariadb", path_to_file)
             shutil.move(path_to_file, self.STORE_PATH + path_to_file)
 
     def restore_file_from_storage(self, path_to_file):
