@@ -259,6 +259,12 @@ rm -rf /%{_libdir}/liblve.so.1
 ln -s /%{_libdir}/liblve.so.0.9.0 /%{_libdir}/liblve.so.1
 /sbin/ldconfig
 
+%if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
+if [ -e /usr/share/lve/dbgovernor/mysqlgovernor.py ]; then
+    /usr/share/lve/dbgovernor/mysqlgovernor.py --correct-cl7-service-name
+fi
+%endif
+
 #check if in signal file saved U, than need to start mysql
 gKEY=`echo -n "%{g_key_library}"`
 if [ -e "/etc/container/dbgovernor-libcheck" ]; then
