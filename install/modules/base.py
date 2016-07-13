@@ -11,7 +11,8 @@ sys.path.append("../")
 from utilities import get_cl_num, exec_command, exec_command_out, new_lve_ctl, \
     num_proc, grep, add_line, service, install_packages, touch, \
     remove_packages, read_file, download_packages, write_file, RPM_TEMP_PATH, \
-    is_package_installed, check_file, mysql_version, confirm_packages_installation
+    is_package_installed, check_file, mysql_version, confirm_packages_installation, \
+    create_mysqld_link, correct_mysqld_service_for_cl7
 
 
 class InstallManager(object):
@@ -94,6 +95,9 @@ class InstallManager(object):
 
         if not confirm_packages_installation("new", no_confirm):
             return False
+            
+        create_mysqld_link("mysqld", "mysql")
+        create_mysqld_link("mysql", "mysqld")
 
         # first remove installed mysql packages
         self.remove_current_packages()
@@ -110,6 +114,9 @@ class InstallManager(object):
         if not install_packages("new", beta, no_confirm):
             # if not install new packages - don`t do next actions
             return False
+            
+        correct_mysqld_service_for_cl7("mysql")
+        correct_mysqld_service_for_cl7("mysqld")
 
         # fix for packages without /etc/my.cnf file
         if not os.path.exists("/etc/my.cnf"):

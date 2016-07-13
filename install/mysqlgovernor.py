@@ -7,7 +7,7 @@ import time
 from clcommon import cpapi
 
 from modules import InstallManager, Storage
-from utilities import exec_command, bcolors, query_yes_no
+from utilities import exec_command, bcolors, query_yes_no, correct_mysqld_service_for_cl7
 
 
 def build_parser():
@@ -58,6 +58,8 @@ def build_parser():
                         dest="restore_list_all", action="store_true", default=False)
     parser.add_argument("--clean-storage", help="Clean up storage",
                         dest="store_clean", action="store_true", default=False)
+    parser.add_argument("--correct-cl7-service-name", help="Remove /etc/init.d/mysql(d) if exists for CloudLinux 7",
+                        dest="cl7_correct", action="store_true", default=False)
     return parser
 
 
@@ -136,6 +138,9 @@ def main(argv):
         storage_holder.list_files_from_storage(True)
     elif opts.store_clean:
         storage_holder.empty_storage()
+    elif opts.cl7_correct:
+        correct_mysqld_service_for_cl7("mysql")
+        correct_mysqld_service_for_cl7("mysqld")
     else:
         parser.print_help()
         sys.exit(2)

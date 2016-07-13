@@ -13,7 +13,8 @@ __all__ = ["mysql_version", "clean_whitespaces", "is_package_installed",
            "check_file", "exec_command", "exec_command_out", "get_cl_num",
            "remove_lines", "write_file", "read_file", "rewrite_file", "touch",
            "add_line", "replace_lines", "getItem", "verCompare", "query_yes_no",
-           "confirm_packages_installation", "is_file_owned_by_package"]
+           "confirm_packages_installation", "is_file_owned_by_package", "create_mysqld_link",
+           "correct_mysqld_service_for_cl7"]
 
 
 RPM_TEMP_PATH = "/usr/share/lve/dbgovernor/tmp/governor-tmp"
@@ -404,3 +405,26 @@ def query_yes_no(question, default="yes"):
         else:
             sys.stdout.write("Please respond with 'yes' or 'no' "
                              "(or 'y' or 'n').\n")
+
+def create_mysqld_link(link, to_file):
+    """
+    cl-MySQL packages brings only /etc/init.d/mysql file, mysqld should be created
+    """
+    cl_ver = get_cl_num()
+    if cl_ver<7:
+	link_name = "/etc/init.d/" + link
+	if not os.path.exists(link_name):
+            if not os.path.islink(link_name):
+                os.symlink("/etc/init.d/" + to_file, link_name)
+                
+def correct_mysqld_service_for_cl7(name):
+    """
+    For cl7 /etc/init.d/mysql should be removed if exists
+    """
+    cl_ver = get_cl_num()
+    if cl_ver==7:
+	link_name = "/etc/init.d/" + name
+	if os.path.exists(link_name):
+	    os.unlink(link_name)
+        elif os.path.islink(link_name):
+            os.unlink(link_name)

@@ -10,7 +10,7 @@ import errno
 
 sys.path.append("../")
 
-from utilities import is_file_owned_by_package, exec_command_out
+from utilities import is_file_owned_by_package, exec_command_out, get_cl_num
 
 class Storage(object):
     """
@@ -81,18 +81,27 @@ class Storage(object):
         srv = name + ".service"
         if srv in path_to_file and os.path.exists("/usr/bin/systemctl"):
                 exec_command_out("systemctl disable " + srv)
+                
+    def _check_initd_service(self, path_to_file):
+        """
+        If it is for CL5 and CL6 we shouldn't remove this files
+        """
+        if "/etc/init.d" in path_to_file and get_cl_num()<7:
+            return True
+        return False
 
     def save_file_to_storage(self, path_to_file):
         """
         Save file to storage
         """
         if self._file_from_list_exists(path_to_file, False)==True and self._is_writable(self.STORE_PATH) == True and self._is_file_not_owned_by_package(path_to_file)==True:
-            print("File %s moved to storage" % path_to_file)
-            self._mkdir_p(self.STORE_PATH + path_to_file)
-            self._check_systemd_service("mysql", path_to_file)
-            self._check_systemd_service("mysqld", path_to_file)
-            self._check_systemd_service("mariadb", path_to_file)
-            shutil.move(path_to_file, self.STORE_PATH + path_to_file)
+            if self._check_initd_service(path_to_file)==False:
+                print("File %s moved to storage" % path_to_file)
+                self._mkdir_p(self.STORE_PATH + path_to_file)
+                self._check_systemd_service("mysql", path_to_file)
+                self._check_systemd_service("mysqld", path_to_file)
+                self._check_systemd_service("mariadb", path_to_file)
+                shutil.move(path_to_file, self.STORE_PATH + path_to_file)
 
     def restore_file_from_storage(self, path_to_file):
         """

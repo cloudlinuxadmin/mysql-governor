@@ -338,6 +338,19 @@ echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
 echo "!!!Before making any changing with database make sure that you have reserve copy of users data!!!"
 echo "Instruction: how to create whole database backup - http://docs.cloudlinux.com/index.html?backing_up_mysql.html"
 
+%triggerin -- cl-MySQL55-server
+%if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
+if [ -e /usr/share/lve/dbgovernor/mysqlgovernor.py ]; then
+    /usr/share/lve/dbgovernor/mysqlgovernor.py --correct-cl7-service-name
+fi
+%endif
+
+%triggerin -- cl-MySQL56-server
+%if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
+if [ -e /usr/share/lve/dbgovernor/mysqlgovernor.py ]; then
+    /usr/share/lve/dbgovernor/mysqlgovernor.py --correct-cl7-service-name
+fi
+%endif
 
 %files
 %defattr(-,root,root)
