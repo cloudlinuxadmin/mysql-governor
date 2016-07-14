@@ -115,6 +115,9 @@ class InstallManager(object):
             # if not install new packages - don`t do next actions
             return False
             
+        create_mysqld_link("mysqld", "mysql")
+        create_mysqld_link("mysql", "mysqld")
+            
         correct_mysqld_service_for_cl7("mysql")
         correct_mysqld_service_for_cl7("mysqld")
 
@@ -214,7 +217,8 @@ class InstallManager(object):
         """
         Cleanup downloaded packages and remove backup repo file
         """
-        shutil.rmtree(RPM_TEMP_PATH)
+        if os.path.exists(RPM_TEMP_PATH):
+            shutil.rmtree(RPM_TEMP_PATH)
 
         if os.path.exists("/etc/yum.repos.d/cl-mysql.repo.bak"):
             os.unlink("/etc/yum.repos.d/cl-mysql.repo.bak")

@@ -82,6 +82,7 @@ def main(argv):
 
     if opts.install or opts.install_beta:
         warn_message()
+        manager.cleanup()
         detect_percona(opts.force)
 
         # remove current packages and install new packages
