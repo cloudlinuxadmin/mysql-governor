@@ -1,5 +1,5 @@
 %define g_version   1.1
-%define g_release   15
+%define g_release   16
 %define g_key_library 6
 
 %if %{undefined _unitdir}
@@ -385,6 +385,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Thu Jul 14 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-16
+- Fixed error in cloudlinux.version file for cPanel
+
 * Fri Jun 03 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-15
 - Added reload-daemon for CL7 on update
 - Uncommented path to PID file in service for CL7
