@@ -92,6 +92,9 @@ def main(argv):
 
         # remove current packages and install new packages
         manager.install(opts.install_beta, opts.yes)
+        
+        print("Give mysql service time to start before service checking(15 sec)")
+        time.sleep(15)
 
         # check mysqld service status
         if exec_command("ps -Af | grep -v grep | grep mysqld | grep datadir",
