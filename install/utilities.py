@@ -14,12 +14,19 @@ __all__ = ["mysql_version", "clean_whitespaces", "is_package_installed",
            "remove_lines", "write_file", "read_file", "rewrite_file", "touch",
            "add_line", "replace_lines", "getItem", "verCompare", "query_yes_no",
            "confirm_packages_installation", "is_file_owned_by_package", "create_mysqld_link",
-           "correct_mysqld_service_for_cl7"]
+           "correct_mysqld_service_for_cl7", "set_debug"]
 
 
 RPM_TEMP_PATH = "/usr/share/lve/dbgovernor/tmp/governor-tmp"
 WHITESPACES_REGEX = re.compile("\s+")
+fDEBUG_FLAG = False
 
+def set_debug():
+    """
+    Enable echo of all exec_command
+    """
+    global fDEBUG_FLAG
+    fDEBUG_FLAG = True
 
 def mysql_version():
     """
@@ -62,14 +69,14 @@ def is_package_installed(name):
     Check is package installed
     """
     out = exec_command("rpm -q %s" % name, True, silent=True, return_code=True)
-    return out==0
+    return out=="yes"
 
 def is_file_owned_by_package(file_path):
     """
     Check is file owned by package
     """
     out = exec_command("rpm -qf %s" % file_path, True, silent=True, return_code=True)
-    return out==0
+    return out=="yes"
 
 def download_packages(names, dest, beta):
     """
@@ -174,11 +181,17 @@ def check_file(path):
 def exec_command(command, as_string=False, silent=False, return_code=False):
     """
     """
+    global fDEBUG_FLAG
     p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE)
     out, err = p.communicate()
+    if fDEBUG_FLAG==True:
+        print("Executed command %s with retcode %d" % (command, p.returncode))
     if return_code==True:
-        return p.returncode
+        if p.returncode == 0:
+            return "yes"
+        else:
+            return "no"
 
     if p.returncode != 0 and not silent:
         print >>sys.stderr, "Execution command: %s error" % command
@@ -191,8 +204,10 @@ def exec_command(command, as_string=False, silent=False, return_code=False):
 
     
 def exec_command_out(command):
+    global fDEBUG_FLAG
     os.system(command)
-
+    if fDEBUG_FLAG==True:
+        print("Executed command %s with retcode NN" % (command))
 
 def get_cl_num():
     """

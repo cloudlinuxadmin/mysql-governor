@@ -129,6 +129,7 @@ install -D -m 755 install/scripts/cpanel-install-hooks $RPM_BUILD_ROOT/usr/share
 install -D -m 755 install/scripts/cpanel-common-lve $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/cpanel-common-lve
 install -D -m 755 install/scripts/dbgovernor_map $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/dbgovernor_map
 install -D -m 755 install/scripts/dbgovernor_map.py $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/dbgovernor_map.py
+install -D -m 755 install/scripts/detect-cpanel-mysql-version.pm $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/detect-cpanel-mysql-version.pm
 
 install -D -m 644 install/utils/cloudlinux.versions $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/cloudlinux.versions
 install -D -m 600 install/list_problem_files.txt $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/
@@ -174,10 +175,6 @@ if [ $1 -eq 2 ] ; then
 		/bin/systemctl stop mysql.service
 	    elif [ -e /usr/lib/systemd/system/mysqld.service ]; then
 		/bin/systemctl stop mysqld.service
-            elif [ -e /etc/init.d/mysql ]; then
-                /etc/init.d/mysql stop
-             elif [ -e /etc/init.d/mysqld ]; then
-                /etc/init.d/mysqld stop
              else
                 /bin/systemctl stop mysqld.service
             fi      
@@ -198,10 +195,6 @@ if [ $1 -eq 2 ] ; then
 		/bin/systemctl stop mysql.service
 	    elif [ -e /usr/lib/systemd/system/mysqld.service ]; then
 		/bin/systemctl stop mysqld.service
-            elif [ -e /etc/init.d/mysql ]; then
-                /etc/init.d/mysql stop
-             elif [ -e /etc/init.d/mysqld ]; then
-                /etc/init.d/mysqld stop
              else
                 /bin/systemctl stop mysqld.service
             fi      
@@ -283,20 +276,6 @@ if [ -e "/etc/container/dbgovernor-libcheck" ]; then
 		/bin/systemctl status mysqld.service
                 if [ "$?" != "0" ]; then
                     /bin/systemctl start mysqld.service
-                else
-                    echo "MySQL already started"
-                fi
-            elif [ -e /etc/init.d/mysql ]; then
-                /etc/init.d/mysql status
-                if [ "$?" != "0" ]; then
-                    /etc/init.d/mysql start
-                else
-                    echo "MySQL already started"
-                fi
-             elif [ -e /etc/init.d/mysqld ]; then
-                /etc/init.d/mysqld status
-                if [ "$?" != "0" ]; then
-                    /etc/init.d/mysqld start
                 else
                     echo "MySQL already started"
                 fi

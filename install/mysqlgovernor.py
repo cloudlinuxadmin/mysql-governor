@@ -7,7 +7,7 @@ import time
 from clcommon import cpapi
 
 from modules import InstallManager, Storage
-from utilities import exec_command, bcolors, query_yes_no, correct_mysqld_service_for_cl7
+from utilities import exec_command, bcolors, query_yes_no, correct_mysqld_service_for_cl7, set_debug
 
 
 def build_parser():
@@ -60,6 +60,8 @@ def build_parser():
                         dest="store_clean", action="store_true", default=False)
     parser.add_argument("--correct-cl7-service-name", help="Remove /etc/init.d/mysql(d) if exists for CloudLinux 7",
                         dest="cl7_correct", action="store_true", default=False)
+    parser.add_argument("--output-commands", help="Echo al commands executed by governor's install script",
+                        dest="debug_flag", action="store_true", default=False)
     return parser
 
 
@@ -79,6 +81,9 @@ def main(argv):
     storage_holder.check_root_permissions()
     # create install manager instance for current cp
     manager = InstallManager.factory(cpapi.CP_NAME)
+    
+    if opts.debug_flag:
+        set_debug()
 
     if opts.install or opts.install_beta:
         warn_message()

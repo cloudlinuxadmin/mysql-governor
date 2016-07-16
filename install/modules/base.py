@@ -110,9 +110,12 @@ class InstallManager(object):
         # don`t know for what this
         self._kill_mysql()
 
-        # new db version which will be installing
-        if not install_packages("new", beta, no_confirm):
-            # if not install new packages - don`t do next actions
+        try:
+            # new db version which will be installing
+            if not install_packages("new", beta, no_confirm):
+                # if not install new packages - don`t do next actions
+                return False
+        except RuntimeError:
             return False
             
         create_mysqld_link("mysqld", "mysql")
@@ -345,11 +348,12 @@ class InstallManager(object):
 
             # server package name
             # pkg_name = exec_command("""rpm -qf --qf "%%{name} %%{version}\n" %s """ % mysqld_path, True, silent=True)
-            pkg_name = exec_command("""rpm -qf %s """ % mysqld_path, True, silent=True, return_code=True)
-            if pkg_name==False:
+            check_if_mysql_installed = exec_command("""rpm -qf %s """ % mysqld_path, True, silent=True, return_code=True)
+            if check_if_mysql_installed=="no":
                 print "No mysql packages installed, but mysqld file presents on system"
                 pkg_name = None
-                # return False
+            else:
+                pkg_name = exec_command("""rpm -qf %s """ % mysqld_path, True, silent=True)
 
         # grep cl-MySQL packages in installed list
         # packages = exec_command("""rpm -qa --qf "%%{name} %%{version}\n"|grep -iE "^(%s)" """ % "|".join(PATTERNS), silent=True)
@@ -472,8 +476,6 @@ class InstallManager(object):
     def _before_install_new_packages(self):
         """
         """
-        if os.path.exists("/var/lib/mysql/RPM_UPGRADE_MARKER"):
-            os.remove("/var/lib/mysql/RPM_UPGRADE_MARKER")
 
     def _after_install_new_packages(self):
         """
