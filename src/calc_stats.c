@@ -639,7 +639,7 @@ void add_user_stats_from_counter(gpointer key, Stat_counters * item, gpointer us
 }
 
 static int dbgov_was_user_activity(dbgov_statitrics *dbgovst){
-	if(dbgovst->sum_cpu>0.0 || dbgovst->sum_write>0.0 || dbgovst->sum_read>0.0) return 1;
+	if((dbgovst->sum_cpu>0.0 || dbgovst->sum_write>0.0 || dbgovst->sum_read>0.0) && (dbgovst->ignored!=IGNORE_MODE)) return 1;
 	else return 0;
 }
 
@@ -669,9 +669,9 @@ void dbstat_print_table( gpointer key, dbgov_statitrics *dbgov_statitrics__, voi
 	  free(buf_pwd);
   }
 
-  if(dbgov_was_user_activity(dbgov_statitrics__)){
+  if(dbgov_was_user_activity(dbgov_statitrics__) && (need_uid!=0)){
   
-	  fprintf( dbgov_stats, "%s;%d;%f;%f;%f;%f;%f;%f;%d;%ld;%ld;%ld;%d;%lu\n",
+	  fprintf( dbgov_stats, "%s;%d;%f;%f;%f;%f;%f;%f;%d;%ld;%ld;%ld;%d;%u\n",
                          dbgov_statitrics__->username,
                          (int)ceil((double)dbgov_statitrics__->max_simultaneous_requests / (double)number_of_iterations),
                          fabs( ( dbgov_statitrics__->sum_cpu   / number_of_iterations ) * 100 ),
@@ -767,6 +767,8 @@ void dbstat_add_to_table( gpointer key, Account *ac, void *data )
     dbgov_statitrics__->limit_cpu_on_period_end = limit_cpu < 0 ? 0 : limit_cpu;
     dbgov_statitrics__->limit_read_on_period_end = limit_read < 0 ? 0 : limit_read;
     dbgov_statitrics__->limit_write_on_period_end = limit_write < 0 ? 0 : limit_write;
+
+    dbgov_statitrics__->ignored = sl->mode;
       
     g_hash_table_insert( DbGovStatitrics, ac->id, dbgov_statitrics__ );
   }
@@ -793,6 +795,7 @@ void dbstat_add_to_table( gpointer key, Account *ac, void *data )
     dbgov_statitrics__->limit_cpu_on_period_end = limit_cpu < 0 ? 0 : limit_cpu;
     dbgov_statitrics__->limit_read_on_period_end = limit_read < 0 ? 0 : limit_read;
     dbgov_statitrics__->limit_write_on_period_end = limit_write < 0 ? 0 : limit_write;
+    dbgov_statitrics__->ignored = sl->mode;
   }
 
 }

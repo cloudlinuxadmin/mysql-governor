@@ -204,6 +204,7 @@ typedef struct __dbgov_statitrics
   long limit_write_on_period_end; //in MB/s
 
   int cause;
+  MODE_TYPE ignored;
 
 } dbgov_statitrics;
 
