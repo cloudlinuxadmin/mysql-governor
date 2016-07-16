@@ -4,7 +4,7 @@ import shutil
 
 from utilities import exec_command_out, grep, add_line, \
     service, remove_lines, write_file, replace_lines, touch, \
-    is_package_installed, remove_packages
+    is_package_installed, remove_packages, exec_command
 from .base import InstallManager
 
 
@@ -54,7 +54,7 @@ class cPanelManager(InstallManager):
         # TODO: for what?
         # exec_command_out(SOURCE+"cpanel/install-db-governor-uninstall")
         
-        service("stop", "mysqld")
+        service("stop", "mysql")
         # remove governor package
         exec_command_out("rpm -e governor-mysql")
         # delete installed packages
@@ -64,7 +64,7 @@ class cPanelManager(InstallManager):
 
         if os.path.exists("/scripts/check_cpanel_rpms"):
             exec_command_out("/scripts/check_cpanel_rpms --fix --targets="
-                             "MySQL50,MySQL51,MySQL55,MySQL56,MariaDB")
+                             "MySQL50,MySQL51,MySQL55,MySQL56,MariaDB,MariaDB100,MariaDB101")
 
     def _after_install_new_packages(self):
         """
@@ -156,3 +156,17 @@ class cPanelManager(InstallManager):
         else:
             write_file("/etc/cpupdate.conf.governor", "")
             write_file("/etc/cpupdate.conf", "MYSQLUP=never\n")
+
+    def _detect_vesrion_if_auto(self):
+        """
+        Detect vesrion of MySQL if mysql.type is auto
+        """
+        if os.path.exists(self._rel("scripts/detect-cpanel-mysql-version.pm")):
+            mysqlname_array = exec_command(self._rel("scripts/detect-cpanel-mysql-version.pm"))
+            mysqlname = ""
+            if len(mysqlname_array)>0:
+                mysqlname = mysqlname_array[0]
+            if "mysql" in mysqlname or "mariadb" in mysqlname:
+                return mysqlname.strip()
+        return ""
+

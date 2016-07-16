@@ -390,6 +390,15 @@ class InstallManager(object):
         arch = ".x86_64" if os.uname()[-1] == "x86_64" else ""
 
         if "auto" == sql_version:
+            detected_version_on_system = self._detect_vesrion_if_auto()
+            if detected_version_on_system != "+":
+                if detected_version_on_system == "":
+                    print >>sys.stderr, "Unknown SQL VERSION"
+                    sys.exit(2)
+                else:
+                    sql_version = detected_version_on_system
+
+        if "auto" == sql_version:
             repo = "mysql-common.repo"
             if 7 != self.cl_version:
                 packages = ["mysql", "mysql-server", "mysql-libs", "mysql-devel", "mysql-bench"]
@@ -463,6 +472,8 @@ class InstallManager(object):
     def _before_install_new_packages(self):
         """
         """
+        if os.path.exists("/var/lib/mysql/RPM_UPGRADE_MARKER"):
+            os.remove("/var/lib/mysql/RPM_UPGRADE_MARKER")
 
     def _after_install_new_packages(self):
         """
@@ -628,3 +639,9 @@ class InstallManager(object):
         Execute package script which locate in SOURCE directory
         """
         exec_command_out("%s %s" % (self._rel("scripts/%s" % path), args or ""))
+
+    def _detect_vesrion_if_auto(self):
+        """
+        What should we do if we get auto param in mysql.type
+        """
+        return "+"
