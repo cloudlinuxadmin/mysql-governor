@@ -29,6 +29,8 @@ class InstallManager(object):
                   "mysql55": "mysql-5.5", "mysql56": "mysql-5.6",
                   "mysql57": "mysql-5.7", "mariadb55": "mariadb-5.5",
                   "mariadb100": "mariadb-10.0", "mariadb101": "mariadb-10.1"}
+    ALL_PACKAGES_NEW_NOT_DOWNLOADED = False
+    ALL_PACKAGES_OLD_NOT_DOWNLOADED = False
 
     @staticmethod
     def factory(cp_name):
@@ -90,12 +92,20 @@ class InstallManager(object):
         # save current installed mysql version
         self._save_previous_version()
 
-        if os.path.exists("/etc/my.cnf"):
-            shutil.copy2("/etc/my.cnf", "/etc/my.cnf.prev")
+        if self.ALL_PACKAGES_NEW_NOT_DOWNLOADED==True:
+            self.print_warning_about_not_complete_of_newpkg_saving()
+            return False
+
+
+        if self.ALL_PACKAGES_OLD_NOT_DOWNLOADED==True:
+            self.print_warning_about_not_complete_of_pkg_saving()
 
         if not confirm_packages_installation("new", no_confirm):
             return False
-            
+
+        if os.path.exists("/etc/my.cnf"):
+            shutil.copy2("/etc/my.cnf", "/etc/my.cnf.prev")
+
         create_mysqld_link("mysqld", "mysql")
         create_mysqld_link("mysql", "mysqld")
 
@@ -149,11 +159,17 @@ class InstallManager(object):
 
         self.fix_cl7_mysql()
         self._ld_fix()
+        return True
 
     def install_rollback(self, beta):
         """
         Rollback installed version
         """
+        if self.ALL_PACKAGES_OLD_NOT_DOWNLOADED == True:
+            self.print_warning_about_not_complete_of_pkg_saving()
+            print("Rollback disabled")
+            return
+
         # self._before_install_new_packages()
         self._mysqlservice("stop")
 
@@ -332,6 +348,14 @@ class InstallManager(object):
         """
         self._old_packages = self._load_current_packages()
         self._new_packages = self._load_new_packages(beta)
+    
+    def print_warning_about_not_complete_of_pkg_saving(self):
+        print("""Restore of MySQL packages will not be completed because not all old packages was downloaded.
+If something went wrong during or after installation process, execute /usr/share/lve/dbgovernor/mysqlgovernor --delete 
+for native procedure restoring of MySQL packages""")
+
+    def print_warning_about_not_complete_of_newpkg_saving(self):
+        print("Install of MySQL packages will not be completed because not all new packages was downloaded")
 
     def _load_current_packages(self, download=True, folder="old"):
         """
@@ -378,7 +402,8 @@ class InstallManager(object):
         if download:
             # arch = ".x86_64" if os.uname()[-1] == "x86_64" else ""
             # download_pkgs = ["%s%s" % (x.split(" ")[0], arch) for x in packages]
-            download_packages(packages, folder, True)
+            if download_packages(packages, folder, True)!=True:
+                self.ALL_PACKAGES_OLD_NOT_DOWNLOADED = True
 
         return packages
         # return [x.replace(" ", "-") for x in packages]
@@ -469,7 +494,8 @@ class InstallManager(object):
             # query for installed package
             # exec_command("rpm -q --requires cl-MySQL-meta")  
 
-        download_packages(packages, folder, beta)
+        if download_packages(packages, folder, beta)!=True:
+            self.ALL_PACKAGES_NEW_NOT_DOWNLOADED = True
 
         return packages
 

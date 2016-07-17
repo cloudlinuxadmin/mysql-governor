@@ -95,7 +95,19 @@ def download_packages(names, dest, beta):
 
     exec_command(("yumdownloader --destdir=%s --disableexcludes=all %s %s")
                   % (path, repo, " ".join(names)), True, silent=True)
-    return True
+    pkg_not_found = False
+    for pkg_name in names:
+        pkg_name_split = pkg_name.split('.',1)[0]
+        list_of_rpm = glob(("%s/%s*.rpm") % (path, pkg_name_split))
+        for i in list_of_rpm:
+            print("Package %s was loaded" % i)
+        if len(list_of_rpm)==0:
+            pkg_not_found = True
+            print("WARNING!!!! Package %s was not downloaded" % pkg_name)
+    if pkg_not_found == True:
+        return False
+    else:
+        return True
 
 def remove_packages(packages_list):
     """

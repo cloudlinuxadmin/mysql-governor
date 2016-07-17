@@ -91,22 +91,22 @@ def main(argv):
         detect_percona(opts.force)
 
         # remove current packages and install new packages
-        manager.install(opts.install_beta, opts.yes)
-        
-        print("Give mysql service time to start before service checking(15 sec)")
-        time.sleep(15)
+        if manager.install(opts.install_beta, opts.yes) == True:
+            print("Give mysql service time to start before service checking(15 sec)")
+            time.sleep(15)
 
         # check mysqld service status
-        if exec_command("ps -Af | grep -v grep | grep mysqld | grep datadir",
+        if manager.ALL_PACKAGES_NEW_NOT_DOWNLOADED == False:
+            if exec_command("ps -Af | grep -v grep | grep mysqld | grep datadir",
                         True, silent=True):
-            manager.save_installed_version()
-            print "Installation mysql for db_governor completed"
+                manager.save_installed_version()
+                print "Installation mysql for db_governor completed"
         
-        # if sql server failed to start ask user to restore old packages
-        elif query_yes_no("Installation is failed. Restore previous version?"):
-            print ("Installation mysql for db_governor was failed. Restore "
+            # if sql server failed to start ask user to restore old packages
+            elif query_yes_no("Installation is failed. Restore previous version?"):
+                print ("Installation mysql for db_governor was failed. Restore "
                    "previous mysql version")
-            manager.install_rollback(opts.install_beta)
+                manager.install_rollback(opts.install_beta)
 
         manager.cleanup()
 
