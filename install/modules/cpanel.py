@@ -4,7 +4,7 @@ import shutil
 
 from utilities import exec_command_out, grep, add_line, \
     service, remove_lines, write_file, replace_lines, touch, \
-    is_package_installed, remove_packages, exec_command
+    is_package_installed, remove_packages, exec_command, parse_rpm_name
 from .base import InstallManager
 
 
@@ -170,3 +170,14 @@ class cPanelManager(InstallManager):
                 return mysqlname.strip()
         return ""
 
+    def _custom_download_of_rpm(self, package_name):
+        """
+        How we should to download installed MySQL package
+        """
+        if package_name == "+":
+            return "yes"
+
+        result = parse_rpm_name(package_name)
+        if len(result)==4:
+            return exec_command(self._rel("scripts/cpanel-mysql-url-detect.pm %s %s-%s" % (result[0], result[1], result[2])), True)
+        return ""

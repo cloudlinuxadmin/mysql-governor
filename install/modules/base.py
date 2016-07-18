@@ -402,8 +402,18 @@ for native procedure restoring of MySQL packages""")
         if download:
             # arch = ".x86_64" if os.uname()[-1] == "x86_64" else ""
             # download_pkgs = ["%s%s" % (x.split(" ")[0], arch) for x in packages]
-            if download_packages(packages, folder, True)!=True:
-                self.ALL_PACKAGES_OLD_NOT_DOWNLOADED = True
+            IS_CL_MYSQL = False
+            for package_item in packages:
+                if "server" in package_item and package_item[:3]=="cl-":
+                    IS_CL_MYSQL = True
+            if IS_CL_MYSQL == True:
+                if download_packages(packages, folder, True, False)!=True:
+                    self.ALL_PACKAGES_OLD_NOT_DOWNLOADED = True
+            else:
+                if download_packages(packages, folder, True, self._custom_download_of_rpm)!=True:
+                    print("Trying to load custom packages from yum")
+                    if download_packages(packages, folder, True, False)!=True:
+                        self.ALL_PACKAGES_OLD_NOT_DOWNLOADED = True
 
         return packages
         # return [x.replace(" ", "-") for x in packages]
@@ -673,3 +683,9 @@ for native procedure restoring of MySQL packages""")
         What should we do if we get auto param in mysql.type
         """
         return "+"
+
+    def _custom_download_of_rpm(self, package_name):
+        """
+        How we should to download installed MySQL package
+        """
+        return "no"

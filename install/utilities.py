@@ -3,6 +3,7 @@ import os
 import re
 import subprocess
 import sys
+import urllib
 from distutils.version import StrictVersion
 from glob import glob
 
@@ -14,7 +15,7 @@ __all__ = ["mysql_version", "clean_whitespaces", "is_package_installed",
            "remove_lines", "write_file", "read_file", "rewrite_file", "touch",
            "add_line", "replace_lines", "getItem", "verCompare", "query_yes_no",
            "confirm_packages_installation", "is_file_owned_by_package", "create_mysqld_link",
-           "correct_mysqld_service_for_cl7", "set_debug"]
+           "correct_mysqld_service_for_cl7", "set_debug", "parse_rpm_name"]
 
 
 RPM_TEMP_PATH = "/usr/share/lve/dbgovernor/tmp/governor-tmp"
@@ -78,7 +79,7 @@ def is_file_owned_by_package(file_path):
     out = exec_command("rpm -qf %s" % file_path, True, silent=True, return_code=True)
     return out=="yes"
 
-def download_packages(names, dest, beta):
+def download_packages(names, dest, beta, custom_download = False):
     """
     Download rpm packages to destination directory
     @param `names` list: list of packages for download
@@ -89,11 +90,30 @@ def download_packages(names, dest, beta):
     if not os.path.exists(path):
         os.makedirs(path, 0755)
 
-    repo = "" if not beta else "--enablerepo=cloudlinux-updates-testing"
-    if exec_command("yum repolist|grep mysql -c", True, True) != "0":
-        repo = "%s --enablerepo=mysqclient" % repo
+    if custom_download!=False and custom_download("+")=="yes":
+        for pkg_name in names:
+            pkg_url = custom_download(pkg_name)
+            if pkg_url!="":
+                file_name = ("%s/%s.rpm") % (path, pkg_name)
+                status  = 200
+                try:
+                    response = urllib.urlopen(pkg_url)
+                    CHUNK = 16 * 1024
+                    with open(file_name, 'wb') as f:
+                        while True:
+                            chunk = response.read(CHUNK)
+                            if not chunk: break
+                            f.write(chunk)
+                except IOError:
+                    status = 404
 
-    exec_command(("yumdownloader --destdir=%s --disableexcludes=all %s %s")
+                print("Downloaded file %s from %s with status %d" % (file_name, pkg_url, status) )
+    else:
+        repo = "" if not beta else "--enablerepo=cloudlinux-updates-testing"
+        if exec_command("yum repolist|grep mysql -c", True, True) != "0":
+            repo = "%s --enablerepo=mysqclient" % repo
+
+        exec_command(("yumdownloader --destdir=%s --disableexcludes=all %s %s")
                   % (path, repo, " ".join(names)), True, silent=True)
     pkg_not_found = False
     for pkg_name in names:
@@ -439,8 +459,8 @@ def create_mysqld_link(link, to_file):
     """
     cl_ver = get_cl_num()
     if cl_ver<7:
-	link_name = "/etc/init.d/" + link
-	if not os.path.exists(link_name):
+        link_name = "/etc/init.d/" + link
+        if not os.path.exists(link_name):
             if not os.path.islink(link_name):
                 os.symlink("/etc/init.d/" + to_file, link_name)
                 
@@ -450,8 +470,18 @@ def correct_mysqld_service_for_cl7(name):
     """
     cl_ver = get_cl_num()
     if cl_ver==7:
-	link_name = "/etc/init.d/" + name
-	if os.path.exists(link_name):
-	    os.unlink(link_name)
+        link_name = "/etc/init.d/" + name
+        if os.path.exists(link_name):
+            os.unlink(link_name)
         elif os.path.islink(link_name):
             os.unlink(link_name)
+
+def parse_rpm_name(name):
+    """
+    Split rpm package name
+    """
+    result = exec_command("/usr/bin/rpm --queryformat \"%%{NAME} %%{VERSION} %%{RELEASE} %%{ARCH}\" -q %s" % name, True).split(' ', 4)
+    if len(result)>=4:
+        return [result[0], result[1], result[2], result[3]]
+    return []
+    
