@@ -81,3 +81,51 @@ class DirectAdminManager(InstallManager):
             self._set_mysql_access(MYSQLUSER, MYSQLPASSWORD)
             print "Rebuild php please... /usr/local/directadmin/custombuild/build php"
 
+
+    def _detect_vesrion_if_auto(self):
+        """
+        Detect vesrion of MySQL if mysql.type is auto
+        """
+        print "Detect MySQL version for AUTO"
+
+        check_file("/usr/local/directadmin/custombuild/build")
+        check_file("/usr/local/directadmin/custombuild/options.conf")
+        MYSQL_DA_VER = ""
+
+        # MYSQL_DA_TYPE=`cat /usr/local/directadmin/custombuild/options.conf | grep mysql_inst= | cut -d= -f2`
+        try:
+            MYSQL_DA_VER = grep("/usr/local/directadmin/custombuild/options.conf", "mysql=")[0].split("=")[1].strip()
+            MYSQL_DA_TYPE = grep("/usr/local/directadmin/custombuild/options.conf", "mysql_inst=")[0].split("=")[1].strip()
+        except IndexError:
+            MYSQL_DA_VER = ""
+            MYSQL_DA_TYPE = ""
+
+        if MYSQL_DA_TYPE == "mysql":
+            if MYSQL_DA_VER == "5.0":
+                MYSQL_DA_VER = "mysql50"
+            elif MYSQL_DA_VER == "5.1":
+                MYSQL_DA_VER = "mysql51"
+            elif MYSQL_DA_VER == "5.5":
+                MYSQL_DA_VER = "mysql55"
+            elif MYSQL_DA_VER == "5.6":
+                MYSQL_DA_VER = "mysql56"
+            elif MYSQL_DA_VER == "5.7":
+                MYSQL_DA_VER = "mysql57"
+            elif MYSQL_DA_VER == "10.0.0":
+                MYSQL_DA_VER = "mariadb100"
+            elif MYSQL_DA_VER == "10.1.1":
+                MYSQL_DA_VER = "mariadb101"
+        elif MYSQL_DA_TYPE == "mariadb":
+            if MYSQL_DA_VER == "10.1":
+                MYSQL_DA_VER = "mariadb101"
+            elif MYSQL_DA_VER == "10.0":
+                MYSQL_DA_VER = "mariadb100"
+            elif MYSQL_DA_VER == "5.5":
+                MYSQL_DA_VER = "mariadb100"
+            elif MYSQL_DA_VER == "10.0.0":
+                MYSQL_DA_VER = "mariadb100"
+            elif MYSQL_DA_VER == "10.1.1":
+                MYSQL_DA_VER = "mariadb100"
+
+
+        return MYSQL_DA_VER
