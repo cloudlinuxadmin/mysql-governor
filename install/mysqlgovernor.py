@@ -3,12 +3,26 @@
 import argparse
 import sys
 import time
+import datetime
 
 from clcommon import cpapi
 
 from modules import InstallManager, Storage
 from utilities import exec_command, bcolors, query_yes_no, correct_mysqld_service_for_cl7, set_debug
 
+LOG_FILE_NAME = "/usr/share/lve/dbgovernor/governor_install.log"
+
+class Logger(object):
+    def __init__(self, filename="Default.log"):
+        self.terminal = sys.stdout
+        self.log = open(filename, "a")
+
+    def write(self, message):
+        self.terminal.write(message)
+        self.log.write(message)
+
+    def write_extended(self, message):
+        self.log.write(message)
 
 def build_parser():
     """
@@ -69,6 +83,11 @@ def main(argv):
     """
     Run main actions
     """
+    sys.stdout = Logger(LOG_FILE_NAME)
+    sys.stderr = Logger(LOG_FILE_NAME)
+    time_now = datetime.datetime.now()
+    sys.stdout.write_extended("\n####################################################Install process begin %s#####################################################\n" % time_now.strftime("%Y-%m-%d %H:%M"))
+
     parser = build_parser()
     if not argv:
         parser.print_help()
@@ -96,7 +115,7 @@ def main(argv):
             time.sleep(15)
 
         # check mysqld service status
-        if manager.ALL_PACKAGES_NEW_NOT_DOWNLOADED == False:
+        if manager.ALL_PACKAGES_NEW_NOT_DOWNLOADED == False and manager.DISABLED == False:
             if exec_command("ps -Af | grep -v grep | grep mysqld | grep datadir",
                         True, silent=True):
                 manager.save_installed_version()

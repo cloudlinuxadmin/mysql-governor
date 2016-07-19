@@ -243,6 +243,8 @@ def exec_command(command, as_string=False, silent=False, return_code=False):
     out, err = p.communicate()
     if fDEBUG_FLAG==True:
         print("Executed command %s with retcode %d" % (command, p.returncode))
+    else:
+        sys.stdout.write_extended("Executed command %s with retcode %d\n" % (command, p.returncode))
     if return_code==True:
         if p.returncode == 0:
             return "yes"
@@ -264,6 +266,8 @@ def exec_command_out(command):
     os.system(command)
     if fDEBUG_FLAG==True:
         print("Executed command %s with retcode NN" % (command))
+    else:
+        sys.stdout.write_extended("Executed command %s with retcode NN\n" % (command))
 
 def get_cl_num():
     """

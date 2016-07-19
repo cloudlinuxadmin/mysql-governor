@@ -31,6 +31,7 @@ class InstallManager(object):
                   "mariadb100": "mariadb-10.0", "mariadb101": "mariadb-10.1"}
     ALL_PACKAGES_NEW_NOT_DOWNLOADED = False
     ALL_PACKAGES_OLD_NOT_DOWNLOADED = False
+    DISABLED = False
 
     @staticmethod
     def factory(cp_name):
@@ -101,6 +102,7 @@ class InstallManager(object):
             self.print_warning_about_not_complete_of_pkg_saving()
 
         if not confirm_packages_installation("new", no_confirm):
+            self.DISABLED = True
             return False
 
         if os.path.exists("/etc/my.cnf"):
