@@ -183,7 +183,10 @@ class InstallManager(object):
                         "/etc/yum.repos.d/cl-mysql.repo")
 
         # install deleted packages with triggers etc
-        install_packages("old", beta)
+        if hasattr(self.__class__, _custom_rpm_installer) and callable(getattr(self.__class__, _custom_rpm_installer)):
+            install_packages("old", beta, self._custom_rpm_installer)
+        else:
+            install_packages("old", beta)
 
         # restore previous packages state
         if os.path.exists("/etc/my.cnf.orig"):

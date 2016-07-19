@@ -1,9 +1,11 @@
 #coding:utf-8
 import os
+import shutil
 
 from utilities import exec_command_out, check_file, grep, write_file, \
-    read_file, remove_packages
+    read_file, remove_packages, exec_command
 from .base import InstallManager
+from glob import glob
 
 
 class DirectAdminManager(InstallManager):
@@ -129,3 +131,24 @@ class DirectAdminManager(InstallManager):
 
 
         return MYSQL_DA_VER
+
+    def _custom_download_of_rpm(self, package_name):
+        """
+        How we should to download installed MySQL package
+        """
+        if package_name == "+":
+            return "yes"
+
+        pkg_name_real = ""
+        list_of_rpm = glob("/usr/local/directadmin/custombuild/mysql/*.rpm")
+        for found_package in list_of_rpm:
+            result = exec_command("/bin/rpm -qp %s" % found_package, True)
+            if package_name in result:
+                pkg_name_real = found_package
+        if pkg_name_real!="" and os.path.exists(pkg_name_real):
+            return "file:%s" % pkg_name_real
+
+        return ""
+
+    def _custom_rpm_installer(self, package_name):
+        exec_command_out("/bin/rpm --ihv --force --nodeps %s" % package_name)

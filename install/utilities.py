@@ -4,6 +4,8 @@ import re
 import subprocess
 import sys
 import urllib
+import shutil
+import ntpath
 from distutils.version import StrictVersion
 from glob import glob
 
@@ -15,7 +17,8 @@ __all__ = ["mysql_version", "clean_whitespaces", "is_package_installed",
            "remove_lines", "write_file", "read_file", "rewrite_file", "touch",
            "add_line", "replace_lines", "getItem", "verCompare", "query_yes_no",
            "confirm_packages_installation", "is_file_owned_by_package", "create_mysqld_link",
-           "correct_mysqld_service_for_cl7", "set_debug", "parse_rpm_name"]
+           "correct_mysqld_service_for_cl7", "set_debug", "parse_rpm_name", "uniq"
+           ]
 
 
 RPM_TEMP_PATH = "/usr/share/lve/dbgovernor/tmp/governor-tmp"
@@ -91,23 +94,37 @@ def download_packages(names, dest, beta, custom_download = False):
         os.makedirs(path, 0755)
 
     if custom_download!=False and custom_download("+")=="yes":
+        new_names = []
         for pkg_name in names:
             pkg_url = custom_download(pkg_name)
+            print("URL %s" % pkg_url)
             if pkg_url!="":
                 file_name = ("%s/%s.rpm") % (path, pkg_name)
                 status  = 200
-                try:
-                    response = urllib.urlopen(pkg_url)
-                    CHUNK = 16 * 1024
-                    with open(file_name, 'wb') as f:
-                        while True:
-                            chunk = response.read(CHUNK)
-                            if not chunk: break
-                            f.write(chunk)
-                except IOError:
-                    status = 404
+                if len(pkg_url)>5 and pkg_url[:5]=="file:":
+                    new_names.append(ntpath.basename(pkg_url[5:]))
+                    pkg_url = pkg_url[5:]
+                    if os.path.exists(pkg_url):
+                        shutil.copy(pkg_url, path)
+                    else:
+                        status = 404
+                else:
+                    new_names.append(pkg_name)
+                    try:
+                        response = urllib.urlopen(pkg_url)
+                        CHUNK = 16 * 1024
+                        with open(file_name, 'wb') as f:
+                            while True:
+                                chunk = response.read(CHUNK)
+                                if not chunk: break
+                                f.write(chunk)
+                    except IOError:
+                        status = 404
 
                 print("Downloaded file %s from %s with status %d" % (file_name, pkg_url, status) )
+            else:
+                new_names.append(pkg_name)
+            names = uniq(new_names)
     else:
         repo = "" if not beta else "--enablerepo=cloudlinux-updates-testing"
         if exec_command("yum repolist|grep mysql -c", True, True) != "0":
@@ -158,7 +175,7 @@ def confirm_packages_installation(rpm_dir,  no_confirm=None):
 
     return True
 
-def install_packages(rpm_dir, is_beta, no_confirm=None):
+def install_packages(rpm_dir, is_beta, no_confirm=None, installer = False):
     """
     Install new packages from rpm files in directory
     @param `no_confirm` bool|None: bool - show info about packages for install
@@ -171,7 +188,13 @@ def install_packages(rpm_dir, is_beta, no_confirm=None):
 
     pkg_path = "%s/" % os.path.join(RPM_TEMP_PATH, rpm_dir.strip("/"))
 
-    print exec_command("yum install %s --disableexcludes=all --nogpgcheck -y %s*.rpm" % (repo, pkg_path), True)
+    if installer == False:
+        print exec_command("yum install %s --disableexcludes=all --nogpgcheck -y %s*.rpm" % (repo, pkg_path), True)
+    else:
+        list_of_rpm = glob("%s*.rpm" % pkg_path)
+        for found_package in list_of_rpm:
+            print("Going to install %s" % found_package)
+            installer(found_package)
     return True
 
 
@@ -484,4 +507,13 @@ def parse_rpm_name(name):
     if len(result)>=4:
         return [result[0], result[1], result[2], result[3]]
     return []
-    
+
+def uniq(input):
+    """
+    Remove duplicate from list
+    """
+    output = []
+    for x in input:
+        if x not in output:
+            output.append(x)
+    return output
