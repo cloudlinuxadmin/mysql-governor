@@ -101,6 +101,11 @@ class DirectAdminManager(InstallManager):
         except IndexError:
             MYSQL_DA_VER = ""
             MYSQL_DA_TYPE = ""
+        if MYSQL_DA_TYPE == "no":
+            if os.path.exists("/usr/share/lve/dbgovernor/da.tp.old"):
+                MYSQL_DA_TYPE = read_file("/usr/share/lve/dbgovernor/da.tp.old")
+
+        print ("I got %s and %s" % (MYSQL_DA_VER, MYSQL_DA_TYPE))
 
         if MYSQL_DA_TYPE == "mysql":
             if MYSQL_DA_VER == "5.0":
@@ -150,5 +155,9 @@ class DirectAdminManager(InstallManager):
 
         return ""
 
-    def _custom_rpm_installer(self, package_name):
-        exec_command_out("/bin/rpm --ihv --force --nodeps %s" % package_name)
+    def _custom_rpm_installer(self, package_name, indicator=False):
+        if indicator==False:
+            exec_command_out("/bin/rpm --ihv --force --nodeps %s" % package_name)
+            return ""
+        else:
+            return "yes"

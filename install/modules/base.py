@@ -183,7 +183,7 @@ class InstallManager(object):
                         "/etc/yum.repos.d/cl-mysql.repo")
 
         # install deleted packages with triggers etc
-        if hasattr(self.__class__, _custom_rpm_installer) and callable(getattr(self.__class__, _custom_rpm_installer)):
+        if self._custom_rpm_installer("", True)=="yes":
             install_packages("old", beta, self._custom_rpm_installer)
         else:
             install_packages("old", beta)
@@ -691,4 +691,7 @@ for native procedure restoring of MySQL packages""")
         """
         How we should to download installed MySQL package
         """
+        return "no"
+
+    def _custom_rpm_installer(self, package_name, indicator=False):
         return "no"
