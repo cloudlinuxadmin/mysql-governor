@@ -82,7 +82,7 @@ def is_file_owned_by_package(file_path):
     out = exec_command("rpm -qf %s" % file_path, True, silent=True, return_code=True)
     return out=="yes"
 
-def download_packages(names, dest, beta, custom_download = False):
+def download_packages(names, dest, beta, custom_download=False):
     """
     Download rpm packages to destination directory
     @param `names` list: list of packages for download
@@ -93,7 +93,8 @@ def download_packages(names, dest, beta, custom_download = False):
     if not os.path.exists(path):
         os.makedirs(path, 0755)
 
-    if custom_download!=False and custom_download("+")=="yes":
+    if custom_download != False and callable(custom_download) \
+            and custom_download("+")=="yes":
         new_names = []
         for pkg_name in names:
             pkg_url = custom_download(pkg_name)
@@ -127,7 +128,7 @@ def download_packages(names, dest, beta, custom_download = False):
             names = uniq(new_names)
     else:
         repo = "" if not beta else "--enablerepo=cloudlinux-updates-testing"
-        if exec_command("yum repolist|grep mysql -c", True, True) != "0":
+        if exec_command("yum repolist --enablerepo=*|grep mysql -c", True, True) != "0":
             repo = "%s --enablerepo=mysqclient" % repo
 
         exec_command(("yumdownloader --destdir=%s --disableexcludes=all %s %s")
