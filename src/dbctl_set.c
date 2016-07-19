@@ -409,6 +409,11 @@ int deleteUser( char *user )
     return 0;
   }
   
+  if (!strncmp(user, "default", sizeof(username_t)-1)){
+	  ezxml_free( cfg );
+	  return 1;
+  }
+
   ezxml_t child = (ezxml_t)SearchTagByName( cfg, "user", user );
   if( child != NULL )
   {
@@ -438,6 +443,11 @@ int ignoreUser( char *user )
     return 0;
   }
   
+  if (!strncmp(user, "default", sizeof(username_t)-1)){
+	  ezxml_free( cfg );
+	  return 1;
+  }
+
   ezxml_t child = (ezxml_t)SearchTagByName( cfg, "user", user );
   
   if( child == NULL )
@@ -467,6 +477,11 @@ int watchUser( char *user )
     return 0;
   }
   
+  if (!strncmp(user, "default", sizeof(username_t)-1)){
+	  ezxml_free( cfg );
+	  return 1;
+  }
+
   ezxml_t child = (ezxml_t)SearchTagByName( cfg, "user", user );
   
   if( child == NULL )

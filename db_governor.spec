@@ -366,6 +366,8 @@ fi
 - MYSQLG-126: Add automatic removal /var/run/mysql-governor-config.xml file with remove/downgrade
 - MYSQLG-131: After update cl-MySQL(cl-MariaDB) cleint can't start mysql process because old process didn't stop
 - MYSQLG-122: Reserch ability to remove unneeded files on governor's migration from one MySQL type to another
+- MYSQLG-129: Set default user status restricted produces duplicate in dbctl list
+- MYSQLG-132: after removin dbgovernor maria db is dead
 
 * Fri Jun 03 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-15
 - Added reload-daemon for CL7 on update

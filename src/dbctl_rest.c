@@ -24,6 +24,10 @@ int restrict_user( char *user, char *level )
   FILE *out = NULL;
   int _socket = -1;
   
+  if (!strncmp(user, "default", sizeof(username_t)-1)){
+	  return 1;
+  }
+
   if( opensock( &_socket, &in, &out ) )
   {
     client_type_t ctt = DBCTL;
@@ -58,6 +62,10 @@ int unrestrict( char *user )
   FILE *in = NULL;
   FILE *out = NULL;
   int _socket = -1;
+
+  if (!strncmp(user, "default", sizeof(username_t)-1)){
+	  return 1;
+  }
 
   if( opensock( &_socket, &in, &out ) )
   {
