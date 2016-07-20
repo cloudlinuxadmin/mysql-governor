@@ -11,8 +11,9 @@ sys.path.append("../")
 from utilities import get_cl_num, exec_command, exec_command_out, new_lve_ctl, \
     num_proc, grep, add_line, service, install_packages, touch, \
     remove_packages, read_file, download_packages, write_file, RPM_TEMP_PATH, \
-    is_package_installed, check_file, mysql_version, confirm_packages_installation, \
-    create_mysqld_link, correct_mysqld_service_for_cl7
+    is_package_installed, check_file, mysql_version, \
+    confirm_packages_installation, create_mysqld_link, \
+    correct_mysqld_service_for_cl7
 
 
 class InstallManager(object):
@@ -93,12 +94,11 @@ class InstallManager(object):
         # save current installed mysql version
         self._save_previous_version()
 
-        if self.ALL_PACKAGES_NEW_NOT_DOWNLOADED==True:
+        if self.ALL_PACKAGES_NEW_NOT_DOWNLOADED:
             self.print_warning_about_not_complete_of_newpkg_saving()
             return False
 
-
-        if self.ALL_PACKAGES_OLD_NOT_DOWNLOADED==True:
+        if self.ALL_PACKAGES_OLD_NOT_DOWNLOADED:
             self.print_warning_about_not_complete_of_pkg_saving()
 
         if not confirm_packages_installation("new", no_confirm):
@@ -129,7 +129,7 @@ class InstallManager(object):
                 return False
         except RuntimeError:
             return False
-            
+
         create_mysqld_link("mysqld", "mysql")
         create_mysqld_link("mysql", "mysqld")
             
@@ -167,9 +167,9 @@ class InstallManager(object):
         """
         Rollback installed version
         """
-        if self.ALL_PACKAGES_OLD_NOT_DOWNLOADED == True:
+        if self.ALL_PACKAGES_OLD_NOT_DOWNLOADED:
             self.print_warning_about_not_complete_of_pkg_saving()
-            print("Rollback disabled")
+            print "Rollback disabled"
             return
 
         # self._before_install_new_packages()
@@ -185,7 +185,7 @@ class InstallManager(object):
                         "/etc/yum.repos.d/cl-mysql.repo")
 
         # install deleted packages with triggers etc
-        if self._custom_rpm_installer("", True)=="yes":
+        if self._custom_rpm_installer("", True) == "yes":
             install_packages("old", beta, self._custom_rpm_installer)
         else:
             install_packages("old", beta)
@@ -409,15 +409,17 @@ for native procedure restoring of MySQL packages""")
             # download_pkgs = ["%s%s" % (x.split(" ")[0], arch) for x in packages]
             IS_CL_MYSQL = False
             for package_item in packages:
-                if "server" in package_item and package_item[:3]=="cl-":
+                if "server" in package_item and package_item[:3] == "cl-":
                     IS_CL_MYSQL = True
+
             if IS_CL_MYSQL == True:
-                if download_packages(packages, folder, True, False)!=True:
+                if not download_packages(packages, folder, True):
                     self.ALL_PACKAGES_OLD_NOT_DOWNLOADED = True
             else:
-                if download_packages(packages, folder, True, self._custom_download_of_rpm)!=True:
+                if not download_packages(packages, folder, True,
+                                         self._custom_download_of_rpm):
                     print("Trying to load custom packages from yum")
-                    if download_packages(packages, folder, True, False)!=True:
+                    if not download_packages(packages, folder, True):
                         self.ALL_PACKAGES_OLD_NOT_DOWNLOADED = True
 
         return packages
@@ -434,7 +436,7 @@ for native procedure restoring of MySQL packages""")
         arch = ".x86_64" if os.uname()[-1] == "x86_64" else ""
 
         if "auto" == sql_version:
-            detected_version_on_system = self._detect_vesrion_if_auto()
+            detected_version_on_system = self._detect_version_if_auto()
             if detected_version_on_system != "+":
                 if detected_version_on_system == "":
                     print >>sys.stderr, "Unknown SQL VERSION"
@@ -509,7 +511,7 @@ for native procedure restoring of MySQL packages""")
             # query for installed package
             # exec_command("rpm -q --requires cl-MySQL-meta")  
 
-        if download_packages(packages, folder, beta)!=True:
+        if not download_packages(packages, folder, beta):
             self.ALL_PACKAGES_NEW_NOT_DOWNLOADED = True
 
         return packages
@@ -683,7 +685,7 @@ for native procedure restoring of MySQL packages""")
         """
         exec_command_out("%s %s" % (self._rel("scripts/%s" % path), args or ""))
 
-    def _detect_vesrion_if_auto(self):
+    def _detect_version_if_auto(self):
         """
         What should we do if we get auto param in mysql.type
         """

@@ -1,11 +1,10 @@
 #coding:utf-8
 import os
-import shutil
+from glob import glob
 
 from utilities import exec_command_out, check_file, grep, write_file, \
     read_file, remove_packages, exec_command
 from .base import InstallManager
-from glob import glob
 
 
 class DirectAdminManager(InstallManager):
@@ -83,8 +82,7 @@ class DirectAdminManager(InstallManager):
             self._set_mysql_access(MYSQLUSER, MYSQLPASSWORD)
             print "Rebuild php please... /usr/local/directadmin/custombuild/build php"
 
-
-    def _detect_vesrion_if_auto(self):
+    def _detect_version_if_auto(self):
         """
         Detect vesrion of MySQL if mysql.type is auto
         """
@@ -134,7 +132,6 @@ class DirectAdminManager(InstallManager):
             elif MYSQL_DA_VER == "10.1.1":
                 MYSQL_DA_VER = "mariadb100"
 
-
         return MYSQL_DA_VER
 
     def _custom_download_of_rpm(self, package_name):
@@ -150,13 +147,15 @@ class DirectAdminManager(InstallManager):
             result = exec_command("/bin/rpm -qp %s" % found_package, True)
             if package_name in result:
                 pkg_name_real = found_package
-        if pkg_name_real!="" and os.path.exists(pkg_name_real):
+                break
+
+        if pkg_name_real != "" and os.path.exists(pkg_name_real):
             return "file:%s" % pkg_name_real
 
         return ""
 
     def _custom_rpm_installer(self, package_name, indicator=False):
-        if indicator==False:
+        if not indicator:
             exec_command_out("/bin/rpm --ihv --force --nodeps %s" % package_name)
             return ""
         else:

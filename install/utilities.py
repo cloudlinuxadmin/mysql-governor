@@ -1,36 +1,93 @@
 #coding:utf-8
 import os
 import re
+import shutil
 import subprocess
 import sys
 import urllib
-import shutil
-import ntpath
+from datetime import datetime
 from distutils.version import StrictVersion
 from glob import glob
 
 
 __all__ = ["mysql_version", "clean_whitespaces", "is_package_installed",
            "download_packages", "remove_packages", "install_packages", "grep",
-           "new_lve_ctl", "num_proc", "service", "bcolors",
+           "new_lve_ctl", "num_proc", "service", "bcolors", "parse_rpm_name",
            "check_file", "exec_command", "exec_command_out", "get_cl_num",
            "remove_lines", "write_file", "read_file", "rewrite_file", "touch",
-           "add_line", "replace_lines", "getItem", "verCompare", "query_yes_no",
-           "confirm_packages_installation", "is_file_owned_by_package", "create_mysqld_link",
-           "correct_mysqld_service_for_cl7", "set_debug", "parse_rpm_name", "uniq"
+           "add_line", "replace_lines", "query_yes_no", "create_mysqld_link",
+           "confirm_packages_installation", "is_file_owned_by_package",
+           "correct_mysqld_service_for_cl7", "set_debug", "debug_log"
            ]
 
 
 RPM_TEMP_PATH = "/usr/share/lve/dbgovernor/tmp/governor-tmp"
 WHITESPACES_REGEX = re.compile("\s+")
+TRACE_LOG_FILE = "/usr/share/lve/dbgovernor/tmp/trace.log"
 fDEBUG_FLAG = False
 
-def set_debug():
+
+def _trace_calls(frame, event, arg):
+    """
+    Functions calls tracer (logger)
+    """
+    if event != "call" or frame.f_back is None:
+        return
+
+    func_name = frame.f_code.co_name
+    if func_name == "write":
+        # Ignore write() calls from print statements
+        return
+
+    filename = frame.f_code.co_filename
+    if filename.startswith("/opt/alt/python27/"):
+        # ignore system functions
+        return
+
+    f, level = frame, -1
+    while f.f_back is not None:
+        level += 1
+        f = f.f_back
+
+    def _call_string(f):
+        func_name = f.f_code.co_name
+        line_no = f.f_lineno
+        filename = f.f_code.co_filename
+        i = f.f_locals if func_name != "<module>" else {}
+        args_str = ", ".join(["%s=%s" % x for x in i.iteritems()])
+        return "%s(%s)|%s:%s" % (func_name, args_str, filename, line_no)
+
+    date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    line = "[%s] %s%s <- %s\n" % (date, "===="*level, _call_string(frame),
+                                  _call_string(frame.f_back))
+    add_line(TRACE_LOG_FILE, line)
+
+    return
+
+
+def set_debug(status=True):
     """
     Enable echo of all exec_command
     """
     global fDEBUG_FLAG
-    fDEBUG_FLAG = True
+    if status:
+        with open(TRACE_LOG_FILE, "w") as f:
+            f.write("")
+
+    sys.settrace(_trace_calls if status else None)
+    fDEBUG_FLAG = status
+
+
+def debug_log(line):
+    """
+    Debug output log
+    """
+    global fDEBUG_FLAG
+    if fDEBUG_FLAG:
+        print line
+    else:
+        sys.stdout.write_extended(line)
+
 
 def mysql_version():
     """
@@ -43,7 +100,7 @@ def mysql_version():
 
     output = exec_command("""rpm -qf --qf="%%{name} %%{version}" %s""" % path,
                           True, silent=True, return_code=True)
-    if output==False:
+    if not output:
         return None
 
     output = exec_command("""rpm -qf --qf="%%{name} %%{version}" %s""" % path,
@@ -73,16 +130,18 @@ def is_package_installed(name):
     Check is package installed
     """
     out = exec_command("rpm -q %s" % name, True, silent=True, return_code=True)
-    return out=="yes"
+    return out == "yes"
+
 
 def is_file_owned_by_package(file_path):
     """
     Check is file owned by package
     """
     out = exec_command("rpm -qf %s" % file_path, True, silent=True, return_code=True)
-    return out=="yes"
+    return out == "yes"
 
-def download_packages(names, dest, beta, custom_download=False):
+
+def download_packages(names, dest, beta, custom_download=None):
     """
     Download rpm packages to destination directory
     @param `names` list: list of packages for download
@@ -93,39 +152,9 @@ def download_packages(names, dest, beta, custom_download=False):
     if not os.path.exists(path):
         os.makedirs(path, 0755)
 
-    if custom_download != False and callable(custom_download) \
-            and custom_download("+")=="yes":
-        new_names = []
-        for pkg_name in names:
-            pkg_url = custom_download(pkg_name)
-            print("URL %s" % pkg_url)
-            if pkg_url!="":
-                file_name = ("%s/%s.rpm") % (path, pkg_name)
-                status  = 200
-                if len(pkg_url)>5 and pkg_url[:5]=="file:":
-                    new_names.append(ntpath.basename(pkg_url[5:]))
-                    pkg_url = pkg_url[5:]
-                    if os.path.exists(pkg_url):
-                        shutil.copy(pkg_url, path)
-                    else:
-                        status = 404
-                else:
-                    new_names.append(pkg_name)
-                    try:
-                        response = urllib.urlopen(pkg_url)
-                        CHUNK = 16 * 1024
-                        with open(file_name, 'wb') as f:
-                            while True:
-                                chunk = response.read(CHUNK)
-                                if not chunk: break
-                                f.write(chunk)
-                    except IOError:
-                        status = 404
-
-                print("Downloaded file %s from %s with status %d" % (file_name, pkg_url, status) )
-            else:
-                new_names.append(pkg_name)
-            names = uniq(new_names)
+    if custom_download is not None and callable(custom_download) \
+            and custom_download("+") == "yes":
+        names = _custom_download_packages(names, path, custom_download)
     else:
         repo = "" if not beta else "--enablerepo=cloudlinux-updates-testing"
         if exec_command("yum repolist --enablerepo=*|grep mysql -c", True, True) != "0":
@@ -133,19 +162,60 @@ def download_packages(names, dest, beta, custom_download=False):
 
         exec_command(("yumdownloader --destdir=%s --disableexcludes=all %s %s")
                   % (path, repo, " ".join(names)), True, silent=True)
+
     pkg_not_found = False
     for pkg_name in names:
         pkg_name_split = pkg_name.split('.',1)[0]
         list_of_rpm = glob(("%s/%s*.rpm") % (path, pkg_name_split))
         for i in list_of_rpm:
-            print("Package %s was loaded" % i)
-        if len(list_of_rpm)==0:
+            print "Package %s was loaded" % i
+
+        if len(list_of_rpm) == 0:
             pkg_not_found = True
-            print("WARNING!!!! Package %s was not downloaded" % pkg_name)
-    if pkg_not_found == True:
-        return False
-    else:
-        return True
+            print "WARNING!!!! Package %s was not downloaded" % pkg_name
+
+    return not pkg_not_found
+
+
+def _custom_download_packages(names, path, downloader):
+    """
+    Custom download packages logic
+    """
+    result = []
+    for pkg_name in names:
+        pkg_url = downloader(pkg_name)
+        print "URL %s" % pkg_url
+        if pkg_url:
+            file_name = ("%s/%s.rpm") % (path, pkg_name)
+            status = 200
+            if len(pkg_url) > 5 and pkg_url[:5] == "file:":
+                result.append(os.path.basename(pkg_url[5:]))
+                pkg_url = pkg_url[5:]
+                if os.path.exists(pkg_url):
+                    shutil.copy(pkg_url, path)
+                else:
+                    status = 404
+            else:
+                result.append(pkg_name)
+                try:
+                    response = urllib.urlopen(pkg_url)
+                    CHUNK = 16 * 1024
+                    with open(file_name, 'wb') as f:
+                        while True:
+                            chunk = response.read(CHUNK)
+                            if not chunk:
+                                break
+                            f.write(chunk)
+                except IOError:
+                    status = 404
+
+            print "Downloaded file %s from %s with status %d" % \
+                  (file_name, pkg_url, status)
+        else:
+            result.append(pkg_name)
+
+    return list(set(result))
+
 
 def remove_packages(packages_list):
     """
@@ -158,16 +228,16 @@ def remove_packages(packages_list):
     packages = " ".join(packages_list)
     print exec_command("rpm -e --nodeps %s" % packages, True)
 
-def confirm_packages_installation(rpm_dir,  no_confirm=None):
+
+def confirm_packages_installation(rpm_dir, no_confirm=None):
     """
     Confirm install new packages from rpm files in directory
     @param `no_confirm` bool|None: bool - show info about packages for install
                                    if True - show confirm message. 
                                    None - no additional info
     """
-
-    pkg_path = "%s/" % os.path.join(RPM_TEMP_PATH, rpm_dir.strip("/"))
     if no_confirm is not None:
+        pkg_path = "%s/" % os.path.join(RPM_TEMP_PATH, rpm_dir.strip("/"))
         packages_list = sorted([x.replace(pkg_path, "") for x in glob("%s*.rpm" % pkg_path)])
         print "New packages will be installed: \n    %s" % "\n    ".join(packages_list)
         if not no_confirm:
@@ -176,7 +246,8 @@ def confirm_packages_installation(rpm_dir,  no_confirm=None):
 
     return True
 
-def install_packages(rpm_dir, is_beta, no_confirm=None, installer = False):
+
+def install_packages(rpm_dir, is_beta, no_confirm=None, installer=None):
     """
     Install new packages from rpm files in directory
     @param `no_confirm` bool|None: bool - show info about packages for install
@@ -189,12 +260,12 @@ def install_packages(rpm_dir, is_beta, no_confirm=None, installer = False):
 
     pkg_path = "%s/" % os.path.join(RPM_TEMP_PATH, rpm_dir.strip("/"))
 
-    if installer == False:
+    if installer is None:
         print exec_command("yum install %s --disableexcludes=all --nogpgcheck -y %s*.rpm" % (repo, pkg_path), True)
     else:
         list_of_rpm = glob("%s*.rpm" % pkg_path)
         for found_package in list_of_rpm:
-            print("Going to install %s" % found_package)
+            print "Going to install %s" % found_package
             installer(found_package)
     return True
 
@@ -236,16 +307,14 @@ def check_file(path):
 
 def exec_command(command, as_string=False, silent=False, return_code=False):
     """
+    Advanced system exec call
     """
-    global fDEBUG_FLAG
     p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE)
     out, err = p.communicate()
-    if fDEBUG_FLAG==True:
-        print("Executed command %s with retcode %d" % (command, p.returncode))
-    else:
-        sys.stdout.write_extended("Executed command %s with retcode %d\n" % (command, p.returncode))
-    if return_code==True:
+    debug_log("Executed command %s with retcode %d" % (command, p.returncode))
+
+    if return_code:
         if p.returncode == 0:
             return "yes"
         else:
@@ -262,12 +331,12 @@ def exec_command(command, as_string=False, silent=False, return_code=False):
 
     
 def exec_command_out(command):
-    global fDEBUG_FLAG
+    """
+    Simple system exec call
+    """
     os.system(command)
-    if fDEBUG_FLAG==True:
-        print("Executed command %s with retcode NN" % (command))
-    else:
-        sys.stdout.write_extended("Executed command %s with retcode NN\n" % (command))
+    debug_log("Executed command %s with retcode NN" % (command))
+
 
 def get_cl_num():
     """
@@ -388,50 +457,6 @@ def touch(fname):
         open(fname, 'a').close()
 
 
-def getItem(txt1, txt2, op):
-    try:
-        i1 = int(txt1)
-    except ValueError:
-        i1 = -1
-    try:
-        i2 = int(txt2)
-    except ValueError:
-        i2 = -1
-    if i1 == -1 or i2 == -1:
-        if op == 0:
-            return txt1>txt2
-        else:
-            return txt1<txt2
-    else:
-        if op == 0:
-            return i1>i2
-        else:
-            return i1<i2
-
-    
-#Compare version of types xx.xx.xxx... and yyy.yy.yy.y..
-#if xxx and yyy is numbers, than comapre as numbers
-#else - comapre as strings
-def verCompare (base, test):
-    base = base.split(".")
-    test = test.split(".")
-    if(len(base)>len(test)):
-        ln = len(test)
-    else:
-        ln = len(base)
-    for i in range(ln):
-        if getItem(base[i],test[i],0):
-            return 1
-        if getItem(base[i],test[i],1):
-            return -1
-    if len(base)==len(test):    
-        return 0
-    elif len(base)>len(test):
-        return 1
-    else:
-        return 0
-
-
 class bcolors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -459,8 +484,7 @@ def query_yes_no(question, default="yes"):
 
     The "answer" return value is True for "yes" or False for "no".
     """
-    valid = {"yes": True, "y": True, "ye": True,
-             "no": False, "n": False}
+    valid = {"yes": True, "y": True, "ye": True, "no": False, "n": False}
     if default is None:
         prompt = " [y/n] "
     elif default == "yes":
@@ -471,7 +495,7 @@ def query_yes_no(question, default="yes"):
         raise ValueError("invalid default answer: '%s'" % default)
 
     while True:
-        sys.stdout.write(question + prompt)
+        sys.stdout.write("%s%s" % (question, prompt))
         choice = raw_input().lower()
         if default is not None and choice == '':
             return valid[default]
@@ -486,39 +510,34 @@ def create_mysqld_link(link, to_file):
     cl-MySQL packages brings only /etc/init.d/mysql file, mysqld should be created
     """
     cl_ver = get_cl_num()
-    if cl_ver<7:
-        link_name = "/etc/init.d/" + link
+    if cl_ver < 7:
+        link_name = "/etc/init.d/%s" % link
         if not os.path.exists(link_name):
             if not os.path.islink(link_name):
-                os.symlink("/etc/init.d/" + to_file, link_name)
-                
+                os.symlink("/etc/init.d/%s" % to_file, link_name)
+
+
 def correct_mysqld_service_for_cl7(name):
     """
     For cl7 /etc/init.d/mysql should be removed if exists
     """
     cl_ver = get_cl_num()
-    if cl_ver==7:
-        link_name = "/etc/init.d/" + name
+    if cl_ver == 7:
+        link_name = "/etc/init.d/%s" % name
         if os.path.exists(link_name):
             os.unlink(link_name)
         elif os.path.islink(link_name):
             os.unlink(link_name)
 
+
 def parse_rpm_name(name):
     """
     Split rpm package name
     """
-    result = exec_command("/usr/bin/rpm --queryformat \"%%{NAME} %%{VERSION} %%{RELEASE} %%{ARCH}\" -q %s" % name, True).split(' ', 4)
-    if len(result)>=4:
+    result = exec_command(("/usr/bin/rpm --queryformat \"%%{NAME} %%{VERSION}"
+                           " %%{RELEASE} %%{ARCH}\" -q %s") % name, True)\
+                          .split(' ', 4)
+    if len(result) >= 4:
         return [result[0], result[1], result[2], result[3]]
-    return []
 
-def uniq(input):
-    """
-    Remove duplicate from list
-    """
-    output = []
-    for x in input:
-        if x not in output:
-            output.append(x)
-    return output
+    return []

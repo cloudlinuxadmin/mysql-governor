@@ -157,7 +157,7 @@ class cPanelManager(InstallManager):
             write_file("/etc/cpupdate.conf.governor", "")
             write_file("/etc/cpupdate.conf", "MYSQLUP=never\n")
 
-    def _detect_vesrion_if_auto(self):
+    def _detect_version_if_auto(self):
         """
         Detect vesrion of MySQL if mysql.type is auto
         """

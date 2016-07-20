@@ -12,6 +12,7 @@ from utilities import exec_command, bcolors, query_yes_no, correct_mysqld_servic
 
 LOG_FILE_NAME = "/usr/share/lve/dbgovernor/governor_install.log"
 
+
 class Logger(object):
     def __init__(self, filename="Default.log"):
         self.terminal = sys.stdout
@@ -23,6 +24,7 @@ class Logger(object):
 
     def write_extended(self, message):
         self.log.write(message)
+
 
 def build_parser():
     """
@@ -95,14 +97,14 @@ def main(argv):
 
     opts = parser.parse_args(argv)
 
-
     storage_holder = Storage()
     storage_holder.check_root_permissions()
+
     # create install manager instance for current cp
     manager = InstallManager.factory(cpapi.CP_NAME)
     
     if opts.debug_flag:
-        set_debug()
+        set_debug(True)
 
     if opts.install or opts.install_beta:
         warn_message()
