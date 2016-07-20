@@ -358,6 +358,7 @@ config_init (const char *path)
 
   tmp_xml = ezxml_child (xml, "statistic");
   cfg->statistic_mode = 1;
+  cfg->save_statistic_uid = 0;
   if( tmp_xml != NULL )
   {
     if( ezxml_attr( tmp_xml, "mode" ) )
@@ -367,6 +368,13 @@ config_init (const char *path)
         cfg->statistic_mode = 0;
       }
 	}
+    if( ezxml_attr( tmp_xml, "mode" ) )
+    {
+      if( !strcasecmp( ezxml_attr( tmp_xml, "save_uid" ), "On" ) )
+      {
+        cfg->save_statistic_uid = 1;
+      }
+    }
   }
 
   tmp_xml = ezxml_child (xml, "debug_user");

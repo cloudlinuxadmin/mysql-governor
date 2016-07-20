@@ -652,6 +652,7 @@ void dbstat_print_table( gpointer key, dbgov_statitrics *dbgov_statitrics__, voi
   size_t bufsize = 0;
   int res = 0;
   uid_t need_uid = 0;
+  struct governor_config data_cfg;
   
   int number_of_iterations = dbgov_statitrics__->number_of_iterations,
       mb_s = 1000000;
@@ -669,8 +670,11 @@ void dbstat_print_table( gpointer key, dbgov_statitrics *dbgov_statitrics__, voi
 	  free(buf_pwd);
   }
 
+  get_config_data( &data_cfg );
+
   if(dbgov_was_user_activity(dbgov_statitrics__) && (need_uid!=0)){
   
+	  if (data_cfg.save_statistic_uid) {
 	  fprintf( dbgov_stats, "%s;%d;%f;%f;%f;%f;%f;%f;%d;%ld;%ld;%ld;%d;%u\n",
                          dbgov_statitrics__->username,
                          (int)ceil((double)dbgov_statitrics__->max_simultaneous_requests / (double)number_of_iterations),
@@ -686,6 +690,23 @@ void dbstat_print_table( gpointer key, dbgov_statitrics *dbgov_statitrics__, voi
                          (long)( dbgov_statitrics__->limit_write_on_period_end / mb_s ),
                         		 dbgov_statitrics__->cause, need_uid
          );
+	  } else {
+		  fprintf( dbgov_stats, "%s;%d;%f;%f;%f;%f;%f;%f;%d;%ld;%ld;%ld;%d\n",
+		                           dbgov_statitrics__->username,
+		                           (int)ceil((double)dbgov_statitrics__->max_simultaneous_requests / (double)number_of_iterations),
+		                           fabs( ( dbgov_statitrics__->sum_cpu   / number_of_iterations ) * 100 ),
+		                           ( dbgov_statitrics__->sum_write / number_of_iterations ) / mb_s,
+		                           ( dbgov_statitrics__->sum_read  / number_of_iterations ) / mb_s,
+		                           fabs( ( dbgov_statitrics__->max_cpu ) * 100 ),
+		                           dbgov_statitrics__->max_write / mb_s,
+		                           dbgov_statitrics__->max_read / mb_s,
+		                           dbgov_statitrics__->number_of_restricts,
+		                           dbgov_statitrics__->limit_cpu_on_period_end,
+		                           (long)( dbgov_statitrics__->limit_read_on_period_end / mb_s ),
+		                           (long)( dbgov_statitrics__->limit_write_on_period_end / mb_s ),
+		                          		 dbgov_statitrics__->cause
+		           );
+	  }
   }
 }
 

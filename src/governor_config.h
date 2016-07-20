@@ -51,6 +51,7 @@ struct governor_config
   unsigned l_unlimit;	// in seconds
   char *slow_queries_log;
   char *debug_user;
+  int save_statistic_uid;
 };
 
 stats_limit_cfg *
