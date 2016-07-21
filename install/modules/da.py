@@ -67,6 +67,9 @@ class DirectAdminManager(InstallManager):
 
         self._mysqlservice("stop")
 
+        # install MySQL-python module
+        exec_command("yum install -y MySQL-python")
+
     def _after_install_new_packages(self):
         """
         """

@@ -103,6 +103,7 @@ mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts
 mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils
 mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/tmp
 mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/storage
+mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/history
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
 # install systemd unit files and scripts for handling server startup
 mkdir -p ${RPM_BUILD_ROOT}%{_unitdir}
