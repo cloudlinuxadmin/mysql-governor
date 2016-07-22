@@ -5,6 +5,7 @@ import shutil
 import sys
 import time
 import urllib2
+from datetime import datetime
 
 sys.path.append("../")
 
@@ -26,6 +27,7 @@ class InstallManager(object):
     NEW_VERSION_FILE = "/usr/share/lve/dbgovernor/mysql.type"
     # file with cached installed version before install
     CACHE_VERSION_FILE = "/usr/share/lve/dbgovernor/mysql.type.installed"
+    HISTORY_FOLDER = "/usr/share/lve/dbgovernor/history"
     REPO_NAMES = {"mysql50": "mysql-5.0", "mysql51": "mysql-5.1", 
                   "mysql55": "mysql-5.5", "mysql56": "mysql-5.6",
                   "mysql57": "mysql-5.7", "mariadb55": "mariadb-5.5",
@@ -201,6 +203,37 @@ class InstallManager(object):
 
         self._after_install_rollback()
 
+    def install_from_history(self, timestamp):
+        """
+        Install packages from history by timestamp value
+        """
+        try:
+            timestamp = int(timestamp)
+        except (TypeError, ValueError):
+            print >>sys.stderr, "Invalid parameters"
+            return False
+
+        history_path = os.path.join(self.HISTORY_FOLDER, "old.%s" % timestamp)
+        if not os.path.isdir(history_path):
+            print >> sys.stderr, "No packages for timestamp: %s" % timestamp
+            return False
+
+        self._mysqlservice("stop")
+
+        # remove current installed packages
+        installed_packages = self._load_current_packages(False)
+        remove_packages(installed_packages)
+
+        # install history packages
+        install_packages(history_path, False, abs_path=True)
+
+        # restore old config file
+        old_cnf = "%s/my.cnf" % history_path
+        if os.path.exists(old_cnf):
+            shutil.copy(old_cnf, "/etc/my.cnf")
+
+        self._mysqlservice("restart")
+
     def delete(self):
         """
         Delete governor packages
@@ -237,10 +270,49 @@ class InstallManager(object):
         # run trigger after governor uninstall
         self._after_delete()
 
+    def show_packages_history(self):
+        """
+        Show early downloaded packages
+        """
+        h = self.HISTORY_FOLDER
+
+        for path in sorted(os.listdir(h)):
+            full_path = os.path.join(h, path)
+            if not os.path.isdir(full_path) or path.count(".") != 1:
+                continue
+
+            _, timestamp = path.split(".")
+            try:
+                timestamp = int(timestamp)
+            except (ValueError, TypeError):
+                continue
+
+            date = datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M")
+            print "DATE: %s, TS: %s" % (date, timestamp)
+            for name in sorted(os.listdir(full_path)):
+                print "    %s" % name
+
+    def clear_history_folder(self):
+        """
+        Remove all downloaded packages
+        """
+        if os.path.isdir(self.HISTORY_FOLDER):
+            shutil.rmtree(self.HISTORY_FOLDER)
+            os.mkdir(self.HISTORY_FOLDER, 0755)
+            os.chmod(self.HISTORY_FOLDER, 0755)
+
     def cleanup(self):
         """
         Cleanup downloaded packages and remove backup repo file
         """
+        tmp_path = "%s/old" % RPM_TEMP_PATH
+        if os.path.isdir(tmp_path):
+            # first move previous downloaded packages to history folder
+            history_path = os.path.join(self.HISTORY_FOLDER, "old.%s" % int(time.time()))
+            shutil.move(tmp_path, history_path)
+            if os.path.exists("/etc/my.cnf.prev"):
+                shutil.move("/etc/my.cnf.prev", "%s/my.cnf" % history_path)
+
         if os.path.exists(RPM_TEMP_PATH):
             shutil.rmtree(RPM_TEMP_PATH)
 

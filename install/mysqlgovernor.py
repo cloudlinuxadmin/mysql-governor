@@ -76,8 +76,14 @@ def build_parser():
                         dest="store_clean", action="store_true", default=False)
     parser.add_argument("--correct-cl7-service-name", help="Remove /etc/init.d/mysql(d) if exists for CloudLinux 7",
                         dest="cl7_correct", action="store_true", default=False)
-    parser.add_argument("--output-commands", help="Echo al commands executed by governor's install script",
+    parser.add_argument("--output-commands", help="Echo all commands executed by governor's install script",
                         dest="debug_flag", action="store_true", default=False)
+    parser.add_argument("--show-previous-packages", help="Show list of early downloaded packages",
+                        dest="show_previous_packages", action="store_true", default=False)
+    parser.add_argument("--install-from-history", help="Restore previous downloaded packages",
+                        dest="install_from_history", required=False)
+    parser.add_argument("--clear-history", help="Delete previous downloaded packages",
+                        dest="clear_history", action="store_true", default=False)
     return parser
 
 
@@ -146,6 +152,12 @@ def main(argv):
         manager.install_mysql_beta_testing_hooks()
     elif opts.fix_cpanel_cl_mysql:
         manager.fix_cl7_mysql()
+    elif opts.install_from_history:
+        manager.install_from_history(opts.install_from_history)
+    elif opts.show_previous_packages:
+        manager.show_packages_history()
+    elif opts.clear_history:
+        manager.clear_history_folder()
     elif opts.clean_mysql:
         print "Option is deprecated."
     elif opts.clean_mysql_delete:

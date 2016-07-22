@@ -247,7 +247,8 @@ def confirm_packages_installation(rpm_dir, no_confirm=None):
     return True
 
 
-def install_packages(rpm_dir, is_beta, no_confirm=None, installer=None):
+def install_packages(rpm_dir, is_beta, no_confirm=None, installer=None,
+                     abs_path=False):
     """
     Install new packages from rpm files in directory
     @param `no_confirm` bool|None: bool - show info about packages for install
@@ -258,12 +259,15 @@ def install_packages(rpm_dir, is_beta, no_confirm=None, installer=None):
     if is_beta:
         repo = "--enablerepo=cloudlinux-updates-testing"
 
-    pkg_path = "%s/" % os.path.join(RPM_TEMP_PATH, rpm_dir.strip("/"))
+    if not abs_path:
+        pkg_path = os.path.join(RPM_TEMP_PATH, rpm_dir.strip("/"))
+    else:
+        pkg_path = rpm_dir.rstrip("/")
 
     if installer is None:
-        print exec_command("yum install %s --disableexcludes=all --nogpgcheck -y %s*.rpm" % (repo, pkg_path), True)
+        print exec_command("yum install %s --disableexcludes=all --nogpgcheck -y %s/*.rpm" % (repo, pkg_path), True)
     else:
-        list_of_rpm = glob("%s*.rpm" % pkg_path)
+        list_of_rpm = glob("%s/*.rpm" % pkg_path)
         for found_package in list_of_rpm:
             print "Going to install %s" % found_package
             installer(found_package)
@@ -474,7 +478,7 @@ class bcolors:
         self.ENDC = ''
 
 
-def query_yes_no(question, default="yes"):
+def query_yes_no(question, default=None):
     """Ask a yes/no question via raw_input() and return their answer.
 
     "question" is a string that is presented to the user.
