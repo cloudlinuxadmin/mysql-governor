@@ -368,7 +368,7 @@ config_init (const char *path)
         cfg->statistic_mode = 0;
       }
 	}
-    if( ezxml_attr( tmp_xml, "mode" ) )
+    if( ezxml_attr( tmp_xml, "save_uid" ) )
     {
       if( !strcasecmp( ezxml_attr( tmp_xml, "save_uid" ), "On" ) )
       {
