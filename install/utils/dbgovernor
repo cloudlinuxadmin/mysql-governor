@@ -1,0 +1,1 @@
+service[db_governor]=x,x,x,if [ -e /usr/lib/systemd/system/db_governor.service ];then systemctl restart db_governor.service; else service db_governor restart; fi,db_governor,root

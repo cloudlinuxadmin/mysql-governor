@@ -134,6 +134,7 @@ install -D -m 755 install/scripts/detect-cpanel-mysql-version.pm $RPM_BUILD_ROOT
 install -D -m 755 install/scripts/cpanel-mysql-url-detect.pm $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/cpanel-mysql-url-detect.pm
 
 install -D -m 644 install/utils/cloudlinux.versions $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/cloudlinux.versions
+install -D -m 644 install/utils/dbgovernor $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/dbgovernor
 install -D -m 600 install/list_problem_files.txt $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/
 
 install -D -m 755 install/cpanel/upgrade-mysql-disabler.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/upgrade-mysql-disabler.sh
@@ -369,6 +370,7 @@ fi
 - MYSQLG-122: Reserch ability to remove unneeded files on governor's migration from one MySQL type to another
 - MYSQLG-129: Set default user status restricted produces duplicate in dbctl list
 - MYSQLG-132: after removin dbgovernor maria db is dead
+- MYSQLG-128: Check ability to add a way to monitor db_governor via cpanel Service Manager (Chkservd).
 
 * Fri Jun 03 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-15
 - Added reload-daemon for CL7 on update

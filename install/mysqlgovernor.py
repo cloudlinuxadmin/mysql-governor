@@ -4,11 +4,12 @@ import argparse
 import sys
 import time
 import datetime
+import os
 
 from clcommon import cpapi
 
 from modules import InstallManager, Storage
-from utilities import exec_command, bcolors, query_yes_no, correct_mysqld_service_for_cl7, set_debug
+from utilities import exec_command, bcolors, query_yes_no, correct_mysqld_service_for_cl7, set_debug, shadow_tracing
 
 LOG_FILE_NAME = "/usr/share/lve/dbgovernor/governor_install.log"
 
@@ -17,6 +18,7 @@ class Logger(object):
     def __init__(self, filename="Default.log"):
         self.terminal = sys.stdout
         self.log = open(filename, "a")
+        os.chmod(filename, 0o600)
 
     def write(self, message):
         self.terminal.write(message)
@@ -93,6 +95,7 @@ def main(argv):
     """
     sys.stdout = Logger(LOG_FILE_NAME)
     sys.stderr = Logger(LOG_FILE_NAME)
+    shadow_tracing(True)
     time_now = datetime.datetime.now()
     sys.stdout.write_extended("\n####################################################Install process begin %s#####################################################\n" % time_now.strftime("%Y-%m-%d %H:%M"))
 

@@ -17,13 +17,14 @@ __all__ = ["mysql_version", "clean_whitespaces", "is_package_installed",
            "remove_lines", "write_file", "read_file", "rewrite_file", "touch",
            "add_line", "replace_lines", "query_yes_no", "create_mysqld_link",
            "confirm_packages_installation", "is_file_owned_by_package",
-           "correct_mysqld_service_for_cl7", "set_debug", "debug_log"
+           "correct_mysqld_service_for_cl7", "set_debug", "debug_log",
+           "shadow_tracing", "add_line_rw_owner"
            ]
 
 
 RPM_TEMP_PATH = "/usr/share/lve/dbgovernor/tmp/governor-tmp"
 WHITESPACES_REGEX = re.compile("\s+")
-TRACE_LOG_FILE = "/usr/share/lve/dbgovernor/tmp/trace.log"
+TRACE_LOG_FILE = "/usr/share/lve/dbgovernor/install_trace.log"
 fDEBUG_FLAG = False
 
 
@@ -60,10 +61,12 @@ def _trace_calls(frame, event, arg):
     date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     line = "[%s] %s%s <- %s\n" % (date, "===="*level, _call_string(frame),
                                   _call_string(frame.f_back))
-    add_line(TRACE_LOG_FILE, line)
+    add_line_rw_owner(TRACE_LOG_FILE, line)
 
     return
 
+def shadow_tracing(status=True):
+    sys.settrace(_trace_calls if status else None)
 
 def set_debug(status=True):
     """
@@ -74,7 +77,6 @@ def set_debug(status=True):
         with open(TRACE_LOG_FILE, "w") as f:
             f.write("")
 
-    sys.settrace(_trace_calls if status else None)
     fDEBUG_FLAG = status
 
 
@@ -399,6 +401,13 @@ def rewrite_file(f, content):
     f.truncate()
     f.write("".join(content))
 
+def add_line_rw_owner(path, line):
+    """
+    Add line to file
+    """
+    with open(path, "a") as f:
+        f.write("%s\n" % line.strip())
+    os.chmod(path, 0o600)
 
 def add_line(path, line):
     """
