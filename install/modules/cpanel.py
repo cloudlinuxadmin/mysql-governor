@@ -185,3 +185,11 @@ class cPanelManager(InstallManager):
         if len(result)==4:
             return exec_command(self._rel("scripts/cpanel-mysql-url-detect.pm %s %s-%s" % (result[0], result[1], result[2])), True)
         return ""
+
+    def make_additional_panel_related_check(self):
+        if os.path.exists("/usr/local/cpanel/cpanel"):
+            if os.path.exists("/usr/local/cpanel/scripts/update_local_rpm_versions") and \
+                    os.path.exists("/var/cpanel/rpm.versions.d/cloudlinux.versions") and os.path.exists(self._rel("utils/cloudlinux.versions")):
+                shutil.copy2(self._rel("utils/cloudlinux.versions"),
+                                 "/var/cpanel/rpm.versions.d/cloudlinux.versions")
+        return

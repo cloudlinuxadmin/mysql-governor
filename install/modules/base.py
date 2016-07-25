@@ -771,3 +771,6 @@ for native procedure restoring of MySQL packages""")
 
     def _custom_rpm_installer(self, package_name, indicator=False):
         return "no"
+
+    def make_additional_panel_related_check(self):
+        return

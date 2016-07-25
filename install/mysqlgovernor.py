@@ -86,6 +86,8 @@ def build_parser():
                         dest="install_from_history", required=False)
     parser.add_argument("--clear-history", help="Delete previous downloaded packages",
                         dest="clear_history", action="store_true", default=False)
+    parser.add_argument("--correct-cloud-version", help="Fix error in cloudlinux.versions file",
+                        dest="clver_correct", action="store_true", default=False)
     return parser
 
 
@@ -173,6 +175,8 @@ def main(argv):
         manager.set_fs_suid_dumpable()
     elif opts.store_list:
         storage_holder.list_files_from_storage(False)
+    elif opts.clver_correct:
+        manager.make_additional_panel_related_check()
     elif opts.store_save:
         storage_holder.save_file_to_storage(opts.store_save)
     elif opts.store_restore:

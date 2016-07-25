@@ -260,6 +260,9 @@ if [ -e /usr/share/lve/dbgovernor/mysqlgovernor.py ]; then
     /usr/share/lve/dbgovernor/mysqlgovernor.py --correct-cl7-service-name
 fi
 %endif
+if [ -e /usr/share/lve/dbgovernor/mysqlgovernor.py ]; then
+    /usr/share/lve/dbgovernor/mysqlgovernor.py --correct-cloud-version
+fi
 
 #check if in signal file saved U, than need to start mysql
 gKEY=`echo -n "%{g_key_library}"`
