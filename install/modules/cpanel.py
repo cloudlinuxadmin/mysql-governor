@@ -37,8 +37,8 @@ class cPanelManager(InstallManager):
     def _delete(self, installed_packages):
         """
         """
-        if os.path.exists("/etc/chkserv.d/dbgovernor"):
-            os.remove("/etc/chkserv.d/dbgovernor")
+        if os.path.exists("/etc/chkserv.d/db_governor"):
+            os.remove("/etc/chkserv.d/db_governor")
         self._script("chek_mysql_rpms_local", "-d")
         self._script("cpanel-delete-hooks")
 
@@ -87,8 +87,7 @@ class cPanelManager(InstallManager):
 
         if os.path.exists("/usr/local/cpanel/cpanel"):
             if os.path.exists("/usr/local/cpanel/scripts/update_local_rpm_versions"):
-                if not os.path.exists("/var/cpanel/rpm.versions.d/cloudlinux.versions"):
-                    shutil.copy2(self._rel("utils/cloudlinux.versions"),
+                shutil.copy2(self._rel("utils/cloudlinux.versions"),
                                  "/var/cpanel/rpm.versions.d/cloudlinux.versions")
             else:
                 if not os.path.exists("/etc/cpupdate.conf.governor"):
@@ -102,9 +101,9 @@ class cPanelManager(InstallManager):
             if os.path.exists("/etc/mysqlupdisable"):
                 os.unlink("/etc/mysqlupdisable")
             remove_lines("/etc/cpupdate.conf", "MYSQLUP=never")
-        if os.path.exists("/etc/chkserv.d") and os.path.exists(self._rel("utils/cloudlinux.versions")):
-            shutil.copy2(self._rel("utils/dbgovernor"),
-                                 "/etc/chkserv.d/dbgovernor")
+        if os.path.exists("/etc/chkserv.d") and os.path.exists(self._rel("utils/db_governor")):
+            shutil.copy2(self._rel("utils/db_governor"),
+                                 "/etc/chkserv.d/db_governor")
 
     def _after_install_rollback(self):
         """
