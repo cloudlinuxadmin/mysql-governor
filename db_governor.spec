@@ -1,5 +1,5 @@
 %define g_version   1.1
-%define g_release   16
+%define g_release   17
 %define g_key_library 6
 
 %if %{undefined _unitdir}
@@ -348,6 +348,15 @@ fi
 
 ldconfig
 
+if [ -e /usr/local/cpanel/cpanel ]; then
+        if [ -e /usr/local/cpanel/scripts/update_local_rpm_versions ]; then
+                if [ -e /var/cpanel/rpm.versions.d/cloudlinux.versions -a -e /usr/share/lve/dbgovernor/cpanel/cloudlinux.versions ]; then 
+                        cp -f /usr/share/lve/dbgovernor/cpanel/cloudlinux.versions /var/cpanel/rpm.versions.d/cloudlinux.versions
+                fi
+        fi
+fi
+
+
 if [ $1 -eq 0 ]; then
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
 /bin/systemctl daemon-reload >/dev/null 2>&1 || :
@@ -385,6 +394,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Tue Jul 26 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-17
+- Force reinstall cloudlinux.versions on update
+
 * Thu Jul 14 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-16
 - Fixed error in cloudlinux.version file for cPanel
 
