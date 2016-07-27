@@ -639,7 +639,7 @@ void add_user_stats_from_counter(gpointer key, Stat_counters * item, gpointer us
 }
 
 static int dbgov_was_user_activity(dbgov_statitrics *dbgovst){
-	if((dbgovst->sum_cpu>0.0 || dbgovst->sum_write>0.0 || dbgovst->sum_read>0.0) && (dbgovst->ignored!=IGNORE_MODE)) return 1;
+	if((dbgovst->sum_cpu>0.0 || dbgovst->sum_write>0.0 || dbgovst->sum_read>0.0 || dbgovst->cause) && (dbgovst->ignored!=IGNORE_MODE)) return 1;
 	else return 0;
 }
 
