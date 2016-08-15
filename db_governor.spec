@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   2
+%define g_release   3
 %define g_key_library 6
 
 %if %{undefined _unitdir}
@@ -366,6 +366,9 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Mon Aug 15 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-3
+- Fixed error on previous MySQL package detected 
+
 * Wed Jul 27 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-2
 - Added save of statistics even if no cpu&io activity but was only cause changing
 

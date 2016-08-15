@@ -102,7 +102,7 @@ def mysql_version():
 
     output = exec_command("""rpm -qf --qf="%%{name} %%{version}" %s""" % path,
                           True, silent=True, return_code=True)
-    if not output:
+    if output == "no":
         return None
 
     output = exec_command("""rpm -qf --qf="%%{name} %%{version}" %s""" % path,
@@ -159,7 +159,7 @@ def download_packages(names, dest, beta, custom_download=None):
         names = _custom_download_packages(names, path, custom_download)
     else:
         repo = "" if not beta else "--enablerepo=cloudlinux-updates-testing"
-        if exec_command("yum repolist --enablerepo=*|grep mysql -c", True, True) != "0":
+        if exec_command("yum repolist --enablerepo=* --setopt=cl-mysql.skip_if_unavailable=true --setopt=cl-mysql-debuginfo.skip_if_unavailable=true --setopt=cl-mysql-testing.skip_if_unavailable=true |grep mysql -c", True, True) != "0":
             repo = "%s --enablerepo=mysqclient" % repo
 
         exec_command(("yumdownloader --destdir=%s --disableexcludes=all %s %s")
