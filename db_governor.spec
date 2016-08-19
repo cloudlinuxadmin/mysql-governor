@@ -1,6 +1,6 @@
 %define g_version   1.2
-%define g_release   3
-%define g_key_library 6
+%define g_release   4
+%define g_key_library 7
 
 %if %{undefined _unitdir}
 %define _unitdir /usr/lib/systemd/system
@@ -366,6 +366,9 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Fri Aug 19 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-4
+- MYSQLG-136: Add new behaviour for MySQL LVE enter for preventing crash MySQL on lve destroy
+
 * Mon Aug 15 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-3
 - Fixed error on previous MySQL package detected 
 
