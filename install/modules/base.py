@@ -666,7 +666,7 @@ for native procedure restoring of MySQL packages""")
         Kill mysqld processes.
         """
         if exec_command("/bin/ps uax | /bin/grep -v grep | /bin/grep mysqld |"
-                        "/bin/grep datadir", True, silent=True):
+                        "/bin/egrep -e 'datadir|--daemonize'", True, silent=True):
             print "Stop hunging MySQL"
             exec_command_out("/usr/bin/killall -SIGTERM mysqld_safe")
             print "Waiting for mysqld_safe stop"

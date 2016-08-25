@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   4
+%define g_release   5
 %define g_key_library 7
 
 %if %{undefined _unitdir}
@@ -366,6 +366,9 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Thu Aug 25 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-5
+- Fixed detecting of MySQL active processes for MySQL 5.7
+
 * Fri Aug 19 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-4
 - MYSQLG-136: Add new behaviour for MySQL LVE enter for preventing crash MySQL on lve destroy
 

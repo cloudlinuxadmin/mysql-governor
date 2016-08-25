@@ -129,7 +129,7 @@ def main(argv):
 
         # check mysqld service status
         if manager.ALL_PACKAGES_NEW_NOT_DOWNLOADED == False and manager.DISABLED == False:
-            if exec_command("ps -Af | grep -v grep | grep mysqld | grep datadir",
+            if exec_command("ps -Af | grep -v grep | grep mysqld | egrep -e 'datadir|--daemonize'",
                         True, silent=True):
                 manager.save_installed_version()
                 print "Installation mysql for db_governor completed"
