@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   5
+%define g_release   6
 %define g_key_library 7
 
 %if %{undefined _unitdir}
@@ -136,6 +136,8 @@ install -D -m 755 install/scripts/cpanel-mysql-url-detect.pm $RPM_BUILD_ROOT/usr
 install -D -m 644 install/utils/cloudlinux.versions $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/cloudlinux.versions
 install -D -m 644 install/utils/dbgovernor $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/db_governor
 install -D -m 600 install/list_problem_files.txt $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/
+
+install -D -m 755 install/utils/mysql_export $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/mysql_export
 
 install -D -m 755 install/cpanel/upgrade-mysql-disabler.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/upgrade-mysql-disabler.sh
 ln -s ../scripts/dbgovernor_map $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/dbgovernor_map
@@ -366,6 +368,9 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Thu Aug 25 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-6
+- MYSQLG-124: Use set_old_limit before mysql process killed
+
 * Thu Aug 25 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-5
 - Fixed detecting of MySQL active processes for MySQL 5.7
 
