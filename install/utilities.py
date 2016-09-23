@@ -18,7 +18,7 @@ __all__ = ["mysql_version", "clean_whitespaces", "is_package_installed",
            "add_line", "replace_lines", "query_yes_no", "create_mysqld_link",
            "confirm_packages_installation", "is_file_owned_by_package",
            "correct_mysqld_service_for_cl7", "set_debug", "debug_log",
-           "shadow_tracing", "add_line_rw_owner"
+           "shadow_tracing", "add_line_rw_owner", "set_path_environ"
            ]
 
 
@@ -27,6 +27,11 @@ WHITESPACES_REGEX = re.compile("\s+")
 TRACE_LOG_FILE = "/usr/share/lve/dbgovernor/install_trace.log"
 fDEBUG_FLAG = False
 
+def set_path_environ():
+    """
+    Set PATH variable
+    """
+    os.environ["PATH"] += os.pathsep + "/bin" + os.pathsep + "/sbin" + os.pathsep + "/usr/bin" + os.pathsep + "/usr/sbin" + os.pathsep + "/usr/local/bin" + os.pathsep + "/usr/local/sbin"
 
 def _trace_calls(frame, event, arg):
     """
@@ -226,9 +231,16 @@ def remove_packages(packages_list):
     # don`t do anything if no packages
     if not packages_list:
         return
-
-    packages = " ".join(packages_list)
-    print exec_command("rpm -e --nodeps %s" % packages, True)
+    #Try to find server package, because it should be removed first
+    new_pkg = []
+    for pkg in packages_list:
+        if "-server" in pkg:
+            print exec_command("rpm -e --nodeps %s" % pkg, True)
+        else:
+            new_pkg.append(pkg)
+    if len(new_pkg)>0:
+        packages = " ".join(new_pkg)
+        print exec_command("rpm -e --nodeps %s" % packages, True)
 
 
 def confirm_packages_installation(rpm_dir, no_confirm=None):
@@ -318,7 +330,7 @@ def exec_command(command, as_string=False, silent=False, return_code=False):
     p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE)
     out, err = p.communicate()
-    debug_log("Executed command %s with retcode %d" % (command, p.returncode))
+    debug_log("Executed command %s with retcode %d\n" % (command, p.returncode))
 
     if return_code:
         if p.returncode == 0:
@@ -341,7 +353,7 @@ def exec_command_out(command):
     Simple system exec call
     """
     os.system(command)
-    debug_log("Executed command %s with retcode NN" % (command))
+    debug_log("Executed command %s with retcode NN\n" % (command))
 
 
 def get_cl_num():
@@ -547,7 +559,7 @@ def parse_rpm_name(name):
     """
     Split rpm package name
     """
-    result = exec_command(("/usr/bin/rpm --queryformat \"%%{NAME} %%{VERSION}"
+    result = exec_command(("rpm --queryformat \"%%{NAME} %%{VERSION}"
                            " %%{RELEASE} %%{ARCH}\" -q %s") % name, True)\
                           .split(' ', 4)
     if len(result) >= 4:

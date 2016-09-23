@@ -9,7 +9,7 @@ import os
 from clcommon import cpapi
 
 from modules import InstallManager, Storage
-from utilities import exec_command, bcolors, query_yes_no, correct_mysqld_service_for_cl7, set_debug, shadow_tracing
+from utilities import exec_command, bcolors, query_yes_no, correct_mysqld_service_for_cl7, set_debug, shadow_tracing, set_path_environ
 
 LOG_FILE_NAME = "/usr/share/lve/dbgovernor/governor_install.log"
 
@@ -95,6 +95,7 @@ def main(argv):
     """
     Run main actions
     """
+    set_path_environ()
     sys.stdout = Logger(LOG_FILE_NAME)
     sys.stderr = Logger(LOG_FILE_NAME)
     shadow_tracing(True)

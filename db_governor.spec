@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   6
+%define g_release   7
 %define g_key_library 7
 
 %if %{undefined _unitdir}
@@ -368,6 +368,9 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Sat Sep 24 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-7
+- Fixed my.cnf restoring on MySQL update or version change
+
 * Thu Aug 25 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-6
 - MYSQLG-124: Use set_old_limit before mysql process killed
 

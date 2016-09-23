@@ -116,6 +116,10 @@ class InstallManager(object):
         # first remove installed mysql packages
         self.remove_current_packages()
 
+        # restore my.cnf, because removing of packages rename /etc/my.cnf to /etc/my.cnf.rpmsave
+        if os.path.exists("/etc/my.cnf.prev"):
+            shutil.copy2("/etc/my.cnf.prev", "/etc/my.cnf")
+
         self.set_fs_suid_dumpable()
         self._check_leave_pid()
 

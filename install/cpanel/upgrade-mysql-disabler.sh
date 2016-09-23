@@ -1,3 +1,3 @@
-#!/bib/bash
+#!/bin/bash
 
 echo "Deprecated script"
