@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   7
+%define g_release   8
 %define g_key_library 7
 
 %if %{undefined _unitdir}
@@ -368,6 +368,10 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Mon Sep 26 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-8
+- MYSQLG-134: Check if mysql is not in yum exclude list
+- MYSQLG-140: Spelling error in mysqlgovernor.py script output
+
 * Sat Sep 24 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-7
 - Fixed my.cnf restoring on MySQL update or version change
 
