@@ -279,12 +279,29 @@ def install_packages(rpm_dir, is_beta, no_confirm=None, installer=None,
         pkg_path = rpm_dir.rstrip("/")
 
     if installer is None:
-        print exec_command("yum install %s --disableexcludes=all --nogpgcheck -y %s/*.rpm" % (repo, pkg_path), True)
-    else:
+        list_for_install = []
+        is_server_found = []
         list_of_rpm = glob("%s/*.rpm" % pkg_path)
         for found_package in list_of_rpm:
-            print "Going to install %s" % found_package
-            installer(found_package)
+            if "-server" in found_package or "-meta-" in found_package:
+                is_server_found.append(found_package)
+            else:
+                list_for_install.append(found_package)
+        print exec_command("yum install %s --disableexcludes=all --nogpgcheck -y %s" % (repo, " ".join(list_for_install)), True)
+        if is_server_found !="":
+            print exec_command("yum install %s --disableexcludes=all --nogpgcheck -y %s" % (repo, " ".join(is_server_found)), True)
+    else:
+        is_server_found = ""
+        list_of_rpm = glob("%s/*.rpm" % pkg_path)
+        for found_package in list_of_rpm:
+            if "-server" in found_package:
+                is_server_found = found_package
+            else:
+                print "Going to install %s" % found_package
+                installer(found_package)
+        if is_server_found != "":
+            print "Going to install %s" % is_server_found
+            installer(is_server_found)
     return True
 
 
@@ -306,10 +323,21 @@ def service(action, *names):
     @param `names` tuple: list with services
     """
     for name in names:
-        if os.path.exists("/usr/lib/systemd/system/%s.service" % name):
+        end_name = name
+        if name=="mysql" or name=="mysqld":
+            if os.path.exists("/usr/lib/systemd/system/mysql.service"):
+                end_name = "mysql"
+            elif os.path.exists("/usr/lib/systemd/system/mysqld.service"):
+                end_name = "mysqld"
+        if os.path.exists("/usr/lib/systemd/system/%s.service" % end_name):
             exec_command_out("/bin/systemctl %s %s.service" % (action, name))
         else:
-            exec_command_out("/sbin/service %s %s" % (name, action))
+            if name=="mysql" or name=="mysqld":
+                if os.path.exists("/etc/init.d/mysql"):
+                    end_name = "mysql"
+                elif os.path.exists("/etc/init.d/mysqld"):
+                    end_name = "mysqld"
+            exec_command_out("/sbin/service %s %s" % (end_name, action))
 
 
 def check_file(path):
