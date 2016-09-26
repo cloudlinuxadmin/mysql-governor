@@ -1,5 +1,5 @@
 %define g_version   1.1
-%define g_release   17
+%define g_release   18
 %define g_key_library 6
 
 %if %{undefined _unitdir}
@@ -394,6 +394,10 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Mon Sep 26 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-18
+- MYSQLG-134: Check if mysql is not in yum exclude list
+- MYSQLG-140: Spelling error in mysqlgovernor.py script output
+
 * Tue Jul 26 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-17
 - Force reinstall cloudlinux.versions on update
 

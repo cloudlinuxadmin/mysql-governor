@@ -116,7 +116,7 @@ def installPythonMysql():
 
 def usage():
 	print ''                                                                                                                                             
-        print 'Use following syntax to manage DBGOVERNOR istall utility:'                                                                                                       
+        print 'Use following syntax to manage DBGOVERNOR install utility:'                                                                                                       
         print sys.argv[0]+" [OPTIONS]"                                                                                                                       
         print 'Options:'                                                                                                                                     
         print " -i | --install             : install MySQL for db-governor"                                                                 
