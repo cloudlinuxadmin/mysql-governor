@@ -324,13 +324,20 @@ def service(action, *names):
     """
     for name in names:
         end_name = name
+        found_path = ""
         if name=="mysql" or name=="mysqld":
             if os.path.exists("/usr/lib/systemd/system/mysql.service"):
                 end_name = "mysql"
             elif os.path.exists("/usr/lib/systemd/system/mysqld.service"):
                 end_name = "mysqld"
-        if os.path.exists("/usr/lib/systemd/system/%s.service" % end_name):
-            exec_command_out("/bin/systemctl %s %s.service" % (action, name))
+            elif os.path.exists("/etc/systemd/system/mysql.service"):
+                end_name = "mysql"
+                found_path = "/etc/systemd/system/mysql.service"
+            elif os.path.exists("/etc/systemd/system/mysqld.service"):
+                end_name = "mysqld"
+                found_path = "/etc/systemd/system/mysqld.service"
+        if os.path.exists("/usr/lib/systemd/system/%s.service" % end_name) or (found_path != ""):
+            exec_command_out("/bin/systemctl %s %s.service" % (action, end_name))
         else:
             if name=="mysql" or name=="mysqld":
                 if os.path.exists("/etc/init.d/mysql"):
@@ -338,7 +345,6 @@ def service(action, *names):
                 elif os.path.exists("/etc/init.d/mysqld"):
                     end_name = "mysqld"
             exec_command_out("/sbin/service %s %s" % (end_name, action))
-
 
 def check_file(path):
     """

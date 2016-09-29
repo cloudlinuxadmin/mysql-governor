@@ -5,6 +5,7 @@
 ###################################################
 . /usr/share/lve/dbgovernor/scripts/cpanel-common-lve
 
+common_path_of_cpanel="/usr/share/lve/dbgovernor/cpanel"
 
 ####################################################
 # Cpanel hooks                                     #

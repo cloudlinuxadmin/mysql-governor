@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   8
+%define g_release   9
 %define g_key_library 7
 
 %if %{undefined _unitdir}
@@ -368,6 +368,10 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Thu Sep 29 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-9
+- Fix incorrect path to deprecated script in postupcp for cPanel
+- Fixed restarting of mysql service (non governor packages)
+
 * Mon Sep 26 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-8
 - MYSQLG-134: Check if mysql is not in yum exclude list
 - MYSQLG-140: Spelling error in mysqlgovernor.py script output
