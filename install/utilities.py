@@ -326,10 +326,10 @@ def service(action, *names):
         end_name = name
         found_path = ""
         if name=="mysql" or name=="mysqld":
-            if os.path.exists("/usr/lib/systemd/system/mysql.service"):
-                end_name = "mysql"
-            elif os.path.exists("/usr/lib/systemd/system/mysqld.service"):
+            if os.path.exists("/usr/lib/systemd/system/mysqld.service"):
                 end_name = "mysqld"
+            elif os.path.exists("/usr/lib/systemd/system/mysql.service"):
+                end_name = "mysql"
             elif os.path.exists("/etc/systemd/system/mysql.service"):
                 end_name = "mysql"
                 found_path = "/etc/systemd/system/mysql.service"
