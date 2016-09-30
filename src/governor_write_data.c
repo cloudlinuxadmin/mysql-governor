@@ -36,7 +36,7 @@
 #define SEC2NANO 1000000000
 
 pthread_mutex_t mtx_write = PTHREAD_MUTEX_INITIALIZER;
-sock_data sd;
+sock_data sd = { -1, 0 };
 
 static int try_lock2(pthread_mutex_t *mtx) {
 	int trys = 0, rc = 0;
@@ -226,7 +226,7 @@ connection_with_timeout_select(int sk, struct sockaddr_un *sa,  socklen_t len, i
 static int connect_to_server_in() {
 	int s, len;
 	struct sockaddr_un saun;
-	sd.socket = 0;
+	sd.socket = -1;
 	sd.status = 0;
 
 	if ((s = socket(AF_UNIX, SOCK_STREAM, 0)) < 0) {
@@ -260,6 +260,7 @@ int connect_to_server() {
 
 int send_info(char *username, int type) {
 
+	if (sd.socket<0) return 0;
 	pid_t current_pid = getpid();
 	pid_t current_tid = gettid();
 
