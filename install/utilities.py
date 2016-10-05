@@ -19,6 +19,7 @@ __all__ = ["mysql_version", "clean_whitespaces", "is_package_installed",
            "confirm_packages_installation", "is_file_owned_by_package",
            "correct_mysqld_service_for_cl7", "set_debug", "debug_log",
            "shadow_tracing", "add_line_rw_owner", "set_path_environ", "correct_remove_notowned_mysql_service_names_cl7",
+           "disable_and_remove_service",
            ]
 
 
