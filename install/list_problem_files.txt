@@ -8,7 +8,6 @@
 /usr/lib64/libmysqlclient.so.16.0.0
 /usr/lib/systemd/system/mysqld.service
 /usr/lib/systemd/system/mariadb.service
-/etc/systemd/system/mysqld.service
 /etc/init.d/mysql
 /etc/init.d/mysqld
 /usr/libexec/mysqld

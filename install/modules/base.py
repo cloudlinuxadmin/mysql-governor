@@ -14,7 +14,7 @@ from utilities import get_cl_num, exec_command, exec_command_out, new_lve_ctl, \
     remove_packages, read_file, download_packages, write_file, RPM_TEMP_PATH, \
     is_package_installed, check_file, mysql_version, \
     confirm_packages_installation, create_mysqld_link, \
-    correct_mysqld_service_for_cl7
+    correct_mysqld_service_for_cl7, correct_remove_notowned_mysql_service_names_cl7
 
 
 class InstallManager(object):
@@ -115,6 +115,8 @@ class InstallManager(object):
 
         # first remove installed mysql packages
         self.remove_current_packages()
+
+        correct_remove_notowned_mysql_service_names_cl7()
 
         # restore my.cnf, because removing of packages rename /etc/my.cnf to /etc/my.cnf.rpmsave
         if os.path.exists("/etc/my.cnf.prev"):
