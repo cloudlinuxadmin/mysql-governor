@@ -14,7 +14,8 @@ from utilities import get_cl_num, exec_command, exec_command_out, new_lve_ctl, \
     remove_packages, read_file, download_packages, write_file, RPM_TEMP_PATH, \
     is_package_installed, check_file, mysql_version, \
     confirm_packages_installation, create_mysqld_link, \
-    correct_mysqld_service_for_cl7, correct_remove_notowned_mysql_service_names_cl7
+    correct_mysqld_service_for_cl7, correct_remove_notowned_mysql_service_names_cl7, \
+    correct_remove_notowned_mysql_service_names_not_symlynks_cl7
 
 
 class InstallManager(object):
@@ -140,9 +141,11 @@ class InstallManager(object):
 
         create_mysqld_link("mysqld", "mysql")
         create_mysqld_link("mysql", "mysqld")
-            
+
         correct_mysqld_service_for_cl7("mysql")
         correct_mysqld_service_for_cl7("mysqld")
+
+        correct_remove_notowned_mysql_service_names_not_symlynks_cl7()
 
         # fix for packages without /etc/my.cnf file
         if not os.path.exists("/etc/my.cnf"):
@@ -152,6 +155,10 @@ class InstallManager(object):
         if version.startswith("mariadb") or version == "auto" \
                 and self.cl_version == 7:
             self._enable_mariadb()
+
+        if version.startswith("mysql") \
+                and self.cl_version == 7:
+            self._enable_mysql()
 
         if os.path.exists("/etc/my.cnf"):
             shutil.copy2("/etc/my.cnf", "/etc/my.cnf.orig")
@@ -687,6 +694,14 @@ for native procedure restoring of MySQL packages""")
         """
         if 7 == self.cl_version:
             exec_command_out("systemctl enable mariadb.service")
+            exec_command_out("systemctl enable mysql.service")
+            exec_command_out("systemctl enable mysqld.service")
+
+    def _enable_mysql(self):
+        """
+        Enable MySQL services
+        """
+        if 7 == self.cl_version:
             exec_command_out("systemctl enable mysql.service")
             exec_command_out("systemctl enable mysqld.service")
 

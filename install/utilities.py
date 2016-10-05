@@ -19,7 +19,8 @@ __all__ = ["mysql_version", "clean_whitespaces", "is_package_installed",
            "confirm_packages_installation", "is_file_owned_by_package",
            "correct_mysqld_service_for_cl7", "set_debug", "debug_log",
            "shadow_tracing", "add_line_rw_owner", "set_path_environ", "correct_remove_notowned_mysql_service_names_cl7",
-           "disable_and_remove_service",
+           "disable_and_remove_service", "correct_remove_notowned_mysql_service_names_not_symlynks_cl7",
+           "disable_and_remove_service_if_notsymlynk",
            ]
 
 
@@ -607,6 +608,24 @@ def correct_remove_notowned_mysql_service_names_cl7():
         disable_and_remove_service("/usr/lib/systemd/system/mariadb.service")
         disable_and_remove_service("/etc/systemd/system/mysqld.service")
         disable_and_remove_service("/etc/systemd/system/mysql.service")
+        exec_command_out("systemctl daemon-reload")
+
+
+def disable_and_remove_service_if_notsymlynk(service_path):
+    if os.path.exists(service_path):
+        service_name = os.path.basename(service_path)
+        if service_name != "" and is_file_owned_by_package(service_path) == False and not os.path.islink(service_path):
+            exec_command_out("systemctl disable %s" % service_name)
+            os.unlink(service_path)
+
+def correct_remove_notowned_mysql_service_names_not_symlynks_cl7():
+    """
+    After any MySQL-server removing should not be any mysql or mysqld or mariadb service files
+    """
+    cl_ver = get_cl_num()
+    if cl_ver == 7:
+        disable_and_remove_service_if_notsymlynk("/etc/systemd/system/mysqld.service")
+        disable_and_remove_service_if_notsymlynk("/etc/systemd/system/mysql.service")
         exec_command_out("systemctl daemon-reload")
 
 
