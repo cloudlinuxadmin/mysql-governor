@@ -145,7 +145,7 @@ class InstallManager(object):
         correct_mysqld_service_for_cl7("mysql")
         correct_mysqld_service_for_cl7("mysqld")
 
-        correct_remove_notowned_mysql_service_names_not_symlynks_cl7()
+
 
         # fix for packages without /etc/my.cnf file
         if not os.path.exists("/etc/my.cnf"):
@@ -176,6 +176,9 @@ class InstallManager(object):
 
         self.fix_cl7_mysql()
         self._ld_fix()
+
+        correct_remove_notowned_mysql_service_names_not_symlynks_cl7()
+
         return True
 
     def install_rollback(self, beta):
