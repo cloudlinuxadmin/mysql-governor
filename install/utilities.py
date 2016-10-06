@@ -627,7 +627,12 @@ def correct_remove_notowned_mysql_service_names_not_symlynks_cl7():
         disable_and_remove_service_if_notsymlynk("/etc/systemd/system/mysqld.service")
         disable_and_remove_service_if_notsymlynk("/etc/systemd/system/mysql.service")
         exec_command_out("systemctl daemon-reload")
-
+        exec_command_out("systemctl disable mysql")
+        exec_command_out("systemctl enable mysql")
+        exec_command_out("systemctl disable mysqld")
+        exec_command_out("systemctl enable mysqld")
+        exec_command_out("systemctl disable mariadb")
+        exec_command_out("systemctl enable mariadb")
 
 def parse_rpm_name(name):
     """
