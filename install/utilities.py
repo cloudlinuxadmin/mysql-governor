@@ -582,13 +582,14 @@ def correct_mysqld_service_for_cl7(name):
     """
     For cl7 /etc/init.d/mysql should be removed if exists
     """
-    cl_ver = get_cl_num()
-    if cl_ver == 7:
-        link_name = "/etc/init.d/%s" % name
-        if os.path.exists(link_name):
-            os.unlink(link_name)
-        elif os.path.islink(link_name):
-            os.unlink(link_name)
+    #cl_ver = get_cl_num()
+    #if cl_ver == 7:
+    #    link_name = "/etc/init.d/%s" % name
+    #    if os.path.exists(link_name):
+    #        os.unlink(link_name)
+    #    elif os.path.islink(link_name):
+    #        os.unlink(link_name)
+    print "Just empty action"
 
 def disable_and_remove_service(service_path):
     if os.path.exists(service_path):
