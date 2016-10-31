@@ -37,7 +37,7 @@ def get_account_list():
     try:
         f = open( conf_name )
         for line in f.readlines():
-            p = line.split( '=' )
+            p = line.split( '=', 1 )
             if len(p)>1:
                  params[ p[ 0 ].strip() ] = p[ 1 ].strip()
         f.close()
