@@ -237,12 +237,12 @@ def remove_packages(packages_list):
     new_pkg = []
     for pkg in packages_list:
         if "-server" in pkg:
-            print exec_command("rpm -e --nodeps %s" % pkg, True)
+            print exec_command("rpm -e --nodeps %s" % pkg, True, cmd_on_error="rpm -e --nodeps --noscript %s" % pkg)
         else:
             new_pkg.append(pkg)
     if len(new_pkg)>0:
         packages = " ".join(new_pkg)
-        print exec_command("rpm -e --nodeps %s" % packages, True)
+        print exec_command("rpm -e --nodeps %s" % packages, True, cmd_on_error="rpm -e --nodeps --noscript %s" % pkg)
 
 
 def confirm_packages_installation(rpm_dir, no_confirm=None):
@@ -359,7 +359,7 @@ def check_file(path):
     return True
 
 
-def exec_command(command, as_string=False, silent=False, return_code=False):
+def exec_command(command, as_string=False, silent=False, return_code=False, cmd_on_error=""):
     """
     Advanced system exec call
     """
@@ -376,6 +376,8 @@ def exec_command(command, as_string=False, silent=False, return_code=False):
 
     if p.returncode != 0 and not silent:
         print >>sys.stderr, "Execution command: %s error" % command
+        if cmd_on_error!="":
+            return exec_command(cmd_on_error, as_string, silent, return_code, "")
         raise RuntimeError("%s\n%s" % (out, err))
 
     if as_string:

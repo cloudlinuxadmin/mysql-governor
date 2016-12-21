@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   10
+%define g_release   11
 %define g_key_library 7
 
 %if %{undefined _unitdir}
@@ -368,6 +368,10 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Thu Dec 22 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-11
+- MYSQLG-146: Remove original mysql packages correctly
+- Fixed detection of MariaDB 10.1 after installing
+
 * Mon Oct 31 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-10
 - Fix DA MySQL connection parameters parsing
 
