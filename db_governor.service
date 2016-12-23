@@ -8,9 +8,10 @@ Environment="G_SLICE=always-malloc" "HOME=/root"
 Type=forking
 PIDFile=/var/run/db-governor.pid
 Restart=always
+RestartSec=3
 
 ExecStart=/usr/sbin/db_governor
-ExecStopPost=/usr/bin/killall -9 /usr/sbin/mysql_connector 2>/dev/null
+#ExecStopPost=/usr/bin/killall -9 /usr/sbin/mysql_connector 2>/dev/null
 ExecStopPost=/usr/bin/killall -SIGTERM /usr/sbin/db_governor 2>/dev/null
 
 [Install]

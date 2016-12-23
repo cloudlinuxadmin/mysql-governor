@@ -1,6 +1,6 @@
 %define g_version   1.1
-%define g_release   18
-%define g_key_library 6
+%define g_release   19
+%define g_key_library 7
 
 %if %{undefined _unitdir}
 %define _unitdir /usr/lib/systemd/system
@@ -394,6 +394,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Thu Dec 22 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-19
+- MYSQLG-136: Add new behaviour for MySQL LVE enter for preventing crash MySQL on lve destroy
+
 * Mon Sep 26 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-18
 - MYSQLG-134: Check if mysql is not in yum exclude list
 - MYSQLG-140: Spelling error in mysqlgovernor.py script output

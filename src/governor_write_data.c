@@ -468,7 +468,7 @@ int governor_enter_lve(uint32_t *cookie, char *username) {
 			&& lve) {
                 errno = 0;
 		int rc = lve_enter_flags(lve, container_lve, cookie, ((int) ((1 << 0) | (1 << 2) | (1
-				<< 3)))); //LVE_NO_MAXENTER|LVE_SILENCE|LVE_NO_UBC
+				<< 3) | (1 << 4) ))); //LVE_NO_MAXENTER|LVE_SILENCE|LVE_NO_UBC|LVE_NO_KILLABLE
 		int keep_errno = errno;
 		if (rc) {
 			if (keep_errno == EPERM) { //if already inside LVE
@@ -489,7 +489,7 @@ int governor_enter_lve_light(uint32_t *cookie) {
 	if (lve_enter_flags && lve && lve_uid) {
                 errno = 0;
 		int rc = lve_enter_flags(lve, lve_uid, cookie, ((int) ((1 << 0) | (1 << 2) | (1
-				<< 3)))); //LVE_NO_MAXENTER|LVE_SILENCE|LVE_NO_UBC
+				<< 3) | (1 << 4)))); //LVE_NO_MAXENTER|LVE_SILENCE|LVE_NO_UBC|LVE_NO_KILLABLE
 		int keep_errno = errno;
 		if (rc) {
 			if (keep_errno == EPERM) { //if already inside LVE
