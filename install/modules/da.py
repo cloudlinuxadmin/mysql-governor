@@ -105,6 +105,12 @@ class DirectAdminManager(InstallManager):
         if MYSQL_DA_TYPE == "no":
             if os.path.exists("/usr/share/lve/dbgovernor/da.tp.old"):
                 MYSQL_DA_TYPE = read_file("/usr/share/lve/dbgovernor/da.tp.old")
+            elif os.path.exists("/usr/bin/mysql"):
+                result = exec_command("/usr/bin/mysql -V | grep -c 'MariaDB'", True)
+                if result == "0":
+                    MYSQL_DA_TYPE = "mysql"
+                else:
+                    MYSQL_DA_TYPE = "mariadb"
 
         print ("I got %s and %s" % (MYSQL_DA_VER, MYSQL_DA_TYPE))
 
@@ -127,6 +133,8 @@ class DirectAdminManager(InstallManager):
             if MYSQL_DA_VER == "10.1":
                 MYSQL_DA_VER = "mariadb101"
             elif MYSQL_DA_VER == "10.0":
+                MYSQL_DA_VER = "mariadb100"
+            elif MYSQL_DA_VER == "5.6":
                 MYSQL_DA_VER = "mariadb100"
             elif MYSQL_DA_VER == "5.5":
                 MYSQL_DA_VER = "mariadb100"

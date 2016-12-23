@@ -237,12 +237,12 @@ def remove_packages(packages_list):
     new_pkg = []
     for pkg in packages_list:
         if "-server" in pkg:
-            print exec_command("rpm -e --nodeps %s" % pkg, True, cmd_on_error="rpm -e --nodeps --noscript %s" % pkg)
+            print exec_command("rpm -e --nodeps %s" % pkg, True, cmd_on_error="rpm -e --nodeps --noscripts %s" % pkg)
         else:
             new_pkg.append(pkg)
     if len(new_pkg)>0:
         packages = " ".join(new_pkg)
-        print exec_command("rpm -e --nodeps %s" % packages, True, cmd_on_error="rpm -e --nodeps --noscript %s" % pkg)
+        print exec_command("rpm -e --nodeps %s" % packages, True, cmd_on_error="rpm -e --nodeps --noscripts %s" % pkg)
 
 
 def confirm_packages_installation(rpm_dir, no_confirm=None):
