@@ -656,7 +656,7 @@ def restore_mysql_target_for_cPanel():
 	else:
 		print "No need in fix"
 
-cp = get_cp()
+cp = get_cp(True)
 
 try:
 	opts, args = getopt.getopt(sys.argv[1:], "hidcmuts", ["help", "install", "delete", "install-beta", "clean-mysql", "clean-mysql-delete", "upgrade", "dbupdate", "update-mysql-beta", "force", "fix-cpanel-hooks", "fix-cpanel-cl-mysql", "safe-install"])
@@ -672,7 +672,11 @@ for o, a in opts:
 		force_percona = 1
 	elif o in ("-s", "--safe-install"):
 		safe_mysql = 1
+        elif o in ("t", "--dbupdate"):
+		update_user_map_file()
+		sys.exit(0)
 
+cp = get_cp()
 	                                                          
 for o, a in opts:
 	if o in ("-h", "--help"):
@@ -747,8 +751,6 @@ for o, a in opts:
                 remove_mysql_justdb()
 	elif o in ("m", "--clean-mysql-delete"):
 		remove_mysql_justdb_cl()
-        elif o in ("t", "--dbupdate"):
-		update_user_map_file()
 	elif o in ("--force",):
 		force_percona = 1
 	elif o in ("-s", "--safe-install"):

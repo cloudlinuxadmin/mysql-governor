@@ -157,10 +157,11 @@ class CP(object):
     rpms = None
     kernel = None
     
-    def __init__(self):
-        self.apache = ApacheInfo('/usr/sbin/apachectl')
-        self.rpms = RPMChecker()
-        self.kernel = Kernel()
+    def __init__(self, lite):
+        if lite!=True:
+            self.apache = ApacheInfo('/usr/sbin/apachectl')
+            self.rpms = RPMChecker()
+            self.kernel = Kernel()
 
     def str(self):
         return self.name + " " + self.version +" "+self.kernel.str()
@@ -178,11 +179,12 @@ class CP(object):
         
 
 class CPanel(CP):
-    def __init__(self):
-        super(CPanel, self).__init__()
+    def __init__(self, lite):
+        super(CPanel, self).__init__(lite)
         self.name = "cPanel"
         self.version = myExec('/usr/local/cpanel/cpanel -V')
-        self.apache = ApacheInfo('/usr/local/bin/apachectl')
+        if lite!=True:
+            self.apache = ApacheInfo('/usr/local/bin/apachectl')
 
     def check_11_30(self):
         self.rpms.check_version('lve-stats', '0.5-17')
@@ -212,33 +214,36 @@ class CPanel(CP):
 
             
 class Plesk(CP):
-    def __init__(self):
-        super(Plesk, self).__init__()
+    def __init__(self, lite):
+        super(Plesk, self).__init__(lite)
         self.name = "Plesk"
         tmp = myExec('/bin/cat /usr/local/psa/version')
         self.version = tmp.split(' ')[0]
-        self.apache = ApacheInfo('/usr/sbin/apachectl')
+        if lite!=True:
+            self.apache = ApacheInfo('/usr/sbin/apachectl')
 
 class DirectAdmin(CP):
-    def __init__(self):
-	super(DirectAdmin, self).__init__()
+    def __init__(self, lite):
+	super(DirectAdmin, self).__init__(lite)
 	self.name = "DirectAdmin"
 	tmp = myExec('/usr/local/directadmin/directadmin v')
 	tmp = tmp.split('\n')
 	self.version = 'Unknown'
-	self.apache = ApacheInfo('/usr/sbin/apachectl')
+	if lite!=True:
+	    self.apache = ApacheInfo('/usr/sbin/apachectl')
 	for item in tmp:
 	    if (item.find('Version: DirectAdmin v.')!=-1):
 		self.version = item.split('v.')[1].strip()
 		break
 
 class HSphere(CP):
-    def __init__(self):
-	super(HSphere, self).__init__()
+    def __init__(self, lite):
+	super(HSphere, self).__init__(lite)
 	self.name = "H-Sphere"
 	tmp = myExec('/bin/cat /hsphere/local/home/cpanel/shiva/psoft_config/HS_VERSION')
 	self.version = tmp.split('\n')[1].strip()
-	self.apache = self.get_apache_type()
+	if lite!=True:
+	    self.apache = self.get_apache_type()
 	
     def get_apache_type(self):
 	if os.path.isfile('/hsphere/shared/scripts/scripts.cfg'):
@@ -256,18 +261,20 @@ class HSphere(CP):
 	return ApacheInfo('')
 	
 class iWorx(CP):
-    def __init__(self):
-        super(iWorx, self).__init__()
+    def __init__(self, lite):
+        super(iWorx, self).__init__(lite)
         self.name = "InterWorx"
         self.version = self.rpms.find_version("interworx")
-        self.apache = ApacheInfo('/usr/sbin/apachectl')
+        if lite!=True:
+            self.apache = ApacheInfo('/usr/sbin/apachectl')
 
 class ISPMgr(CP):
-    def __init__(self):
-        super(ISPMgr, self).__init__()
+    def __init__(self, lite):
+        super(ISPMgr, self).__init__(lite)
         self.name = "ISPManager"
         self.version = "unk"
-        self.apache = ApacheInfo('/usr/sbin/apachectl')	
+        if lite!=True:
+            self.apache = ApacheInfo('/usr/sbin/apachectl')	
 
 class RPMChecker:
     def __init__(self):
@@ -307,25 +314,25 @@ class RPMChecker:
 	return None
 
         
-def get_cp():
+def get_cp(lite=False):
     if os.path.isfile('/usr/local/cpanel/cpanel'):
-        cp = CPanel()
+        cp = CPanel(lite)
     elif os.path.isfile('/usr/local/psa/version'):
-        cp = Plesk()
+        cp = Plesk(lite)
     elif os.path.isdir('/usr/local/directadmin') and os.path.isfile('/usr/local/directadmin/directadmin'):
-	cp = DirectAdmin()
+	cp = DirectAdmin(lite)
     elif os.path.isfile('/hsphere/local/home/cpanel/shiva/psoft_config/HS_VERSION'):
-	cp = HSphere()
+	cp = HSphere(lite)
     elif os.path.isdir("/usr/local/ispmgr"):
-	cp = ISPMgr()
+	cp = ISPMgr(lite)
     elif os.path.isdir("/usr/local/mgr5/bin/core"):
-	cp = ISPMgr()
+	cp = ISPMgr(lite)
     else:
 	rpmss = RPMChecker()
 	if not (rpmss.find_version("interworx") is None):
-	    cp = iWorx()
+	    cp = iWorx(lite)
 	else:
-    	    cp = CP()  
+    	    cp = CP(lite)  
     return cp
 
 

@@ -396,6 +396,7 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 %changelog
 * Thu Dec 22 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-19
 - MYSQLG-136: Add new behaviour for MySQL LVE enter for preventing crash MySQL on lve destroy
+- MYSQLG-149: investigate the possibility to avoid httpd checks during "mysqlgovernor.py --dbupdate"
 
 * Mon Sep 26 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-18
 - MYSQLG-134: Check if mysql is not in yum exclude list
