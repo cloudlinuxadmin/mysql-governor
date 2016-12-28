@@ -289,9 +289,10 @@ def install_packages(rpm_dir, is_beta, no_confirm=None, installer=None,
                 is_server_found.append(found_package)
             else:
                 list_for_install.append(found_package)
-        print exec_command("yum install %s --disableexcludes=all --nogpgcheck -y %s" % (repo, " ".join(list_for_install)), True)
+        exec_command_out("yum install %s --disableexcludes=all --nogpgcheck -y %s" % (repo, " ".join(list_for_install)))
         if is_server_found !="":
-            print exec_command("yum install %s --disableexcludes=all --nogpgcheck -y %s" % (repo, " ".join(is_server_found)), True)
+            exec_command_out("yum clean all --enablerepo=cloudlinux-updates-testing")
+            exec_command_out("yum install %s --disableexcludes=all --nogpgcheck -y %s" % (repo, " ".join(is_server_found)))
     else:
         is_server_found = ""
         list_of_rpm = glob("%s/*.rpm" % pkg_path)
