@@ -1,4 +1,8 @@
-#coding:utf-8
+# coding:utf-8
+"""
+This module contains base class for managing governor on all supported
+control panels
+"""
 import math
 import os
 import shutil
@@ -14,7 +18,8 @@ from utilities import get_cl_num, exec_command, exec_command_out, new_lve_ctl, \
     remove_packages, read_file, download_packages, write_file, RPM_TEMP_PATH, \
     is_package_installed, check_file, mysql_version, \
     confirm_packages_installation, create_mysqld_link, \
-    correct_mysqld_service_for_cl7, correct_remove_notowned_mysql_service_names_cl7, \
+    correct_mysqld_service_for_cl7, \
+    correct_remove_notowned_mysql_service_names_cl7, \
     correct_remove_notowned_mysql_service_names_not_symlynks_cl7
 
 
@@ -29,10 +34,16 @@ class InstallManager(object):
     # file with cached installed version before install
     CACHE_VERSION_FILE = "/usr/share/lve/dbgovernor/mysql.type.installed"
     HISTORY_FOLDER = "/usr/share/lve/dbgovernor/history"
-    REPO_NAMES = {"mysql50": "mysql-5.0", "mysql51": "mysql-5.1", 
-                  "mysql55": "mysql-5.5", "mysql56": "mysql-5.6",
-                  "mysql57": "mysql-5.7", "mariadb55": "mariadb-5.5",
-                  "mariadb100": "mariadb-10.0", "mariadb101": "mariadb-10.1"}
+    REPO_NAMES = {
+        "mysql50": "mysql-5.0",
+        "mysql51": "mysql-5.1",
+        "mysql55": "mysql-5.5",
+        "mysql56": "mysql-5.6",
+        "mysql57": "mysql-5.7",
+        "mariadb55": "mariadb-5.5",
+        "mariadb100": "mariadb-10.0",
+        "mariadb101": "mariadb-10.1"
+    }
     ALL_PACKAGES_NEW_NOT_DOWNLOADED = False
     ALL_PACKAGES_OLD_NOT_DOWNLOADED = False
     DISABLED = False
@@ -66,10 +77,46 @@ class InstallManager(object):
     _new_packages = None
 
     def __init__(self, cp_name):
-        """
-        """
         self.cl_version = get_cl_num()
         self.cp_name = cp_name
+
+    @staticmethod
+    def my_cnf_manager(action, old_path=None):
+        """
+        Allows to manage known manipulations with /etc/my.cnf file
+        :param action: action to perform
+        :param old_path: path to my.cnf if needed
+        """
+        # fix for packages without /etc/my.cnf file
+        if action == 'touch':
+            touch("/etc/my.cnf")
+            return
+
+        actions = {
+            'backup': lambda x: shutil.copy2(x, "/etc/my.cnf.prev"),
+            'restore': lambda x: shutil.move(x, "/etc/my.cnf"),
+            'restore_old': lambda x: shutil.copy(x, "/etc/my.cnf"),
+            'restore_rpmsave': lambda x: shutil.copy2(x, "/etc/my.cnf"),
+            'cleanup': lambda x: os.unlink(x),
+            'backup_old': '',
+        }
+
+        if action not in actions.keys():
+            raise RuntimeError('Cannot manage /etc/my.cnf: '
+                               'unknown action %s' % action)
+
+        if action == 'backup':
+            working_path = "/etc/my.cnf"
+        elif action == 'restore_old':
+            working_path = "%s/my.cnf" % old_path
+        else:
+            working_path = "/etc/my.cnf.prev"
+
+        if os.path.exists(working_path):
+            if action == 'backup_old':
+                shutil.move(working_path, "%s/my.cnf" % old_path)
+            else:
+                actions.get(action)(working_path)
 
     def remove_current_packages(self):
         """
@@ -108,8 +155,9 @@ class InstallManager(object):
             self.DISABLED = True
             return False
 
-        if os.path.exists("/etc/my.cnf"):
-            shutil.copy2("/etc/my.cnf", "/etc/my.cnf.prev")
+        # if os.path.exists("/etc/my.cnf"):
+        #     shutil.copy2("/etc/my.cnf", "/etc/my.cnf.prev")
+        self.my_cnf_manager('backup')
 
         create_mysqld_link("mysqld", "mysql")
         create_mysqld_link("mysql", "mysqld")
@@ -119,9 +167,11 @@ class InstallManager(object):
 
         correct_remove_notowned_mysql_service_names_cl7()
 
-        # restore my.cnf, because removing of packages rename /etc/my.cnf to /etc/my.cnf.rpmsave
-        if os.path.exists("/etc/my.cnf.prev"):
-            shutil.copy2("/etc/my.cnf.prev", "/etc/my.cnf")
+        # restore my.cnf, because removing of packages
+        # renames /etc/my.cnf to /etc/my.cnf.rpmsave
+        # if os.path.exists("/etc/my.cnf.prev"):
+        #     shutil.copy2("/etc/my.cnf.prev", "/etc/my.cnf")
+        self.my_cnf_manager('restore_rpmsave')
 
         self.set_fs_suid_dumpable()
         self._check_leave_pid()
@@ -145,11 +195,10 @@ class InstallManager(object):
         correct_mysqld_service_for_cl7("mysql")
         correct_mysqld_service_for_cl7("mysqld")
 
-
-
         # fix for packages without /etc/my.cnf file
-        if not os.path.exists("/etc/my.cnf"):
-            touch("/etc/my.cnf")
+        # if not os.path.exists("/etc/my.cnf"):
+        #     touch("/etc/my.cnf")
+        self.my_cnf_manager('touch')
 
         version = self._get_new_version()
         if version.startswith("mariadb") or version == "auto" \
@@ -159,9 +208,6 @@ class InstallManager(object):
         if version.startswith("mysql") \
                 and self.cl_version == 7:
             self._enable_mysql()
-
-        if os.path.exists("/etc/my.cnf"):
-            shutil.copy2("/etc/my.cnf", "/etc/my.cnf.orig")
 
         self._mysqlservice("restart")
 
@@ -209,11 +255,9 @@ class InstallManager(object):
             install_packages("old", beta)
 
         # restore previous packages state
-        if os.path.exists("/etc/my.cnf.orig"):
-            os.unlink("/etc/my.cnf.orig")
-
-        if os.path.exists("/etc/my.cnf.prev"):
-            shutil.move("/etc/my.cnf.prev", "/etc/my.cnf")
+        # if os.path.exists("/etc/my.cnf.prev"):
+        #     shutil.move("/etc/my.cnf.prev", "/etc/my.cnf")
+        self.my_cnf_manager('restore')
 
         self._mysqlservice("restart")
 
@@ -226,7 +270,7 @@ class InstallManager(object):
         try:
             timestamp = int(timestamp)
         except (TypeError, ValueError):
-            print >>sys.stderr, "Invalid parameters"
+            print >> sys.stderr, "Invalid parameters"
             return False
 
         history_path = os.path.join(self.HISTORY_FOLDER, "old.%s" % timestamp)
@@ -244,9 +288,10 @@ class InstallManager(object):
         install_packages(history_path, False, abs_path=True)
 
         # restore old config file
-        old_cnf = "%s/my.cnf" % history_path
-        if os.path.exists(old_cnf):
-            shutil.copy(old_cnf, "/etc/my.cnf")
+        # old_cnf = "%s/my.cnf" % history_path
+        # if os.path.exists(old_cnf):
+        #     shutil.copy(old_cnf, "/etc/my.cnf")
+        self.my_cnf_manager('restore_old', history_path)
 
         self._mysqlservice("restart")
 
@@ -274,8 +319,9 @@ class InstallManager(object):
                         "/etc/cron.d/dbgovernor-usermap-cron.bak")
 
         # backup my.cnf file for restore if uninstall will be failed
-        if os.path.exists("/etc/my.cnf"):
-            shutil.copy2("/etc/my.cnf", "/etc/my.cnf.prev")
+        # if os.path.exists("/etc/my.cnf"):
+        #     shutil.copy2("/etc/my.cnf", "/etc/my.cnf.prev")
+        self.my_cnf_manager('backup')
 
         # run trigger before governor uninstal
         self._before_delete()
@@ -324,10 +370,12 @@ class InstallManager(object):
         tmp_path = "%s/old" % RPM_TEMP_PATH
         if os.path.isdir(tmp_path):
             # first move previous downloaded packages to history folder
-            history_path = os.path.join(self.HISTORY_FOLDER, "old.%s" % int(time.time()))
+            history_path = os.path.join(self.HISTORY_FOLDER, "old.%s" %
+                                        int(time.time()))
             shutil.move(tmp_path, history_path)
-            if os.path.exists("/etc/my.cnf.prev"):
-                shutil.move("/etc/my.cnf.prev", "%s/my.cnf" % history_path)
+            # if os.path.exists("/etc/my.cnf.prev"):
+            #     shutil.move("/etc/my.cnf.prev", "%s/my.cnf" % history_path)
+            self.my_cnf_manager('backup_old', history_path)
 
         if os.path.exists(RPM_TEMP_PATH):
             shutil.rmtree(RPM_TEMP_PATH)
@@ -335,11 +383,9 @@ class InstallManager(object):
         if os.path.exists("/etc/yum.repos.d/cl-mysql.repo.bak"):
             os.unlink("/etc/yum.repos.d/cl-mysql.repo.bak")
 
-        if os.path.exists("/etc/my.cnf.prev"):
-            os.unlink("/etc/my.cnf.prev")
-
-        if os.path.exists("/etc/my.cnf.orig"):
-            os.unlink("/etc/my.cnf.orig")
+        # if os.path.exists("/etc/my.cnf.prev"):
+        #     os.unlink("/etc/my.cnf.prev")
+        self.my_cnf_manager('cleanup')
 
         if os.path.exists("/etc/cron.d/dbgovernor-usermap-cron.bak"):
             os.unlink("/etc/cron.d/dbgovernor-usermap-cron.bak")
@@ -364,31 +410,47 @@ class InstallManager(object):
         if not os.path.exists("/usr/sbin/lvectl"):
             return
 
+        # lvectl commands
+        get_lve_limits_3 = r"/usr/sbin/lvectl limits 3 | sed -n 2p | sed -e " \
+                           r"'s/\s\+/ /g' | cut -d' ' -f3"
+        get_lve_limits_default = r"/usr/sbin/lvectl limits default | sed -n 2p" \
+                                 r" | sed -e 's/\s\+/ /g' | cut -d' ' -f3"
+        lve_set_3 = "/usr/sbin/lvectl set 3 --cpu=25 --ncpu=1 --io=1024 " \
+                    "--mem=0 --vmem=0 --maxEntryProcs=0 --save-all-parameters"
+        lve_set_3_nproc_pmem = "/usr/sbin/lvectl set 3 --cpu=25 --ncpu=1 " \
+                               "--io=1024 --nproc=0 --pmem=0 --mem=0 --vmem=0" \
+                               " --maxEntryProcs=0 --save-all-parameters"
+
         result0 = exec_command("/usr/sbin/lvectl version | cut -d\"-\" -f1")
-        if len(result0)>0 and new_lve_ctl(result0[0])==True:
-            result1 = exec_command("/usr/sbin/lvectl limits 3 | sed -n 2p | sed -e 's/\s\+/ /g' | cut -d' ' -f3")
-            result2 = exec_command("/usr/sbin/lvectl limits default | sed -n 2p | sed -e 's/\s\+/ /g' | cut -d' ' -f3")
+        if len(result0) > 0 and new_lve_ctl(result0[0]) == True:
+            result1 = exec_command(get_lve_limits_3)
+            result2 = exec_command(get_lve_limits_default)
             if result1 == result2 or len(result1) == 0:
-                result3 = exec_command("cat /proc/cpuinfo | grep processor | wc -l")
-                cpu_lim=800
-                if(len(result3)>0):
+                result3 = exec_command("cat /proc/cpuinfo | grep processor "
+                                       "| wc -l")
+                cpu_lim = 800
+                if len(result3) > 0:
                     cpu_lim = num_proc(result3[0]) * 100
-                exec_command_out("/usr/sbin/lvectl set 3 --speed=" + str(int(math.ceil(float(cpu_lim)/4))) + "% --io=1024 --nproc=0 --pmem=0 --mem=0 --vmem=0 --maxEntryProcs=0 --save-all-parameters")
+                exec_command_out("/usr/sbin/lvectl set 3 --speed=" +
+                                 str(int(math.ceil(float(cpu_lim) / 4))) +
+                                 "% --io=1024 --nproc=0 --pmem=0 --mem=0 "
+                                 "--vmem=0 --maxEntryProcs=0 "
+                                 "--save-all-parameters")
         else:
             result = exec_command("/usr/sbin/lvectl limits 3")
-            if len(result)==1:
+            if len(result) == 1:
                 if self.cl_version == 5:
-                    exec_command_out("/usr/sbin/lvectl set 3 --cpu=25 --ncpu=1 --io=1024 --mem=0 --vmem=0 --maxEntryProcs=0 --save-all-parameters")
+                    exec_command_out(lve_set_3)
                 else:
-                    exec_command_out("/usr/sbin/lvectl set 3 --cpu=25 --ncpu=1 --io=1024 --nproc=0 --pmem=0 --mem=0 --vmem=0 --maxEntryProcs=0 --save-all-parameters")  
+                    exec_command_out(lve_set_3_nproc_pmem)
                 return
-            result1 = exec_command("/usr/sbin/lvectl limits 3 | sed -n 2p | sed -e 's/\s\+/ /g' | cut -d' ' -f3")
-            result2 = exec_command("/usr/sbin/lvectl limits default | sed -n 2p | sed -e 's/\s\+/ /g' | cut -d' ' -f3")
+            result1 = exec_command(get_lve_limits_3)
+            result2 = exec_command(get_lve_limits_default)
             if result1 == result2:
                 if self.cl_version == 5:
-                    exec_command_out("/usr/sbin/lvectl set 3 --cpu=25 --ncpu=1 --io=1024 --mem=0 --vmem=0 --maxEntryProcs=0 --save-all-parameters")
+                    exec_command_out(lve_set_3)
                 else:
-                    exec_command_out("/usr/sbin/lvectl set 3 --cpu=25 --ncpu=1 --io=1024 --nproc=0 --pmem=0 --mem=0 --vmem=0 --maxEntryProcs=0 --save-all-parameters")
+                    exec_command_out(lve_set_3_nproc_pmem)
 
     def install_mysql_beta_testing_hooks(self):
         """
@@ -403,20 +465,21 @@ class InstallManager(object):
         """
         print "No need in MySQL fix"
 
-    def set_mysql_version(self, mysql_version):
+    def set_mysql_version(self, version):
         """
         Set new mysql version for next install
         """
         # check available versions
         versions = ["auto"] + self.REPO_NAMES.keys()
-        if mysql_version not in versions:
-            print >>sys.stderr, "Invalid mysql version."
-            print >>sys.stderr, "Available versions: %s" % ", ".join(versions)
+        if version not in versions:
+            print >> sys.stderr, "Invalid mysql version."
+            print >> sys.stderr, "Available versions: %s" % ", ".join(versions)
             sys.exit(2)
 
-        write_file(self.NEW_VERSION_FILE, mysql_version)
+        write_file(self.NEW_VERSION_FILE, version)
 
-    def set_fs_suid_dumpable(self):
+    @staticmethod
+    def set_fs_suid_dumpable():
         """
         Run this code in spec file
         """
@@ -424,11 +487,13 @@ class InstallManager(object):
         exec_command_out("sysctl -w fs.suid_dumpable=1")
         if os.path.exists("/etc/sysctl.conf"):
             if not grep("/etc/sysctl.conf", "fs.suid_dumpable=1"):
-                print "Add to /etc/sysctl.conf suid_dumpable instruction for governor to work correctly"
+                print "Add to /etc/sysctl.conf suid_dumpable instruction " \
+                      "for governor to work correctly"
                 shutil.copy("/etc/sysctl.conf", "/etc/sysctl.conf.bak")
                 add_line("/etc/sysctl.conf", "fs.suid_dumpable=1")
             else:
-                print "Everything is present in /etc/sysctl.conf for governor to work correctly"
+                print "Everything is present in /etc/sysctl.conf " \
+                      "for governor to work correctly"
         else:
             print "Create /etc/sysctl.conf for governor to work correctly"
             add_line("/etc/sysctl.conf", "fs.suid_dumpable=1")
@@ -441,22 +506,35 @@ class InstallManager(object):
         """
         self._old_packages = self._load_current_packages()
         self._new_packages = self._load_new_packages(beta)
-    
-    def print_warning_about_not_complete_of_pkg_saving(self):
-        print("""Restore of MySQL packages will not be completed because not all old packages was downloaded.
-If something went wrong during or after installation process, execute /usr/share/lve/dbgovernor/mysqlgovernor --delete 
-for native procedure restoring of MySQL packages""")
 
-    def print_warning_about_not_complete_of_newpkg_saving(self):
-        print("Install of MySQL packages will not be completed because not all new packages was downloaded")
+    @staticmethod
+    def print_warning_about_not_complete_of_pkg_saving():
+        """
+        Display warning in case of failed download of old packages
+        """
+        print """Restore of MySQL packages will not be completed because
+        not all old packages was downloaded. If something went wrong during
+        or after installation process,
+        execute /usr/share/lve/dbgovernor/mysqlgovernor --delete
+        for native procedure restoring of MySQL packages"""
+
+    @staticmethod
+    def print_warning_about_not_complete_of_newpkg_saving():
+        """
+        Display warning in case of failed download of new packages
+        """
+        print "Install of MySQL packages will not be completed because " \
+              "not all new packages have been downloaded"
 
     def _load_current_packages(self, download=True, folder="old"):
         """
         here we download current installed packages
-        @param `download` bool: download rpm files or only return list of installed packages
+        @param `download` bool: download rpm files or
+                                only return list of installed packages
         """
         print "Start download current installed packages"
-        PATTERNS = ["cl-mysql", "cl-mariadb", "mysql", "mariadb", "compat-mysql5"]
+        PATTERNS = ["cl-mysql", "cl-mariadb", "mysql", "mariadb",
+                    "compat-mysql5"]
         mysqld_path = exec_command("which mysqld", True, silent=True)
         pkg_name = False
         if mysqld_path:
@@ -464,17 +542,25 @@ for native procedure restoring of MySQL packages""")
             # return None
 
             # server package name
-            # pkg_name = exec_command("""rpm -qf --qf "%%{name} %%{version}\n" %s """ % mysqld_path, True, silent=True)
-            check_if_mysql_installed = exec_command("""rpm -qf %s """ % mysqld_path, True, silent=True, return_code=True)
-            if check_if_mysql_installed=="no":
-                print "No mysql packages installed, but mysqld file presents on system"
+            # pkg_name = exec_command("""rpm -qf --qf "%%{name}
+            # %%{version}\n" %s """ % mysqld_path, True, silent=True)
+            check_if_mysql_installed = exec_command("""rpm -qf %s """ %
+                                                    mysqld_path, True,
+                                                    silent=True,
+                                                    return_code=True)
+            if check_if_mysql_installed == "no":
+                print "No mysql packages installed, " \
+                      "but mysqld file presents on system"
                 pkg_name = None
             else:
-                pkg_name = exec_command("""rpm -qf %s """ % mysqld_path, True, silent=True)
+                pkg_name = exec_command("""rpm -qf %s """ % mysqld_path, True,
+                                        silent=True)
 
         # grep cl-MySQL packages in installed list
-        # packages = exec_command("""rpm -qa --qf "%%{name} %%{version}\n"|grep -iE "^(%s)" """ % "|".join(PATTERNS), silent=True)
-        packages = exec_command("""rpm -qa|grep -iE "^(%s)" """ % "|".join(PATTERNS), silent=True)
+        # packages = exec_command("""rpm -qa --qf "%%{name}
+        # %%{version}\n"|grep -iE "^(%s)" """ % "|".join(PATTERNS), silent=True)
+        packages = exec_command("""rpm -qa|grep -iE "^(%s)" """ %
+                                "|".join(PATTERNS), silent=True)
 
         if not len(packages):
             print "No installed DB packages found"
@@ -494,7 +580,8 @@ for native procedure restoring of MySQL packages""")
         # self._old_packages = packages
         if download:
             # arch = ".x86_64" if os.uname()[-1] == "x86_64" else ""
-            # download_pkgs = ["%s%s" % (x.split(" ")[0], arch) for x in packages]
+            # download_pkgs = ["%s%s" % (x.split(" ")[0], arch)
+            # for x in packages]
             IS_CL_MYSQL = False
             for package_item in packages:
                 if "server" in package_item and package_item[:3] == "cl-":
@@ -506,7 +593,7 @@ for native procedure restoring of MySQL packages""")
             else:
                 if not download_packages(packages, folder, True,
                                          self._custom_download_of_rpm):
-                    print("Trying to load custom packages from yum")
+                    print "Trying to load custom packages from yum"
                     if not download_packages(packages, folder, True):
                         self.ALL_PACKAGES_OLD_NOT_DOWNLOADED = True
 
@@ -527,7 +614,7 @@ for native procedure restoring of MySQL packages""")
             detected_version_on_system = self._detect_version_if_auto()
             if detected_version_on_system != "+":
                 if detected_version_on_system == "":
-                    print >>sys.stderr, "Unknown SQL VERSION"
+                    print >> sys.stderr, "Unknown SQL VERSION"
                     sys.exit(2)
                 else:
                     sql_version = detected_version_on_system
@@ -535,20 +622,24 @@ for native procedure restoring of MySQL packages""")
         if "auto" == sql_version:
             repo = "mysql-common.repo"
             if 7 != self.cl_version:
-                packages = ["mysql", "mysql-server", "mysql-libs", "mysql-devel", "mysql-bench"]
+                packages = ["mysql", "mysql-server", "mysql-libs",
+                            "mysql-devel", "mysql-bench"]
             else:
-                packages = ["mariadb", "mariadb-server", "mariadb-libs", "mariadb-devel", "mariadb-bench"]
+                packages = ["mariadb", "mariadb-server", "mariadb-libs",
+                            "mariadb-devel", "mariadb-bench"]
 
             # download and install only need arch packages
             packages = ["%s%s" % (x, arch) for x in packages]
             for line in exec_command("yum info %s" % packages[0]):
                 if line.startswith("Version"):
-                    new_version = "%s%s" % (packages[0], "".join(line.split(":")[1].split(".")[:2]))
+                    new_version = "%s%s" % (
+                        packages[0], "".join(line.split(":")[1].split(".")[:2]))
 
         else:
             repo = "cl-%s-common.repo" % self.REPO_NAMES.get(sql_version, None)
 
-            if sql_version in ["mysql50", "mysql51", "mysql55", "mysql56", "mysql57"]:
+            if sql_version in ["mysql50", "mysql51", "mysql55", "mysql56",
+                               "mysql57"]:
                 packages = ["cl-MySQL-meta", "cl-MySQL-meta-client",
                             "cl-MySQL-meta-devel"]
                 requires = list(packages)
@@ -561,7 +652,7 @@ for native procedure restoring of MySQL packages""")
                             "cl-MariaDB-meta-devel"]
                 requires = packages[:3]
             else:
-                print >>sys.stderr, "Unknown SQL VERSION"
+                print >> sys.stderr, "Unknown SQL VERSION"
                 sys.exit(2)
 
         if new_version == "mysql50":
@@ -577,18 +668,19 @@ for native procedure restoring of MySQL packages""")
 
         packages.append("libaio%s" % arch)
 
-        repo_url = "http://repo.cloudlinux.com/other/cl%s/mysqlmeta/%s" % (self.cl_version, repo)
+        repo_url = "http://repo.cloudlinux.com/other/cl%s/mysqlmeta/%s" % (
+            self.cl_version, repo)
         try:
             content = urllib2.urlopen(repo_url).read()
         except Exception, e:
-            print >>sys.stderr, "Can`t download repo file: %s" % e
+            print >> sys.stderr, "Can`t download repo file: %s" % e
             sys.exit(2)
         else:
             if os.path.exists("/etc/yum.repos.d/cl-mysql.repo"):
                 shutil.copy2("/etc/yum.repos.d/cl-mysql.repo",
                              "/etc/yum.repos.d/cl-mysql.repo.bak")
             write_file("/etc/yum.repos.d/cl-mysql.repo", content)
-        
+
         # update repositories
         exec_command_out("yum clean all")
 
@@ -597,7 +689,7 @@ for native procedure restoring of MySQL packages""")
             # query only for non-installed packages
             packages += exec_command("repoquery --requires %s" % name)
             # query for installed package
-            # exec_command("rpm -q --requires cl-MySQL-meta")  
+            # exec_command("rpm -q --requires cl-MySQL-meta")
 
         if not download_packages(packages, folder, beta):
             self.ALL_PACKAGES_NEW_NOT_DOWNLOADED = True
@@ -606,10 +698,12 @@ for native procedure restoring of MySQL packages""")
 
     def _before_install_new_packages(self):
         """
+        Specific actions before install new packages
         """
 
     def _after_install_new_packages(self):
         """
+        Specific actions after install new packages
         """
 
     def _after_install_rollback(self):
@@ -619,20 +713,24 @@ for native procedure restoring of MySQL packages""")
 
     def _before_remove_old_packages(self):
         """
+        Specific actions before removing old packages
         """
         # stop mysql server
         self._mysqlservice("stop")
 
     def _after_remove_old_packages(self):
         """
+        Specific actions after removing old packages
         """
 
     def _before_delete(self):
         """
+        Specific actions before delete
         """
 
     def _delete(self, installed_packages):
         """
+        Remove installed packages and install new
         """
         print "Removing mysql for db_governor start"
 
@@ -640,7 +738,8 @@ for native procedure restoring of MySQL packages""")
         self._load_new_packages(False, "auto")
 
         # if not os.path.exists("/etc/my.cnf.bkp"):
-        shutil.copy2("/etc/my.cnf", "/etc/my.cnf.prev")
+        # shutil.copy2("/etc/my.cnf", "/etc/my.cnf.prev")
+        self.my_cnf_manager('backup')  # why without if exists?
 
         self._mysqlservice("stop")
 
@@ -657,32 +756,40 @@ for native procedure restoring of MySQL packages""")
 
     def _after_delete(self):
         """
+        Specific actions after delete
         """
 
-    def _set_mysql_access(self, username, password):
+    @staticmethod
+    def _set_mysql_access(username, password):
         """
         Set mysql admin login and password and save it to governor config
         """
         if os.path.exists("/usr/bin/mysql_upgrade"):
-           exec_command_out("""/usr/bin/mysql_upgrade --user=%s --password=%s""" % (username, password))
+            exec_command_out("""/usr/bin/mysql_upgrade --user=%s
+           --password=%s""" % (username, password))
         elif os.path.exists("/usr/bin/mysql_fix_privilege_tables"):
-           exec_command_out("""/usr/bin/mysql_fix_privilege_tables --user=%s --password=%s""" % (username, password))
+            exec_command_out("""/usr/bin/mysql_fix_privilege_tables --user=%s
+           --password=%s""" % (username, password))
 
         print "Patch governor configuration file"
         check_file("/etc/container/mysql-governor.xml")
         if not grep("/etc/container/mysql-governor.xml", "login="):
-            exec_command_out("""sed -e "s/<connector prefix_separator=\"_\"\/>/<connector prefix_separator=\"_\" login=\"%s\" password=\"%s\"\/>/" -i /etc/container/mysql-governor.xml""" % (username, password))
+            exec_command_out(
+                r"""sed -e "s/<connector prefix_separator=\"_\"\/>/<connector prefix_separator=\"_\" login=\"%s\" password=\"%s\"\/>/" -i /etc/container/mysql-governor.xml""" % (
+                    username, password))
 
         if exec_command("rpm -qa governor-mysql", True):
             service("restart", "db_governor")
             print "DB-Governor restarted..."
 
-    def _kill_mysql(self):
+    @staticmethod
+    def _kill_mysql():
         """
         Kill mysqld processes.
         """
         if exec_command("/bin/ps uax | /bin/grep -v grep | /bin/grep mysqld |"
-                        "/bin/egrep -e 'datadir|--daemonize'", True, silent=True):
+                        "/bin/egrep -e 'datadir|--daemonize'",
+                        True, silent=True):
             print "Stop hunging MySQL"
             exec_command_out("/usr/bin/killall -SIGTERM mysqld_safe")
             print "Waiting for mysqld_safe stop"
@@ -708,23 +815,28 @@ for native procedure restoring of MySQL packages""")
             exec_command_out("systemctl enable mysql.service")
             exec_command_out("systemctl enable mysqld.service")
 
-    def _check_leave_pid(self):
+    @staticmethod
+    def _check_leave_pid():
         """
+        Remove upgrade marker for mysql
         """
         print "Check for mysql pids and upgrade marker"
         if os.path.exists("/var/lib/mysql/RPM_UPGRADE_MARKER"):
             shutil.move("/var/lib/mysql/RPM_UPGRADE_MARKER",
                         "/var/lib/mysql/RPM_UPGRADE_MARKER.old")
 
-    def _ld_fix(self):
+    @staticmethod
+    def _ld_fix():
         """
         Fix shared library problems
         """
         if os.path.exists("/usr/lib64/mysql/libmygcc.a"):
-            os.rename("/usr/lib64/mysql/libmygcc.a", "/usr/lib64/mysql/libmygcc.a.bak")
+            os.rename("/usr/lib64/mysql/libmygcc.a",
+                      "/usr/lib64/mysql/libmygcc.a.bak")
 
         if os.path.exists("/usr/lib/mysql/libmygcc.a"):
-            os.rename("/usr/lib/mysql/libmygcc.a", "/usr/lib/mysql/libmygcc.a.bak")
+            os.rename("/usr/lib/mysql/libmygcc.a",
+                      "/usr/lib/mysql/libmygcc.a.bak")
 
         if os.path.exists("/sbin/ldconfig"):
             exec_command_out("/sbin/ldconfig")
@@ -763,8 +875,8 @@ for native procedure restoring of MySQL packages""")
         version = mysql_version()
         name = "mysqld"
         if 6 == self.cl_version:
-            if version in ["mysql50", "mysql51", "mysql55", "mysql56", "mysql57",
-                           "mariadb55", "mariadb100", "mariadb101"]:
+            if version in ["mysql50", "mysql51", "mysql55", "mysql56",
+                           "mysql57", "mariadb55", "mariadb100", "mariadb101"]:
                 name = "mysql"
 
         service(action, name)
@@ -794,7 +906,17 @@ for native procedure restoring of MySQL packages""")
         return "no"
 
     def _custom_rpm_installer(self, package_name, indicator=False):
+        """
+        Specific rpm installer to use for given package name
+        :param package_name: package to install
+        :param indicator:
+        :return:
+        """
         return "no"
 
     def make_additional_panel_related_check(self):
+        """
+        Specific cPanel
+        :return:
+        """
         return

@@ -1,4 +1,7 @@
-#coding:utf-8
+# coding:utf-8
+"""
+This module contains class for managing governor on cPanel server
+"""
 import os
 import shutil
 
@@ -21,12 +24,14 @@ class cPanelManager(InstallManager):
 
     def install_mysql_beta_testing_hooks(self):
         """
+        Specific hooks
         """
         self._set_fs_suid_dumpable()
         self._script("cpanel-install-hooks")
 
     def fix_cl7_mysql(self):
         """
+        Specific fix
         """
         if 7 == self.cl_version:
             if os.path.lexists("/etc/init.d/mysqld"):
@@ -36,6 +41,7 @@ class cPanelManager(InstallManager):
 
     def _delete(self, installed_packages):
         """
+        Remove installed packages
         """
         if os.path.exists("/etc/chkserv.d/db_governor"):
             os.remove("/etc/chkserv.d/db_governor")
@@ -55,7 +61,7 @@ class cPanelManager(InstallManager):
 
         # TODO: for what?
         # exec_command_out(SOURCE+"cpanel/install-db-governor-uninstall")
-        
+
         service("stop", "mysql")
         # remove governor package
         exec_command_out("rpm -e governor-mysql")
@@ -66,7 +72,8 @@ class cPanelManager(InstallManager):
 
         if os.path.exists("/scripts/check_cpanel_rpms"):
             exec_command_out("/scripts/check_cpanel_rpms --fix --targets="
-                             "MySQL50,MySQL51,MySQL55,MySQL56,MariaDB,MariaDB100,MariaDB101")
+                             "MySQL50,MySQL51,MySQL55,MySQL56,MariaDB,"
+                             "MariaDB100,MariaDB101")
 
     def _after_install_new_packages(self):
         """
@@ -86,9 +93,10 @@ class cPanelManager(InstallManager):
         # print "The installation of MySQL for db_governor completed"
 
         if os.path.exists("/usr/local/cpanel/cpanel"):
-            if os.path.exists("/usr/local/cpanel/scripts/update_local_rpm_versions"):
+            if os.path.exists(
+                    "/usr/local/cpanel/scripts/update_local_rpm_versions"):
                 shutil.copy2(self._rel("utils/cloudlinux.versions"),
-                                 "/var/cpanel/rpm.versions.d/cloudlinux.versions")
+                             "/var/cpanel/rpm.versions.d/cloudlinux.versions")
             else:
                 if not os.path.exists("/etc/cpupdate.conf.governor"):
                     self._get_mysqlup()
@@ -97,13 +105,15 @@ class cPanelManager(InstallManager):
         self._script("cpanel-install-hooks")
 
         if os.path.exists("/usr/local/cpanel/cpanel") and \
-                os.path.exists("/usr/local/cpanel/scripts/update_local_rpm_versions"):
+                os.path.exists(
+                    "/usr/local/cpanel/scripts/update_local_rpm_versions"):
             if os.path.exists("/etc/mysqlupdisable"):
                 os.unlink("/etc/mysqlupdisable")
             remove_lines("/etc/cpupdate.conf", "MYSQLUP=never")
-        if os.path.exists("/etc/chkserv.d") and os.path.exists(self._rel("utils/db_governor")):
+        if os.path.exists("/etc/chkserv.d") and os.path.exists(
+                self._rel("utils/db_governor")):
             shutil.copy2(self._rel("utils/db_governor"),
-                                 "/etc/chkserv.d/db_governor")
+                         "/etc/chkserv.d/db_governor")
 
     def _after_install_rollback(self):
         """
@@ -126,26 +136,28 @@ class cPanelManager(InstallManager):
         # if os.path.exists("/scripts/check_cpanel_rpms"):
         #     exec_command_out("/scripts/check_cpanel_rpms --fix --targets=MySQL50,MySQL51,MySQL55,MySQL56,MariaDB")
 
-#############################
-#############################
-#############################
-        # if os.path.exists("/var/cpanel/rpm.versions.d/cloudlinux.versions"):
-        #     os.unlink("/var/cpanel/rpm.versions.d/cloudlinux.versions")
+    #############################
+    #############################
+    #############################
+    # if os.path.exists("/var/cpanel/rpm.versions.d/cloudlinux.versions"):
+    #     os.unlink("/var/cpanel/rpm.versions.d/cloudlinux.versions")
 
-        # exec_command_out(SOURCE+"cpanel/cpanel-delete-hooks")
+    # exec_command_out(SOURCE+"cpanel/cpanel-delete-hooks")
 
-        # remove_lines("/etc/cpupdate.conf", "MYSQLUP=never")
-        # if os.path.exists("/etc/cpupdate.conf.governor"):
-        #     os.unlink("/etc/cpupdate.conf.governor")
+    # remove_lines("/etc/cpupdate.conf", "MYSQLUP=never")
+    # if os.path.exists("/etc/cpupdate.conf.governor"):
+    #     os.unlink("/etc/cpupdate.conf.governor")
 
-        # if os.path.exists("/etc/mysqlupdisable"):
-        #     os.unlink("/etc/mysqlupdisable")
+    # if os.path.exists("/etc/mysqlupdisable"):
+    #     os.unlink("/etc/mysqlupdisable")
 
     def _before_delete(self):
         """
+        Actions before delete packages
         """
 
-    def _get_mysqlup(self):
+    @staticmethod
+    def _get_mysqlup():
         """
         ? Set value for panel update MYSQLUP option
         """
@@ -154,7 +166,8 @@ class cPanelManager(InstallManager):
             is_mysqlup = grep("/etc/cpupdate.conf", "MYSQLUP")
             if is_mysqlup:
                 if not grep(is_mysqlup, "never$", True):
-                    replace_lines("/etc/cpupdate.conf", "".join(is_mysqlup), "MYSQLUP=never")
+                    replace_lines("/etc/cpupdate.conf", "".join(is_mysqlup),
+                                  "MYSQLUP=never")
             else:
                 add_line("/etc/cpupdate.conf", "\nMYSQLUP=never\n")
         else:
@@ -166,9 +179,10 @@ class cPanelManager(InstallManager):
         Detect vesrion of MySQL if mysql.type is auto
         """
         if os.path.exists(self._rel("scripts/detect-cpanel-mysql-version.pm")):
-            mysqlname_array = exec_command(self._rel("scripts/detect-cpanel-mysql-version.pm"))
+            mysqlname_array = exec_command(
+                self._rel("scripts/detect-cpanel-mysql-version.pm"))
             mysqlname = ""
-            if len(mysqlname_array)>0:
+            if len(mysqlname_array) > 0:
                 mysqlname = mysqlname_array[0]
             if "mysql" in mysqlname or "mariadb" in mysqlname:
                 return mysqlname.strip()
@@ -182,14 +196,24 @@ class cPanelManager(InstallManager):
             return "yes"
 
         result = parse_rpm_name(package_name)
-        if len(result)==4:
-            return exec_command(self._rel("scripts/cpanel-mysql-url-detect.pm %s %s-%s" % (result[0], result[1], result[2])), True)
+        if len(result) == 4:
+            return exec_command(self._rel(
+                "scripts/cpanel-mysql-url-detect.pm %s %s-%s" % (
+                    result[0], result[1], result[2])), True)
         return ""
 
     def make_additional_panel_related_check(self):
+        """
+        Specific cPanel check
+        :return:
+        """
         if os.path.exists("/usr/local/cpanel/cpanel"):
-            if os.path.exists("/usr/local/cpanel/scripts/update_local_rpm_versions") and \
-                    os.path.exists("/var/cpanel/rpm.versions.d/cloudlinux.versions") and os.path.exists(self._rel("utils/cloudlinux.versions")):
+            if os.path.exists(
+                    "/usr/local/cpanel/scripts/update_local_rpm_versions") and \
+                    os.path.exists(
+                        "/var/cpanel/rpm.versions.d/cloudlinux.versions") and \
+                    os.path.exists(
+                        self._rel("utils/cloudlinux.versions")):
                 shutil.copy2(self._rel("utils/cloudlinux.versions"),
-                                 "/var/cpanel/rpm.versions.d/cloudlinux.versions")
+                             "/var/cpanel/rpm.versions.d/cloudlinux.versions")
         return

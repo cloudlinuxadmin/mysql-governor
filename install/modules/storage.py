@@ -1,4 +1,7 @@
-#coding:utf-8
+# coding:utf-8
+"""
+This module contains class for holding governor storage
+"""
 import errno
 import os
 import shutil
@@ -53,7 +56,8 @@ class Storage(object):
             for fname in files_list:
                 f_path = "%s/%s" % (dir_name, fname)
                 if restore:
-                    self.restore_file_from_storage("/%s" % f_path.replace(root_dir, ""))
+                    self.restore_file_from_storage(
+                        "/%s" % f_path.replace(root_dir, ""))
                 else:
                     access_time = ""
                     if os.path.islink(f_path):
@@ -61,9 +65,11 @@ class Storage(object):
                     else:
                         access_time = time.ctime(os.path.getctime(f_path))
                     if dir_name.replace(root_dir, "") != "":
-                        print 'Moved to storage: %s\tFile: /%s/%s' % (access_time, dir_name.replace(root_dir, ""), fname)
+                        print 'Moved to storage: %s\tFile: /%s/%s' % (
+                            access_time, dir_name.replace(root_dir, ""), fname)
                     else:
-                        print 'Moved to storage: %s\tFile: /%s' % (access_time, fname)
+                        print 'Moved to storage: %s\tFile: /%s' % (
+                            access_time, fname)
         if restore:
             self._find_empty_dirs_in_storage()
 
@@ -90,12 +96,13 @@ class Storage(object):
             try:
                 if os.path.isfile(file_path):
                     os.unlink(file_path)
-                elif os.path.isdir(file_path): 
+                elif os.path.isdir(file_path):
                     shutil.rmtree(file_path)
             except Exception as e:
                 print e
 
-    def check_root_permissions(self):
+    @staticmethod
+    def check_root_permissions():
         """
         Script should run under root only
         """
@@ -103,7 +110,13 @@ class Storage(object):
             exit("You need to have root privileges to run this script.\nPlease "
                  "try again, this time using 'sudo'. Exiting.")
 
-    def _is_writable(self, path):
+    @staticmethod
+    def _is_writable(path):
+        """
+        Check write permissions for path
+        :param path:
+        :return:
+        """
         try:
             testfile = tempfile.TemporaryFile(dir=path)
             testfile.close()
@@ -115,13 +128,25 @@ class Storage(object):
         return True
 
     def _file_from_list_exists(self, path, storage):
+        """
+        Check path presence
+        :param path:
+        :param storage:
+        :return:
+        """
         if storage:
             path = "%s%s" % (self.STORE_PATH, path)
         if os.path.islink(path):
             return True
         return os.path.exists(path)
 
-    def _mkdir_p(self, path):
+    @staticmethod
+    def _mkdir_p(path):
+        """
+        Create directory recursively
+        :param path:
+        :return:
+        """
         path = os.path.dirname(os.path.abspath(path))
         try:
             os.makedirs(path)
@@ -133,11 +158,17 @@ class Storage(object):
                 return False
 
     def _find_empty_dirs_in_storage_one_iteration(self):
+        """
+        Find empty directories generator
+        """
         for dirpath, dirs, files in os.walk(self.STORE_PATH):
             if not dirs and not files:
                 yield dirpath
 
     def _find_empty_dirs_in_storage(self):
+        """
+        Find empty directories
+        """
         result = list(self._find_empty_dirs_in_storage_one_iteration())
         root_found = False
         while not root_found and len(result) > 0:
@@ -150,7 +181,8 @@ class Storage(object):
                 shutil.rmtree(dir_name)
             result = list(self._find_empty_dirs_in_storage_one_iteration())
 
-    def _check_systemd_service(self, name, path_to_file):
+    @staticmethod
+    def _check_systemd_service(name, path_to_file):
         """
         If it is service. It should be disabled before moving
         """
@@ -158,7 +190,8 @@ class Storage(object):
         if srv in path_to_file and os.path.exists("/usr/bin/systemctl"):
             exec_command_out("systemctl disable %s" % srv)
 
-    def _check_initd_service(self, path_to_file):
+    @staticmethod
+    def _check_initd_service(path_to_file):
         """
         If it is for CL5 and CL6 we shouldn't remove this files
         """

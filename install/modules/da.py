@@ -1,4 +1,7 @@
 #coding:utf-8
+"""
+This module contains class for managing governor on DirectAdmin server
+"""
 import os
 from glob import glob
 
@@ -21,6 +24,7 @@ class DirectAdminManager(InstallManager):
 
     def _delete(self, installed_packages):
         """
+        Remove installed packages
         """
         check_file("/usr/local/directadmin/custombuild/build")
 
@@ -43,6 +47,7 @@ class DirectAdminManager(InstallManager):
 
     def _before_install_new_packages(self):
         """
+        Specific actions before new packages installation
         """
         print "The installation of MySQL for db_governor has started"
 
@@ -72,6 +77,7 @@ class DirectAdminManager(InstallManager):
 
     def _after_install_new_packages(self):
         """
+        Specific actions after new packages installation
         """
         if not os.path.exists(self.CONF_FILE_MYSQL):
             return None
@@ -112,7 +118,7 @@ class DirectAdminManager(InstallManager):
                 else:
                     MYSQL_DA_TYPE = "mariadb"
 
-        print ("I got %s and %s" % (MYSQL_DA_VER, MYSQL_DA_TYPE))
+        print "I got %s and %s" % (MYSQL_DA_VER, MYSQL_DA_TYPE)
 
         if MYSQL_DA_TYPE == "mysql":
             if MYSQL_DA_VER == "5.0":
@@ -166,6 +172,12 @@ class DirectAdminManager(InstallManager):
         return ""
 
     def _custom_rpm_installer(self, package_name, indicator=False):
+        """
+        Specific package installer
+        :param package_name:
+        :param indicator:
+        :return:
+        """
         if not indicator:
             exec_command_out("/bin/rpm --ihv --force --nodeps %s" % package_name)
             return ""

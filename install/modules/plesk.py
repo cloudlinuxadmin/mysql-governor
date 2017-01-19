@@ -1,4 +1,7 @@
 #coding:utf-8
+"""
+This module contains class for managing governor on Plesk server
+"""
 import os
 
 from utilities import read_file

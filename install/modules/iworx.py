@@ -1,4 +1,7 @@
-#coding:utf-8
+# coding:utf-8
+"""
+This module contains class for managing governor on Iworx server
+"""
 import os
 
 from utilities import grep
@@ -25,7 +28,7 @@ class IWorxManager(InstallManager):
             MYSQLPASSWORD = lines[0].split("/")[2].split(":")[1].split("@")[0]
         except IndexError:
             MYSQLPASSWORD = None
-        
+
         if MYSQLPASSWORD:
             self._set_mysql_access(MYSQLUSER, MYSQLPASSWORD)
 

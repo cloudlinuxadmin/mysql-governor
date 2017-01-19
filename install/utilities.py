@@ -1,4 +1,7 @@
-#coding:utf-8
+# coding:utf-8
+"""
+This module contains helpful utilities to perform common actions
+"""
 import os
 import re
 import shutil
@@ -9,31 +12,37 @@ from datetime import datetime
 from distutils.version import StrictVersion
 from glob import glob
 
-
-__all__ = ["mysql_version", "clean_whitespaces", "is_package_installed",
-           "download_packages", "remove_packages", "install_packages", "grep",
-           "new_lve_ctl", "num_proc", "service", "bcolors", "parse_rpm_name",
-           "check_file", "exec_command", "exec_command_out", "get_cl_num",
-           "remove_lines", "write_file", "read_file", "rewrite_file", "touch",
-           "add_line", "replace_lines", "query_yes_no", "create_mysqld_link",
-           "confirm_packages_installation", "is_file_owned_by_package",
-           "correct_mysqld_service_for_cl7", "set_debug", "debug_log",
-           "shadow_tracing", "add_line_rw_owner", "set_path_environ", "correct_remove_notowned_mysql_service_names_cl7",
-           "disable_and_remove_service", "correct_remove_notowned_mysql_service_names_not_symlynks_cl7",
-           "disable_and_remove_service_if_notsymlynk",
-           ]
-
+__all__ = [
+    "mysql_version", "clean_whitespaces", "is_package_installed",
+    "download_packages", "remove_packages", "install_packages", "grep",
+    "new_lve_ctl", "num_proc", "service", "bcolors", "parse_rpm_name",
+    "check_file", "exec_command", "exec_command_out", "get_cl_num",
+    "remove_lines", "write_file", "read_file", "rewrite_file", "touch",
+    "add_line", "replace_lines", "query_yes_no", "create_mysqld_link",
+    "confirm_packages_installation", "is_file_owned_by_package",
+    "correct_mysqld_service_for_cl7", "set_debug", "debug_log",
+    "shadow_tracing", "add_line_rw_owner", "set_path_environ",
+    "correct_remove_notowned_mysql_service_names_cl7",
+    "correct_remove_notowned_mysql_service_names_not_symlynks_cl7",
+    "disable_and_remove_service",
+    "disable_and_remove_service_if_notsymlynk"
+]
 
 RPM_TEMP_PATH = "/usr/share/lve/dbgovernor/tmp/governor-tmp"
-WHITESPACES_REGEX = re.compile("\s+")
+WHITESPACES_REGEX = re.compile(r"\s+")
 TRACE_LOG_FILE = "/usr/share/lve/dbgovernor/install_trace.log"
 fDEBUG_FLAG = False
+
 
 def set_path_environ():
     """
     Set PATH variable
     """
-    os.environ["PATH"] += os.pathsep + "/bin" + os.pathsep + "/sbin" + os.pathsep + "/usr/bin" + os.pathsep + "/usr/sbin" + os.pathsep + "/usr/local/bin" + os.pathsep + "/usr/local/sbin"
+    os.environ[
+        "PATH"] += os.pathsep + "/bin" + os.pathsep + "/sbin" + os.pathsep + \
+                   "/usr/bin" + os.pathsep + "/usr/sbin" + os.pathsep + \
+                   "/usr/local/bin" + os.pathsep + "/usr/local/sbin"
+
 
 def _trace_calls(frame, event, arg):
     """
@@ -58,6 +67,10 @@ def _trace_calls(frame, event, arg):
         f = f.f_back
 
     def _call_string(f):
+        """
+        Make trace message
+        :param f:
+        """
         func_name = f.f_code.co_name
         line_no = f.f_lineno
         filename = f.f_code.co_filename
@@ -66,14 +79,20 @@ def _trace_calls(frame, event, arg):
         return "%s(%s)|%s:%s" % (func_name, args_str, filename, line_no)
 
     date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    line = "[%s] %s%s <- %s\n" % (date, "===="*level, _call_string(frame),
+    line = "[%s] %s%s <- %s\n" % (date, "====" * level, _call_string(frame),
                                   _call_string(frame.f_back))
     add_line_rw_owner(TRACE_LOG_FILE, line)
 
     return
 
+
 def shadow_tracing(status=True):
+    """
+    Enable tracing
+    :param status:
+    """
     sys.settrace(_trace_calls if status else None)
+
 
 def set_debug(status=True):
     """
@@ -146,7 +165,8 @@ def is_file_owned_by_package(file_path):
     """
     Check is file owned by package
     """
-    out = exec_command("rpm -qf %s" % file_path, True, silent=True, return_code=True)
+    out = exec_command("rpm -qf %s" % file_path, True, silent=True,
+                       return_code=True)
     return out == "yes"
 
 
@@ -166,16 +186,18 @@ def download_packages(names, dest, beta, custom_download=None):
         names = _custom_download_packages(names, path, custom_download)
     else:
         repo = "" if not beta else "--enablerepo=cloudlinux-updates-testing"
-        if exec_command("yum repolist --enablerepo=* --setopt=cl-mysql.skip_if_unavailable=true --setopt=cl-mysql-debuginfo.skip_if_unavailable=true --setopt=cl-mysql-testing.skip_if_unavailable=true |grep mysql -c", True, True) != "0":
+        if exec_command(
+                "yum repolist --enablerepo=* --setopt=cl-mysql.skip_if_unavailable=true --setopt=cl-mysql-debuginfo.skip_if_unavailable=true --setopt=cl-mysql-testing.skip_if_unavailable=true |grep mysql -c",
+                True, True) != "0":
             repo = "%s --enablerepo=mysqclient" % repo
 
-        exec_command(("yumdownloader --destdir=%s --disableexcludes=all %s %s")
-                  % (path, repo, " ".join(names)), True, silent=True)
+        exec_command("yumdownloader --destdir=%s --disableexcludes=all %s %s"
+                     % (path, repo, " ".join(names)), True, silent=True)
 
     pkg_not_found = False
     for pkg_name in names:
-        pkg_name_split = pkg_name.split('.',1)[0]
-        list_of_rpm = glob(("%s/%s*.rpm") % (path, pkg_name_split))
+        pkg_name_split = pkg_name.split('.', 1)[0]
+        list_of_rpm = glob("%s/%s*.rpm" % (path, pkg_name_split))
         for i in list_of_rpm:
             print "Package %s was loaded" % i
 
@@ -195,7 +217,7 @@ def _custom_download_packages(names, path, downloader):
         pkg_url = downloader(pkg_name)
         print "URL %s" % pkg_url
         if pkg_url:
-            file_name = ("%s/%s.rpm") % (path, pkg_name)
+            file_name = "%s/%s.rpm" % (path, pkg_name)
             status = 200
             if len(pkg_url) > 5 and pkg_url[:5] == "file:":
                 result.append(os.path.basename(pkg_url[5:]))
@@ -233,29 +255,33 @@ def remove_packages(packages_list):
     # don`t do anything if no packages
     if not packages_list:
         return
-    #Try to find server package, because it should be removed first
+    # Try to find server package, because it should be removed first
     new_pkg = []
     for pkg in packages_list:
         if "-server" in pkg:
-            print exec_command("rpm -e --nodeps %s" % pkg, True, cmd_on_error="rpm -e --nodeps --noscripts %s" % pkg)
+            print exec_command("rpm -e --nodeps %s" % pkg, True,
+                               cmd_on_error="rpm -e --nodeps --noscripts %s" % pkg)
         else:
             new_pkg.append(pkg)
-    if len(new_pkg)>0:
+    if len(new_pkg) > 0:
         packages = " ".join(new_pkg)
-        print exec_command("rpm -e --nodeps %s" % packages, True, cmd_on_error="rpm -e --nodeps --noscripts %s" % pkg)
+        print exec_command("rpm -e --nodeps %s" % packages, True,
+                           cmd_on_error="rpm -e --nodeps --noscripts %s" % pkg)
 
 
 def confirm_packages_installation(rpm_dir, no_confirm=None):
     """
     Confirm install new packages from rpm files in directory
     @param `no_confirm` bool|None: bool - show info about packages for install
-                                   if True - show confirm message. 
+                                   if True - show confirm message.
                                    None - no additional info
     """
     if no_confirm is not None:
         pkg_path = "%s/" % os.path.join(RPM_TEMP_PATH, rpm_dir.strip("/"))
-        packages_list = sorted([x.replace(pkg_path, "") for x in glob("%s*.rpm" % pkg_path)])
-        print "New packages will be installed: \n    %s" % "\n    ".join(packages_list)
+        packages_list = sorted(
+            [x.replace(pkg_path, "") for x in glob("%s*.rpm" % pkg_path)])
+        print "New packages will be installed: \n    %s" % "\n    ".join(
+            packages_list)
         if not no_confirm:
             if not query_yes_no("Continue?"):
                 return False
@@ -263,12 +289,11 @@ def confirm_packages_installation(rpm_dir, no_confirm=None):
     return True
 
 
-def install_packages(rpm_dir, is_beta, no_confirm=None, installer=None,
-                     abs_path=False):
+def install_packages(rpm_dir, is_beta, installer=None, abs_path=False):
     """
     Install new packages from rpm files in directory
     @param `no_confirm` bool|None: bool - show info about packages for install
-                                   if True - show confirm message. 
+                                   if True - show confirm message.
                                    None - no additional info
     """
     repo = ""
@@ -289,10 +314,15 @@ def install_packages(rpm_dir, is_beta, no_confirm=None, installer=None,
                 is_server_found.append(found_package)
             else:
                 list_for_install.append(found_package)
-        exec_command_out("yum install %s --disableexcludes=all --nogpgcheck -y %s" % (repo, " ".join(list_for_install)))
-        if is_server_found !="":
-            exec_command_out("yum clean all --enablerepo=cloudlinux-updates-testing")
-            exec_command_out("yum install %s --disableexcludes=all --nogpgcheck -y %s" % (repo, " ".join(is_server_found)))
+        exec_command_out(
+            "yum install %s --disableexcludes=all --nogpgcheck -y %s" % (
+                repo, " ".join(list_for_install)))
+        if is_server_found != "":
+            exec_command_out(
+                "yum clean all --enablerepo=cloudlinux-updates-testing")
+            exec_command_out(
+                "yum install %s --disableexcludes=all --nogpgcheck -y %s" % (
+                    repo, " ".join(is_server_found)))
     else:
         is_server_found = ""
         list_of_rpm = glob("%s/*.rpm" % pkg_path)
@@ -309,10 +339,18 @@ def install_packages(rpm_dir, is_beta, no_confirm=None, installer=None,
 
 
 def new_lve_ctl(version1):
+    """
+    Check version
+    :param version1:
+    """
     return StrictVersion("1.4") <= StrictVersion(version1)
-    
+
 
 def num_proc(s):
+    """
+    Convert to int
+    :param s:
+    """
     try:
         return int(s)
     except ValueError:
@@ -328,7 +366,7 @@ def service(action, *names):
     for name in names:
         end_name = name
         found_path = ""
-        if name=="mysql" or name=="mysqld":
+        if name == "mysql" or name == "mysqld":
             if os.path.exists("/usr/lib/systemd/system/mysqld.service"):
                 end_name = "mysqld"
             elif os.path.exists("/usr/lib/systemd/system/mysql.service"):
@@ -339,15 +377,18 @@ def service(action, *names):
             elif os.path.exists("/etc/systemd/system/mysqld.service"):
                 end_name = "mysqld"
                 found_path = "/etc/systemd/system/mysqld.service"
-        if os.path.exists("/usr/lib/systemd/system/%s.service" % end_name) or (found_path != ""):
-            exec_command_out("/bin/systemctl %s %s.service" % (action, end_name))
+        if os.path.exists("/usr/lib/systemd/system/%s.service" % end_name) or (
+                    found_path != ""):
+            exec_command_out(
+                "/bin/systemctl %s %s.service" % (action, end_name))
         else:
-            if name=="mysql" or name=="mysqld":
+            if name == "mysql" or name == "mysqld":
                 if os.path.exists("/etc/init.d/mysql"):
                     end_name = "mysql"
                 elif os.path.exists("/etc/init.d/mysqld"):
                     end_name = "mysqld"
             exec_command_out("/sbin/service %s %s" % (end_name, action))
+
 
 def check_file(path):
     """
@@ -360,7 +401,8 @@ def check_file(path):
     return True
 
 
-def exec_command(command, as_string=False, silent=False, return_code=False, cmd_on_error=""):
+def exec_command(command, as_string=False, silent=False, return_code=False,
+                 cmd_on_error=""):
     """
     Advanced system exec call
     """
@@ -376,9 +418,10 @@ def exec_command(command, as_string=False, silent=False, return_code=False, cmd_
             return "no"
 
     if p.returncode != 0 and not silent:
-        print >>sys.stderr, "Execution command: %s error" % command
-        if cmd_on_error!="":
-            return exec_command(cmd_on_error, as_string, silent, return_code, "")
+        print >> sys.stderr, "Execution command: %s error" % command
+        if cmd_on_error != "":
+            return exec_command(cmd_on_error, as_string, silent, return_code,
+                                "")
         raise RuntimeError("%s\n%s" % (out, err))
 
     if as_string:
@@ -386,13 +429,13 @@ def exec_command(command, as_string=False, silent=False, return_code=False, cmd_
 
     return [x.strip() for x in out.split("\n") if x.strip()]
 
-    
+
 def exec_command_out(command):
     """
     Simple system exec call
     """
     os.system(command)
-    debug_log("Executed command %s with retcode NN\n" % (command))
+    debug_log("Executed command %s with retcode NN\n" % command)
 
 
 def get_cl_num():
@@ -452,6 +495,7 @@ def rewrite_file(f, content):
     f.truncate()
     f.write("".join(content))
 
+
 def add_line_rw_owner(path, line):
     """
     Add line to file
@@ -459,6 +503,7 @@ def add_line_rw_owner(path, line):
     with open(path, "a") as f:
         f.write("%s\n" % line.strip())
     os.chmod(path, 0o600)
+
 
 def add_line(path, line):
     """
@@ -502,7 +547,7 @@ def grep(path, pattern, regex=False):
 
 def replace_lines(path, pattern, replace):
     """
-    Replace file lines with pattern to replace value 
+    Replace file lines with pattern to replace value
     """
     lines = []
     with open(path, "w+") as f:
@@ -515,13 +560,21 @@ def replace_lines(path, pattern, replace):
 
 
 def touch(fname):
+    """
+    Unix touch analog
+    :param fname:
+    :return:
+    """
     try:
         os.utime(fname, None)
-    except:
+    except (IOError, OSError):
         open(fname, 'a').close()
 
 
-class bcolors:
+class bcolors(object):
+    """
+    Colorful stdout
+    """
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
     OKGREEN = '\033[92m'
@@ -530,6 +583,9 @@ class bcolors:
     ENDC = '\033[0m'
 
     def disable(self):
+        """
+        Set no colors
+        """
         self.HEADER = ''
         self.OKBLUE = ''
         self.OKGREEN = ''
@@ -569,9 +625,11 @@ def query_yes_no(question, default=None):
             sys.stdout.write("Please respond with 'yes' or 'no' "
                              "(or 'y' or 'n').\n")
 
+
 def create_mysqld_link(link, to_file):
     """
-    cl-MySQL packages brings only /etc/init.d/mysql file, mysqld should be created
+    cl-MySQL packages brings only /etc/init.d/mysql file,
+    mysqld should be created
     """
     cl_ver = get_cl_num()
     if cl_ver < 7:
@@ -585,8 +643,8 @@ def correct_mysqld_service_for_cl7(name):
     """
     For cl7 /etc/init.d/mysql should be removed if exists
     """
-    #cl_ver = get_cl_num()
-    #if cl_ver == 7:
+    # cl_ver = get_cl_num()
+    # if cl_ver == 7:
     #    link_name = "/etc/init.d/%s" % name
     #    if os.path.exists(link_name):
     #        os.unlink(link_name)
@@ -594,16 +652,25 @@ def correct_mysqld_service_for_cl7(name):
     #        os.unlink(link_name)
     print "Just empty action"
 
+
 def disable_and_remove_service(service_path):
+    """
+    Disable systemd service
+    :param service_path:
+    :return:
+    """
     if os.path.exists(service_path):
         service_name = os.path.basename(service_path)
-        if service_name != "" and is_file_owned_by_package(service_path) == False:
+        if service_name != "" and is_file_owned_by_package(
+                service_path) == False:
             exec_command_out("systemctl disable %s" % service_name)
             os.unlink(service_path)
 
+
 def correct_remove_notowned_mysql_service_names_cl7():
     """
-    After any MySQL-server removing should not be any mysql or mysqld or mariadb service files
+    After any MySQL-server removing should not be any mysql
+    or mysqld or mariadb service files
     """
     cl_ver = get_cl_num()
     if cl_ver == 7:
@@ -616,20 +683,30 @@ def correct_remove_notowned_mysql_service_names_cl7():
 
 
 def disable_and_remove_service_if_notsymlynk(service_path):
+    """
+    Disable not symlinked systemd service
+    :param service_path:
+    :return:
+    """
     if os.path.exists(service_path):
         service_name = os.path.basename(service_path)
-        if service_name != "" and is_file_owned_by_package(service_path) == False and not os.path.islink(service_path):
+        if service_name != "" and is_file_owned_by_package(
+                service_path) == False and not os.path.islink(service_path):
             exec_command_out("systemctl disable %s" % service_name)
             os.unlink(service_path)
 
+
 def correct_remove_notowned_mysql_service_names_not_symlynks_cl7():
     """
-    After any MySQL-server removing should not be any mysql or mysqld or mariadb service files
+    After any MySQL-server removing should not be any mysql
+    or mysqld or mariadb service files
     """
     cl_ver = get_cl_num()
     if cl_ver == 7:
-        disable_and_remove_service_if_notsymlynk("/etc/systemd/system/mysqld.service")
-        disable_and_remove_service_if_notsymlynk("/etc/systemd/system/mysql.service")
+        disable_and_remove_service_if_notsymlynk(
+            "/etc/systemd/system/mysqld.service")
+        disable_and_remove_service_if_notsymlynk(
+            "/etc/systemd/system/mysql.service")
         exec_command_out("systemctl daemon-reload")
         exec_command_out("systemctl disable mysql")
         exec_command_out("systemctl enable mysql")
@@ -638,13 +715,14 @@ def correct_remove_notowned_mysql_service_names_not_symlynks_cl7():
         exec_command_out("systemctl disable mariadb")
         exec_command_out("systemctl enable mariadb")
 
+
 def parse_rpm_name(name):
     """
     Split rpm package name
     """
     result = exec_command(("rpm --queryformat \"%%{NAME} %%{VERSION}"
-                           " %%{RELEASE} %%{ARCH}\" -q %s") % name, True)\
-                          .split(' ', 4)
+                           " %%{RELEASE} %%{ARCH}\" -q %s") % name, True) \
+        .split(' ', 4)
     if len(result) >= 4:
         return [result[0], result[1], result[2], result[3]]
 
