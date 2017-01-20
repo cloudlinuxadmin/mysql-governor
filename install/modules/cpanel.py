@@ -26,7 +26,7 @@ class cPanelManager(InstallManager):
         """
         Specific hooks
         """
-        self._set_fs_suid_dumpable()
+        self.set_fs_suid_dumpable()
         self._script("cpanel-install-hooks")
 
     def fix_cl7_mysql(self):
@@ -58,9 +58,6 @@ class cPanelManager(InstallManager):
             if os.path.exists("/etc/cpupdate.conf"):
                 os.remove("/etc/cpupdate.conf")
             os.rename("/etc/cpupdate.conf.governor", "/etc/cpupdate.conf")
-
-        # TODO: for what?
-        # exec_command_out(SOURCE+"cpanel/install-db-governor-uninstall")
 
         service("stop", "mysql")
         # remove governor package

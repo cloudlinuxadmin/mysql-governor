@@ -887,6 +887,12 @@ class InstallManager(object):
         """
         return os.path.join(self.SOURCE, path)
 
+    def rel(self, path):
+        """
+        Public wrapper for _rel
+        """
+        return self._rel(path)
+
     def _script(self, path, args=None):
         """
         Execute package script which locate in SOURCE directory

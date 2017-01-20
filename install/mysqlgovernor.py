@@ -276,10 +276,10 @@ def detect_percona(force, install_manager_instance):
               "MySQL Governor. If you want to run MySQL governor, " \
               "we would have to uninstall Percona, and substitute it " \
               "for MariaDB or MySQL. Run installator next commands for install:"
-        print install_manager_instance._rel("mysqlgovernor.py") + \
+        print install_manager_instance.rel("mysqlgovernor.py") + \
               " --mysql-version=mysql56 (or mysql50, mysql51, mysql55, " \
               "mysql57, mariadb55, mariadb100, mariadb101)"
-        print install_manager_instance._rel("mysqlgovernor.py") + \
+        print install_manager_instance.rel("mysqlgovernor.py") + \
               " --install --force"
         sys.exit(2)
 

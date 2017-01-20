@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   12
+%define g_release   13
 %define g_key_library 7
 
 %if %{undefined _unitdir}
@@ -368,6 +368,10 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Fri Jan 20 2017 Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-13
+- Fixed errors in source code.
+- Code prettifying and formatting
+
 * Wed Dec 28 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-12
 - Fixed Rpmdb checksum is invalid in mysql packages installation
 

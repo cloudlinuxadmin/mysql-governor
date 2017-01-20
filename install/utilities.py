@@ -266,7 +266,7 @@ def remove_packages(packages_list):
     if len(new_pkg) > 0:
         packages = " ".join(new_pkg)
         print exec_command("rpm -e --nodeps %s" % packages, True,
-                           cmd_on_error="rpm -e --nodeps --noscripts %s" % pkg)
+                           cmd_on_error="rpm -e --nodeps --noscripts %s" % packages)
 
 
 def confirm_packages_installation(rpm_dir, no_confirm=None):
