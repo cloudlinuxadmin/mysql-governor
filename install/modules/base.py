@@ -183,7 +183,7 @@ class InstallManager(object):
 
         try:
             # new db version which will be installing
-            if not install_packages("new", beta, no_confirm):
+            if not install_packages("new", beta):
                 # if not install new packages - don`t do next actions
                 return False
         except RuntimeError:
