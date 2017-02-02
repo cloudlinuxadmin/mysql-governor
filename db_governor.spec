@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   13
+%define g_release   14
 %define g_key_library 7
 
 %if %{undefined _unitdir}
@@ -368,6 +368,9 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Thu Feb 02 2017 Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-14
+- MYSQLG-152: Use default values for "script" parameters in governor's config in case when script="". Now governor report about error and stop to work.
+
 * Fri Jan 20 2017 Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-13
 - Fixed errors in source code.
 - Code prettifying and formatting
