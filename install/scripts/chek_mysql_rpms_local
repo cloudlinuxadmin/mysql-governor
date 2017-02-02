@@ -19,7 +19,7 @@ function getMySQLTargets(){
 function setMySQLTargets(){
     target="$1"
     if [ -n "$target" -a -e /scripts/update_local_rpm_versions ];then
-	result=$cat /usr/share/lve/dbgovernor/old.rpms | grep "$target:")
+	result=$(cat /usr/share/lve/dbgovernor/old.rpms | grep "$target:")
 	if [ -n "$result" ];then
 	    result2=${result//[[:blank:]]/}
 	    trg=$(echo "$result2" | cut -d: -f1)

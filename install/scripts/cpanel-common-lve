@@ -74,7 +74,7 @@ function checkHookStringParam(){
 function rewriteDBUserHook(){
     #1 - hook name
     if [ -e "$1" ]; then 
-	correct=$(cat "$1" | grep '/usr/share/lve/dbgovernor/utils/dbgovernor_map "$1"'`)
+	correct=$(cat "$1" | grep '/usr/share/lve/dbgovernor/utils/dbgovernor_map "$1"')
 	if [ -z "$correct" ]; then
 	    is_hook=$(cat "$1" | grep "/usr/share/lve/dbgovernor/utils/dbgovernor_map")
 	    if [ -n "$is_hook" ]; then
