@@ -176,19 +176,19 @@ if [ $1 -eq 2 ] ; then
             echo "U" > /etc/container/dbgovernor-libcheck
             echo "Stop MySQL for safe installation"
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
-	    if [ -e /usr/lib/systemd/system/mysql.service ]; then
-		/bin/systemctl stop mysql.service
-	    elif [ -e /usr/lib/systemd/system/mysqld.service ]; then
-		/bin/systemctl stop mysqld.service
+            if [ -e /usr/lib/systemd/system/mysql.service ]; then
+                /bin/systemctl stop mysql.service
+            elif [ -e /usr/lib/systemd/system/mysqld.service ]; then
+                /bin/systemctl stop mysqld.service
              else
                 /bin/systemctl stop mysqld.service
-            fi      
+            fi
 %else
             if [ -e /etc/init.d/mysql ]; then
                 /etc/init.d/mysql stop
              elif [ -e /etc/init.d/mysqld ]; then
                 /etc/init.d/mysqld stop
-            fi      
+            fi
 %endif
         fi
    else
@@ -196,19 +196,19 @@ if [ $1 -eq 2 ] ; then
         echo "U" > /etc/container/dbgovernor-libcheck
         echo "Stop MySQL for safe installation"
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
-	    if [ -e /usr/lib/systemd/system/mysql.service ]; then
-		/bin/systemctl stop mysql.service
-	    elif [ -e /usr/lib/systemd/system/mysqld.service ]; then
-		/bin/systemctl stop mysqld.service
+            if [ -e /usr/lib/systemd/system/mysql.service ]; then
+                /bin/systemctl stop mysql.service
+            elif [ -e /usr/lib/systemd/system/mysqld.service ]; then
+                /bin/systemctl stop mysqld.service
              else
                 /bin/systemctl stop mysqld.service
-            fi      
+            fi
 %else
             if [ -e /etc/init.d/mysql ]; then
                 /etc/init.d/mysql stop
              elif [ -e /etc/init.d/mysqld ]; then
                 /etc/init.d/mysqld stop
-            fi      
+            fi
 %endif
    fi
 fi
@@ -273,15 +273,15 @@ if [ -e "/etc/container/dbgovernor-libcheck" ]; then
         if [ "$rKEY" == "U" ]; then
     	     echo "Start MySQL for safe installation"
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
-	    if [ -e /usr/lib/systemd/system/mysql.service ]; then
-		/bin/systemctl status mysql.service
+            if [ -e /usr/lib/systemd/system/mysql.service ]; then
+                /bin/systemctl status mysql.service
                 if [ "$?" != "0" ]; then
                     /bin/systemctl start mysql.service
                 else
                     echo "MySQL already started"
                 fi
-	    elif [ -e /usr/lib/systemd/system/mysqld.service ]; then
-		/bin/systemctl status mysqld.service
+            elif [ -e /usr/lib/systemd/system/mysqld.service ]; then
+                /bin/systemctl status mysqld.service
                 if [ "$?" != "0" ]; then
                     /bin/systemctl start mysqld.service
                 else

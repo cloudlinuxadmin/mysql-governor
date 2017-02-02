@@ -15,7 +15,7 @@ MYSQL_SET_VER=""
 
 while true; do
   case "$1" in
-    -h | --help )    HELP="y"; shift ;;
+    -h | --help ) shift; break ;;
     -m | --mysql-version ) MYSQL_SET_VER="$2"; shift; shift ;;
     -- ) shift; break ;;
     * ) break ;;
