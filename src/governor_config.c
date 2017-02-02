@@ -505,34 +505,35 @@ config_init (const char *path)
 		  "timeout")) ==
      NULL) ? parse_period ("1h") : parse_period (ptr);
 
-  if (ezxml_attr (tmp_xml, "script"))
-    {
-      cfg->exec_script = strdup (ezxml_attr (tmp_xml, "script"));
-      if (cfg->exec_script)
-	{
-	  int status_script;
-	  struct stat buffer_script;
-	  status_script = stat (cfg->exec_script, &buffer_script);
-	  if (status_script)
-	    {
-	      fprintf (stderr, "Wrong script name - %s\n", cfg->exec_script);
-	      exit (-1);
-	    }
-	  else
-	    {
-	      if (S_ISDIR (buffer_script.st_mode))
-		{
-		  fprintf (stderr, "Script is directory - %s\n",
-			   cfg->exec_script);
-		  exit (-1);
+	if (ezxml_attr(tmp_xml, "script")) {
+		cfg->exec_script = strdup(ezxml_attr(tmp_xml, "script"));
+		if (cfg->exec_script) {
+			if (!cfg->exec_script[0]) {
+				free(cfg->exec_script);
+				cfg->exec_script = NULL;
+			} else {
+				int status_script;
+				struct stat buffer_script;
+				status_script = stat(cfg->exec_script, &buffer_script);
+				if (status_script) {
+					fprintf(stderr,
+							"Wrong script name - %s. Work without script\n",
+							cfg->exec_script);
+					free(cfg->exec_script);
+					cfg->exec_script = NULL;
+				} else {
+					if (S_ISDIR (buffer_script.st_mode)) {
+						fprintf(stderr, "Script is directory - %s\n",
+								cfg->exec_script);
+						free(cfg->exec_script);
+						cfg->exec_script = NULL;
+					}
+				}
+			}
 		}
-	    }
+	} else {
+		cfg->exec_script = NULL;
 	}
-    }
-  else
-    {
-      cfg->exec_script = NULL;
-    }
 
   tmp_xml = ezxml_child (xml, "connector");
   if (tmp_xml == NULL)

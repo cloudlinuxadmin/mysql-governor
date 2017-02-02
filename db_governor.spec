@@ -1,5 +1,5 @@
 %define g_version   1.1
-%define g_release   19
+%define g_release   20
 %define g_key_library 7
 
 %if %{undefined _unitdir}
@@ -394,6 +394,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Thu Feb 02 2017 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-20
+- MYSQLG-152: Use default values for "script" parameters in governor's config in case when script="". Now governor report about error and stop to work.
+
 * Thu Dec 22 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-19
 - MYSQLG-136: Add new behaviour for MySQL LVE enter for preventing crash MySQL on lve destroy
 - MYSQLG-149: investigate the possibility to avoid httpd checks during "mysqlgovernor.py --dbupdate"
