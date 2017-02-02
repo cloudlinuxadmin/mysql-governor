@@ -92,8 +92,7 @@ class cPanelManager(InstallManager):
         if os.path.exists("/usr/local/cpanel/cpanel"):
             if os.path.exists(
                     "/usr/local/cpanel/scripts/update_local_rpm_versions"):
-                shutil.copy2(self._rel("utils/cloudlinux.versions"),
-                             "/var/cpanel/rpm.versions.d/cloudlinux.versions")
+                shutil.copy2(self._rel("utils/cloudlinux.versions"), "/var/cpanel/rpm.versions.d/cloudlinux.versions")
             else:
                 if not os.path.exists("/etc/cpupdate.conf.governor"):
                     self._get_mysqlup()

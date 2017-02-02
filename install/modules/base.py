@@ -28,7 +28,7 @@ class InstallManager(object):
     Base class with standard methods for any CP
     """
     # installation path
-    SOURCE = "/usr/share/lve/dbgovernor/"  # TODO: remove this variable
+    SOURCE = "/usr/share/lve/dbgovernor/"
     # file with new version for install
     NEW_VERSION_FILE = "/usr/share/lve/dbgovernor/mysql.type"
     # file with cached installed version before install

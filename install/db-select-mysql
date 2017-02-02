@@ -2,7 +2,7 @@
 
 
 
-OPTS=`getopt -o hm: --long help,mysql-version: -n 'parse-options' -- "$@"`
+OPTS=$(getopt -o hm: --long help,mysql-version: -n 'parse-options' -- "$@")
 
 if [ $? != 0 ] ; then echo "Failed parsing options." >&2 ; exit 1 ; fi
 
@@ -23,7 +23,7 @@ while true; do
 done
 
 if [ -n "$MYSQL_SET_VER" ]; then
-    /usr/share/lve/dbgovernor/mysqlgovernor.py --mysql-version $MYSQL_SET_VER;
+    /usr/share/lve/dbgovernor/mysqlgovernor.py --mysql-version "$MYSQL_SET_VER";
     exit 0
 fi;
 

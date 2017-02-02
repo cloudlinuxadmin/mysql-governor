@@ -87,16 +87,15 @@ int db_connect_common(MYSQL ** internal_db, const char *host,
 	int db_connection_method = 0;
 	my_bool reconnect = 1;
 
-    struct governor_config data_cfg;
-    get_config_data( &data_cfg );
+	struct governor_config data_cfg;
+	get_config_data(&data_cfg);
 
 	//Prepare local options name for default access with name and password from my.cnf, .my.cnf
 	struct option long_options[] = { { "host", optional_argument, NULL, 'r' },
-					 { "user", optional_argument, NULL, 'g' }, 
-					 { "password", optional_argument, NULL, 'j' }, 
-					 { "pass", optional_argument, NULL, 'i' }, 
-					 { "socket", optional_argument, NULL, 'S' }, 
-					 { 0, 0, 0, 0 } };
+			{ "user", optional_argument, NULL, 'g' }, { "password",
+					optional_argument, NULL, 'j' }, { "pass",
+					optional_argument, NULL, 'i' }, { "socket",
+					optional_argument, NULL, 'S' }, { 0, 0, 0, 0 } };
 
 	if (*internal_db != NULL) {
 		//Already connected
@@ -121,7 +120,7 @@ int db_connect_common(MYSQL ** internal_db, const char *host,
 		case 'S':
 			unix_socket_address = optarg;
 			break;
-                case 'r':
+		case 'r':
 			hst = optarg;
 			break;
 		case 'g':
@@ -174,50 +173,57 @@ int db_connect_common(MYSQL ** internal_db, const char *host,
 		} else {
 			//Сохраним праматеры с которыми успешно соединились
 			if (save_global) {
-				strlcpy(global_user_name, (user?user:""), _DBGOVERNOR_BUFFER_128);
-				strlcpy(global_host, (host?host:""), _DBGOVERNOR_BUFFER_512);
-				strlcpy(global_user_password, (password?password:""), _DBGOVERNOR_BUFFER_256);
-				strlcpy(global_db_name, (db_name?db_name:""), _DBGOVERNOR_BUFFER_512);
+				strlcpy(global_user_name, (user ? user : ""),
+						_DBGOVERNOR_BUFFER_128);
+				strlcpy(global_host, (host ? host : ""), _DBGOVERNOR_BUFFER_512);
+				strlcpy(global_user_password, (password ? password : ""),
+						_DBGOVERNOR_BUFFER_256);
+				strlcpy(global_db_name, (db_name ? db_name : ""),
+						_DBGOVERNOR_BUFFER_512);
 			}
 		}
 	} else {
 		//Сохраним праматеры с которыми успешно соединились
 		if (save_global) {
-			strlcpy(global_user_name, (user_name?user_name:""), _DBGOVERNOR_BUFFER_128);
-			strlcpy(global_host, (host?host:""), _DBGOVERNOR_BUFFER_512);
-			strlcpy(global_user_password, (user_password?user_password:""), _DBGOVERNOR_BUFFER_256);
-			strlcpy(global_db_name, (db_name?db_name:""), _DBGOVERNOR_BUFFER_512);
+			strlcpy(global_user_name, (user_name ? user_name : ""),
+					_DBGOVERNOR_BUFFER_128);
+			strlcpy(global_host, (host ? host : ""), _DBGOVERNOR_BUFFER_512);
+			strlcpy(global_user_password, (user_password ? user_password : ""),
+					_DBGOVERNOR_BUFFER_256);
+			strlcpy(global_db_name, (db_name ? db_name : ""),
+					_DBGOVERNOR_BUFFER_512);
 		}
 	}
 	return 0;
 }
 
-static int local_reconnect(MYSQL **mysql_internal,	MODE_TYPE debug_mode){
+static int local_reconnect(MYSQL **mysql_internal, MODE_TYPE debug_mode) {
 	char buf[_DBGOVERNOR_BUFFER_512];
 	struct governor_config data_cfg;
-	get_config_data( &data_cfg );
+	get_config_data(&data_cfg);
 	char *unm = NULL;
 	char *upwd = NULL;
 	(*_mysql_close)(*mysql_internal);
 	*mysql_internal = NULL;
 
-	* mysql_internal = (*_mysql_init)(NULL);
+	*mysql_internal = (*_mysql_init)(NULL);
 	if (*mysql_internal == NULL) {
-			WRITE_LOG(NULL, 0, buf, _DBGOVERNOR_BUFFER_512,
-					"Can't init mysql structure(on reconnect)",
-					data_cfg.log_mode);
-			return -1;
+		WRITE_LOG(NULL, 0, buf, _DBGOVERNOR_BUFFER_512,
+				"Can't init mysql structure(on reconnect)",
+				data_cfg.log_mode);
+		return -1;
 	}
 
-	if(global_user_name[0]) unm = global_user_name;
-	if(global_user_password[0]) upwd = global_user_password;
+	if (global_user_name[0])
+		unm = global_user_name;
+	if (global_user_password[0])
+		upwd = global_user_password;
 	my_bool reconnect = 1;
 	//Авторекоонет - подключить
 	(*_mysql_options)(*mysql_internal, MYSQL_OPT_RECONNECT, &reconnect);
 	//Еще разок соединимся
-	if (!(*_mysql_real_connect)(*mysql_internal, global_host,
-			unm, upwd, global_db_name, 0,
-			unix_socket_address, 0)) {
+	if (!(*_mysql_real_connect)(*mysql_internal, global_host, unm, upwd,
+			global_db_name, 0, unix_socket_address, 0)) {
 		return -1;
 	}
 	return 0;
@@ -227,14 +233,14 @@ static int local_reconnect(MYSQL **mysql_internal,	MODE_TYPE debug_mode){
 int db_mysql_exec_query(const char *query, MYSQL ** mysql_internal,
 		MODE_TYPE debug_mode) {
 	char buf[_DBGOVERNOR_BUFFER_2048];
-    struct governor_config data_cfg;
-    get_config_data( &data_cfg );
+	struct governor_config data_cfg;
+	get_config_data(&data_cfg);
 
 	//Проверим наличие соединения, а вдруг пропало
 	if ((*_mysql_ping)(*mysql_internal)) {
 		//База действительно ушла прочь, что даже реконнект не помог
 
-		if(local_reconnect(mysql_internal, debug_mode)<0){
+		if (local_reconnect(mysql_internal, debug_mode) < 0) {
 			return -1;
 		}
 	}
@@ -270,14 +276,14 @@ void db_close_kill() {
 	}
 }
 
-void db_close_command(){
+void db_close_command() {
 	if (mysql_do_command != NULL) {
 		(*_mysql_close)(mysql_do_command);
 		mysql_do_command = NULL;
 	}
 }
 
-void db_close_send(){
+void db_close_send() {
 	if (mysql_send_governor != NULL) {
 		(*_mysql_close)(mysql_send_governor);
 		mysql_send_governor = NULL;
@@ -295,18 +301,17 @@ int db_close() {
 //Unfreaze all accounts.
 void unfreaze_all(MODE_TYPE debug_mode) {
 	char sql_buffer[_DBGOVERNOR_BUFFER_8192];
-	snprintf(sql_buffer, _DBGOVERNOR_BUFFER_2048-1,
+	snprintf(sql_buffer, _DBGOVERNOR_BUFFER_2048 - 1,
 			QUERY_USER_CONN_LIMIT_UNFREEZE, (unsigned long) -1);
-	if (db_mysql_exec_query(sql_buffer, &mysql_do_command,
-			debug_mode))
+	if (db_mysql_exec_query(sql_buffer, &mysql_do_command, debug_mode))
 		return;
 	flush_user_priv(debug_mode);
 }
 
 //Unfreaze all accounts.
 void unfreaze_lve(MODE_TYPE debug_mode) {
-	if (db_mysql_exec_query(QUERY_USER_CONN_LIMIT_UNFREEZE_LVE, &mysql_do_command,
-			debug_mode))
+	if (db_mysql_exec_query(QUERY_USER_CONN_LIMIT_UNFREEZE_LVE,
+			&mysql_do_command, debug_mode))
 		return;
 	flush_user_priv(debug_mode);
 }
@@ -314,8 +319,9 @@ void unfreaze_lve(MODE_TYPE debug_mode) {
 //Unfreaze daily
 void unfreaze_daily(MODE_TYPE debug_mode) {
 	char buffer[_DBGOVERNOR_BUFFER_2048];
-	if(mysql_do_command == NULL) return;
-	snprintf(buffer, _DBGOVERNOR_BUFFER_2048-1,
+	if (mysql_do_command == NULL)
+		return;
+	snprintf(buffer, _DBGOVERNOR_BUFFER_2048 - 1,
 			QUERY_USER_CONN_LIMIT_UNFREEZE_DAILY, (unsigned long) -1);
 	if (db_mysql_exec_query(buffer, &mysql_do_command, debug_mode))
 		return;
@@ -327,8 +333,7 @@ long db_mysql_get_integer(char *result, unsigned long length) {
 	int index = 0;
 	long result_number = 0;
 	while (index < length) {
-		if ((result[index] != 0) && (result[index] >= '0') && (result[index]
-				<= '9'))
+		if ((result[index] >= '0') && (result[index] <= '9'))
 			result_number = result_number * 10 + (result[index++] - '0');
 		else
 			break;
@@ -364,13 +369,14 @@ double db_mysql_get_float(char *result, unsigned long length) {
 }
 
 //Get ranged string from string. NULL at end safety
-void db_mysql_get_string(char *buffer, char *result, unsigned long length, unsigned long max_bufer_len) {
-        unsigned long nlen = 0;
-	if(max_bufer_len<length)
+void db_mysql_get_string(char *buffer, char *result, unsigned long length,
+		unsigned long max_bufer_len) {
+	unsigned long nlen = 0;
+	if (max_bufer_len < length)
 		nlen = max_bufer_len - 1;
 	else
 		nlen = length;
-        memcpy(buffer, result, nlen);
+	memcpy(buffer, result, nlen);
 	buffer[nlen] = 0;
 }
 
@@ -389,16 +395,17 @@ void update_user_limit_no_flush(char *user_name, unsigned int limit,
 	char sql_buffer[_DBGOVERNOR_BUFFER_8192];
 	char user_name_alloc[USERNAMEMAXLEN * 2];
 	MYSQL_RES *res;
-    struct governor_config data_cfg;
+	struct governor_config data_cfg;
 
-    get_config_data( &data_cfg );
+	get_config_data(&data_cfg);
 
-    if(mysql_do_command == NULL) return;
+	if (mysql_do_command == NULL)
+		return;
 
 	(*_mysql_real_escape_string)(mysql_do_command, user_name_alloc, user_name,
 			strlen(user_name));
-	snprintf(sql_buffer, _DBGOVERNOR_BUFFER_8192-1, QUERY_USER_CONN_LIMIT,
-			(unsigned long)limit, user_name_alloc);
+	snprintf(sql_buffer, _DBGOVERNOR_BUFFER_8192 - 1, QUERY_USER_CONN_LIMIT,
+			(unsigned long) limit, user_name_alloc);
 	if (db_mysql_exec_query(sql_buffer, &mysql_do_command, debug_mode)) {
 		if (debug_mode != DEBUG_MODE) {
 			WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
@@ -432,11 +439,13 @@ void flush_user_stat(MODE_TYPE debug_mode) {
 void flush_user_priv(MODE_TYPE debug_mode) {
 	char buffer[_DBGOVERNOR_BUFFER_2048];
 	MYSQL_RES *res;
-    struct governor_config data_cfg;
-    get_config_data( &data_cfg );
-    if(mysql_do_command == NULL) return;
+	struct governor_config data_cfg;
+	get_config_data(&data_cfg);
+	if (mysql_do_command == NULL)
+		return;
 
-	if (db_mysql_exec_query(QUERY_FLUSH_USER_PRIV, &mysql_do_command, debug_mode)) {
+	if (db_mysql_exec_query(QUERY_FLUSH_USER_PRIV, &mysql_do_command,
+			debug_mode)) {
 		if (debug_mode != DEBUG_MODE) {
 			WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
 					"Can't flush user privs",
@@ -458,9 +467,10 @@ void kill_query(char *user_name, MODE_TYPE debug_mode) {
 	char sql_buffer[_DBGOVERNOR_BUFFER_8192];
 	char user_name_alloc[USERNAMEMAXLEN * 2];
 	MYSQL_RES *res;
-    struct governor_config data_cfg;
-    get_config_data( &data_cfg );
-    if(mysql_do_command == NULL) return;
+	struct governor_config data_cfg;
+	get_config_data(&data_cfg);
+	if (mysql_do_command == NULL)
+		return;
 
 	(*_mysql_real_escape_string)(mysql_do_command, user_name_alloc, user_name,
 			strlen(user_name));
@@ -487,11 +497,13 @@ void kill_query_by_id(long id, MODE_TYPE debug_mode, MYSQL ** mysql_internal) {
 	char buffer[_DBGOVERNOR_BUFFER_2048];
 	char sql_buffer[_DBGOVERNOR_BUFFER_8192];
 	MYSQL_RES *res;
-    struct governor_config data_cfg;
-    get_config_data( &data_cfg );
-    if(*mysql_internal==NULL) return;
+	struct governor_config data_cfg;
+	get_config_data(&data_cfg);
+	if (*mysql_internal == NULL)
+		return;
 
-	snprintf(sql_buffer, _DBGOVERNOR_BUFFER_8192-1, QUERY_KILL_USER_QUERY_ID, id);
+	snprintf(sql_buffer, _DBGOVERNOR_BUFFER_8192 - 1, QUERY_KILL_USER_QUERY_ID,
+			id);
 	if (db_mysql_exec_query(sql_buffer, mysql_internal, debug_mode)) {
 
 		if (debug_mode != DEBUG_MODE) {
@@ -512,157 +524,157 @@ void kill_query_by_id(long id, MODE_TYPE debug_mode, MYSQL ** mysql_internal) {
 void governor_enable(MODE_TYPE debug_mode) {
 	char buffer[_DBGOVERNOR_BUFFER_2048];
 	MYSQL_RES *res;
-    struct governor_config data_cfg;
-    get_config_data( &data_cfg );
+	struct governor_config data_cfg;
+	get_config_data(&data_cfg);
 
-    if(is_plugin_version){
-    	if (db_mysql_exec_query(QUERY_GOVERNOR_MODE_ENABLE_PLG, &mysql_send_governor,
-    				debug_mode)) {
+	if (is_plugin_version) {
+		if (db_mysql_exec_query(QUERY_GOVERNOR_MODE_ENABLE_PLG,
+				&mysql_send_governor, debug_mode)) {
 
-    	    	WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-    			"Can't execute sql request. ENABLE_GOVERNOR_PLG",
-    			data_cfg.log_mode);
-
-    	}
-    	if (db_mysql_exec_query(QUERY_GOVERNOR_RECON_LVE_PLG2, &mysql_send_governor,
-    	    	    				debug_mode)) {
-
-    	   		WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-    			"Can't execute sql request. ENABLE_GOVERNOR_SECOND",
-    			data_cfg.log_mode);
-
-    	}
-    } else {
-    	if (db_mysql_exec_query(QUERY_GOVERNOR_MODE_ENABLE, &mysql_send_governor,
-			debug_mode)) {
-
-    		WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-				"Can't execute sql request. ENABLE_GOVERNOR",
-				data_cfg.log_mode);
+			WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
+					"Can't execute sql request. ENABLE_GOVERNOR_PLG",
+					data_cfg.log_mode);
 
 		}
-    }
-    if(mysql_send_governor){
-    	res = (*_mysql_store_result)(mysql_send_governor);
-    	(*_mysql_free_result)(res);
-    }
+		if (db_mysql_exec_query(QUERY_GOVERNOR_RECON_LVE_PLG2,
+				&mysql_send_governor, debug_mode)) {
+
+			WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
+					"Can't execute sql request. ENABLE_GOVERNOR_SECOND",
+					data_cfg.log_mode);
+
+		}
+	} else {
+		if (db_mysql_exec_query(QUERY_GOVERNOR_MODE_ENABLE,
+				&mysql_send_governor, debug_mode)) {
+
+			WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
+					"Can't execute sql request. ENABLE_GOVERNOR",
+					data_cfg.log_mode);
+
+		}
+	}
+	if (mysql_send_governor) {
+		res = (*_mysql_store_result)(mysql_send_governor);
+		(*_mysql_free_result)(res);
+	}
 }
 
 void governor_enable_reconn(MODE_TYPE debug_mode) {
 	char buffer[_DBGOVERNOR_BUFFER_2048];
 	MYSQL_RES *res;
-    struct governor_config data_cfg;
-    get_config_data( &data_cfg );
+	struct governor_config data_cfg;
+	get_config_data(&data_cfg);
 
-    if(is_plugin_version){
-    	if (db_mysql_exec_query(QUERY_GOVERNOR_MODE_ENABLE_RECON_PLG, &mysql_send_governor,
-    				debug_mode)) {
-
-    		WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-    			"Can't execute sql request. ENABLE_GOVERNOR",
-    			data_cfg.log_mode);
-
-    	}
-    	if (db_mysql_exec_query(QUERY_GOVERNOR_RECON_LVE_PLG2, &mysql_send_governor,
-    	    				debug_mode)) {
-
-    		WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-    			"Can't execute sql request. ENABLE_GOVERNOR_SECOND",
-    			data_cfg.log_mode);
-
-    	}
-    } else {
-    	if (db_mysql_exec_query(QUERY_GOVERNOR_MODE_ENABLE_RECON, &mysql_send_governor,
-			debug_mode)) {
+	if (is_plugin_version) {
+		if (db_mysql_exec_query(QUERY_GOVERNOR_MODE_ENABLE_RECON_PLG,
+				&mysql_send_governor, debug_mode)) {
 
 			WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-				"Can't execute sql request. ENABLE_GOVERNOR",
-				data_cfg.log_mode);
+					"Can't execute sql request. ENABLE_GOVERNOR",
+					data_cfg.log_mode);
 
 		}
-    }
-    if(mysql_send_governor){
-    	res = (*_mysql_store_result)(mysql_send_governor);
-    	(*_mysql_free_result)(res);
-    }
+		if (db_mysql_exec_query(QUERY_GOVERNOR_RECON_LVE_PLG2,
+				&mysql_send_governor, debug_mode)) {
+
+			WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
+					"Can't execute sql request. ENABLE_GOVERNOR_SECOND",
+					data_cfg.log_mode);
+
+		}
+	} else {
+		if (db_mysql_exec_query(QUERY_GOVERNOR_MODE_ENABLE_RECON,
+				&mysql_send_governor, debug_mode)) {
+
+			WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
+					"Can't execute sql request. ENABLE_GOVERNOR",
+					data_cfg.log_mode);
+
+		}
+	}
+	if (mysql_send_governor) {
+		res = (*_mysql_store_result)(mysql_send_governor);
+		(*_mysql_free_result)(res);
+	}
 }
 
 void governor_enable_lve(MODE_TYPE debug_mode) {
 	char buffer[_DBGOVERNOR_BUFFER_2048];
 	MYSQL_RES *res;
-    struct governor_config data_cfg;
-    get_config_data( &data_cfg );
+	struct governor_config data_cfg;
+	get_config_data(&data_cfg);
 
-    if(is_plugin_version){
-    	if (db_mysql_exec_query(QUERY_GOVERNOR_MODE_ENABLE_LVE_PLG, &mysql_send_governor,
-    			debug_mode)) {
+	if (is_plugin_version) {
+		if (db_mysql_exec_query(QUERY_GOVERNOR_MODE_ENABLE_LVE_PLG,
+				&mysql_send_governor, debug_mode)) {
 
-    		WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-    			"Can't execute sql request. ENABLE_GOVERNOR",
-    			data_cfg.log_mode);
-
-    	}
-    	if (db_mysql_exec_query(QUERY_GOVERNOR_RECON_LVE_PLG2, &mysql_send_governor,
-    	    	    				debug_mode)) {
-
-    		WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-    			"Can't execute sql request. ENABLE_GOVERNOR_SECOND",
-    			data_cfg.log_mode);
-
-    	}
-    } else {
-    	if (db_mysql_exec_query(QUERY_GOVERNOR_MODE_ENABLE_LVE, &mysql_send_governor,
-			debug_mode)) {
-
-    		WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-				"Can't execute sql request. ENABLE_GOVERNOR",
-				data_cfg.log_mode);
+			WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
+					"Can't execute sql request. ENABLE_GOVERNOR",
+					data_cfg.log_mode);
 
 		}
-    }
-    if(mysql_send_governor){
-    	res = (*_mysql_store_result)(mysql_send_governor);
-    	(*_mysql_free_result)(res);
-    }
+		if (db_mysql_exec_query(QUERY_GOVERNOR_RECON_LVE_PLG2,
+				&mysql_send_governor, debug_mode)) {
+
+			WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
+					"Can't execute sql request. ENABLE_GOVERNOR_SECOND",
+					data_cfg.log_mode);
+
+		}
+	} else {
+		if (db_mysql_exec_query(QUERY_GOVERNOR_MODE_ENABLE_LVE,
+				&mysql_send_governor, debug_mode)) {
+
+			WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
+					"Can't execute sql request. ENABLE_GOVERNOR",
+					data_cfg.log_mode);
+
+		}
+	}
+	if (mysql_send_governor) {
+		res = (*_mysql_store_result)(mysql_send_governor);
+		(*_mysql_free_result)(res);
+	}
 }
 
 void governor_enable_reconn_lve(MODE_TYPE debug_mode) {
 	char buffer[_DBGOVERNOR_BUFFER_2048];
 	MYSQL_RES *res;
-    struct governor_config data_cfg;
-    get_config_data( &data_cfg );
+	struct governor_config data_cfg;
+	get_config_data(&data_cfg);
 
-    if(is_plugin_version){
-    	if (db_mysql_exec_query(QUERY_GOVERNOR_MODE_ENABLE_RECON_LVE_PLG, &mysql_send_governor,
-    		debug_mode)) {
-
-    		WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-    			"Can't execute sql request. ENABLE_GOVERNOR",
-    			data_cfg.log_mode);
-
-    	}
-    	if (db_mysql_exec_query(QUERY_GOVERNOR_RECON_LVE_PLG2, &mysql_send_governor,
-    	    	    				debug_mode)) {
-
-    		WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-    		"Can't execute sql request. ENABLE_GOVERNOR_SECOND",
-    		data_cfg.log_mode);
-
-    	}
-    } else {
-    	if (db_mysql_exec_query(QUERY_GOVERNOR_MODE_ENABLE_RECON_LVE, &mysql_send_governor,
-			debug_mode)) {
+	if (is_plugin_version) {
+		if (db_mysql_exec_query(QUERY_GOVERNOR_MODE_ENABLE_RECON_LVE_PLG,
+				&mysql_send_governor, debug_mode)) {
 
 			WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-				"Can't execute sql request. ENABLE_GOVERNOR",
-				data_cfg.log_mode);
+					"Can't execute sql request. ENABLE_GOVERNOR",
+					data_cfg.log_mode);
 
 		}
-    }
-    if(mysql_send_governor){
-    	res = (*_mysql_store_result)(mysql_send_governor);
-    	(*_mysql_free_result)(res);
-    }
+		if (db_mysql_exec_query(QUERY_GOVERNOR_RECON_LVE_PLG2,
+				&mysql_send_governor, debug_mode)) {
+
+			WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
+					"Can't execute sql request. ENABLE_GOVERNOR_SECOND",
+					data_cfg.log_mode);
+
+		}
+	} else {
+		if (db_mysql_exec_query(QUERY_GOVERNOR_MODE_ENABLE_RECON_LVE,
+				&mysql_send_governor, debug_mode)) {
+
+			WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
+					"Can't execute sql request. ENABLE_GOVERNOR",
+					data_cfg.log_mode);
+
+		}
+	}
+	if (mysql_send_governor) {
+		res = (*_mysql_store_result)(mysql_send_governor);
+		(*_mysql_free_result)(res);
+	}
 }
 
 //KILL CONNECTION request
@@ -671,9 +683,10 @@ void kill_connection(char *user_name, MODE_TYPE debug_mode) {
 	char sql_buffer[_DBGOVERNOR_BUFFER_8192];
 	char user_name_alloc[USERNAMEMAXLEN * 2];
 	MYSQL_RES *res;
-    struct governor_config data_cfg;
-    get_config_data( &data_cfg );
-    if(mysql_do_command==NULL) return;
+	struct governor_config data_cfg;
+	get_config_data(&data_cfg);
+	if (mysql_do_command == NULL)
+		return;
 
 	(*_mysql_real_escape_string)(mysql_do_command, user_name_alloc, user_name,
 			strlen(user_name));
@@ -700,8 +713,8 @@ int db_connect(const char *host, const char *user_name,
 		const char *user_password, const char *db_name, int argc, char *argv[],
 		MODE_TYPE debug_mode) {
 	char buffer[_DBGOVERNOR_BUFFER_2048];
-    struct governor_config data_cfg;
-    get_config_data( &data_cfg );
+	struct governor_config data_cfg;
+	get_config_data(&data_cfg);
 
 	//Обнулим глобальные переменные доступа
 	strcpy(global_user_name, "");
@@ -732,10 +745,10 @@ int db_connect(const char *host, const char *user_name,
 			return -1;
 		} else {
 			if (db_connect_common(&mysql_do_kill, host, user_name,
-							user_password, db_name, debug_mode, argc, argv, 0) < 0) {
-					WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-							"Kill connection error",
-							data_cfg.log_mode);
+					user_password, db_name, debug_mode, argc, argv, 0) < 0) {
+				WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
+						"Kill connection error",
+						data_cfg.log_mode);
 				return -1;
 			}
 		}
@@ -750,8 +763,8 @@ int check_mysql_version(MODE_TYPE debug_mode) {
 	MYSQL_ROW row;
 	unsigned long *lengths;
 	char buffer[_DBGOVERNOR_BUFFER_2048], outbuffer[_DBGOVERNOR_BUFFER_2048];
-    struct governor_config data_cfg;
-    get_config_data( &data_cfg );
+	struct governor_config data_cfg;
+	get_config_data(&data_cfg);
 
 	if (mysql_send_governor != NULL) {
 		if (db_mysql_exec_query(QUERY_GET_SERVER_INFO, &mysql_send_governor,
@@ -766,24 +779,28 @@ int check_mysql_version(MODE_TYPE debug_mode) {
 		row = (*_mysql_fetch_row)(res);
 		if (row) {
 			lengths = (*_mysql_fetch_lengths)(res);
-			db_mysql_get_string(buffer, row[0], lengths[0], _DBGOVERNOR_BUFFER_2048);
+			db_mysql_get_string(buffer, row[0], lengths[0],
+					_DBGOVERNOR_BUFFER_2048);
 			if (strstr(buffer, "-cll-lve")) {
-				snprintf(outbuffer, _DBGOVERNOR_BUFFER_2048 - 1, "MySQL version correct %s", buffer);
+				snprintf(outbuffer, _DBGOVERNOR_BUFFER_2048 - 1,
+						"MySQL version correct %s", buffer);
 				WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
 						outbuffer,
 						data_cfg.log_mode);
 				(*_mysql_free_result)(res);
-				if(strstr(buffer, "-cll-lve-plg")){
+				if (strstr(buffer, "-cll-lve-plg")) {
 					is_plugin_version = 1;
-					snprintf(outbuffer, _DBGOVERNOR_BUFFER_2048 - 1, "Governor with plugin mode enabled");
-								WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-								outbuffer,
-								data_cfg.log_mode);
+					snprintf(outbuffer, _DBGOVERNOR_BUFFER_2048 - 1,
+							"Governor with plugin mode enabled");
+					WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
+							outbuffer,
+							data_cfg.log_mode);
 				}
 				return 1;
 			} else {
 				snprintf(
-						outbuffer, _DBGOVERNOR_BUFFER_2048 - 1,
+						outbuffer,
+						_DBGOVERNOR_BUFFER_2048 - 1,
 						"Update your MySQL to CLL version from repo.cloudlinux.com. Current is %s",
 						buffer);
 				WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
@@ -809,7 +826,7 @@ int check_mysql_version(MODE_TYPE debug_mode) {
 	}
 }
 
-char *get_work_user(){
+char *get_work_user() {
 	return work_user;
 }
 
@@ -819,8 +836,8 @@ void lve_connection(char *user_name, MODE_TYPE debug_mode) {
 	char sql_buffer[_DBGOVERNOR_BUFFER_8192];
 	char user_name_alloc[USERNAMEMAXLEN * 2];
 	MYSQL_RES *res;
-    struct governor_config data_cfg;
-    get_config_data( &data_cfg );
+	struct governor_config data_cfg;
+	get_config_data(&data_cfg);
 
 	(*_mysql_real_escape_string)(mysql_do_command, user_name_alloc, user_name,
 			strlen(user_name));
@@ -844,125 +861,125 @@ void lve_connection(char *user_name, MODE_TYPE debug_mode) {
 }
 
 //LOGGER USER QUERIES
-int create_dir()
-{
-  char tek_day_dir[ 11 ];
-  GDate *date = g_date_new();
-  const time_t timestamp = time( NULL );
-  g_date_set_time_t( date, timestamp );
+int create_dir() {
+	char tek_day_dir[11];
+	GDate *date = g_date_new();
+	const time_t timestamp = time(NULL);
+	g_date_set_time_t(date, timestamp);
 
-  if( g_mkdir_with_parents( PATH_TO_LOG_USER_QUERIES, 0755 ) == 0 )
-  {
-    if( g_chdir( PATH_TO_LOG_USER_QUERIES ) == 0 )
-    {
-      sprintf( tek_day_dir, "%d-%d-%d", g_date_get_year( date ), g_date_get_month( date ), g_date_get_day( date ) );
-      if( g_mkdir_with_parents( tek_day_dir, 0755 ) == 0 )
-      {
-        g_date_free( date );
-        if( g_chdir( tek_day_dir ) == 0 ) return 1;
-      }
-    }
-  }
-  g_date_free( date );
-  return 0;
+	if (g_mkdir_with_parents(PATH_TO_LOG_USER_QUERIES, 0755) == 0) {
+		if (g_chdir(PATH_TO_LOG_USER_QUERIES) == 0) {
+			sprintf(tek_day_dir, "%d-%d-%d", g_date_get_year(date),
+					g_date_get_month(date), g_date_get_day(date));
+			if (g_mkdir_with_parents(tek_day_dir, 0755) == 0) {
+				g_date_free(date);
+				if (g_chdir(tek_day_dir) == 0)
+					return 1;
+			}
+		}
+	}
+	g_date_free(date);
+	return 0;
 }
 
-void log_user_queries( char *user_name, MODE_TYPE debug_mode )
-{
-  char buffer[ _DBGOVERNOR_BUFFER_8192 ];
-  char sql_buffer[ _DBGOVERNOR_BUFFER_8192 ];
-  char user_name_alloc[ USERNAMEMAXLEN * 2 ];
-  char file_name[ USERNAMEMAXLEN + 1 + 10 ];
+void log_user_queries(char *user_name, MODE_TYPE debug_mode) {
+	char buffer[_DBGOVERNOR_BUFFER_8192];
+	char sql_buffer[_DBGOVERNOR_BUFFER_8192];
+	char user_name_alloc[USERNAMEMAXLEN * 2];
+	char file_name[USERNAMEMAXLEN + 1 + 10];
 
-  unsigned long counts;
-  unsigned long *lengths;
-  MYSQL_RES *res;
-  MYSQL_ROW row;
-  FILE *log_queries;
-  const time_t timestamp = time( NULL );
-  struct governor_config data_cfg;
-  get_config_data( &data_cfg );
+	unsigned long counts;
+	unsigned long *lengths;
+	MYSQL_RES *res;
+	MYSQL_ROW row;
+	FILE *log_queries;
+	const time_t timestamp = time(NULL);
+	struct governor_config data_cfg;
+	get_config_data(&data_cfg);
 
-  if(mysql_do_command == NULL) return;
+	if (mysql_do_command == NULL)
+		return;
 
-  (*_mysql_real_escape_string)( mysql_do_command, user_name_alloc, user_name, strlen( user_name ) );
-  snprintf( sql_buffer, _DBGOVERNOR_BUFFER_8192, QUERY_GET_PROCESSLIST_INFO );
-  if( db_mysql_exec_query( sql_buffer, &mysql_do_command, debug_mode ) )
-  {
-    WRITE_LOG( NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048, "Get show processlist failed", data_cfg.log_mode );
-    return;
-  }
+	(*_mysql_real_escape_string)(mysql_do_command, user_name_alloc, user_name,
+			strlen(user_name));
+	snprintf(sql_buffer, _DBGOVERNOR_BUFFER_8192, QUERY_GET_PROCESSLIST_INFO);
+	if (db_mysql_exec_query(sql_buffer, &mysql_do_command, debug_mode)) {
+		WRITE_LOG( NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048, "Get show processlist failed", data_cfg.log_mode );
+		return;
+	}
 
-  res = (*_mysql_store_result)( mysql_do_command );
-  counts = (*_mysql_num_rows)( res );
-  int tek_r = 0;
+	res = (*_mysql_store_result)(mysql_do_command);
+	counts = (*_mysql_num_rows)(res);
+	int tek_r = 0;
 
-  if( create_dir() && counts > 0 )
-  {
-    snprintf( file_name, USERNAMEMAXLEN + 1 + 10, "%s.%lld", user_name, timestamp );
-    log_queries = fopen( file_name, "w" );
-    if(log_queries!=NULL){
-    while( ( row = (*_mysql_fetch_row)( res ) ) )
-    {
-         if( strcmp( row[ 1 ], user_name ) == 0 )
-        {
-          lengths = (*_mysql_fetch_lengths)( res );
-          db_mysql_get_string( buffer, row[ 7 ], lengths[ 7 ], _DBGOVERNOR_BUFFER_8192 );
-          fprintf( log_queries, "%s\n", buffer );
-        }
+	if (create_dir() && counts > 0) {
+		snprintf(file_name, USERNAMEMAXLEN + 1 + 10, "%s.%lld", user_name,
+				timestamp);
+		log_queries = fopen(file_name, "w");
+		if (log_queries != NULL) {
+			while ((row = (*_mysql_fetch_row)(res))) {
+				if (strcmp(row[1], user_name) == 0) {
+					lengths = (*_mysql_fetch_lengths)(res);
+					db_mysql_get_string(buffer, row[7], lengths[7],
+							_DBGOVERNOR_BUFFER_8192);
+					fprintf(log_queries, "%s\n", buffer);
+				}
 
-    }
-    fclose( log_queries );
-  } else {
-	  (*_mysql_free_result)( res );
-	  WRITE_LOG( NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,  "Can't open file %s", data_cfg.log_mode, file_name );
-	  return;
-  }
-  }
-  (*_mysql_free_result)( res );
+			}
+			fclose(log_queries);
+		} else {
+			(*_mysql_free_result)(res);
+			WRITE_LOG( NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048, "Can't open file %s", data_cfg.log_mode, file_name );
+			return;
+		}
+	}
+	(*_mysql_free_result)(res);
 }
 
-MYSQL **get_mysql_connect()
-{
-  return &mysql_do_kill;
+MYSQL **get_mysql_connect() {
+	return &mysql_do_kill;
 }
 
-int activate_plugin( MODE_TYPE debug_mode ){
-	if(is_plugin_version){
+int activate_plugin(MODE_TYPE debug_mode) {
+	if (is_plugin_version) {
 		int is_founf_plg = 0;
 		MYSQL_RES *res;
 		MYSQL_ROW row;
 		unsigned long *lengths;
-		char buffer[_DBGOVERNOR_BUFFER_2048], outbuffer[_DBGOVERNOR_BUFFER_2048];
-	    struct governor_config data_cfg;
-	    get_config_data( &data_cfg );
+		char buffer[_DBGOVERNOR_BUFFER_2048],
+				outbuffer[_DBGOVERNOR_BUFFER_2048];
+		struct governor_config data_cfg;
+		get_config_data(&data_cfg);
 
 		if (mysql_send_governor != NULL) {
-			if (db_mysql_exec_query(QUERY_GET_PLUGIN_INFO, &mysql_send_governor,
-					debug_mode)) {
+			if (db_mysql_exec_query(QUERY_GET_PLUGIN_INFO,
+					&mysql_send_governor, debug_mode)) {
 				WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
 						"Get mysql plugin request failed",
 						data_cfg.log_mode);
 				return 0;
 			}
 			res = (*_mysql_store_result)(mysql_send_governor);
-			while( ( row = (*_mysql_fetch_row)( res ) ) ){
+			while ((row = (*_mysql_fetch_row)(res))) {
 				lengths = (*_mysql_fetch_lengths)(res);
-				db_mysql_get_string(buffer, row[0], lengths[0], _DBGOVERNOR_BUFFER_2048);
-				if(!strncasecmp(buffer, "GOVERNOR", _DBGOVERNOR_BUFFER_2048)){
+				db_mysql_get_string(buffer, row[0], lengths[0],
+						_DBGOVERNOR_BUFFER_2048);
+				if (!strncasecmp(buffer, "GOVERNOR", _DBGOVERNOR_BUFFER_2048)) {
 					is_founf_plg = 1;
 				}
 			}
 			(*_mysql_free_result)(res);
-			if(!is_founf_plg){
-				if (db_mysql_exec_query(QUERY_SET_PLUGIN_INFO, &mysql_send_governor,
-									debug_mode)) {
-					if(!strstr((char *) (*_mysql_error)(mysql_send_governor),"Function 'governor' already exists")){}
+			if (!is_founf_plg) {
+				if (db_mysql_exec_query(QUERY_SET_PLUGIN_INFO,
+						&mysql_send_governor, debug_mode)) {
+					if (!strstr((char *) (*_mysql_error)(mysql_send_governor),
+							"Function 'governor' already exists")) {
+					}
 					{
-								WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
+						WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
 								"Set mysql plugin request failed",
 								data_cfg.log_mode);
-								return 0;
+						return 0;
 					}
 				}
 				res = (*_mysql_store_result)(mysql_do_command);

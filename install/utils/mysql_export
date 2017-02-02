@@ -37,25 +37,25 @@ vercomp() {
 get_limit(){
   return
   if [ -e /usr/sbin/lvectl ]; then
-	VERS=`/usr/sbin/lvectl version | cut -d"-" -f1`
+	VERS=$(/usr/sbin/lvectl version | cut -d"-" -f1)
 	vercomp "1.4" "$VERS"
 	VERS_GET=$?
 	if [ "$VERS_GET" -eq 1 ];then
-    	    LVE_VER=`/usr/sbin/lvectl --lve-version`
+    	    LVE_VER=$(/usr/sbin/lvectl --lve-version)
     	    if [ "$LVE_VER" == "4" ]; then
-        	io_limit=`/usr/sbin/lvectl limits 3 | awk 'NR == 2' | awk '{print $6}'`
+        	io_limit=$(/usr/sbin/lvectl limits 3 | awk 'NR == 2' | awk '{print $6}')
     	    else
-        	io_limit=`/usr/sbin/lvectl limits 3 | awk 'NR == 2' | awk '{print $8}'`
+        	io_limit=$(/usr/sbin/lvectl limits 3 | awk 'NR == 2' | awk '{print $8}')
     	    fi
-    	    cpu_limit=`/usr/sbin/lvectl limits 3 | awk 'NR == 2' | awk '{print $2}'`
+    	    cpu_limit=$(/usr/sbin/lvectl limits 3 | awk 'NR == 2' | awk '{print $2}')
 	else
-	    LVE_VER=`/usr/sbin/lvectl --lve-version`
+	    LVE_VER=$(/usr/sbin/lvectl --lve-version)
     	    if [ "$LVE_VER" == "4" ]; then
-        	io_limit=`/usr/sbin/lvectl limits 3 | awk 'NR == 2' | awk '{print $6}'`
+        	io_limit=$(/usr/sbin/lvectl limits 3 | awk 'NR == 2' | awk '{print $6}')
     	    else
-        	io_limit=`/usr/sbin/lvectl limits 3 | awk 'NR == 2' | awk '{print $8}'`
+        	io_limit=$(/usr/sbin/lvectl limits 3 | awk 'NR == 2' | awk '{print $8}')
     	    fi
-    	    cpu_limit=`/usr/sbin/lvectl limits 3 | awk 'NR == 2' | awk '{print $2}'`
+    	    cpu_limit=$(/usr/sbin/lvectl limits 3 | awk 'NR == 2' | awk '{print $2}')
 	fi
   fi
 }
@@ -63,7 +63,7 @@ get_limit(){
 set_big_limit(){
     return
     if [ -e /usr/sbin/lvectl ]; then
-	VERS=`/usr/sbin/lvectl version | cut -d"-" -f1`
+	VERS=$(/usr/sbin/lvectl version | cut -d"-" -f1)
 	vercomp "1.4" "$VERS"
 	VERS_GET=$?
 	if [ "$VERS_GET" -eq 1 ];then
@@ -71,7 +71,7 @@ set_big_limit(){
 		/usr/sbin/lvectl set 3 --cpu=100 --io=0 --save-all-parameters
 	    fi
 	else
-	    proc_numb=`cat /proc/cpuinfo | grep processor | wc -l`
+	    proc_numb=$(cat /proc/cpuinfo | grep processor | wc -l)
 	    let "max_limit = $proc_numb * 100";
 	    /usr/sbin/lvectl set 3 --speed=$max_limit% --io=0 --save-all-parameters
 	fi
@@ -81,20 +81,20 @@ set_big_limit(){
 set_old_limit(){
     return
     if [ -e /usr/sbin/lvectl ]; then
-	VERS=`/usr/sbin/lvectl version | cut -d"-" -f1`
+	VERS=$(/usr/sbin/lvectl version | cut -d"-" -f1)
 	vercomp "1.4" "$VERS"
 	VERS_GET=$?
 	if [ "$VERS_GET" -eq 1 ];then
 	    if [ -z "$io_limit" ]; then
-		/usr/sbin/lvectl set 3 --cpu=$cpu_limit --save-all-parameters
+		/usr/sbin/lvectl set 3 --cpu="$cpu_limit" --save-all-parameters
 	    else
-		/usr/sbin/lvectl set 3 --cpu=$cpu_limit --io=$io_limit --save-all-parameters
+		/usr/sbin/lvectl set 3 --cpu="$cpu_limit" --io="$io_limit" --save-all-parameters
 	    fi
 	else
 	    if [ -z "$io_limit" ]; then
-		/usr/sbin/lvectl set 3 --speed=$cpu_limit% --save-all-parameters
+		/usr/sbin/lvectl set 3 --speed="$cpu_limit"% --save-all-parameters
 	    else
-		/usr/sbin/lvectl set 3 --speed=$cpu_limit% --io=$io_limit --save-all-parameters
+		/usr/sbin/lvectl set 3 --speed="$cpu_limit"% --io="$io_limit" --save-all-parameters
 	    fi
 	fi
     fi
