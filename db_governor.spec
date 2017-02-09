@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   14
+%define g_release   15
 %define g_key_library 7
 
 %if %{undefined _unitdir}
@@ -175,41 +175,33 @@ if [ $1 -eq 2 ] ; then
             touch /etc/container/dbgovernor-libcheck
             echo "U" > /etc/container/dbgovernor-libcheck
             echo "Stop MySQL for safe installation"
-%if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
-            if [ -e /usr/lib/systemd/system/mysql.service ]; then
-                /bin/systemctl stop mysql.service
-            elif [ -e /usr/lib/systemd/system/mysqld.service ]; then
-                /bin/systemctl stop mysqld.service
-             else
-                /bin/systemctl stop mysqld.service
-            fi
-%else
-            if [ -e /etc/init.d/mysql ]; then
+            if [ -e /usr/lib/systemd/system/mysql.service -a -e /usr/bin/systemctl ]; then
+                systemctl stop mysql.service
+            elif [ -e /usr/lib/systemd/system/mysqld.service -a -e /usr/bin/systemctl ]; then
+                systemctl stop mysqld.service
+            elif [ -e /usr/lib/systemd/system/mariadb.service -a -e /usr/bin/systemctl ]; then
+                systemctl stop mariadb.service
+            elif [ -e /etc/init.d/mysql ]; then
                 /etc/init.d/mysql stop
-             elif [ -e /etc/init.d/mysqld ]; then
+            elif [ -e /etc/init.d/mysqld ]; then
                 /etc/init.d/mysqld stop
             fi
-%endif
         fi
    else
         touch /etc/container/dbgovernor-libcheck
         echo "U" > /etc/container/dbgovernor-libcheck
         echo "Stop MySQL for safe installation"
-%if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
-            if [ -e /usr/lib/systemd/system/mysql.service ]; then
-                /bin/systemctl stop mysql.service
-            elif [ -e /usr/lib/systemd/system/mysqld.service ]; then
-                /bin/systemctl stop mysqld.service
-             else
-                /bin/systemctl stop mysqld.service
-            fi
-%else
-            if [ -e /etc/init.d/mysql ]; then
-                /etc/init.d/mysql stop
-             elif [ -e /etc/init.d/mysqld ]; then
-                /etc/init.d/mysqld stop
-            fi
-%endif
+        if [ -e /usr/lib/systemd/system/mysql.service -a -e /usr/bin/systemctl ]; then
+            systemctl stop mysql.service
+        elif [ -e /usr/lib/systemd/system/mysqld.service -a -e /usr/bin/systemctl ]; then
+            systemctl stop mysqld.service
+        elif [ -e /usr/lib/systemd/system/mariadb.service -a -e /usr/bin/systemctl ]; then
+            systemctl stop mariadb.service
+        elif [ -e /etc/init.d/mysql ]; then
+            /etc/init.d/mysql stop
+        elif [ -e /etc/init.d/mysqld ]; then
+            /etc/init.d/mysqld stop
+        fi
    fi
 fi
 
@@ -223,7 +215,7 @@ fi
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
 if [ $1 = 1 ]; then
     # Initial installation
-    /bin/systemctl daemon-reload >/dev/null 2>&1 || :
+    systemctl daemon-reload >/dev/null 2>&1 || :
 fi
 %else
 if [ $1 = 1 ]; then
@@ -236,8 +228,8 @@ fi
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
 if [ $1 -eq 0 ]; then
     # Package removal, not upgrade
-    /bin/systemctl --no-reload disable db_governor.service >/dev/null 2>&1 || :
-    /bin/systemctl stop db_governor.service >/dev/null 2>&1 || :
+    systemctl --no-reload disable db_governor.service >/dev/null 2>&1 || :
+    systemctl stop db_governor.service >/dev/null 2>&1 || :
 fi
 %else
 if [ $1 -eq 0 ]; then
@@ -271,48 +263,44 @@ gKEY=`echo -n "%{g_key_library}"`
 if [ -e "/etc/container/dbgovernor-libcheck" ]; then
     rKEY=`cat /etc/container/dbgovernor-libcheck | tr -d '\n'`
         if [ "$rKEY" == "U" ]; then
-    	     echo "Start MySQL for safe installation"
-%if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
-            if [ -e /usr/lib/systemd/system/mysql.service ]; then
-                /bin/systemctl status mysql.service
+            echo "Start MySQL for safe installation"
+            if [ -e /usr/lib/systemd/system/mysql.service -a -e /usr/bin/systemctl ]; then
+                systemctl status mysql.service
                 if [ "$?" != "0" ]; then
-                    /bin/systemctl start mysql.service
+                    systemctl start mysql.service
                 else
                     echo "MySQL already started"
                 fi
-            elif [ -e /usr/lib/systemd/system/mysqld.service ]; then
-                /bin/systemctl status mysqld.service
+            elif [ -e /usr/lib/systemd/system/mysqld.service -a -e /usr/bin/systemctl ]; then
+                systemctl status mysqld.service
                 if [ "$?" != "0" ]; then
-                    /bin/systemctl start mysqld.service
+                    systemctl start mysqld.service
                 else
                     echo "MySQL already started"
                 fi
-             else
-                /bin/systemctl status mysqld.service
+            elif [ -e /usr/lib/systemd/system/mariadb.service -a -e /usr/bin/systemctl ]; then
+                systemctl status mariadb.service
                 if [ "$?" != "0" ]; then
-                    /bin/systemctl start mysqld.service
+                    systemctl start mariadb.service
                 else
                     echo "MySQL already started"
                 fi
-             fi  
-%else
-             if [ -e /etc/init.d/mysql ]; then
+            elif [ -e /etc/init.d/mysql ]; then
                 /etc/init.d/mysql status
                 if [ "$?" != "0" ]; then
                     /etc/init.d/mysql start
                 else
                     echo "MySQL already started"
                 fi
-             elif [ -e /etc/init.d/mysqld ]; then
+            elif [ -e /etc/init.d/mysqld ]; then
                 /etc/init.d/mysqld status
                 if [ "$?" != "0" ]; then
                     /etc/init.d/mysqld start
                 else
                     echo "MySQL already started"
                 fi
-             fi  
-%endif
-             echo "$gKEY" > /etc/container/dbgovernor-libcheck
+            fi
+            echo "$gKEY" > /etc/container/dbgovernor-libcheck
         fi
 fi
 
@@ -330,20 +318,6 @@ fi
 echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
 echo "!!!Before making any changing with database make sure that you have reserve copy of users data!!!"
 echo "Instruction: how to create whole database backup - http://docs.cloudlinux.com/index.html?backing_up_mysql.html"
-
-%triggerin -- cl-MySQL55-server
-%if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
-if [ -e /usr/share/lve/dbgovernor/mysqlgovernor.py ]; then
-    /usr/share/lve/dbgovernor/mysqlgovernor.py --correct-cl7-service-name
-fi
-%endif
-
-%triggerin -- cl-MySQL56-server
-%if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
-if [ -e /usr/share/lve/dbgovernor/mysqlgovernor.py ]; then
-    /usr/share/lve/dbgovernor/mysqlgovernor.py --correct-cl7-service-name
-fi
-%endif
 
 %files
 %defattr(-,root,root)
