@@ -342,6 +342,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Fri Feb 10 2017 Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-15
+- Fixed restarting MariaDB services for CL7 on governor update
+
 * Thu Feb 02 2017 Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-14
 - MYSQLG-152: Use default values for "script" parameters in governor's config in case when script="". Now governor report about error and stop to work.
 
