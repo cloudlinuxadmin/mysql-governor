@@ -39,6 +39,11 @@
 #include "slow_queries.h"
 #include "version.h"
 
+#ifdef SYSTEMD_FLAG
+#include <systemd/sd-daemon.h>
+#endif
+
+
 #define BUF_SIZE_III 100
 
 #define MACRO_CHECK_ZERO(x) if (!st->x._current) WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048, "WARNING!!! default " # x "  = 0", get_config_log_mode())
@@ -382,43 +387,15 @@ int main(int argc, char *argv[]) {
 	printf("governor-mysql starting error\n");  
         exit(-1);
       }
-/*
-    get_config_data( &data_cfg );
-	// init global structures 
-	if (!config_init(CONFIG_PATH)) {
-		fprintf(stderr, "Unable to read config file: %s\n", CONFIG_PATH);
-		fflush(stderr);
-		exit(EXIT_FAILURE);
-	}
-	// Set signal handlers
-	if (install_signals_handlers() < 0) {
-		fprintf(stderr, "Can't install signal catcher\n");
-		fflush(stderr);
-		config_free();
-		exit(EXIT_FAILURE);
-	}
 
-	// Open error log
-	if (open_log(data_cfg.log)) {
-		fprintf(stderr, "Can't open log file\n");
-		fflush(stderr);
-		config_free();
-		exit(EXIT_FAILURE);
-	}
-	print_config(&data_cfg);
-
-	check_for_zero(&data_cfg.default_limit);
-	// Open restrict log if exists
-	if (data_cfg.restrict_log)
-		open_restrict_log(data_cfg.restrict_log);
-*/
 #ifndef TEST
   config_destroy_lock();
   initGovernor();
   get_config_data( &data_cfg );
 
 #ifdef SYSTEMD_FLAG
-  becameDaemon( 1 );
+  sd_notify (0, "READY=1");
+  becameDaemon( 0 );
 #else
   if( data_cfg.daemon_monitor )
   {

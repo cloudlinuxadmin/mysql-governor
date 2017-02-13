@@ -33,6 +33,10 @@
 
 #include "commands.h"
 
+#ifdef SYSTEMD_FLAG
+#include <systemd/sd-daemon.h>
+#endif
+
 void free_commands_list_send();
 
 static GList* command_list = NULL, *command_list_send = NULL;
@@ -305,6 +309,9 @@ void *send_governor(void *data) {
 		    governor_enable(data_cfg.log_mode);
         
 		sleep(60);
+#ifdef SYSTEMD_FLAG
+                sd_notify (0, "WATCHDOG=1");
+#endif
 	}
 	return NULL;
 }

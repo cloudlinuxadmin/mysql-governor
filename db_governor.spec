@@ -212,8 +212,8 @@ if [ $1 -gt 0 ] ; then
     fi
 fi
 
-%if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
-if [ $1 = 1 ]; then
+%if 0%{?rhel} >= 7
+if [ $1 -gt 0 ]; then
     # Initial installation
     systemctl daemon-reload >/dev/null 2>&1 || :
 fi
@@ -225,7 +225,7 @@ fi
 %endif
 
 %preun
-%if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
+%if 0%{?rhel} >= 7
 if [ $1 -eq 0 ]; then
     # Package removal, not upgrade
     systemctl --no-reload disable db_governor.service >/dev/null 2>&1 || :
@@ -249,7 +249,7 @@ rm -rf /%{_libdir}/liblve.so.1
 ln -s /%{_libdir}/liblve.so.0.9.0 /%{_libdir}/liblve.so.1
 /sbin/ldconfig
 
-%if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
+%if 0%{?rhel} >= 7
 if [ -e /usr/share/lve/dbgovernor/mysqlgovernor.py ]; then
     /usr/share/lve/dbgovernor/mysqlgovernor.py --correct-cl7-service-name
 fi
@@ -308,7 +308,7 @@ fi
 ldconfig
 
 if [ $1 -eq 0 ]; then
-%if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
+%if 0%{?rhel} >= 7
 /bin/systemctl daemon-reload >/dev/null 2>&1 || :
 /bin/systemctl restart db_governor.service >/dev/null 2>&1 || :
 %else
