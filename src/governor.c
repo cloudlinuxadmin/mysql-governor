@@ -170,6 +170,8 @@ void becameDaemon( int self_supporting ) {
 		break;
 	}
   }
+  
+#ifndef SYSTEMD_FLAG
 	/* Set session leader */
 	if (setsid() == -1) {
 		WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
@@ -182,7 +184,7 @@ void becameDaemon( int self_supporting ) {
 		fflush(stderr);
 		exit(EXIT_FAILURE);
 	}
-
+#endif
 	/* Create new daemon as session leader */
   if( self_supporting )
   {
@@ -394,8 +396,8 @@ int main(int argc, char *argv[]) {
   get_config_data( &data_cfg );
 
 #ifdef SYSTEMD_FLAG
-  sd_notify (0, "READY=1");
   becameDaemon( 0 );
+  sd_notify (0, "READY=1");
 #else
   if( data_cfg.daemon_monitor )
   {
