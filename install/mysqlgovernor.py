@@ -13,7 +13,8 @@ from clcommon import cpapi
 
 from modules import InstallManager, Storage
 from utilities import exec_command, bcolors, query_yes_no, \
-    correct_mysqld_service_for_cl7, set_debug, shadow_tracing, set_path_environ
+    correct_mysqld_service_for_cl7, set_debug, shadow_tracing, set_path_environ, \
+    check_mysqld_is_alive
 
 LOG_FILE_NAME = "/usr/share/lve/dbgovernor/governor_install.log"
 
@@ -119,10 +120,6 @@ def build_parser():
                         default=False)
     parser.add_argument("--clean-storage", help="Clean up storage",
                         dest="store_clean", action="store_true", default=False)
-    parser.add_argument("--correct-cl7-service-name",
-                        help="Remove /etc/init.d/mysql(d) "
-                             "if exists for CloudLinux 7",
-                        dest="cl7_correct", action="store_true", default=False)
     parser.add_argument("--output-commands",
                         help="Echo all commands executed by "
                              "governor's install script",
@@ -187,13 +184,7 @@ def main(argv):
 
         # check mysqld service status
         if manager.ALL_PACKAGES_NEW_NOT_DOWNLOADED == False and manager.DISABLED == False:
-            check_mysql = exec_command("ps -Af | grep -v grep | grep mysqld | "
-                                       "egrep -e 'datadir|--daemonize'",
-                                       True, silent=True)
-            check_mysqld = exec_command("/usr/bin/mysql -e \"select 1\" "
-                                        "2>&1 1>/dev/null", True, silent=True,
-                                        return_code=True)
-            if check_mysql or check_mysqld == "yes":
+            if check_mysqld_is_alive():
                 manager.save_installed_version()
                 print "Installation mysql for db_governor completed"
 
@@ -219,8 +210,6 @@ def main(argv):
         manager.update_user_map_file()
     elif opts.fix_cpanel_hooks:
         manager.install_mysql_beta_testing_hooks()
-    elif opts.fix_cpanel_cl_mysql:
-        manager.fix_cl7_mysql()
     elif opts.install_from_history:
         manager.install_from_history(opts.install_from_history)
     elif opts.show_previous_packages:

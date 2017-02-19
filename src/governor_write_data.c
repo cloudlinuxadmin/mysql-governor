@@ -446,6 +446,11 @@ int governor_init_lve() {
 	if (lve == NULL) {
 		return -1;
 	}
+	governor_init_users_list();
+	return 0;
+}
+
+int governor_init_users_list() {
 	init_bad_users_list_client();
 	return 0;
 }

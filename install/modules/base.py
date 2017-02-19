@@ -166,6 +166,7 @@ class InstallManager(object):
         self.remove_current_packages()
 
         correct_remove_notowned_mysql_service_names_cl7()
+        correct_remove_notowned_mysql_service_names_not_symlynks_cl7()
 
         # restore my.cnf, because removing of packages
         # renames /etc/my.cnf to /etc/my.cnf.rpmsave
@@ -220,10 +221,7 @@ class InstallManager(object):
 
         self._after_install_new_packages()
 
-        self.fix_cl7_mysql()
         self._ld_fix()
-
-        correct_remove_notowned_mysql_service_names_not_symlynks_cl7()
 
         return True
 
@@ -458,12 +456,6 @@ class InstallManager(object):
         """
         # self.set_fs_suid_dumpable()
         print "No need in fix"
-
-    def fix_cl7_mysql(self):
-        """
-        cPanel specific action
-        """
-        print "No need in MySQL fix"
 
     def set_mysql_version(self, version):
         """

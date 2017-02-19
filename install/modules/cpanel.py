@@ -29,16 +29,6 @@ class cPanelManager(InstallManager):
         self.set_fs_suid_dumpable()
         self._script("cpanel-install-hooks")
 
-    def fix_cl7_mysql(self):
-        """
-        Specific fix
-        """
-        if 7 == self.cl_version:
-            if os.path.lexists("/etc/init.d/mysqld"):
-                os.remove("/etc/init.d/mysqld")
-            if os.path.lexists("/etc/rc.d/init.d/mysqld"):
-                os.remove("/etc/rc.d/init.d/mysqld")
-
     def _delete(self, installed_packages):
         """
         Remove installed packages

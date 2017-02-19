@@ -10,7 +10,7 @@ import tempfile
 import time
 
 sys.path.append("../")
-from utilities import is_file_owned_by_package, exec_command_out, get_cl_num
+from utilities import is_file_owned_by_package, exec_command_out, get_cl_num, disable_service
 
 
 class Storage(object):
@@ -188,7 +188,7 @@ class Storage(object):
         """
         srv = "%s.service" % name
         if srv in path_to_file and os.path.exists("/usr/bin/systemctl"):
-            exec_command_out("systemctl disable %s" % srv)
+            disable_service(name)
 
     @staticmethod
     def _check_initd_service(path_to_file):

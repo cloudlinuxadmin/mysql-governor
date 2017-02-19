@@ -31,6 +31,7 @@ void governor_lve_exit_null();
 int governor_lve_enter_pid(pid_t pid);
 int governor_lve_enter_pid_user(pid_t pid, char *username);
 int governor_is_in_lve();
+int governor_init_users_list();
 
 
 #endif /* GOVERNOR_WRITE_DATA_H_ */

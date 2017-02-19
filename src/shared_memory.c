@@ -382,22 +382,52 @@ shm_structure *bad_list_clents_global = NULL;
 pthread_mutex_t mtx_shared = PTHREAD_MUTEX_INITIALIZER;
 
 int init_bad_users_list_client() {
-	pthread_mutex_lock(&mtx_shared);
-	if ((shm_fd_clents_global = shm_open(SHARED_MEMORY_NAME, O_RDONLY, 0755))
-			< 0) {
-		pthread_mutex_unlock(&mtx_shared);
-		return -1;
-	}
-	if ((bad_list_clents_global = (shm_structure *) cl_mmap(0,
-			sizeof(shm_structure), PROT_READ, MAP_SHARED, shm_fd_clents_global,
-			0)) == MAP_FAILED) {
-		close(shm_fd_clents_global);
-		pthread_mutex_unlock(&mtx_shared);
-		return -2;
-	}
-	pthread_mutex_unlock(&mtx_shared);
+    mode_t old_umask = umask(0);
+    sem_t *sem_in = NULL;
+    pthread_mutex_lock(&mtx_shared);
+    int first = 0;
+    if ((shm_fd_clents_global = shm_open(SHARED_MEMORY_NAME, (O_CREAT | O_EXCL | O_RDWR),
+                                                    0755)) > 0) {
+            first = 1;
+    } else if ((shm_fd_clents_global = shm_open(SHARED_MEMORY_NAME, (O_CREAT | O_RDWR), 0755))
+                    < 0) {
+            pthread_mutex_unlock(&mtx_shared);
+            umask(old_umask);
+            return -1;
+    }
+    if ((bad_list_clents_global = (shm_structure *) cl_mmap(0,
+                    sizeof(shm_structure), PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd_clents_global,
+                    0)) == MAP_FAILED) {
+            close(shm_fd_clents_global);
+            pthread_mutex_unlock(&mtx_shared);
+            umask(old_umask);
+            return -2;
+    }
 
-	return 0;
+    if (first) {
+            ftruncate(shm_fd_clents_global, sizeof(shm_structure));
+
+    sem_in = sem_open(SHARED_MEMORY_SEM, O_CREAT, 0777, 1);
+
+    if (sem_in == SEM_FAILED) {
+            cl_munmap((void *) bad_list_clents_global, sizeof(shm_structure));
+            bad_list_clents_global = NULL;
+            close(shm_fd_clents_global);
+            pthread_mutex_unlock(&mtx_shared);
+            return -2;
+    }
+    if (sem_wait(sem_in) == 0) {
+            clear_bad_users_list();
+            sem_post(sem_in);
+    }
+    sem_close(sem_in);
+
+    }
+
+    pthread_mutex_unlock(&mtx_shared);
+    umask(old_umask);
+    return 0;
+
 }
 
 int remove_bad_users_list_client() {

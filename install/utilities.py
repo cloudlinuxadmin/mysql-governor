@@ -8,6 +8,7 @@ import shutil
 import subprocess
 import sys
 import urllib
+import time
 from datetime import datetime
 from distutils.version import StrictVersion
 from glob import glob
@@ -25,7 +26,7 @@ __all__ = [
     "correct_remove_notowned_mysql_service_names_cl7",
     "correct_remove_notowned_mysql_service_names_not_symlynks_cl7",
     "disable_and_remove_service",
-    "disable_and_remove_service_if_notsymlynk"
+    "disable_and_remove_service_if_notsymlynk", "check_mysqld_is_alive"
 ]
 
 RPM_TEMP_PATH = "/usr/share/lve/dbgovernor/tmp/governor-tmp"
@@ -663,7 +664,7 @@ def disable_and_remove_service(service_path):
         service_name = os.path.basename(service_path)
         if service_name != "" and is_file_owned_by_package(
                 service_path) == False:
-            exec_command_out("systemctl disable %s" % service_name)
+            disable_service(os.path.splitext(service_name)[0])
             os.unlink(service_path)
 
 
@@ -677,8 +678,7 @@ def correct_remove_notowned_mysql_service_names_cl7():
         disable_and_remove_service("/usr/lib/systemd/system/mysqld.service")
         disable_and_remove_service("/usr/lib/systemd/system/mysql.service")
         disable_and_remove_service("/usr/lib/systemd/system/mariadb.service")
-        disable_and_remove_service("/etc/systemd/system/mysqld.service")
-        disable_and_remove_service("/etc/systemd/system/mysql.service")
+
         exec_command_out("systemctl daemon-reload")
 
 
@@ -692,7 +692,7 @@ def disable_and_remove_service_if_notsymlynk(service_path):
         service_name = os.path.basename(service_path)
         if service_name != "" and is_file_owned_by_package(
                 service_path) == False and not os.path.islink(service_path):
-            exec_command_out("systemctl disable %s" % service_name)
+            disable_service(os.path.splitext(service_name)[0])
             os.unlink(service_path)
 
 
@@ -707,13 +707,6 @@ def correct_remove_notowned_mysql_service_names_not_symlynks_cl7():
             "/etc/systemd/system/mysqld.service")
         disable_and_remove_service_if_notsymlynk(
             "/etc/systemd/system/mysql.service")
-        exec_command_out("systemctl daemon-reload")
-        exec_command_out("systemctl disable mysql")
-        exec_command_out("systemctl enable mysql")
-        exec_command_out("systemctl disable mysqld")
-        exec_command_out("systemctl enable mysqld")
-        exec_command_out("systemctl disable mariadb")
-        exec_command_out("systemctl enable mariadb")
 
 
 def parse_rpm_name(name):
@@ -727,3 +720,71 @@ def parse_rpm_name(name):
         return [result[0], result[1], result[2], result[3]]
 
     return []
+
+def disable_service(name):
+    """
+    systemd disabling service, Before disabling MySQL or MariaDB should be stopped.
+    """
+    cl_ver = get_cl_num()
+    if cl_ver == 7:
+        service_name = name + ".service"
+        if os.path.exists("/usr/lib/systemd/system/" + service_name):
+            #Bingo! We found service from one step
+            service("stop", name)
+            time.sleep(10)
+            if check_mysqld_is_alive():
+                if os.path.exists("/etc/rc.d/init.d/mysql"):
+                    exec_command_out("service --skip-redirect mysql stop")
+                    time.sleep(10)
+            exec_command_out("systemctl disable %s" % service_name)
+        else:
+            #We are not so lucky. Looks like name - it is only alias. Try to figure out what is real service name
+            service_name = ""
+            real_name = ""
+            if name == "mysql":
+            #It can be mysql.service or mysqld.service or mariadb.service
+                if os.path.exists("/usr/lib/systemd/system/mysql.service"):
+                    service_name = "mysql.service"
+                    real_name = "mysql"
+                elif os.path.exists("/usr/lib/systemd/system/mysqld.service"):
+                    service_name = "mysqld.service"
+                    real_name = "mysqld"
+                elif os.path.exists("/usr/lib/systemd/system/mariadb.service"):
+                    service_name = "mariadb.service"
+                    real_name = "mariadb"
+            elif name == "mysqld":
+            #It can be mysqld.service or mariadb.service
+                if os.path.exists("/usr/lib/systemd/system/mysqld.service"):
+                    service_name = "mysqld.service"
+                    real_name = "mysqld"
+                elif os.path.exists("/usr/lib/systemd/system/mariadb.service"):
+                    service_name = "mariadb.service"
+                    real_name = "mariadb"
+            elif name == "mariadb":
+            #It can be mariadb.service
+                if os.path.exists("/usr/lib/systemd/system/mariadb.service"):
+                    service_name = "mariadb.service"
+                    real_name = "mariadb"
+            if service_name != "":
+                service("stop", real_name)
+                time.sleep(10)
+                if check_mysqld_is_alive():
+                    if os.path.exists("/etc/rc.d/init.d/mysql"):
+                        exec_command_out("service --skip-redirect mysql stop")
+                        time.sleep(10)
+                exec_command_out("systemctl disable %s" % service_name)
+
+
+def check_mysqld_is_alive():
+    """
+    Check if mysql process is alive
+    """
+    check_mysql = exec_command("ps -Af | grep -v grep | grep mysqld | "
+                               "egrep -e 'datadir|--daemonize'",
+                               True, silent=True)
+    check_mysqld = exec_command("/usr/bin/mysql -e \"select 1\" "
+                                "2>&1 1>/dev/null", True, silent=True,
+                                        return_code=True)
+    if check_mysql or check_mysqld == "yes":
+        return True
+    return False

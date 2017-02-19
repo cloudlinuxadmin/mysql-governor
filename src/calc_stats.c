@@ -672,10 +672,10 @@ void dbstat_print_table( gpointer key, dbgov_statitrics *dbgov_statitrics__, voi
 
   get_config_data( &data_cfg );
 
-  if(dbgov_was_user_activity(dbgov_statitrics__) && (need_uid!=0)){
+  if(dbgov_was_user_activity(dbgov_statitrics__)){
   
 	  if (data_cfg.save_statistic_uid) {
-	  fprintf( dbgov_stats, "%s;%d;%f;%f;%f;%f;%f;%f;%d;%ld;%ld;%ld;%d;%u\n",
+	  fprintf( dbgov_stats, "%s;%d;%f;%f;%f;%f;%f;%f;%d;%ld;%ld;%ld;%d;%d\n",
                          dbgov_statitrics__->username,
                          (int)ceil((double)dbgov_statitrics__->max_simultaneous_requests / (double)number_of_iterations),
                          fabs( ( dbgov_statitrics__->sum_cpu   / number_of_iterations ) * 100 ),
@@ -688,7 +688,7 @@ void dbstat_print_table( gpointer key, dbgov_statitrics *dbgov_statitrics__, voi
                          dbgov_statitrics__->limit_cpu_on_period_end,
                          (long)( dbgov_statitrics__->limit_read_on_period_end / mb_s ),
                          (long)( dbgov_statitrics__->limit_write_on_period_end / mb_s ),
-                        		 dbgov_statitrics__->cause, need_uid
+                        		 dbgov_statitrics__->cause, ((!need_uid)?-1:(int)need_uid)
          );
 	  } else {
 		  fprintf( dbgov_stats, "%s;%d;%f;%f;%f;%f;%f;%f;%d;%ld;%ld;%ld;%d\n",

@@ -342,6 +342,16 @@ char *GetDefaultForUsers( GPtrArray *tags, DbCtlLimitAttr *cpu_def,
           cpu_mid = atoi( GetLimitAttr( found_tag_->limit_attr, "cpu", "mid" ) ),
           cpu_long = atoi( GetLimitAttr( found_tag_->limit_attr, "cpu", "long" ) );
 
+      int read_curr_real_size = atoi(GetLimitAttr( found_tag_->limit_attr, "read", "current" )),
+    		  read_short_real_size = atoi(GetLimitAttr( found_tag_->limit_attr, "read", "short" )),
+    		  read_mid_real_size = atoi(GetLimitAttr( found_tag_->limit_attr, "read", "mid" )),
+    		  read_long_real_size = atoi(GetLimitAttr( found_tag_->limit_attr, "read", "long" ));
+
+      int write_curr_real_size = atoi(GetLimitAttr( found_tag_->limit_attr, "write", "current" )),
+          		  write_short_real_size = atoi(GetLimitAttr( found_tag_->limit_attr, "write", "short" )),
+          		  write_mid_real_size = atoi(GetLimitAttr( found_tag_->limit_attr, "write", "mid" )),
+          		  write_long_real_size = atoi(GetLimitAttr( found_tag_->limit_attr, "write", "long" ));
+
       int read_curr = atoi( get_mb_str( GetLimitAttr( found_tag_->limit_attr, "read", "current" ), mb_buffer ) ),
           read_short = atoi( get_mb_str( GetLimitAttr( found_tag_->limit_attr, "read", "short" ), mb_buffer ) ),
           read_mid = atoi( get_mb_str( GetLimitAttr( found_tag_->limit_attr, "read", "mid" ), mb_buffer ) ),
@@ -357,15 +367,15 @@ char *GetDefaultForUsers( GPtrArray *tags, DbCtlLimitAttr *cpu_def,
       if( cpu_mid == 0 ) cpu_mid = atoi( cpu_def->l_mid );
       if( cpu_long == 0 ) cpu_long = atoi( cpu_def->l_long );
 
-      if( read_curr == 0 ) read_curr = atoi( read_def->l_current );
-      if( read_short == 0 ) read_short = atoi( read_def->l_short );
-      if( read_mid == 0 ) read_mid = atoi( read_def->l_mid );
-      if( read_long == 0 ) read_long = atoi( read_def->l_long );
+      if( read_curr == 0 && !read_curr_real_size ) read_curr = atoi( read_def->l_current );
+      if( read_short == 0 && !read_short_real_size ) read_short = atoi( read_def->l_short );
+      if( read_mid == 0 && !read_mid_real_size ) read_mid = atoi( read_def->l_mid );
+      if( read_long == 0 && !read_long_real_size ) read_long = atoi( read_def->l_long );
 
-      if( write_curr == 0 ) write_curr = atoi( write_def->l_current );
-      if( write_short == 0 ) write_short = atoi( write_def->l_short );
-      if( write_mid == 0 ) write_mid = atoi( write_def->l_mid );
-      if( write_long == 0 ) write_long = atoi( write_def->l_long );
+      if( write_curr == 0 && !write_curr_real_size ) write_curr = atoi( write_def->l_current );
+      if( write_short == 0 && !write_short_real_size ) write_short = atoi( write_def->l_short );
+      if( write_mid == 0 && !write_mid_real_size ) write_mid = atoi( write_def->l_mid );
+      if( write_long == 0 && !write_long_real_size ) write_long = atoi( write_def->l_long );
 
       if( name == NULL ) name = GetUserMysqlName( found_tag_->attr );
 
