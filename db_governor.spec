@@ -36,6 +36,7 @@ BuildRequires: tar
 BuildRequires: alt-python27
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
 BuildRequires: systemd
+BuildRequires: systemd-devel
 %endif
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 Conflicts: db-governor
