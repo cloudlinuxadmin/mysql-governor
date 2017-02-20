@@ -782,9 +782,11 @@ def check_mysqld_is_alive():
     check_mysql = exec_command("ps -Af | grep -v grep | grep mysqld | "
                                "egrep -e 'datadir|--daemonize'",
                                True, silent=True)
+    check_mysql57_mariadb101 = exec_command("ps -Af | grep -v grep | grep /usr/sbin/mysqld",
+                               True, silent=True)
     check_mysqld = exec_command("/usr/bin/mysql -e \"select 1\" "
                                 "2>&1 1>/dev/null", True, silent=True,
                                         return_code=True)
-    if check_mysql or check_mysqld == "yes":
+    if check_mysql57_mariadb101 or check_mysql or check_mysqld == "yes":
         return True
     return False
