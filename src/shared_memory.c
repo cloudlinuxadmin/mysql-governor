@@ -387,9 +387,9 @@ int init_bad_users_list_client() {
     pthread_mutex_lock(&mtx_shared);
     int first = 0;
     if ((shm_fd_clents_global = shm_open(SHARED_MEMORY_NAME, (O_CREAT | O_EXCL | O_RDWR),
-                                                    0755)) > 0) {
+                                                    0600)) > 0) {
             first = 1;
-    } else if ((shm_fd_clents_global = shm_open(SHARED_MEMORY_NAME, (O_CREAT | O_RDWR), 0755))
+    } else if ((shm_fd_clents_global = shm_open(SHARED_MEMORY_NAME, (O_CREAT | O_RDWR), 0600))
                     < 0) {
             pthread_mutex_unlock(&mtx_shared);
             umask(old_umask);
