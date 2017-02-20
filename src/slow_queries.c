@@ -139,15 +139,15 @@ void *parse_slow_query( void *data )
 */
 #endif            
             db_mysql_get_string( buffer, row[ 0 ], lengths[ 0 ], _DBGOVERNOR_BUFFER_8192 );
-            strncpy( Id, buffer,  _DBGOVERNOR_BUFFER_2048);
+            strncpy( Id, buffer,  _DBGOVERNOR_BUFFER_2048 - 1);
             db_mysql_get_string( buffer, row[ 1 ], lengths[ 1 ], _DBGOVERNOR_BUFFER_8192 );
-            strncpy( User, buffer, USERNAMEMAXLEN );
+            strncpy( User, buffer, USERNAMEMAXLEN - 1 );
             db_mysql_get_string( buffer, row[ 5 ], lengths[ 5 ], _DBGOVERNOR_BUFFER_8192 );
-            strncpy( Time, buffer, _DBGOVERNOR_BUFFER_2048);
+            strncpy( Time, buffer, _DBGOVERNOR_BUFFER_2048 - 1);
             db_mysql_get_string( buffer, row[ 6 ], lengths[ 6 ], _DBGOVERNOR_BUFFER_8192 );
-            strncpy( State, buffer, _DBGOVERNOR_BUFFER_256 );
+            strncpy( State, buffer, _DBGOVERNOR_BUFFER_256 - 1);
             db_mysql_get_string( buffer, row[ 7 ], lengths[ 7 ], _DBGOVERNOR_BUFFER_8192 );
-            strncpy( Info, buffer, _DBGOVERNOR_BUFFER_2048 );
+            strncpy( Info, buffer, _DBGOVERNOR_BUFFER_2048 - 1);
             upper( Info );
             long slow_time = is_user_ignored(User);
             if( slow_time > 0 &&
