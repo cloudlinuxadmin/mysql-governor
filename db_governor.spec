@@ -250,11 +250,6 @@ rm -rf /%{_libdir}/liblve.so.1
 ln -s /%{_libdir}/liblve.so.0.9.0 /%{_libdir}/liblve.so.1
 /sbin/ldconfig
 
-%if 0%{?rhel} >= 7
-if [ -e /usr/share/lve/dbgovernor/mysqlgovernor.py ]; then
-    /usr/share/lve/dbgovernor/mysqlgovernor.py --correct-cl7-service-name
-fi
-%endif
 if [ -e /usr/share/lve/dbgovernor/mysqlgovernor.py ]; then
     /usr/share/lve/dbgovernor/mysqlgovernor.py --correct-cloud-version
 fi
