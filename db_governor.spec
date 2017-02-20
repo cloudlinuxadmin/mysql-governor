@@ -1,6 +1,6 @@
 %define g_version   1.2
 %define g_release   15
-%define g_key_library 7
+%define g_key_library 8
 
 %if %{undefined _unitdir}
 %define _unitdir /usr/lib/systemd/system
