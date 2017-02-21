@@ -72,8 +72,7 @@ class DirectAdminManager(InstallManager):
 
         self._mysqlservice("stop")
 
-        # install MySQL-python module
-        exec_command("yum install -y MySQL-python --disableexcludes=all")
+
 
     def _after_install_new_packages(self):
         """
@@ -90,6 +89,8 @@ class DirectAdminManager(InstallManager):
         else:
             self._set_mysql_access(MYSQLUSER, MYSQLPASSWORD)
             print "Rebuild php please... /usr/local/directadmin/custombuild/build php"
+        # install MySQL-python module
+        exec_command("yum install -y MySQL-python --disableexcludes=all")
 
     def _detect_version_if_auto(self):
         """

@@ -640,19 +640,59 @@ def create_mysqld_link(link, to_file):
                 os.symlink("/etc/init.d/%s" % to_file, link_name)
 
 
-def correct_mysqld_service_for_cl7(name):
+def correct_mysqld_service_for_cl7(mysql_type):
     """
-    For cl7 /etc/init.d/mysql should be removed if exists
+    For cl7 check symlink pathes
     """
-    # cl_ver = get_cl_num()
-    # if cl_ver == 7:
-    #    link_name = "/etc/init.d/%s" % name
-    #    if os.path.exists(link_name):
-    #        os.unlink(link_name)
-    #    elif os.path.islink(link_name):
-    #        os.unlink(link_name)
-    print "Just empty action"
-
+    name="mysqld"
+    if mysql_type in ["mysql50", "mysql51", "mysql55", "mysql56", "mysql57", "auto"]:
+        name="mysqld"
+    elif mysql_type in ["mariadb55", "mariadb100", "mariadb101"]:
+        name="mariadb"
+    cl_ver = get_cl_num()
+    if cl_ver == 7:
+        service_name = name + ".service"
+        if check_mysqld_is_alive():
+            service("stop", name)
+            time.sleep(10)
+            if os.path.exists("/etc/rc.d/init.d/mysql") and check_mysqld_is_alive():
+                exec_command_out("service --skip-redirect mysql stop")
+                time.sleep(10)
+        if os.path.exists("/usr/lib/systemd/system/" + service_name):
+            need_enable = False
+            if name == "mysqld" or name == "mariadb":
+                if os.path.exists("/etc/systemd/system/mariadb.service"):
+                    os.unlink("/etc/systemd/system/mariadb.service")
+                    need_enable = True
+            if os.path.exists("/etc/systemd/system/mysql.service"):
+                if os.path.islink("/etc/systemd/system/mysql.service"):
+                    if os.path.realpath("/etc/systemd/system/mysql.service") != "/usr/lib/systemd/system/" + service_name:
+                        os.unlink("/etc/systemd/system/mysql.service")
+                        need_enable = True
+                else:
+                    os.unlink("/etc/systemd/system/mysql.service")
+                    need_enable = True
+            else:
+                need_enable = True
+            if name == "mysqld":
+                if os.path.exists("/etc/systemd/system/mysqld.service"):
+                    os.unlink("/etc/systemd/system/mysqld.service")
+                    need_enable = True
+            else:
+                if os.path.exists("/etc/systemd/system/mysql.service"):
+                    if os.path.islink("/etc/systemd/system/mysql.service"):
+                        if os.path.realpath("/etc/systemd/system/mysql.service") != "/usr/lib/systemd/system/" + service_name:
+                            os.unlink("/etc/systemd/system/mysql.service")
+                            need_enable = True
+                    else:
+                        os.unlink("/etc/systemd/system/mysql.service")
+                        need_enable = True
+                else:
+                    need_enable = True
+            if need_enable:
+                exec_command_out("systemctl enable %s" % service_name)
+            if not check_mysqld_is_alive():
+                service("start", name)
 
 def disable_and_remove_service(service_path):
     """

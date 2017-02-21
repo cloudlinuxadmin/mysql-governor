@@ -193,8 +193,7 @@ class InstallManager(object):
         create_mysqld_link("mysqld", "mysql")
         create_mysqld_link("mysql", "mysqld")
 
-        correct_mysqld_service_for_cl7("mysql")
-        correct_mysqld_service_for_cl7("mysqld")
+        correct_mysqld_service_for_cl7(self._get_result_mysql_version(None))
 
         # fix for packages without /etc/my.cnf file
         # if not os.path.exists("/etc/my.cnf"):
@@ -592,15 +591,11 @@ class InstallManager(object):
         return packages
         # return [x.replace(" ", "-") for x in packages]
 
-    def _load_new_packages(self, beta, sql_version=None, folder="new"):
+    def _get_result_mysql_version(self, sql_version=None):
         """
-        detect and download packages for new installation
+        Get MySQL version will be installed according to auto or mysql.type
         """
-        print "Start download packages for new installation"
-        # based on sql_version get packages names list and repo name
-        packages, requires = [], []
-        new_version = sql_version = sql_version or self._get_new_version()
-        arch = ".x86_64" if os.uname()[-1] == "x86_64" else ""
+        sql_version = sql_version or self._get_new_version()
 
         if "auto" == sql_version:
             detected_version_on_system = self._detect_version_if_auto()
@@ -610,6 +605,18 @@ class InstallManager(object):
                     sys.exit(2)
                 else:
                     sql_version = detected_version_on_system
+        return sql_version
+
+    def _load_new_packages(self, beta, sql_version=None, folder="new"):
+        """
+        detect and download packages for new installation
+        """
+        print "Start download packages for new installation"
+        # based on sql_version get packages names list and repo name
+        packages, requires = [], []
+        new_version = sql_version or self._get_new_version()
+        arch = ".x86_64" if os.uname()[-1] == "x86_64" else ""
+        sql_version = self._get_result_mysql_version(sql_version)
 
         if "auto" == sql_version:
             repo = "mysql-common.repo"
@@ -757,11 +764,9 @@ class InstallManager(object):
         Set mysql admin login and password and save it to governor config
         """
         if os.path.exists("/usr/bin/mysql_upgrade"):
-            exec_command_out("""/usr/bin/mysql_upgrade --user=%s
-           --password=%s""" % (username, password))
+            exec_command_out("""/usr/bin/mysql_upgrade --user=%s --password=%s""" % (username, password))
         elif os.path.exists("/usr/bin/mysql_fix_privilege_tables"):
-            exec_command_out("""/usr/bin/mysql_fix_privilege_tables --user=%s
-           --password=%s""" % (username, password))
+            exec_command_out("""/usr/bin/mysql_fix_privilege_tables --user=%s --password=%s""" % (username, password))
 
         print "Patch governor configuration file"
         check_file("/etc/container/mysql-governor.xml")
