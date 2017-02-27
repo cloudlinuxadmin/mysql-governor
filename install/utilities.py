@@ -9,6 +9,7 @@ import subprocess
 import sys
 import urllib
 import time
+import ConfigParser
 from datetime import datetime
 from distutils.version import StrictVersion
 from glob import glob
@@ -26,7 +27,8 @@ __all__ = [
     "correct_remove_notowned_mysql_service_names_cl7",
     "correct_remove_notowned_mysql_service_names_not_symlynks_cl7",
     "disable_and_remove_service",
-    "disable_and_remove_service_if_notsymlynk", "check_mysqld_is_alive"
+    "disable_and_remove_service_if_notsymlynk", "check_mysqld_is_alive",
+    "get_mysql_log_file", "get_mysql_cnf_value"
 ]
 
 RPM_TEMP_PATH = "/usr/share/lve/dbgovernor/tmp/governor-tmp"
@@ -830,3 +832,28 @@ def check_mysqld_is_alive():
     if check_mysql57_mariadb101 or check_mysql or check_mysqld == "yes":
         return True
     return False
+
+def get_mysql_cnf_value(section, name):
+    """
+    Get value from my.cnf
+    """
+    if os.path.exists("/etc/my.cnf"):
+        configParser = ConfigParser.RawConfigParser()
+        configFilePath = r'/etc/my.cnf'
+        configParser.read(configFilePath)
+        try:
+            return configParser.get(section, name)
+        except ConfigParser.NoOptionError:
+            return ""
+    return ""
+
+def get_mysql_log_file():
+    """
+    Get path to mysqld.log file
+    """
+    file_path = get_mysql_cnf_value("mysqld", "log-error")
+    if file_path == "":
+        file_path = get_mysql_cnf_value("mysqld_safe", "log-error")
+    if file_path == "":
+        file_path = "/var/log/mysqld.log"
+    return file_path

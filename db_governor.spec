@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   15
+%define g_release   16
 %define g_key_library 8
 
 %if %{undefined _unitdir}
@@ -338,6 +338,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Mon Feb 27 2017 Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-16
+- Check log-error existings on installation of MySQL packages
+
 * Fri Feb 10 2017 Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-15
 - Fixed restarting MariaDB services for CL7 on governor update
 

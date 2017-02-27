@@ -9,6 +9,8 @@ import shutil
 import sys
 import time
 import urllib2
+import pwd
+import grp
 from datetime import datetime
 
 sys.path.append("../")
@@ -20,7 +22,8 @@ from utilities import get_cl_num, exec_command, exec_command_out, new_lve_ctl, \
     confirm_packages_installation, create_mysqld_link, \
     correct_mysqld_service_for_cl7, \
     correct_remove_notowned_mysql_service_names_cl7, \
-    correct_remove_notowned_mysql_service_names_not_symlynks_cl7
+    correct_remove_notowned_mysql_service_names_not_symlynks_cl7, get_mysql_log_file, \
+    check_mysqld_is_alive
 
 
 class InstallManager(object):
@@ -199,6 +202,16 @@ class InstallManager(object):
         # if not os.path.exists("/etc/my.cnf"):
         #     touch("/etc/my.cnf")
         self.my_cnf_manager('touch')
+        # check if log MySQL's log file exists and correct perms
+        # in other case MySQL will not starts
+        log_file = get_mysql_log_file()
+        touch(log_file)
+        log_owner_name = pwd.getpwuid(os.stat(log_file).st_uid)[0]
+        log_owner_grp = grp.getgrgid(os.stat(log_file).st_gid)[0]
+        if log_owner_name != "mysql" or log_owner_grp != "mysql":
+            target_uid = pwd.getpwnam("mysql").pw_uid
+            target_gid = grp.getgrnam("mysql").gr_gid
+            os.chown(log_file, target_uid, target_gid)
 
         version = self._get_new_version()
         if version.startswith("mariadb") or version == "auto" \
@@ -784,9 +797,7 @@ class InstallManager(object):
         """
         Kill mysqld processes.
         """
-        if exec_command("/bin/ps uax | /bin/grep -v grep | /bin/grep mysqld |"
-                        "/bin/egrep -e 'datadir|--daemonize'",
-                        True, silent=True):
+        if check_mysqld_is_alive():
             print "Stop hunging MySQL"
             exec_command_out("/usr/bin/killall -SIGTERM mysqld_safe")
             print "Waiting for mysqld_safe stop"
