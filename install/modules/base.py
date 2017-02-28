@@ -676,7 +676,7 @@ class InstallManager(object):
         elif new_version in ["mysql55", "mysql56", "mysql57"]:
             packages += ["mysqlclient16", "mysqlclient15"]
             if new_version in ["mysql57"]:
-                packages += ["numactl-devel%s" % arch, "numactl%s" % arch]
+                packages += ["numactl-devel%s" % arch, "numactl%s" % arch, "mysqlclient18"]
         elif new_version.startswith("mariadb"):
             packages += ["mysqlclient16", "mysqlclient15"]
 
