@@ -838,14 +838,15 @@ def get_mysql_cnf_value(section, name):
     Get value from my.cnf
     """
     if os.path.exists("/etc/my.cnf"):
-        configParser = ConfigParser.RawConfigParser()
+        configParser = ConfigParser.RawConfigParser(allow_no_value=True)
         configFilePath = r'/etc/my.cnf'
-        configParser.read(configFilePath)
         try:
+            configParser.read(configFilePath)
             return configParser.get(section, name)
-        except ConfigParser.NoOptionError:
+        except:
             return ""
     return ""
+
 
 def get_mysql_log_file():
     """
