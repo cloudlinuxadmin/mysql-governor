@@ -2,6 +2,7 @@
 """
 This module contains helpful utilities to perform common actions
 """
+import errno
 import os
 import re
 import shutil
