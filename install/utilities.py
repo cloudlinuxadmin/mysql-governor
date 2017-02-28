@@ -28,7 +28,7 @@ __all__ = [
     "correct_remove_notowned_mysql_service_names_not_symlynks_cl7",
     "disable_and_remove_service",
     "disable_and_remove_service_if_notsymlynk", "check_mysqld_is_alive",
-    "get_mysql_log_file", "get_mysql_cnf_value"
+    "get_mysql_log_file", "get_mysql_cnf_value", "makedir_recursive"
 ]
 
 RPM_TEMP_PATH = "/usr/share/lve/dbgovernor/tmp/governor-tmp"
@@ -858,3 +858,19 @@ def get_mysql_log_file():
     if file_path == "":
         file_path = "/var/log/mysqld.log"
     return file_path
+
+def makedir_recursive(path):
+    """
+    Create directory recursively
+    :param path:
+    :return:
+    """
+    path = os.path.dirname(os.path.abspath(path))
+    try:
+        os.makedirs(path)
+        return True
+    except OSError as exc:  # Python >2.5
+        if exc.errno == errno.EEXIST and os.path.isdir(path):
+            return True
+        else:
+            return False

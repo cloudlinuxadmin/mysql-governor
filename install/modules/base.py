@@ -23,7 +23,7 @@ from utilities import get_cl_num, exec_command, exec_command_out, new_lve_ctl, \
     correct_mysqld_service_for_cl7, \
     correct_remove_notowned_mysql_service_names_cl7, \
     correct_remove_notowned_mysql_service_names_not_symlynks_cl7, get_mysql_log_file, \
-    check_mysqld_is_alive
+    check_mysqld_is_alive, makedir_recursive
 
 
 class InstallManager(object):
@@ -205,6 +205,8 @@ class InstallManager(object):
         # check if log MySQL's log file exists and correct perms
         # in other case MySQL will not starts
         log_file = get_mysql_log_file()
+        if not os.path.exists(os.path.dirname(log_file)):
+            makedir_recursive(os.path.dirname(log_file))
         touch(log_file)
         log_owner_name = pwd.getpwuid(os.stat(log_file).st_uid)[0]
         log_owner_grp = grp.getgrgid(os.stat(log_file).st_gid)[0]
