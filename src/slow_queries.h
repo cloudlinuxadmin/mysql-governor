@@ -25,6 +25,6 @@
 #include "data.h"
 */
 
-void *parse_slow_query( void *data );
+void *parse_slow_query (void *data);
 
 #endif /* __SLOW_QUERY__ */

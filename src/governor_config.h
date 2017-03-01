@@ -48,23 +48,23 @@ struct governor_config
   int all_lve;
   int slow_queries;
   int restrict_mode;
-  unsigned l_unlimit;	// in seconds
+  unsigned l_unlimit;		// in seconds
   char *slow_queries_log;
   char *debug_user;
   int save_statistic_uid;
 };
 
-stats_limit_cfg *
-config_get_account_limit (const char *account_id, stats_limit_cfg *cfgin);
+stats_limit_cfg *config_get_account_limit (const char *account_id,
+					   stats_limit_cfg * cfgin);
 void config_free ();
 struct governor_config *config_init (const char *path);
-int save_duplicate_config(ezxml_t xml);
-void reread_config();
-void config_destroy_lock();
+int save_duplicate_config (ezxml_t xml);
+void reread_config ();
+void config_destroy_lock ();
 void config_add_work_user (const char *user_name);
 //struct governor_config * get_config();
-void get_config_data( struct governor_config *data );
-MODE_TYPE get_config_log_mode();
-struct governor_config * get_config();
+void get_config_data (struct governor_config *data);
+MODE_TYPE get_config_log_mode ();
+struct governor_config *get_config ();
 
 #endif

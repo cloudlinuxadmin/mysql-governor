@@ -152,7 +152,8 @@ get_scaled_iostat (const char *buffer, const char *key)
   return value;
 }
 
-int get_io_stat (dbgov_iostat * info, pid_t pid, pid_t tid)
+int
+get_io_stat (dbgov_iostat * info, pid_t pid, pid_t tid)
 {
   char buffer[BUFSIZ];
   io_stat_reset (info);
@@ -165,23 +166,30 @@ int get_io_stat (dbgov_iostat * info, pid_t pid, pid_t tid)
       info->write_bytes = get_scaled_iostat (buffer, "write_bytes:");
       info->cancelled_write_bytes =
 	get_scaled_iostat (buffer, "cancelled_write_bytes:");
-      if(info->cancelled_write_bytes<=info->write_bytes){
-    	  info->write_bytes = info->write_bytes - info->cancelled_write_bytes;
-      } else {
-    	  info->write_bytes = 0;
-      }
-    } else {
-    	return -2;
+      if (info->cancelled_write_bytes <= info->write_bytes)
+	{
+	  info->write_bytes = info->write_bytes - info->cancelled_write_bytes;
+	}
+      else
+	{
+	  info->write_bytes = 0;
+	}
+    }
+  else
+    {
+      return -2;
     }
   return 0;
 }
 
-void io_stat_reset (dbgov_iostat * info)
+void
+io_stat_reset (dbgov_iostat * info)
 {
   memset (info, 0, sizeof (dbgov_iostat));
 }
 
-void get_cpu (dbgov_cpu * buf)
+void
+get_cpu (dbgov_cpu * buf)
 {
   char buffer[BUFSIZ], *p;
 
@@ -238,7 +246,8 @@ skip_multiple_token (const char *p, size_t count)
   return (char *) p;
 }
 
-int get_proc_time (dbgov_proc_time * buf, pid_t pid, pid_t tid)
+int
+get_proc_time (dbgov_proc_time * buf, pid_t pid, pid_t tid)
 {
   char buffer[BUFSIZ], *p;
   memset (buf, 0, sizeof (dbgov_proc_time));
@@ -261,15 +270,18 @@ int get_proc_time (dbgov_proc_time * buf, pid_t pid, pid_t tid)
       buf->it_real_value = strtoull (p, &p, 0);
       buf->frequency = 100;
 
-    } else {
-    	return -2;
+    }
+  else
+    {
+      return -2;
     }
   return 0;
 }
 
 #define FILENAMEMEM        "/proc/meminfo"
 
-void get_mem (dbgov_mem * buf)
+void
+get_mem (dbgov_mem * buf)
 {
   char buffer[BUFSIZ];
   memset (buf, 0, sizeof *buf);
@@ -302,7 +314,8 @@ get_page_size (void)
   return pagesize;
 }
 
-void get_proc_mem (dbgov_proc_mem * buf, pid_t pid, pid_t tid)
+void
+get_proc_mem (dbgov_proc_mem * buf, pid_t pid, pid_t tid)
 {
   char buffer[BUFSIZ], *p;
   const size_t pagesize = get_page_size ();
@@ -321,7 +334,8 @@ void get_proc_mem (dbgov_proc_mem * buf, pid_t pid, pid_t tid)
       buf->rss = strtoull (p, &p, 0);
       buf->rss_rlim = strtoull (p, &p, 0);
 
-      int res = try_file_to_buffer(buffer, "/proc/%d/task/%d/statm", pid, tid);
+      int res =
+	try_file_to_buffer (buffer, "/proc/%d/task/%d/statm", pid, tid);
       if (res == TRY_FILE_TO_BUFFER_OK_IOSTAT)
 	{
 	  buf->size = strtoull (buffer, &p, 0);

@@ -56,11 +56,11 @@ init_mysql_function ()
 		  lib_handle = dlopen ("libmysqlclient_r.so", RTLD_LAZY);
 		  if (!lib_handle)
 		    {
-			  lib_handle = dlopen ("libmysqlclient.so", RTLD_LAZY);
-			  if (!lib_handle)
-			  {
-			  	return -1;
-			  }
+		      lib_handle = dlopen ("libmysqlclient.so", RTLD_LAZY);
+		      if (!lib_handle)
+			{
+			  return -1;
+			}
 		    }
 		}
 	    }

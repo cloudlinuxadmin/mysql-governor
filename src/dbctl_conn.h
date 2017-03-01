@@ -14,7 +14,7 @@
 #ifndef __DBCTL_CONN__
 #define __DBCTL_CONN__
 
-int opensock( int *_socket, FILE **in, FILE **out );
-void closesock( int _socket, FILE *in, FILE *out );
+int opensock (int *_socket, FILE ** in, FILE ** out);
+void closesock (int _socket, FILE * in, FILE * out);
 
 #endif /* __DBCTL_CONN__ */

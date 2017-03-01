@@ -20,8 +20,7 @@ int open_log (const char *log_file);
 int close_log (void);
 int write_log (const char *error_file, int error_line,
 	       const char *error_string, MODE_TYPE mode);
-char *
-prepare_output(char *buffer, size_t size, char *fmt, ...);
+char *prepare_output (char *buffer, size_t size, char *fmt, ...);
 
 #define WRITE_LOG(stats, type, buffer, size, message, mode, ...) if (type==0) \
 	write_log(__FILE__, __LINE__, prepare_output(buffer, size, message, ##__VA_ARGS__), mode); \
@@ -46,10 +45,10 @@ int open_slow_queries_log (const char *log_file);
 int close_slow_queries_log (void);
 int write_slow_queries_log (const char *error_string);
 
-FILE *get_log();
-FILE *get_restrict_log();
-FILE *get_slow_queries_log();
+FILE *get_log ();
+FILE *get_restrict_log ();
+FILE *get_slow_queries_log ();
 
-void print_config(void *icfg);
+void print_config (void *icfg);
 
 #endif

@@ -57,7 +57,9 @@ typedef enum client_type_enum
 
 typedef enum dbctl_command_enum
 {
-  SET = 0, IGNORE, DELETE, LIST, LIST_R, RESTRICT, UNRESTRICT, UNRESTRICT_A, LOG_PATH, REREAD_CFG, REINIT_USERS_LIST
+  SET =
+    0, IGNORE, DELETE, LIST, LIST_R, RESTRICT, UNRESTRICT, UNRESTRICT_A,
+    LOG_PATH, REREAD_CFG, REINIT_USERS_LIST
 } dbctl_command_l;
 
 typedef enum
@@ -79,21 +81,21 @@ typedef struct
 
 typedef enum
 {
-	NORESTRICT_PARAM2=0,
-	CPU_PARAM=4,
-	READ_PARAM,
-	WRITE_PARAM,
-	NORESTRICT_PARAM=100,
+  NORESTRICT_PARAM2 = 0,
+  CPU_PARAM = 4,
+  READ_PARAM,
+  WRITE_PARAM,
+  NORESTRICT_PARAM = 100,
 } GOVERNORS_FIELD_NAME;
 
 /*Периоды*/
 typedef enum
 {
-	NO_PERIOD=0,
-	CURRENT_PERIOD,
-	SHORT_PERIOD,
-	MID_PERIOD,
-	LONG_PERIOD
+  NO_PERIOD = 0,
+  CURRENT_PERIOD,
+  SHORT_PERIOD,
+  MID_PERIOD,
+  LONG_PERIOD
 } GOVERNORS_PERIOD_NAME;
 
 typedef struct dbctl_options_struct
@@ -105,7 +107,7 @@ typedef struct dbctl_options_struct
   int level;
   int timeout;
   int user_max_connections;
-  
+
 } DbCtlOptions;
 
 typedef struct user_statistics_struct_cfg
@@ -166,42 +168,43 @@ typedef struct mysql_dbctl_command_struct
   dbctl_command_l command;
   parameter_t parameter;
   DbCtlOptions options;
-  
+
 } DbCtlCommand;
 
 //Network exchange data
-typedef struct _dbtop_exch{
-	username_t id;
-	Stats current;
-	Stats short_average;
-	Stats mid_average;
-	Stats long_average;
-	int restricted;
-	int timeout;
-	restrict_info info;
-	time_t start_count;
+typedef struct _dbtop_exch
+{
+  username_t id;
+  Stats current;
+  Stats short_average;
+  Stats mid_average;
+  Stats long_average;
+  int restricted;
+  int timeout;
+  restrict_info info;
+  time_t start_count;
 } dbtop_exch;
 
-typedef struct __dbgov_statitrics 
+typedef struct __dbgov_statitrics
 {
-  char username[ USERNAMEMAXLEN ];
+  char username[USERNAMEMAXLEN];
   int max_simultaneous_requests;
-  
-  double sum_cpu;   // in %
-  double sum_write; // in MB/s
-  double sum_read;  // in MB/s
 
-  int number_of_iterations; // число замеров за период
+  double sum_cpu;		// in %
+  double sum_write;		// in MB/s
+  double sum_read;		// in MB/s
 
-  double max_cpu;   // in %
-  double max_write; // in MB/s
-  double max_read;  // in MB/s
+  int number_of_iterations;	// число замеров за период
+
+  double max_cpu;		// in %
+  double max_write;		// in MB/s
+  double max_read;		// in MB/s
 
   int number_of_restricts;
 
-  long limit_cpu_on_period_end;   //in %
-  long limit_read_on_period_end;  //in MB/s
-  long limit_write_on_period_end; //in MB/s
+  long limit_cpu_on_period_end;	//in %
+  long limit_read_on_period_end;	//in MB/s
+  long limit_write_on_period_end;	//in MB/s
 
   int cause;
   MODE_TYPE ignored;

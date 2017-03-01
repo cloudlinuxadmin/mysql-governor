@@ -80,7 +80,6 @@ Stats *push_stats (Stats * st, User_stats * us);
 /* resets stat */
 void reset_stats (Stats * st);
 
-Stats *
-refresh_stats(Stats * st, User_stats * us);
+Stats *refresh_stats (Stats * st, User_stats * us);
 
 #endif

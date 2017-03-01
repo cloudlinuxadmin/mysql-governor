@@ -16,11 +16,13 @@
 
 static GHashTable *user_account_table;
 
-int check_if_user_restricted(username_t username, GHashTable * accounts){
-	struct user_account *ua = get_user_account (username);
-	Account *ac = NULL;
-	ac = g_hash_table_lookup (accounts, ua->account);
-	return (ac->timeout>0);
+int
+check_if_user_restricted (username_t username, GHashTable * accounts)
+{
+  struct user_account *ua = get_user_account (username);
+  Account *ac = NULL;
+  ac = g_hash_table_lookup (accounts, ua->account);
+  return (ac->timeout > 0);
 }
 
 User_stats *
@@ -60,7 +62,7 @@ get_user_account (username_t username)
   struct user_account *ua =
     g_hash_table_lookup (user_account_table, username);
   struct governor_config data_cfg;
-  get_config_data( &data_cfg );
+  get_config_data (&data_cfg);
 
   if (!ua)
     {
@@ -71,53 +73,56 @@ get_user_account (username_t username)
       stats_limit_cfg *sl = config_get_account_limit (ua->username, &cfg_buf);
       if (sl->account_flag)
 	{
-    	  char *ptr = NULL;
-    	  if( lock_read_map() == 0 )
-    	  {
-    	  	  ptr=get_account(username);
-    	  	  unlock_rdwr_map();
-    	  }
-    	  if (ptr == NULL){
-    	  	  char *ptr = strchr (username, data_cfg.separator);
-    	  	  if (ptr == NULL || ptr == username)
-    	  	  {
-    	  		  strlcpy (ua->account, username, USERNAMEMAXLEN);
-    	  	  }
-    	  	  else
-    	  	  {
-    	  	  	  strlcpy (ua->account, username, ptr - username + 1);
-    	  	  }
+	  char *ptr = NULL;
+	  if (lock_read_map () == 0)
+	    {
+	      ptr = get_account (username);
+	      unlock_rdwr_map ();
+	    }
+	  if (ptr == NULL)
+	    {
+	      char *ptr = strchr (username, data_cfg.separator);
+	      if (ptr == NULL || ptr == username)
+		{
+		  strlcpy (ua->account, username, USERNAMEMAXLEN);
+		}
+	      else
+		{
+		  strlcpy (ua->account, username, ptr - username + 1);
+		}
 
-    	  } else {
-    	  	  strlcpy (ua->account, ptr, USERNAMEMAXLEN);
-    	  }
+	    }
+	  else
+	    {
+	      strlcpy (ua->account, ptr, USERNAMEMAXLEN);
+	    }
 
-    	          /*if(data_cfg.separator != '*'){
-    	      	  char *ptr = strchr (username, data_cfg.separator);
-    	  	  	  if (ptr == NULL || ptr == username)
-    	  	    	{
-    	  	      	  strlcpy (ua->account, username, USERNAMEMAXLEN);
-    	  	    	}
-    	  	  	  else
-    	  	    	{
-    	  	      	  strlcpy (ua->account, username, ptr - username + 1);
-    	  	    	}
-    	  		} else {
-    	  			char *ptr = NULL;
-    	  			if( lock_read_map() == 0 )
-    	  			{
-    	  			  ptr=get_account(username);
-    	  			  unlock_rdwr_map();
-    	  			}
-    	  			if (ptr == NULL)
-    	  			{
-    	  			  strlcpy (ua->account, username, USERNAMEMAXLEN);
-    	  			}
-    	  			else
-    	  			{
-    	  			  strlcpy (ua->account, ptr, USERNAMEMAXLEN);
-    	  			}
-    	  		}*/
+	  /*if(data_cfg.separator != '*'){
+	     char *ptr = strchr (username, data_cfg.separator);
+	     if (ptr == NULL || ptr == username)
+	     {
+	     strlcpy (ua->account, username, USERNAMEMAXLEN);
+	     }
+	     else
+	     {
+	     strlcpy (ua->account, username, ptr - username + 1);
+	     }
+	     } else {
+	     char *ptr = NULL;
+	     if( lock_read_map() == 0 )
+	     {
+	     ptr=get_account(username);
+	     unlock_rdwr_map();
+	     }
+	     if (ptr == NULL)
+	     {
+	     strlcpy (ua->account, username, USERNAMEMAXLEN);
+	     }
+	     else
+	     {
+	     strlcpy (ua->account, ptr, USERNAMEMAXLEN);
+	     }
+	     } */
 	}
       else
 	{
@@ -126,4 +131,3 @@ get_user_account (username_t username)
     }
   return ua;
 }
-
