@@ -21,14 +21,20 @@ GPtrArray *FoundTag = NULL;
 #define SIZEOF_OUTPUT_BUFFER 512
 
 char *
-get_mb_str (char *s, char *buf)
+get_mb_str (char *s, char *buf, int flag)
 {
+  unsigned long long divider = 1024 * 1024;
+  if (flag == 1){
+	  divider = 1024;
+  } else if (flag == 2){
+	  divider = 1;
+  }
   int alloc = 0;
   int _len = strlen (s);
   if (_len > 6)
     {
       unsigned long long mb =
-	(unsigned long long) (atol (s)) / (unsigned long long) (1024 * 1024);
+	(unsigned long long) (atol (s)) / divider;
       sprintf (s, "%llu", mb);
     }
   else if (_len > 1)
@@ -265,7 +271,7 @@ ComparePrintByName (gpointer a, gpointer b)
 }
 
 char *
-GetDefault (GPtrArray * tags)
+GetDefault (GPtrArray * tags, int flag)
 {
   char mb_buffer[SIZEOF_OUTPUT_BUFFER] = { 0 };
   char *buffer = (char *) alloca (120 * sizeof (char));
@@ -292,29 +298,29 @@ GetDefault (GPtrArray * tags)
   int read_curr =
     atoi (get_mb_str
 	  (GetLimitAttr (found_tag_->limit_attr, "read", "current"),
-	   mb_buffer)), read_short =
+	   mb_buffer, flag)), read_short =
     atoi (get_mb_str
 	  (GetLimitAttr (found_tag_->limit_attr, "read", "short"),
-	   mb_buffer)), read_mid =
+	   mb_buffer, flag)), read_mid =
     atoi (get_mb_str
-	  (GetLimitAttr (found_tag_->limit_attr, "read", "mid"), mb_buffer)),
+	  (GetLimitAttr (found_tag_->limit_attr, "read", "mid"), mb_buffer, flag)),
     read_long =
     atoi (get_mb_str
-	  (GetLimitAttr (found_tag_->limit_attr, "read", "long"), mb_buffer));
+	  (GetLimitAttr (found_tag_->limit_attr, "read", "long"), mb_buffer, flag));
 
   int write_curr =
     atoi (get_mb_str
 	  (GetLimitAttr (found_tag_->limit_attr, "write", "current"),
-	   mb_buffer)), write_short =
+	   mb_buffer, flag)), write_short =
     atoi (get_mb_str
 	  (GetLimitAttr (found_tag_->limit_attr, "write", "short"),
-	   mb_buffer)), write_mid =
+	   mb_buffer, flag)), write_mid =
     atoi (get_mb_str
-	  (GetLimitAttr (found_tag_->limit_attr, "write", "mid"), mb_buffer)),
+	  (GetLimitAttr (found_tag_->limit_attr, "write", "mid"), mb_buffer, flag)),
     write_long =
     atoi (get_mb_str
 	  (GetLimitAttr (found_tag_->limit_attr, "write", "long"),
-	   mb_buffer));
+	   mb_buffer, flag));
 
   gchar *buf_tmp1 = g_strdup_printf ("%i", cpu_curr);
   gchar *buf_tmp2 = g_strdup_printf ("%i", cpu_short);
@@ -369,7 +375,7 @@ GetDefault (GPtrArray * tags)
 
 char *
 GetDefaultForUsers (GPtrArray * tags, DbCtlLimitAttr * cpu_def,
-		    DbCtlLimitAttr * read_def, DbCtlLimitAttr * write_def)
+		    DbCtlLimitAttr * read_def, DbCtlLimitAttr * write_def, int flag)
 {
   char mb_buffer[SIZEOF_OUTPUT_BUFFER] = { 0 };
   int i = 0, cnt_line = 1;
@@ -408,42 +414,42 @@ GetDefaultForUsers (GPtrArray * tags, DbCtlLimitAttr * cpu_def,
 	    read_long_real_size =
 	    atoi (GetLimitAttr (found_tag_->limit_attr, "read", "long"));
 
-	  int write_curr_real_size =
-	    atoi (GetLimitAttr (found_tag_->limit_attr, "write", "current")),
+	  long write_curr_real_size =
+	    atol (GetLimitAttr (found_tag_->limit_attr, "write", "current")),
 	    write_short_real_size =
-	    atoi (GetLimitAttr (found_tag_->limit_attr, "write", "short")),
+	    atol (GetLimitAttr (found_tag_->limit_attr, "write", "short")),
 	    write_mid_real_size =
-	    atoi (GetLimitAttr (found_tag_->limit_attr, "write", "mid")),
+	    atol (GetLimitAttr (found_tag_->limit_attr, "write", "mid")),
 	    write_long_real_size =
-	    atoi (GetLimitAttr (found_tag_->limit_attr, "write", "long"));
+	    atol (GetLimitAttr (found_tag_->limit_attr, "write", "long"));
 
-	  int read_curr =
-	    atoi (get_mb_str
+	  long read_curr =
+	    atol (get_mb_str
 		  (GetLimitAttr (found_tag_->limit_attr, "read", "current"),
-		   mb_buffer)), read_short =
-	    atoi (get_mb_str
+		   mb_buffer, flag)), read_short =
+	    atol (get_mb_str
 		  (GetLimitAttr (found_tag_->limit_attr, "read", "short"),
-		   mb_buffer)), read_mid =
-	    atoi (get_mb_str
+		   mb_buffer, flag)), read_mid =
+	    atol (get_mb_str
 		  (GetLimitAttr (found_tag_->limit_attr, "read", "mid"),
-		   mb_buffer)), read_long =
-	    atoi (get_mb_str
+		   mb_buffer, flag)), read_long =
+	    atol (get_mb_str
 		  (GetLimitAttr (found_tag_->limit_attr, "read", "long"),
-		   mb_buffer));
+		   mb_buffer, flag));
 
-	  int write_curr =
-	    atoi (get_mb_str
+	  long write_curr =
+	    atol (get_mb_str
 		  (GetLimitAttr (found_tag_->limit_attr, "write", "current"),
-		   mb_buffer)), write_short =
-	    atoi (get_mb_str
+		   mb_buffer, flag)), write_short =
+	    atol (get_mb_str
 		  (GetLimitAttr (found_tag_->limit_attr, "write", "short"),
-		   mb_buffer)), write_mid =
-	    atoi (get_mb_str
+		   mb_buffer, flag)), write_mid =
+	    atol (get_mb_str
 		  (GetLimitAttr (found_tag_->limit_attr, "write", "mid"),
-		   mb_buffer)), write_long =
-	    atoi (get_mb_str
+		   mb_buffer, flag)), write_long =
+	    atol (get_mb_str
 		  (GetLimitAttr (found_tag_->limit_attr, "write", "long"),
-		   mb_buffer));
+		   mb_buffer, flag));
 
 	  if (cpu_curr == 0)
 	    cpu_curr = atoi (cpu_def->l_current);
@@ -455,29 +461,61 @@ GetDefaultForUsers (GPtrArray * tags, DbCtlLimitAttr * cpu_def,
 	    cpu_long = atoi (cpu_def->l_long);
 
 	  if (read_curr == 0 && !read_curr_real_size)
-	    read_curr = atoi (read_def->l_current);
+	    read_curr = atol (read_def->l_current);
 	  if (read_short == 0 && !read_short_real_size)
-	    read_short = atoi (read_def->l_short);
+	    read_short = atol (read_def->l_short);
 	  if (read_mid == 0 && !read_mid_real_size)
-	    read_mid = atoi (read_def->l_mid);
+	    read_mid = atol (read_def->l_mid);
 	  if (read_long == 0 && !read_long_real_size)
-	    read_long = atoi (read_def->l_long);
+	    read_long = atol (read_def->l_long);
 
 	  if (write_curr == 0 && !write_curr_real_size)
-	    write_curr = atoi (write_def->l_current);
+	    write_curr = atol (write_def->l_current);
 	  if (write_short == 0 && !write_short_real_size)
-	    write_short = atoi (write_def->l_short);
+	    write_short = atol (write_def->l_short);
 	  if (write_mid == 0 && !write_mid_real_size)
-	    write_mid = atoi (write_def->l_mid);
+	    write_mid = atol (write_def->l_mid);
 	  if (write_long == 0 && !write_long_real_size)
-	    write_long = atoi (write_def->l_long);
+	    write_long = atol (write_def->l_long);
 
 	  if (name == NULL)
 	    name = GetUserMysqlName (found_tag_->attr);
 
-	  print_list_t = (DbCtlPrintList *) alloca (sizeof (DbCtlPrintList));
-	  print_list_t->name = (char *) alloca (16 * sizeof (char));
-	  print_list_t->data = (char *) alloca (90 * sizeof (char));
+	  if (flag){
+		  gchar *tmp_param[8] = { 0 };
+		  tmp_param[0] = g_strdup_printf ("%i", read_curr);
+		  tmp_param[1] = g_strdup_printf ("%i", read_short);
+		  tmp_param[2] = g_strdup_printf ("%i", read_mid);
+		  tmp_param[3] = g_strdup_printf ("%i", read_long);
+		  tmp_param[4] = g_strdup_printf ("%i", write_curr);
+		  tmp_param[5] = g_strdup_printf ("%i", write_short);
+		  tmp_param[6] = g_strdup_printf ("%i", write_mid);
+		  tmp_param[7] = g_strdup_printf ("%i", write_long);
+		  print_list_t = (DbCtlPrintList *) g_malloc (sizeof (DbCtlPrintList));
+		  print_list_t->name = g_strdup_printf("%s", name);
+		  print_list_t->data = g_strdup_printf("%d/%d/%d/%d	%s/%s/%s/%s %s/%s/%s/%s",
+				  cpu_curr, cpu_short, cpu_mid, cpu_long,
+				  ( read_curr < 1 && flag != 2 )? "<1" : tmp_param[0],
+				  ( read_short < 1 && flag != 2 ) ? "<1" : tmp_param[1],
+				  ( read_mid < 1 && flag != 2 )? "<1" : tmp_param[2],
+				  ( read_long < 1 && flag != 2 ) ? "<1" : tmp_param[3],
+				  ( write_curr < 1 && flag != 2 ) ? "<1" : tmp_param[4],
+				  ( write_short < 1 && flag != 2 ) ? "<1" : tmp_param[5],
+				  ( write_mid < 1 && flag != 2 ) ? "<1" : tmp_param[6],
+				  ( write_long < 1 && flag != 2 ) ? "<1" : tmp_param[7] );
+		  g_free (tmp_param[0]);
+		  g_free (tmp_param[1]);
+		  g_free (tmp_param[2]);
+		  g_free (tmp_param[3]);
+		  g_free (tmp_param[4]);
+		  g_free (tmp_param[5]);
+		  g_free (tmp_param[6]);
+		  g_free (tmp_param[7]);
+	  } else {
+
+	  print_list_t = (DbCtlPrintList *) g_malloc (sizeof (DbCtlPrintList));
+	  print_list_t->name = (char *) g_malloc (16 * sizeof (char));
+	  print_list_t->data = (char *) g_malloc (90 * sizeof (char));
 
 	  char *buffer_cpu = (char *) alloca (25 * sizeof (char));
 	  char *buffer_read = (char *) alloca (29 * sizeof (char));
@@ -517,6 +555,7 @@ GetDefaultForUsers (GPtrArray * tags, DbCtlLimitAttr * cpu_def,
 	  snprintf (print_list_t->name, 15, "%-16s", name);
 	  snprintf (print_list_t->data, 89, "  %-25s  %-29s     %-29s",
 		    buffer_cpu, buffer_read, buffer_write);
+	  }
 	  arr_print_list = g_list_append (arr_print_list, print_list_t);
 	}
     }
@@ -529,6 +568,9 @@ GetDefaultForUsers (GPtrArray * tags, DbCtlLimitAttr * cpu_def,
     {
       DbCtlPrintList *print_list_l_ = (DbCtlPrintList *) print_list_l->data;
       printf ("%s%s\n", print_list_l_->name, print_list_l_->data);
+      g_free(print_list_t->name);
+      g_free(print_list_t->data);
+      g_free(print_list_t);
     }
 
   if (arr_print_list)

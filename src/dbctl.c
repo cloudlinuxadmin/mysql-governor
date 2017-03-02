@@ -27,6 +27,8 @@
 #include "dbctl_list.h"
 #include "dbctl_rest.h"
 
+int kb_flag = 0;
+
 typedef struct dbclt_options
 {
   int option;
@@ -72,9 +74,9 @@ valid_comm (int argc, char **argv)
   for (i = 0; i < 4; i++)
     {
       if (strcmp (level_100[i], argv[1]) == 0)
-	if (argc > 2)
+	if (!(strcmp(argv[1], "list") && (argc == 3)) || (argc > 2))
 	  {
-	    printf ("Incorrect syntax\n");
+	    printf ("Incorrect syntax. Command %s shouldn't has any parameter\n", argv[1]);
 	    return 0;
 	  }
     }
@@ -85,7 +87,7 @@ valid_comm (int argc, char **argv)
 	{
 	  if (argc != 3)
 	    {
-	      printf ("Incorrect syntax\n");
+	      printf ("Incorrect syntax. Command %s should has 3 parameters\n", argv[1]);
 	      return 0;
 	    }
 	  else
@@ -94,27 +96,27 @@ valid_comm (int argc, char **argv)
 	      for (j = 0; j < 3; j++)
 		if (strcmp (level_100[j], argv[2]) == 0)
 		  {
-		    printf ("Incorrect syntax\n");
+		    printf ("Incorrect syntax. Both parameters %s and %s can't be used together\n", argv[1], argv[2]);
 		    return 0;
 		  }
 
 	      for (j = 0; j < 4; j++)
 		if (strcmp (level_110[j], argv[2]) == 0)
 		  {
-		    printf ("Incorrect syntax\n");
+		    printf ("Incorrect syntax. Both parameters %s and %s can't be used together\n", argv[1], argv[2]);
 		    return 0;
 		  }
 
 	      for (j = 0; j < 2; j++)
 		if (strcmp (level_111[j], argv[2]) == 0)
 		  {
-		    printf ("Incorrect syntax\n");
+		    printf ("Incorrect syntax. Both parameters %s and %s can't be used together\n", argv[1], argv[2]);
 		    return 0;
 		  }
 
 	      if (strcmp ("default", argv[2]) == 0)
 		{
-		  printf ("Incorrect syntax\n");
+		  printf ("Incorrect syntax. default in parameter can't use with this command\n");
 		  return 0;
 		}
 	    }
@@ -254,6 +256,10 @@ help (void)
   printf ("--cpu=N                  limit CPU   (pct)  usage\n");
   printf ("--read=N                 limit READ  (MB/s) usage\n");
   printf ("--write=N                limit WRITE (MB/s) usage\n");
+  printf ("\noptions for parameter list:\n");
+  printf ("--kb                     show limits in Kbytes no pretty print\n");
+  printf ("--bb                     show limits in bytes no pretty print\n");
+  printf ("--mb                     show limits in Mbytes no pretty print\n");
   printf
     ("--slow=N                 limit time for long running select queries\n");
   printf ("--level=N                level (1,2,3 or 4) specified\n");
@@ -274,6 +280,9 @@ GetOptList (int argc, char **argv, int *ret)
     {"lve-mode", required_argument, NULL, 100},
     {"help", no_argument, &helpflag, 1},
     {"version", no_argument, &verflag, 1},
+    {"kb", no_argument, &kb_flag, 1},
+    {"bb", no_argument, &kb_flag, 2},
+    {"mb", no_argument, &kb_flag, 3},
     {0, 0, 0, 0}
   };
 
@@ -445,7 +454,7 @@ GetCmd (int argc, char **argv)
     }
   else if (strcmp ("list", argv[1]) == 0)
     {
-      list ();
+      list (kb_flag);
     }
   else if (strcmp ("list-restricted", argv[1]) == 0)
     {

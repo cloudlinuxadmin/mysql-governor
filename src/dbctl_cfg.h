@@ -51,10 +51,10 @@ char *GetUserName (GHashTable * attr);
 char *GetAttr (GHashTable * attr, char *name_attr);
 char *GetLimitAttr (GPtrArray * limit_attr, char *name_limit,
 		    char *name_attr);
-char *GetDefault (GPtrArray * tags);
+char *GetDefault (GPtrArray * tags, int flag);
 char *GetDefaultForUsers (GPtrArray * tags, DbCtlLimitAttr * cpu_def,
 			  DbCtlLimitAttr * read_def,
-			  DbCtlLimitAttr * write_def);
+			  DbCtlLimitAttr * write_def, int flag);
 ezxml_t ParseXmlCfg (char *file_name);
 
 //---------------------------------------------------
