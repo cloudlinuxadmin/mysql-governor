@@ -418,51 +418,9 @@ class InstallManager(object):
     def set_bad_lve_container(self):
         """
         Function with some manipulations with lvectl and limits for container
+        No more need in changing. Lets user decide by himself the value of the limits
         """
-        if not os.path.exists("/usr/sbin/lvectl"):
-            return
-
-        # lvectl commands
-        get_lve_limits_3 = r"/usr/sbin/lvectl limits 3 | sed -n 2p | sed -e " \
-                           r"'s/\s\+/ /g' | cut -d' ' -f3"
-        get_lve_limits_default = r"/usr/sbin/lvectl limits default | sed -n 2p" \
-                                 r" | sed -e 's/\s\+/ /g' | cut -d' ' -f3"
-        lve_set_3 = "/usr/sbin/lvectl set 3 --cpu=25 --ncpu=1 --io=1024 " \
-                    "--mem=0 --vmem=0 --maxEntryProcs=0 --save-all-parameters"
-        lve_set_3_nproc_pmem = "/usr/sbin/lvectl set 3 --cpu=25 --ncpu=1 " \
-                               "--io=1024 --nproc=0 --pmem=0 --mem=0 --vmem=0" \
-                               " --maxEntryProcs=0 --save-all-parameters"
-
-        result0 = exec_command("/usr/sbin/lvectl version | cut -d\"-\" -f1")
-        if len(result0) > 0 and new_lve_ctl(result0[0]) == True:
-            result1 = exec_command(get_lve_limits_3)
-            result2 = exec_command(get_lve_limits_default)
-            if result1 == result2 or len(result1) == 0:
-                result3 = exec_command("cat /proc/cpuinfo | grep processor "
-                                       "| wc -l")
-                cpu_lim = 800
-                if len(result3) > 0:
-                    cpu_lim = num_proc(result3[0]) * 100
-                exec_command_out("/usr/sbin/lvectl set 3 --speed=" +
-                                 str(int(math.ceil(float(cpu_lim) / 4))) +
-                                 "% --io=1024 --nproc=0 --pmem=0 --mem=0 "
-                                 "--vmem=0 --maxEntryProcs=0 "
-                                 "--save-all-parameters")
-        else:
-            result = exec_command("/usr/sbin/lvectl limits 3")
-            if len(result) == 1:
-                if self.cl_version == 5:
-                    exec_command_out(lve_set_3)
-                else:
-                    exec_command_out(lve_set_3_nproc_pmem)
-                return
-            result1 = exec_command(get_lve_limits_3)
-            result2 = exec_command(get_lve_limits_default)
-            if result1 == result2:
-                if self.cl_version == 5:
-                    exec_command_out(lve_set_3)
-                else:
-                    exec_command_out(lve_set_3_nproc_pmem)
+        return
 
     def install_mysql_beta_testing_hooks(self):
         """
