@@ -454,6 +454,11 @@ GetCmd (int argc, char **argv)
     }
   else if (strcmp ("list", argv[1]) == 0)
     {
+	  if (argc == 3) {
+		  if (!strcmp(argv[2], "--bb")) kb_flag = 2;
+		  if (!strcmp(argv[2], "--kb")) kb_flag = 1;
+		  if (!strcmp(argv[2], "--mb")) kb_flag = 3;
+	  }
       list (kb_flag);
     }
   else if (strcmp ("list-restricted", argv[1]) == 0)

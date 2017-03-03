@@ -159,7 +159,7 @@ print_list (FILE * in, int flag)
   else if ( flag == 2 ) val = ' ';
   ReadCfg (CONFIG_PATH, "default");
   if (flag)
-	 printf (" user	cpu(%%)	read(%cB/s)	write(%cB/s)\n", val, val);
+	 printf (" user\tcpu(%%)\tread(%cB/s)\twrite(%cB/s)\n", val, val);
   else
      printf (" user             cpu(%%)                     read(%cB/s)                        write(%cB/s)\n", val, val);
   GetDefault (GetCfg (), flag);
