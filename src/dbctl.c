@@ -74,7 +74,7 @@ valid_comm (int argc, char **argv)
   for (i = 0; i < 4; i++)
     {
       if (strcmp (level_100[i], argv[1]) == 0)
-	if (!(strcmp(argv[1], "list") && (argc == 3)) || (argc > 2))
+    if (!(!strcmp(argv[1], "list") && (argc == 3)) && (argc > 2))
 	  {
 	    printf ("Incorrect syntax. Command %s shouldn't has any parameter\n", argv[1]);
 	    return 0;
@@ -137,19 +137,19 @@ valid_comm (int argc, char **argv)
 		      for (j = 0; j < 3; j++)
 			if (strcmp (level_100[j], argv[2]) == 0)
 			  {
-			    printf ("Incorrect syntax\n");
+			    printf ("Incorrect syntax. Both parameters %s and %s can't be used together\n", argv[1], argv[2]);
 			    return 0;
 			  }
 		      for (j = 0; j < 4; j++)
 			if (strcmp (level_110[j], argv[2]) == 0)
 			  {
-			    printf ("Incorrect syntax\n");
+			    printf ("Incorrect syntax. Both parameters %s and %s can't be used together\n", argv[1], argv[2]);
 			    return 0;
 			  }
 		      for (j = 0; j < 2; j++)
 			if (strcmp (level_111[j], argv[2]) == 0)
 			  {
-			    printf ("Incorrect syntax\n");
+			    printf ("Incorrect syntax. Both parameters %s and %s can't be used together\n", argv[1], argv[2]);
 			    return 0;
 			  }
 		    }
@@ -168,19 +168,19 @@ valid_comm (int argc, char **argv)
 		  for (j = 0; j < 3; j++)
 		    if (strcmp (level_100[j], argv[2]) == 0)
 		      {
-			printf ("Incorrect syntax\n");
+			printf ("Incorrect syntax. Both parameters %s and %s can't be used together\n", argv[1], argv[2]);
 			return 0;
 		      }
 		  for (j = 0; j < 4; j++)
 		    if (strcmp (level_110[j], argv[2]) == 0)
 		      {
-			printf ("Incorrect syntax\n");
+			printf ("Incorrect syntax. Both parameters %s and %s can't be used together\n", argv[1], argv[2]);
 			return 0;
 		      }
 		  for (j = 0; j < 2; j++)
 		    if (strcmp (level_111[j], argv[2]) == 0)
 		      {
-			printf ("Incorrect syntax\n");
+			printf ("Incorrect syntax. Both parameters %s and %s can't be used together\n", argv[1], argv[2]);
 			return 0;
 		      }
 		}
