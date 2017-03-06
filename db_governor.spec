@@ -360,6 +360,11 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Mon Mar 06 2017 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-21
+- MYSQLG-154: Fix ""dbctl list"" show io limits equals to default when they are less then 1mb/s
+- MYSQLG-159: add ability to specify units for io limits
+- MYSQLG-157: Need to review the algoritm of set LVE=3 limits on MySQL install/update
+
 * Thu Feb 02 2017 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-20
 - MYSQLG-152: Use default values for "script" parameters in governor's config in case when script="". Now governor report about error and stop to work.
 

@@ -14,9 +14,9 @@
 #ifndef __DBCTL_LIST__
 #define __DBCTL_LIST__
 
-void list( void );
-void list_restricted( void );
-void show_uids( void );
-void list_restricted_shm( void );
+void list (int flag);
+void list_restricted (void);
+void show_uids (void);
+void list_restricted_shm (void);
 
 #endif /* __DBCTL_LIST__ */

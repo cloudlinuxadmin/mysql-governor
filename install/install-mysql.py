@@ -693,7 +693,6 @@ for o, a in opts:
                 remove_percona_justdb()
                 remove_mysql_target_for_cPanel()
 		install_mysql_beta()
-                set_bad_lve_container()
                 if os.path.exists("/usr/share/lve/dbgovernor/chk-mysqlclient"):
 		    exec_command_out("/usr/share/lve/dbgovernor/chk-mysqlclient")
                 installPythonMysql()
@@ -711,7 +710,6 @@ for o, a in opts:
                 remove_percona_justdb()
 		install_mysql_beta()
 		remove_mysql_justdb()
-                set_bad_lve_container()
 		if os.path.exists("/usr/bin/mysql_upgrade"):
 		    exec_command_out("/usr/bin/mysql_upgrade")
 		if os.path.exists("/usr/share/lve/dbgovernor/chk-mysqlclient"):
@@ -737,7 +735,6 @@ for o, a in opts:
                 remove_mysql_justdb()
                 remove_mysql_target_for_cPanel()
 		install_mysql_beta_testing()
-                set_bad_lve_container()
                 if os.path.exists("/usr/share/lve/dbgovernor/chk-mysqlclient"):
 		    exec_command_out("/usr/share/lve/dbgovernor/chk-mysqlclient")
                 installPythonMysql()
