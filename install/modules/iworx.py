@@ -14,22 +14,15 @@ class IWorxManager(InstallManager):
     """
     CONF_PATH = "/home/interworx/iworx.ini"
 
-    def _after_install_new_packages(self):
+    def get_mysql_user(self):
         """
-        Set mysql login and password
+        Retrieve MySQL user name and password and save it into self attributes
         """
-        MYSQLUSER = "iworx"
-        if not os.path.exists(self.CONF_PATH):
-            return
-
-        lines = grep(self.CONF_PATH, "rootdsn=")
-        try:
-            # MYSQLPASSWORD = exec_command("cat /home/interworx/iworx.ini | grep rootdsn= | cut -d"/" -f3 | cut -d: -f2 | cut -d@ -f1", True)
-            MYSQLPASSWORD = lines[0].split("/")[2].split(":")[1].split("@")[0]
-        except IndexError:
-            MYSQLPASSWORD = None
-
-        if MYSQLPASSWORD:
-            self._set_mysql_access(MYSQLUSER, MYSQLPASSWORD)
-
-        print "The installation of MySQL for db_governor completed"
+        if os.path.exists(self.CONF_PATH):
+            self.MYSQLUSER = "iworx"
+            lines = grep(self.CONF_PATH, "rootdsn=")
+            try:
+                # MYSQLPASSWORD = exec_command("cat /home/interworx/iworx.ini | grep rootdsn= | cut -d"/" -f3 | cut -d: -f2 | cut -d@ -f1", True)
+                self.MYSQLPASSWORD = lines[0].split("/")[2].split(":")[1].split("@")[0]
+            except IndexError:
+                self.MYSQLPASSWORD = None

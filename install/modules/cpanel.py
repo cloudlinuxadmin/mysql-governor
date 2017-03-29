@@ -62,6 +62,23 @@ class cPanelManager(InstallManager):
                              "MySQL50,MySQL51,MySQL55,MySQL56,MariaDB,"
                              "MariaDB100,MariaDB101")
 
+    def check_need_for_mysql_upgrade(self):
+        """
+        Check for upgrading mysql tables on cPanel is specific
+        because cPanel manages its own upgrade scripts for MySQL.
+        That is why the True condition for mysql_upgrade is
+            if MySQL became MariaDB
+            if MariaDB version has changed
+        :return: should upgrade or not (True or False)
+        """
+        current_version = self._check_mysql_version()
+        if not self.prev_version or not current_version:
+            print 'Problem with version retrieving'
+            return False
+        return current_version['mysql_type'] == 'mariadb' and \
+               (self.prev_version['mysql_type'] == 'mysql' or
+                current_version['short'] != self.prev_version['short'])
+
     def _after_install_new_packages(self):
         """
         cPanel triggers after install new packages to system
@@ -100,6 +117,8 @@ class cPanelManager(InstallManager):
                 self._rel("utils/db_governor")):
             shutil.copy2(self._rel("utils/db_governor"),
                          "/etc/chkserv.d/db_governor")
+        # call parent after_install
+        InstallManager._after_install_new_packages(self)
 
     def _after_install_rollback(self):
         """

@@ -697,6 +697,7 @@ def correct_mysqld_service_for_cl7(mysql_type):
             if not check_mysqld_is_alive():
                 service("start", name)
 
+
 def disable_and_remove_service(service_path):
     """
     Disable systemd service
@@ -763,6 +764,7 @@ def parse_rpm_name(name):
         return [result[0], result[1], result[2], result[3]]
 
     return []
+
 
 def disable_service(name):
     """
@@ -834,6 +836,7 @@ def check_mysqld_is_alive():
         return True
     return False
 
+
 def get_mysql_cnf_value(section, name):
     """
     Get value from my.cnf
@@ -860,6 +863,7 @@ def get_mysql_log_file():
         file_path = "/var/log/mysqld.log"
     return file_path
 
+
 def makedir_recursive(path):
     """
     Create directory recursively
@@ -875,3 +879,21 @@ def makedir_recursive(path):
             return True
         else:
             return False
+
+
+def patch_governor_config(username, password):
+    """
+
+    :param username:
+    :param password:
+    :return:
+    """
+    with open("/etc/container/mysql-governor.xml", 'rb') as governor_config:
+        contents = governor_config.readlines()
+
+    for index, line in enumerate(contents):
+        if 'connector' in line and 'login=' not in line:
+            contents[index] = '<connector login="{login}" password="{password}" prefix_separator="_"/>\n'.format(login=username, password=password)
+
+    with open("/etc/container/mysql-governor.xml", 'wb') as governor_config:
+        governor_config.writelines(contents)
