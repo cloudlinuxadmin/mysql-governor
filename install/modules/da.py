@@ -72,25 +72,27 @@ class DirectAdminManager(InstallManager):
 
         self._mysqlservice("stop")
 
-
+    def get_mysql_user(self):
+        """
+        Retrieve MySQL user name and password and save it into self attributes
+        """
+        if not os.path.exists(self.CONF_FILE_MYSQL):
+            return None
+        try:
+            self.MYSQLUSER = grep(self.CONF_FILE_MYSQL, "user=")[0].split("=")[1]
+            self.MYSQLPASSWORD = grep(self.CONF_FILE_MYSQL, "passwd=")[0].split("=")[1]
+        except IndexError:
+            pass
 
     def _after_install_new_packages(self):
         """
         Specific actions after new packages installation
         """
-        if not os.path.exists(self.CONF_FILE_MYSQL):
-            return None
-
-        try:
-            MYSQLUSER = grep(self.CONF_FILE_MYSQL, "user=")[0].split("=")[1]
-            MYSQLPASSWORD = grep(self.CONF_FILE_MYSQL, "passwd=")[0].split("=")[1]
-        except IndexError:
-            pass
-        else:
-            self._set_mysql_access(MYSQLUSER, MYSQLPASSWORD)
-            print "Rebuild php please... /usr/local/directadmin/custombuild/build php"
+        # call parent after_install
+        InstallManager._after_install_new_packages(self)
         # install MySQL-python module
         exec_command("yum install -y MySQL-python --disableexcludes=all")
+        print "Rebuild php please... /usr/local/directadmin/custombuild/build php"
 
     def _detect_version_if_auto(self):
         """
@@ -113,7 +115,7 @@ class DirectAdminManager(InstallManager):
             if os.path.exists("/usr/share/lve/dbgovernor/da.tp.old"):
                 MYSQL_DA_TYPE = read_file("/usr/share/lve/dbgovernor/da.tp.old")
             elif os.path.exists("/usr/bin/mysql"):
-                result = exec_command("/usr/bin/mysql -V | grep -c 'MariaDB'", True)
+                result = exec_command("/usr/bin/mysql -V | grep -c 'MariaDB' -i || true", True)
                 if result == "0":
                     MYSQL_DA_TYPE = "mysql"
                 else:

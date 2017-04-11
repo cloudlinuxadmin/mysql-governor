@@ -14,16 +14,10 @@ class PleskManager(InstallManager):
     """
     DBPASS_PATH = "/etc/psa/.psa.shadow"
 
-    def _after_install_new_packages(self):
+    def get_mysql_user(self):
         """
-        Set mysql login and password
+        Retrieve MySQL user name and password and save it into self attributes
         """
-        MYSQLUSER = "admin"
-        MYSQLPASSWORD = None
         if os.path.exists(self.DBPASS_PATH):
-            MYSQLPASSWORD = read_file(self.DBPASS_PATH)
-
-        if MYSQLPASSWORD:
-            self._set_mysql_access(MYSQLUSER, MYSQLPASSWORD)
-
-        print "The installation of MySQL for db_governor completed"
+            self.MYSQLUSER = "admin"
+            self.MYSQLPASSWORD = read_file(self.DBPASS_PATH)

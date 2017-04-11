@@ -83,10 +83,6 @@ def build_parser():
                         help="fix adduser and deluser hooks for cPanel",
                         dest="fix_cpanel_hooks", action="store_true",
                         default=False)
-    parser.add_argument("--fix-cpanel-cl-mysql",
-                        help="fix mysqld service for cPanel(CL7)",
-                        dest="fix_cpanel_cl_mysql", action="store_true",
-                        default=False)
     parser.add_argument("--force",
                         help="Don`t exit if percona installation found",
                         dest="force", action="store_true", default=False)
@@ -120,6 +116,10 @@ def build_parser():
                         default=False)
     parser.add_argument("--clean-storage", help="Clean up storage",
                         dest="store_clean", action="store_true", default=False)
+    parser.add_argument("--correct-cl7-service-name",
+                        help="Remove /etc/init.d/mysql(d) "
+                             "if exists for CloudLinux 7",
+                        dest="cl7_correct", action="store_true", default=False)
     parser.add_argument("--output-commands",
                         help="Echo all commands executed by "
                              "governor's install script",

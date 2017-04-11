@@ -11,6 +11,7 @@ import time
 import urllib2
 import pwd
 import grp
+import re
 from datetime import datetime
 
 sys.path.append("../")
@@ -23,7 +24,7 @@ from utilities import get_cl_num, exec_command, exec_command_out, new_lve_ctl, \
     correct_mysqld_service_for_cl7, \
     correct_remove_notowned_mysql_service_names_cl7, \
     correct_remove_notowned_mysql_service_names_not_symlynks_cl7, get_mysql_log_file, \
-    check_mysqld_is_alive, makedir_recursive
+    check_mysqld_is_alive, makedir_recursive, patch_governor_config
 
 
 class InstallManager(object):
@@ -50,6 +51,8 @@ class InstallManager(object):
     ALL_PACKAGES_NEW_NOT_DOWNLOADED = False
     ALL_PACKAGES_OLD_NOT_DOWNLOADED = False
     DISABLED = False
+    MYSQLUSER = ''
+    MYSQLPASSWORD = ''
 
     @staticmethod
     def factory(cp_name):
@@ -141,6 +144,9 @@ class InstallManager(object):
             print "Unknown system type. Installation aborted"
             sys.exit(2)
 
+        # remember installed mysql version
+        self.prev_version = self._check_mysql_version()
+
         # first download packages for current and new mysql versions
         self._load_packages(beta)
 
@@ -205,8 +211,7 @@ class InstallManager(object):
         # check if log MySQL's log file exists and correct perms
         # in other case MySQL will not starts
         log_file = get_mysql_log_file()
-        if not os.path.exists(os.path.dirname(log_file)):
-            makedir_recursive(os.path.dirname(log_file))
+        makedir_recursive(log_file)
         touch(log_file)
         log_owner_name = pwd.getpwuid(os.stat(log_file).st_uid)[0]
         log_owner_grp = grp.getgrgid(os.stat(log_file).st_gid)[0]
@@ -668,6 +673,70 @@ class InstallManager(object):
 
         return packages
 
+    def get_mysql_user(self):
+        """
+        Retrieve MySQL user name and password and save it into self attributes
+        """
+
+    @staticmethod
+    def _check_mysql_version():
+        """
+        Retrieve MySQL version from mysql --version command
+        :return: dictionary with version of form {
+                short: two numbers of version (e.g. 5.5)
+                extended: all numbers of version (e.g. 5.5.52)
+                mysql_type: type flag (mysql or mariadb)
+                full: mysql_type + short version (e.g. mariadb55)
+            }
+        """
+        try:
+            version_string = exec_command('mysql --version')
+            version_info = re.findall(r'(?<=Distrib\s)[^,]+', version_string[0])
+            parts = version_info[0].split('-')
+            version = {
+                'short': '.'.join(parts[0].split('.')[:-1]),
+                'extended': parts[0],
+                'mysql_type': parts[1].lower() if len(parts) > 1 else 'mysql'
+            }
+            version.update({'full': '{m_type}{m_version}'.format(m_type=version['mysql_type'],
+                                                                 m_version=version['short'].replace('.', ''))})
+        except Exception:
+            return {}
+        return version
+
+    def check_need_for_mysql_upgrade(self):
+        """
+        Basic check for upgrading MySQL tables
+        The True condition for mysql_upgrade is
+            if mysql type has changed (mysql/mariadb)
+            if version has changed
+        :return: should upgrade or not (True or False)
+        """
+        current_version = self._check_mysql_version()
+        if not self.prev_version or not current_version:
+            print 'Problem with version retrieving'
+            return False
+        return current_version['mysql_type'] != self.prev_version['mysql_type'] or current_version['short'] != self.prev_version['short']
+
+    def run_mysql_upgrade(self):
+        """
+        Run mysql_upgrade and mysql_fix_privilege_tables scripts if it is needed
+        """
+        print 'Check for the need of mysql_upgrade...'
+        if self.check_need_for_mysql_upgrade():
+            print 'Tables should be upgraded!'
+            if self.MYSQLPASSWORD:
+                cmd_upgrade = "/usr/bin/mysql_upgrade --user='{user}' --password='{passwd}'".format(user=self.MYSQLUSER, passwd=self.MYSQLPASSWORD)
+                cmd_fix = "/usr/bin/mysql_fix_privilege_tables --user='{user}' --password='{passwd}'".format(user=self.MYSQLUSER, passwd=self.MYSQLPASSWORD)
+            else:
+                cmd_upgrade = '/usr/bin/mysql_upgrade'
+                cmd_fix = '/usr/bin/mysql_fix_privilege_tables'
+            exec_command_out(cmd_upgrade)
+            if os.path.exists('/usr/bin/mysql_fix_privilege_tables'):
+                exec_command_out(cmd_fix)
+        else:
+            print 'No need for upgrading tables'
+
     def _before_install_new_packages(self):
         """
         Specific actions before install new packages
@@ -677,6 +746,11 @@ class InstallManager(object):
         """
         Specific actions after install new packages
         """
+        # patch governor config if needed
+        self._set_mysql_access()
+        # run mysql_upgrade if needed
+        self.run_mysql_upgrade()
+        print "The installation of MySQL for db_governor completed"
 
     def _after_install_rollback(self):
         """
@@ -731,26 +805,19 @@ class InstallManager(object):
         Specific actions after delete
         """
 
-    @staticmethod
-    def _set_mysql_access(username, password):
+    def _set_mysql_access(self):
         """
         Set mysql admin login and password and save it to governor config
         """
-        if os.path.exists("/usr/bin/mysql_upgrade"):
-            exec_command_out("""/usr/bin/mysql_upgrade --user=%s --password=%s""" % (username, password))
-        elif os.path.exists("/usr/bin/mysql_fix_privilege_tables"):
-            exec_command_out("""/usr/bin/mysql_fix_privilege_tables --user=%s --password=%s""" % (username, password))
+        self.get_mysql_user()
+        if self.MYSQLUSER and self.MYSQLPASSWORD:
+            print "Patch governor configuration file"
+            check_file("/etc/container/mysql-governor.xml")
+            patch_governor_config(self.MYSQLUSER, self.MYSQLPASSWORD)
 
-        print "Patch governor configuration file"
-        check_file("/etc/container/mysql-governor.xml")
-        if not grep("/etc/container/mysql-governor.xml", "login="):
-            exec_command_out(
-                r"""sed -e "s/<connector prefix_separator=\"_\"\/>/<connector prefix_separator=\"_\" login=\"%s\" password=\"%s\"\/>/" -i /etc/container/mysql-governor.xml""" % (
-                    username, password))
-
-        if exec_command("rpm -qa governor-mysql", True):
-            service("restart", "db_governor")
-            print "DB-Governor restarted..."
+            if exec_command("rpm -qa governor-mysql", True):
+                service("restart", "db_governor")
+                print "DB-Governor restarted..."
 
     @staticmethod
     def _kill_mysql():
