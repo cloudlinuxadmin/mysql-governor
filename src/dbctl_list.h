@@ -14,7 +14,7 @@
 #ifndef __DBCTL_LIST__
 #define __DBCTL_LIST__
 
-void list (int flag);
+void list (int flag, int non_priv);
 void list_restricted (void);
 void show_uids (void);
 void list_restricted_shm (void);

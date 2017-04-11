@@ -151,13 +151,13 @@ addMemoryUser (FILE * in, GPtrArray * tags)
 }
 
 void
-print_list (FILE * in, int flag)
+print_list (FILE * in, int flag, int non_priv)
 {
   DbCtlLimitAttr cpu_def, read_def, write_def;
   char val = 'M';
   if (flag == 1) val = 'K';
   else if ( flag == 2 ) val = ' ';
-  ReadCfg (CONFIG_PATH, "default");
+  ReadCfg ((non_priv?DUPLICATE_CONFIG_PATH:CONFIG_PATH), "default");
   if (flag)
 	 printf (" user\tcpu(%%)\tread(%cB/s)\twrite(%cB/s)\n", val, val);
   else
@@ -326,7 +326,7 @@ print_list_rest (FILE * in)
 }
 
 void
-list (int flag)
+list (int flag, int non_priv)
 {
   FILE *in = NULL;
   FILE *out = NULL;
