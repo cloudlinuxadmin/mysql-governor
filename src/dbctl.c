@@ -254,8 +254,8 @@ help (void)
 
   printf ("\noptions:\n");
   printf ("--cpu=N                  limit CPU   (pct)  usage\n");
-  printf ("--read=N                 limit READ  (MB/s) usage\n");
-  printf ("--write=N                limit WRITE (MB/s) usage\n");
+  printf ("--read=N                 limit READ  (MB/s) usage (can by k(KB/s), b(BB/s))\n");
+  printf ("--write=N                limit WRITE (MB/s) usage (can by k(KB/s), b(BB/s))\n");
   printf ("\noptions for parameter list:\n");
   printf ("--kb                     show limits in Kbytes no pretty print\n");
   printf ("--bb                     show limits in bytes no pretty print\n");

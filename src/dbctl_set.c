@@ -169,18 +169,19 @@ setLimitAttr (ezxml_t limit, char *s)
 	  strcmp (ezxml_attr (limit, "name"), "write") == 0)
 	{
 	  int l = 0;
-	  for (; l < 4; l++)
-		limit_l = strnlen(data[l].str, 100);
+	  for (; l < 4; l++){
+		int limit_l = strnlen(data[l].str, 100);
 	    if (limit_l){
-	    	if (data[l].str[limit_l - 1] == 'b'){
+	    	char units = data[l].str[limit_l - 1];
+	    	if (units == 'b'){
 	    		data[l].str[limit_l - 1] = '\0';
 	    		if (isprint (data[l].str[0]))
 	    			get_bb (&data[l].str);
-	    	} if (data[l].str[limit_l - 1] == 'k'){
+	    	} else if (units == 'k'){
 	    		data[l].str[limit_l - 1] = '\0';
 	    		if (isprint (data[l].str[0]))
 	    			get_kb (&data[l].str);
-	    	} if (data[l].str[limit_l - 1] == 'm'){
+	    	} else if (units == 'm'){
 	    		data[l].str[limit_l - 1] = '\0';
 	    		if (isprint (data[l].str[0]))
 	    			get_mb (&data[l].str);
@@ -192,6 +193,7 @@ setLimitAttr (ezxml_t limit, char *s)
 	        if (isprint (data[l].str[0]))
 	          get_mb (&data[l].str);
 	    }
+	  }
 	}
 
       if (isprint (data[0].str[0]))

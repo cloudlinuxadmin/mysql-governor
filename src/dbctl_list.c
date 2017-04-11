@@ -206,7 +206,7 @@ print_list (FILE * in, int flag, int non_priv)
   FreeCfg ();
 
   DbCtlLimitAttr limit_attr_def;
-  ReadCfg (CONFIG_PATH, "user");
+  ReadCfg ((non_priv?DUPLICATE_CONFIG_PATH:CONFIG_PATH), "user");
   GPtrArray *tags = addMemoryUser (in, GetCfg ());
   GetDefaultForUsers (tags, &cpu_def, &read_def, &write_def, flag);
   FreeCfg ();
@@ -351,7 +351,7 @@ list (int flag, int non_priv)
       fwrite_wrapper (&command, sizeof (DbCtlCommand), 1, out);
       fflush (out);
 
-      print_list (in, flag);
+      print_list (in, flag, non_priv);
       closesock (socket, in, out);
     }
   else
