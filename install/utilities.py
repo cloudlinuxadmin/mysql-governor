@@ -14,6 +14,7 @@ import ConfigParser
 from datetime import datetime
 from distutils.version import StrictVersion
 from glob import glob
+import xml.etree.ElementTree as ET
 
 __all__ = [
     "mysql_version", "clean_whitespaces", "is_package_installed",
@@ -883,17 +884,17 @@ def makedir_recursive(path):
 
 def patch_governor_config(username, password):
     """
-
+    Add username and password to connector tag in governor config file
     :param username:
     :param password:
     :return:
     """
-    with open("/etc/container/mysql-governor.xml", 'rb') as governor_config:
-        contents = governor_config.readlines()
+    governor_config_file = '/etc/container/mysql-governor.xml'
+    tree = ET.parse(governor_config_file)
+    root = tree.getroot()
 
-    for index, line in enumerate(contents):
-        if 'connector' in line and 'login=' not in line:
-            contents[index] = '<connector login="{login}" password="{password}" prefix_separator="_"/>\n'.format(login=username, password=password)
-
-    with open("/etc/container/mysql-governor.xml", 'wb') as governor_config:
-        governor_config.writelines(contents)
+    connector = root.find('connector')
+    if not connector.get('login'):
+        connector.set('login', username)
+        connector.set('password', password)
+        tree.write(governor_config_file)
