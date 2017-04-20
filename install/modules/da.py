@@ -115,7 +115,7 @@ class DirectAdminManager(InstallManager):
             if os.path.exists("/usr/share/lve/dbgovernor/da.tp.old"):
                 MYSQL_DA_TYPE = read_file("/usr/share/lve/dbgovernor/da.tp.old")
             elif os.path.exists("/usr/bin/mysql"):
-                result = exec_command("/usr/bin/mysql -V | grep -c 'MariaDB'", True)
+                result = exec_command("/usr/bin/mysql -V | grep -c 'MariaDB' -i || true", True)
                 if result == "0":
                     MYSQL_DA_TYPE = "mysql"
                 else:

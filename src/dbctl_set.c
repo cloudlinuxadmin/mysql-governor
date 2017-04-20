@@ -29,8 +29,22 @@ get_mb (char **s)
   unsigned long long mb =
     (unsigned long long) (atol (*s)) * (unsigned long long) (1024 * 1024);
   sprintf (*s, "%llu", mb);
-  //*s = realloc( *s, strlen( *s ) + ( 15 * sizeof( char ) ) );
-  //sprintf( *s, "%s000000", *s );
+}
+
+void
+get_kb (char **s)
+{
+  unsigned long long kb =
+    (unsigned long long) (atol (*s)) * (unsigned long long) (1024 );
+  sprintf (*s, "%llu", kb);
+}
+
+void
+get_bb (char **s)
+{
+  unsigned long long bb =
+    (unsigned long long) (atol (*s)) * (unsigned long long) (1024 * 1024);
+  sprintf (*s, "%llu", bb);
 }
 
 int
@@ -155,9 +169,31 @@ setLimitAttr (ezxml_t limit, char *s)
 	  strcmp (ezxml_attr (limit, "name"), "write") == 0)
 	{
 	  int l = 0;
-	  for (; l < 4; l++)
-	    if (isprint (data[l].str[0]))
-	      get_mb (&data[l].str);
+	  for (; l < 4; l++){
+		int limit_l = strnlen(data[l].str, 100);
+	    if (limit_l){
+	    	char units = data[l].str[limit_l - 1];
+	    	if (units == 'b'){
+	    		data[l].str[limit_l - 1] = '\0';
+	    		if (isprint (data[l].str[0]))
+	    			get_bb (&data[l].str);
+	    	} else if (units == 'k'){
+	    		data[l].str[limit_l - 1] = '\0';
+	    		if (isprint (data[l].str[0]))
+	    			get_kb (&data[l].str);
+	    	} else if (units == 'm'){
+	    		data[l].str[limit_l - 1] = '\0';
+	    		if (isprint (data[l].str[0]))
+	    			get_mb (&data[l].str);
+	    	} else {
+	    		if (isprint (data[l].str[0]))
+	    			 get_mb (&data[l].str);
+	    	}
+	    } else {
+	        if (isprint (data[l].str[0]))
+	          get_mb (&data[l].str);
+	    }
+	  }
 	}
 
       if (isprint (data[0].str[0]))
