@@ -13,7 +13,7 @@
 #define _GOVERNOR_CONFIG_H_ 1
 #include <glib.h>
 #include <stdio.h>
-#include "ezxml.h"
+#include "xml.h"
 #include "data.h"
 
 
@@ -58,7 +58,7 @@ stats_limit_cfg *config_get_account_limit (const char *account_id,
 					   stats_limit_cfg * cfgin);
 void config_free ();
 struct governor_config *config_init (const char *path);
-int save_duplicate_config (ezxml_t xml);
+int save_duplicate_config (xml_data* xml);
 void reread_config ();
 void config_destroy_lock ();
 void config_add_work_user (const char *user_name);
@@ -66,5 +66,6 @@ void config_add_work_user (const char *user_name);
 void get_config_data (struct governor_config *data);
 MODE_TYPE get_config_log_mode ();
 struct governor_config *get_config ();
+void print_config_full(void);
 
 #endif

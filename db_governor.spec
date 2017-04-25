@@ -27,6 +27,7 @@ Requires: alt-python27-cllib
 Requires: yum-utils
 Requires: tmpwatch
 Requires: wget
+Requires: libxml2
 Requires(preun): /sbin/chkconfig
 BuildRequires: cmake
 BuildRequires: ncurses-devel
@@ -34,6 +35,7 @@ BuildRequires: glib2-devel
 BuildRequires: autoconf
 BuildRequires: tar
 BuildRequires: alt-python27
+BuildRequires: libxml2-devel
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
 BuildRequires: systemd
 BuildRequires: systemd-devel

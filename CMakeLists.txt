@@ -10,13 +10,16 @@ SET(CMAKE_BUILD_TYPE Debug)
 SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 #SET(MYSQL_INCLUDE_DIRS "/usr/include/mysql")
 FIND_PACKAGE(GLIB2 REQUIRED)
+FIND_PACKAGE(LibXml2 REQUIRED)
 #FIND_PACKAGE(MySQL REQUIRED)
 
 #INCLUDE_DIRECTORIES(${GLIB2_INCLUDE_DIRS} ${MYSQL_INCLUDE_DIRS})
 INCLUDE_DIRECTORIES(${GLIB2_INCLUDE_DIRS})
+INCLUDE_DIRECTORIES(${LIBXML2_INCLUDE_DIR})
 #LINK_LIBRARIES(${GLIB2_LIBRARIES} ${MYSQL_CLIENT_LIBS})
 #INCLUDE_DIRECTORIES(${GLIB2_INCLUDE_DIRS})
 LINK_LIBRARIES(${GLIB2_LIBRARIES})
+LINK_LIBRARIES(${LIBXML2_LIBRARIES})
 LINK_LIBRARIES(pthread)
 LINK_LIBRARIES(m)
 LINK_LIBRARIES(rt)
@@ -32,7 +35,7 @@ SET(EXECUTABLE_OUTPUT_PATH "${CMAKE_SOURCE_DIR}/bin/")
 SET(LIBRARY_OUTPUT_PATH "${CMAKE_SOURCE_DIR}/lib/")
 
 SET(SRC "${CMAKE_SOURCE_DIR}/src/")
-SET(config_SRC ${SRC}/governor_config.c ${SRC}/ezxml.c)
+SET(config_SRC ${SRC}/governor_config.c ${SRC}/xml.c)
 SET(db_governor_SRC ${SRC}/governor.c 
                     ${config_SRC} 
                     ${SRC}/fifo_stats.c 
@@ -112,7 +115,7 @@ SET(governor_lib_src ${SRC}/dbgovernor_string_functions.c
                     ${SRC}/parce_proc_fs.c
                     ${SRC}/shared_memory.c             
 )
-SET_SOURCE_FILES_PROPERTIES(${db_governor_SRC} ${dbtop_SRC} ${governor_lib_src} ${mysql_unfreeze_SRC} ${dbctl_SRC} PROPERTIES COMPILE_FLAGS "-DOK -DEZXML_NOMMAP -ggdb -fstack-protector-all")
+SET_SOURCE_FILES_PROPERTIES(${db_governor_SRC} ${dbtop_SRC} ${governor_lib_src} ${mysql_unfreeze_SRC} ${dbctl_SRC} PROPERTIES COMPILE_FLAGS "-DOK -ggdb -fstack-protector-all")
 
 ADD_EXECUTABLE(db_governor ${db_governor_SRC})
 ADD_EXECUTABLE(dbtop ${dbtop_SRC})
@@ -206,7 +209,6 @@ set(CPACK_SOURCE_TBZ2 "ON")
 set(CPACK_SOURCE_TGZ "OFF")
 set(CPACK_SOURCE_TZ "OFF")
 set(CPACK_SOURCE_ZIP "ON")
-#set(EZXML_NOMMAP 1)
 
 set(CPACK_RPM_USER_BINARY_SPECFILE "${CMAKE_CURRENT_BINARY_DIR}/db_governor.spec")
 include(CPack)
