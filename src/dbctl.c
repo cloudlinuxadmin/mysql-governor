@@ -43,7 +43,7 @@ valid_comm (int argc, char **argv)
   name_comm level_111[] = { "set", "restrict" };
   name_comm level_110[] = { "ignore", "monitor", "delete", "unrestrict" };
   name_comm level_100[] =
-    { "list", "list-restricted", "unrestrict-all", "list-restricted-shm", "nonpriv-list" };
+    { "list", "list-restricted", "unrestrict-all", "list-restricted-shm" };
 
   char _tmp_arg[11];
   _tmp_arg[0] = '\0';
@@ -58,7 +58,7 @@ valid_comm (int argc, char **argv)
 
   int val_comm = 0;
   int i = 0;
-  for (i = 0; i < 5; i++)
+  for (i = 0; i < 4; i++)
     if (strcmp (level_100[i], argv[1]) == 0)
       val_comm++;
   for (i = 0; i < 4; i++)
@@ -71,7 +71,7 @@ valid_comm (int argc, char **argv)
   if (!val_comm)
     return 0;
 
-  for (i = 0; i < 5; i++)
+  for (i = 0; i < 4; i++)
     {
       if (strcmp (level_100[i], argv[1]) == 0)
     if (!(!strcmp(argv[1], "list") && (argc == 3)) && (argc > 2))
@@ -93,7 +93,7 @@ valid_comm (int argc, char **argv)
 	  else
 	    {
 	      int j = 0;
-	      for (j = 0; j < 5; j++)
+	      for (j = 0; j < 4; j++)
 		if (strcmp (level_100[j], argv[2]) == 0)
 		  {
 		    printf ("Incorrect syntax. Both parameters %s and %s can't be used together\n", argv[1], argv[2]);
@@ -134,7 +134,7 @@ valid_comm (int argc, char **argv)
 		  if (strcmp ("default", argv[2]) != 0)
 		    {
 		      int j = 0;
-		      for (j = 0; j < 5; j++)
+		      for (j = 0; j < 4; j++)
 			if (strcmp (level_100[j], argv[2]) == 0)
 			  {
 			    printf ("Incorrect syntax. Both parameters %s and %s can't be used together\n", argv[1], argv[2]);
@@ -165,7 +165,7 @@ valid_comm (int argc, char **argv)
 	      if (strcmp (level_111[i], "restrict") == 0)
 		{
 		  int j = 0;
-		  for (j = 0; j < 5; j++)
+		  for (j = 0; j < 4; j++)
 		    if (strcmp (level_100[j], argv[2]) == 0)
 		      {
 			printf ("Incorrect syntax. Both parameters %s and %s can't be used together\n", argv[1], argv[2]);
@@ -218,7 +218,7 @@ help (void)
   printf ("set                      set parameters for a db_governor\n");
 
   printf
-    ("list(or nonpriv-list)         list users & their limits (list all known users in dbgovernor, not just those that have limits set )\n");
+    ("list         list users & their limits (list all known users in dbgovernor, not just those that have limits set )\n");
   printf
     ("list-restricted          list restricted customers, with their limits, restriction reason, and time period they will still be restricted\n");
 
@@ -460,15 +460,6 @@ GetCmd (int argc, char **argv)
 		  if (!strcmp(argv[2], "--mb")) kb_flag = 3;
 	  }
       list (kb_flag, 0);
-    }
-  else if (strcmp ("nonpriv-list", argv[1]) == 0)
-    {
-  	  if (argc == 3) {
-  		  if (!strcmp(argv[2], "--bb")) kb_flag = 2;
-  		  if (!strcmp(argv[2], "--kb")) kb_flag = 1;
-  		  if (!strcmp(argv[2], "--mb")) kb_flag = 3;
-  	  }
-        list (kb_flag, 1);
     }
   else if (strcmp ("list-restricted", argv[1]) == 0)
     {

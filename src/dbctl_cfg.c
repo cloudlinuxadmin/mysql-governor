@@ -482,11 +482,13 @@ void *SearchTagByName(xml_data *cfg, char *name_tag, char *name) {
 			releaseElemValue(attrValue);
 			return tmp_xml;
 		}
+		releaseElemValue(attrValue);
 		attrValue = getElemAttr(tmp_xml, "mysql_name");
 		if (attrValue && !strcmp(attrValue, name)) {
 			releaseElemValue(attrValue);
 			return tmp_xml;
 		}
+		releaseElemValue(attrValue);
 
 	}
 

@@ -158,9 +158,9 @@ void *setLimitAttr(void *limit, char *s) {
 
 	SplitStr *data = NULL;
 	int res = 0;
-	const char *slowAttr = getElemAttr(limit, "slow");
+	const char *slowAttr = getElemAttr(limit, "name");
 	if (cnt = split(&data, s, ',')) {
-		const char *nameAttr = getElemAttr(limit, "name");
+		const char *nameAttr = slowAttr;
 
 		if (!strcmp(nameAttr, "read") || !strcmp(nameAttr, "write")) {
 			int l = 0;
@@ -204,7 +204,6 @@ void *setLimitAttr(void *limit, char *s) {
 			if (data[index].str)
 				free(data[index].str);
 		}
-		releaseElemValue(nameAttr);
 
 	} else if (slowAttr && strcmp(slowAttr, "slow") == 0) {
 		if (cnt = split(&data, s, '\n')) {
@@ -229,8 +228,7 @@ void *setLimitAttr(void *limit, char *s) {
 }
 
 void *addLimit(xml_data *xml, void *child, char *n, char *s) {
-	void *limit = setNode(xml, child, "limit", NULL);
-	setAttr(limit, "name", n);
+	void *limit = setNodeWithAttr(xml, child, "limit", NULL, "name", n);
 
 	return setLimitAttr(limit, s);
 }
@@ -291,13 +289,13 @@ int setDefault(char *cpu, char *read, char *write, char *slow) {
 					= getNextChild(child, "limit", limit)) {
 				const char *nameAttr = getElemAttr(limit, "name");
 				if (!strcmp(nameAttr, "read")) {
-					setLimitAttr(limit, cpu);
+					setLimitAttr(limit, read);
 					cnt_attr++;
 				}
 				releaseElemValue(nameAttr);
 			}
 			if (!cnt_attr)
-				limit = addLimit(cfg, child, "read", cpu);
+				limit = addLimit(cfg, child, "read", read);
 			if (checkCorrectAttrs(child, "read"))
 				limit = removeBadLimit(child, "read");
 		}
@@ -308,13 +306,13 @@ int setDefault(char *cpu, char *read, char *write, char *slow) {
 					= getNextChild(child, "limit", limit)) {
 				const char *nameAttr = getElemAttr(limit, "name");
 				if (!strcmp(nameAttr, "write")) {
-					setLimitAttr(limit, cpu);
+					setLimitAttr(limit, write);
 					cnt_attr++;
 				}
 				releaseElemValue(nameAttr);
 			}
 			if (!cnt_attr)
-				limit = addLimit(cfg, child, "write", cpu);
+				limit = addLimit(cfg, child, "write", write);
 			if (checkCorrectAttrs(child, "write"))
 				limit = removeBadLimit(child, "write");
 		}
@@ -325,13 +323,13 @@ int setDefault(char *cpu, char *read, char *write, char *slow) {
 					= getNextChild(child, "limit", limit)) {
 				const char *nameAttr = getElemAttr(limit, "name");
 				if (!strcmp(nameAttr, "slow")) {
-					setLimitAttr(limit, cpu);
+					setLimitAttr(limit, slow);
 					cnt_attr++;
 				}
 				releaseElemValue(nameAttr);
 			}
 			if (!cnt_attr)
-				limit = addLimit(cfg, child, "slow", cpu);
+				limit = addLimit(cfg, child, "slow", slow);
 			if (checkCorrectAttrs(child, "slow"))
 				limit = removeBadLimit(child, "slow");
 		}
@@ -353,12 +351,11 @@ int setUser(char *para, char *cpu, char *read, char *write, char *slow) {
 		return 0;
 	}
 
-	void * child = SearchTagByName(cfg, "user", NULL);
+	void * child = SearchTagByName(cfg, "user", para);
 	void *limit = NULL;
 
 	if (child == NULL) {
-		child = setNode(cfg, NULL, "user", NULL);
-		setAttr(child, "name", para);
+		child = setNodeWithAttr(cfg, NULL, "user", NULL, "name", para);
 		setAttr(child, "mode", "restrict");
 
 		if (cpu)
@@ -402,13 +399,13 @@ int setUser(char *para, char *cpu, char *read, char *write, char *slow) {
 					= getNextChild(child, "limit", limit)) {
 				const char *nameAttr = getElemAttr(limit, "name");
 				if (!strcmp(nameAttr, "read")) {
-					setLimitAttr(limit, cpu);
+					setLimitAttr(limit, read);
 					cnt_attr++;
 				}
 				releaseElemValue(nameAttr);
 			}
 			if (!cnt_attr)
-				limit = addLimit(cfg, child, "read", cpu);
+				limit = addLimit(cfg, child, "read", read);
 			if (checkCorrectAttrs(child, "read"))
 				limit = removeBadLimit(child, "read");
 		}
@@ -419,13 +416,13 @@ int setUser(char *para, char *cpu, char *read, char *write, char *slow) {
 					= getNextChild(child, "limit", limit)) {
 				const char *nameAttr = getElemAttr(limit, "name");
 				if (!strcmp(nameAttr, "write")) {
-					setLimitAttr(limit, cpu);
+					setLimitAttr(limit, write);
 					cnt_attr++;
 				}
 				releaseElemValue(nameAttr);
 			}
 			if (!cnt_attr)
-				limit = addLimit(cfg, child, "write", cpu);
+				limit = addLimit(cfg, child, "write", write);
 			if (checkCorrectAttrs(child, "write"))
 				limit = removeBadLimit(child, "write");
 		}
@@ -436,13 +433,13 @@ int setUser(char *para, char *cpu, char *read, char *write, char *slow) {
 					= getNextChild(child, "limit", limit)) {
 				const char *nameAttr = getElemAttr(limit, "name");
 				if (!strcmp(nameAttr, "slow")) {
-					setLimitAttr(limit, cpu);
+					setLimitAttr(limit, slow);
 					cnt_attr++;
 				}
 				releaseElemValue(nameAttr);
 			}
 			if (!cnt_attr)
-				limit = addLimit(cfg, child, "slow", cpu);
+				limit = addLimit(cfg, child, "slow", slow);
 			if (checkCorrectAttrs(child, "slow"))
 				limit = removeBadLimit(child, "slow");
 		}
@@ -502,8 +499,7 @@ int ignoreUser(char *user) {
 	void * child = SearchTagByName(cfg, "user", user);
 
 	if (child == NULL) {
-		child = setNode(cfg, NULL, "user", NULL);
-		setAttr(child, "name", user);
+		child = setNodeWithAttr(cfg, NULL, "user", NULL, "name", user);
 	}
 
 	setAttr(child, "mode", "ignore");
@@ -532,8 +528,7 @@ int watchUser(char *user) {
 	void * child = SearchTagByName(cfg, "user", user);
 
 	if (child == NULL) {
-		child = setNode(cfg, NULL, "user", NULL);
-		setAttr(child, "name", user);
+		child = setNodeWithAttr(cfg, NULL, "user", NULL, "name", user);
 	}
 
 	setAttr(child, "mode", "restrict");

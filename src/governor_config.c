@@ -767,7 +767,7 @@ void print_config_full(void) {
 	if (cfg->use_lve && !cfg->all_lve && cfg->separate_lve) {
 		snprintf(buffer, 511, "AbUsers");
 	}
-	printf("LVE %s, USE_LVE %d, ALL_LVE %d, SEP_LVE %d", buffer, cfg->use_lve,
+	printf("LVE %s, USE_LVE %d, ALL_LVE %d, SEP_LVE %d\n", buffer, cfg->use_lve,
 			cfg->all_lve, cfg->separate_lve);
 	printf("LOG %s, MODE %s\n", cfg->log ? cfg->log : "NULL",
 			mode_type_enum_to_str(cfg->log_mode, buffer, 511));

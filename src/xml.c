@@ -26,6 +26,7 @@ xml_data *parseConfigData(const char *path, char *error, int maxErrDescr) {
 	if (path) {
 		xml_data *xml = calloc(1, sizeof(xml_data));
 		if (xml) {
+			xmlKeepBlanksDefault(0);
 			xml->doc = xmlReadFile(path, NULL, 0);
 			if (xml->doc) {
 				xml->root = (void *) xmlDocGetRootElement(xml->doc);
@@ -60,6 +61,34 @@ void *FindElementWithName(xml_data *data, void *node, const char *nodeName) {
 	while (cur != NULL) {
 		if ((!xmlStrcmp(cur->name, (const xmlChar *) nodeName))) {
 			return (void *) cur;
+		}
+		xmlNodePtr nodef = (xmlNodePtr) FindElementWithName(data, cur,
+				nodeName);
+		if (nodef) {
+			return (void *) nodef;
+		}
+		cur = cur->next;
+	}
+	return NULL;
+}
+
+/*
+ * finds element with name nodeName and attrName with attrValue
+ * in parsed data. NULL if nothing found. node - root elemnt for
+ * node finding or NULL for docroot
+ */
+void *FindElementWithNameAndAttr(xml_data *data, void *node, const char *nodeName,
+		const char *attrName, const char *attrValue) {
+	xmlNodePtr cur = node ? node : (xmlNodePtr) data->root;
+	cur = cur->xmlChildrenNode;
+	while (cur != NULL) {
+		if ((!xmlStrcmp(cur->name, (const xmlChar *) nodeName))) {
+			const char *attr = getElemAttr(cur, attrName);
+			if (attr && !strcmp(attr, attrValue)){
+				releaseElemValue(attr);
+				return cur;
+			}
+			releaseElemValue(attr);
 		}
 		xmlNodePtr nodef = (xmlNodePtr) FindElementWithName(data, cur,
 				nodeName);
@@ -189,6 +218,29 @@ void *setNode(xml_data *data, void *node, const char *nodeName,
 }
 
 /*
+ * set node value for nodeName (and node should has name attr with attrValue)for existing node(or NULL for docroot)
+ * or create new. If value is NULL will be
+ * created empty node
+ * return pointer to the new element and NULL if not created
+ */
+void *setNodeWithAttr(xml_data *data, void *node, const char *nodeName,
+		const char *value, const char *attrName, const char *attrValue) {
+	xmlNodePtr parent = node ? (xmlNodePtr) node : (xmlNodePtr) data->root;
+	if (!nodeName)
+		return (void *) NULL;
+	xmlNodePtr fNode = (xmlNodePtr) FindElementWithNameAndAttr(data, parent, nodeName, attrName, attrValue);
+	xmlNodePtr addressNode = NULL;
+	if (fNode) {
+		xmlNodeSetContent(addressNode, (const xmlChar *) value);
+	} else {
+		addressNode = xmlNewChild(parent, NULL, (const xmlChar *) nodeName,
+				(const xmlChar *) value);
+		setAttr(addressNode, attrName, attrValue);
+	}
+	return (void *) addressNode;
+}
+
+/*
  * set attribute value for existing node or create new.
  * return pointer to the new element and NULL if not created
  */
@@ -208,8 +260,8 @@ void *setAttr(void *node, const char *attrName, const char *value) {
  * save xml to file, if path not specified it will be taken from data->path
  */
 int saveXML(xml_data * data, char *path) {
-	if (data && data->path && data->doc) {
-		return xmlSaveFormatFile(data->path, (xmlDocPtr) data->doc, 1);
+	if (data && data->doc) {
+		return xmlSaveFormatFile((path?path:data->path), (xmlDocPtr) data->doc, 1);
 	}
 	return -1;
 }
@@ -230,9 +282,6 @@ void releaseConfigData(xml_data *data) {
 	if (data) {
 		if (data->doc) {
 			xmlFreeDoc((xmlDocPtr) data->doc);
-		}
-		if (data->path) {
-			free(data->path);
 		}
 		free(data);
 	}

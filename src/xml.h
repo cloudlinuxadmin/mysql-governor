@@ -36,5 +36,9 @@ void removeNode(void *node);
 void *getNextAttr(void *nodeValue, void *prev_attr);
 char *getAttributeName(void *attr);
 char *getAttributeValue(void *attr);
+void *FindElementWithNameAndAttr(xml_data *data, void *node, const char *nodeName,
+		const char *attrName, const char *attrValue);
+void *setNodeWithAttr(xml_data *data, void *node, const char *nodeName,
+		const char *value, const char *attrName, const char *attrValue);
 
 #endif /* XML_H_ */
