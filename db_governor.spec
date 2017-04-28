@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   17
+%define g_release   18
 %define g_key_library 8
 
 %if %{undefined _unitdir}
@@ -340,7 +340,7 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
-* Thu Mar 30 2017 Daria Kavchuk <dkavchuk@cloudlinux.com>, Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-17
+* Thu Mar 30 2017 Daria Kavchuk <dkavchuk@cloudlinux.com>, Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-18
 - Added mysql_upgrade for MariaDB packages
 - Fixed error in DirectAdmin installation
 - Added xml escaping and prettyfying
