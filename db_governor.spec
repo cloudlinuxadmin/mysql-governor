@@ -343,6 +343,8 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 * Thu Mar 30 2017 Daria Kavchuk <dkavchuk@cloudlinux.com>, Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-17
 - Added mysql_upgrade for MariaDB packages
 - Fixed error in DirectAdmin installation
+- Added xml escaping and prettyfying
+- Added read duplicate of config for non user list
 
 * Mon Feb 27 2017 Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-16
 - Check log-error existings on installation of MySQL packages
