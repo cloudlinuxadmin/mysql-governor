@@ -36,8 +36,7 @@ void get_kb(char **s) {
 }
 
 void get_bb(char **s) {
-	unsigned long long bb = (unsigned long long) (atol(*s))
-			* (unsigned long long) (1024 * 1024);
+	unsigned long long bb = (unsigned long long) (atol(*s));
 	sprintf(*s, "%llu", bb);
 }
 
