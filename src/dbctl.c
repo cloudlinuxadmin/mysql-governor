@@ -250,7 +250,7 @@ help (void)
 
   printf ("\nparameter:\n");
   printf ("default                  set default parameter\n");
-  printf ("usrename                 set parameter for user\n");
+  printf ("username                 set parameter for user\n");
 
   printf ("\noptions:\n");
   printf ("--cpu=N                  limit CPU   (pct)  usage\n");
