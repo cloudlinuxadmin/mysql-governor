@@ -26,6 +26,7 @@
 #include "dbctl_set.h"
 #include "dbctl_list.h"
 #include "dbctl_rest.h"
+#include "version.h"
 
 int kb_flag = 0;
 
@@ -199,7 +200,7 @@ valid_comm (int argc, char **argv)
 void
 version (void)
 {
-  printf ("version 0.0.1\n");
+  printf ("version %s\n", GOVERNOR_CUR_VER);
 }
 
 void

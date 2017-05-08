@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   18
+%define g_release   19
 %define g_key_library 8
 
 %if %{undefined _unitdir}
@@ -340,6 +340,10 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Mon May 08 2017 Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-19
+- Spell fixes
+- MYSQLG-178: store read write mysql limits as signed values
+
 * Thu Mar 30 2017 Daria Kavchuk <dkavchuk@cloudlinux.com>, Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-18
 - Added mysql_upgrade for MariaDB packages
 - Fixed error in DirectAdmin installation

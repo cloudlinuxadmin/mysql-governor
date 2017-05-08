@@ -30,9 +30,12 @@ get_mb_str(char *s, char *buf, int flag) {
 	} else if (flag == 2) {
 		divider = 1;
 	}
-	long long mb = (atoll(s)) / divider;
+	long long mb = (atoll(s));
+	if(mb != -1) {
+		mb = mb	/ divider;
+	}
 
-	snprintf(buf, SIZEOF_OUTPUT_BUFFER - 1, "%llu", (mb < 0 ? 0 : mb));
+	snprintf(buf, SIZEOF_OUTPUT_BUFFER - 1, "%lld", (mb < -1 ? 0 : mb));
 
 	return buf;
 }
@@ -334,31 +337,31 @@ GetDefaultForUsers(GPtrArray * tags, DbCtlLimitAttr * cpu_def,
 			}
 
 			if (read_def) {
-				if (read_curr == 0 && read_curr_real_size <= 0)
+				if (read_curr == 0 && read_curr_real_size <= 0 && read_curr_real_size!=-1)
 					read_curr = atoll(
 							get_mb_str(read_def->l_current, mb_buffer, flag));
-				if (read_short == 0 && read_short_real_size <= 0)
+				if (read_short == 0 && read_short_real_size <= 0 && read_short_real_size!=-1)
 					read_short = atoll(
 							get_mb_str(read_def->l_short, mb_buffer, flag));
-				if (read_mid == 0 && read_mid_real_size <= 0)
+				if (read_mid == 0 && read_mid_real_size <= 0 && read_mid_real_size!=-1)
 					read_mid = atoll(
 							get_mb_str(read_def->l_mid, mb_buffer, flag));
-				if (read_long == 0 && read_long_real_size <= 0)
+				if (read_long == 0 && read_long_real_size <= 0 && read_long_real_size!=-1)
 					read_long = atoll(
 							get_mb_str(read_def->l_long, mb_buffer, flag));
 			}
 
 			if (write_def) {
-				if (write_curr == 0 && write_curr_real_size <= 0)
+				if (write_curr == 0 && write_curr_real_size <= 0 && write_curr_real_size!=-1)
 					write_curr = atoll(
 							get_mb_str(write_def->l_current, mb_buffer, flag));
-				if (write_short == 0 && write_short_real_size <= 0)
+				if (write_short == 0 && write_short_real_size <= 0 && write_short_real_size!=-1)
 					write_short = atoll(
 							get_mb_str(write_def->l_short, mb_buffer, flag));
-				if (write_mid == 0 && write_mid_real_size <= 0)
+				if (write_mid == 0 && write_mid_real_size <= 0 && write_mid_real_size!=-1)
 					write_mid = atoll(
 							get_mb_str(write_def->l_mid, mb_buffer, flag));
-				if (write_long == 0 && write_long_real_size <= 0)
+				if (write_long == 0 && write_long_real_size <= 0 && write_long_real_size!=-1)
 					write_long = atoll(
 							get_mb_str(write_def->l_long, mb_buffer, flag));
 			}
@@ -382,14 +385,14 @@ GetDefaultForUsers(GPtrArray * tags, DbCtlLimitAttr * cpu_def,
 				print_list_t->data = g_strdup_printf(
 						"\t%d/%d/%d/%d\t%s/%s/%s/%s\t%s/%s/%s/%s", cpu_curr,
 						cpu_short, cpu_mid, cpu_long,
-						(read_curr < 1 && flag != 2) ? "<1" : tmp_param[0],
-						(read_short < 1 && flag != 2) ? "<1" : tmp_param[1],
-						(read_mid < 1 && flag != 2) ? "<1" : tmp_param[2],
-						(read_long < 1 && flag != 2) ? "<1" : tmp_param[3],
-						(write_curr < 1 && flag != 2) ? "<1" : tmp_param[4],
-						(write_short < 1 && flag != 2) ? "<1" : tmp_param[5],
-						(write_mid < 1 && flag != 2) ? "<1" : tmp_param[6],
-						(write_long < 1 && flag != 2) ? "<1" : tmp_param[7]);
+						(read_curr < 1 && flag != 2 && read_curr!=-1) ? "<1" : tmp_param[0],
+						(read_short < 1 && flag != 2 && read_short!=-1) ? "<1" : tmp_param[1],
+						(read_mid < 1 && flag != 2 && read_mid!=-1) ? "<1" : tmp_param[2],
+						(read_long < 1 && flag != 2 && read_long!=-1) ? "<1" : tmp_param[3],
+						(write_curr < 1 && flag != 2 && write_curr!=-1) ? "<1" : tmp_param[4],
+						(write_short < 1 && flag != 2 && write_short!=-1) ? "<1" : tmp_param[5],
+						(write_mid < 1 && flag != 2 && write_mid!=-1) ? "<1" : tmp_param[6],
+						(write_long < 1 && flag != 2 && write_long!=-1) ? "<1" : tmp_param[7]);
 				g_free(tmp_param[0]);
 				g_free(tmp_param[1]);
 				g_free(tmp_param[2]);
@@ -417,10 +420,10 @@ GetDefaultForUsers(GPtrArray * tags, DbCtlLimitAttr * cpu_def,
 				tmp_param[2] = g_strdup_printf("%i", read_mid);
 				tmp_param[3] = g_strdup_printf("%i", read_long);
 				snprintf(buffer_read, 28, "%s/%s/%s/%s",
-						read_curr < 1 ? "<1" : tmp_param[0],
-						read_short < 1 ? "<1" : tmp_param[1],
-						read_mid < 1 ? "<1" : tmp_param[2],
-						read_long < 1 ? "<1" : tmp_param[3]);
+						(read_curr < 1 && read_curr!=-1) ? "<1" : tmp_param[0],
+						(read_short < 1 && read_short!=-1) ? "<1" : tmp_param[1],
+						(read_mid < 1 && read_mid!=-1) ? "<1" : tmp_param[2],
+						(read_long < 1 && read_long!=-1) ? "<1" : tmp_param[3]);
 				g_free(tmp_param[0]);
 				g_free(tmp_param[1]);
 				g_free(tmp_param[2]);
@@ -431,10 +434,10 @@ GetDefaultForUsers(GPtrArray * tags, DbCtlLimitAttr * cpu_def,
 				tmp_param[3] = g_strdup_printf("%i", write_long);
 
 				snprintf(buffer_write, 28, "%s/%s/%s/%s",
-						write_curr < 1 ? "<1" : tmp_param[0],
-						write_short < 1 ? "<1" : tmp_param[1],
-						write_mid < 1 ? "<1" : tmp_param[2],
-						write_long < 1 ? "<1" : tmp_param[3]);
+						(write_curr < 1 && write_curr!=-1) ? "<1" : tmp_param[0],
+						(write_short < 1 && write_short!=-1) ? "<1" : tmp_param[1],
+						(write_mid < 1 && write_mid!=-1) ? "<1" : tmp_param[2],
+						(write_long < 1 && write_long!=-1) ? "<1" : tmp_param[3]);
 				g_free(tmp_param[0]);
 				g_free(tmp_param[1]);
 				g_free(tmp_param[2]);

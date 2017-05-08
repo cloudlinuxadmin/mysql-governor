@@ -24,20 +24,23 @@
 #include "dbctl_rest.h"
 
 void get_mb(char **s) {
-	unsigned long long mb = (unsigned long long) (atol(*s))
-			* (unsigned long long) (1024 * 1024);
-	sprintf(*s, "%llu", mb);
+	long long mb = (long long) (atoll(*s))
+			* (long long) (1024 * 1024);
+	if (mb < 0) mb = -1;
+	sprintf(*s, "%lld", mb);
 }
 
 void get_kb(char **s) {
-	unsigned long long kb = (unsigned long long) (atol(*s))
-			* (unsigned long long) (1024);
-	sprintf(*s, "%llu", kb);
+	long long kb = (long long) (atoll(*s))
+			* (long long) (1024);
+	if (kb < 0) kb = -1;
+	sprintf(*s, "%lld", kb);
 }
 
 void get_bb(char **s) {
-	unsigned long long bb = (unsigned long long) (atol(*s));
-	sprintf(*s, "%llu", bb);
+	long long bb = (long long) (atoll(*s));
+	if (bb < 0) bb = -1;
+	sprintf(*s, "%lld", bb);
 }
 
 int split(SplitStr ** s_s, char *str, char t) {
