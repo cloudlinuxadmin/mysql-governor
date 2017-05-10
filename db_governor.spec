@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   17
+%define g_release   19
 %define g_key_library 8
 
 %if %{undefined _unitdir}
@@ -27,6 +27,7 @@ Requires: alt-python27-cllib
 Requires: yum-utils
 Requires: tmpwatch
 Requires: wget
+Requires: libxml2
 Requires(preun): /sbin/chkconfig
 BuildRequires: cmake
 BuildRequires: ncurses-devel
@@ -34,6 +35,7 @@ BuildRequires: glib2-devel
 BuildRequires: autoconf
 BuildRequires: tar
 BuildRequires: alt-python27
+BuildRequires: libxml2-devel
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
 BuildRequires: systemd
 BuildRequires: systemd-devel
@@ -338,9 +340,15 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
-* Thu Mar 30 2017 Daria Kavchuk <dkavchuk@cloudlinux.com>, Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-17
+* Mon May 08 2017 Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-19
+- Spell fixes
+- MYSQLG-178: store read write mysql limits as signed values
+
+* Thu Mar 30 2017 Daria Kavchuk <dkavchuk@cloudlinux.com>, Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-18
 - Added mysql_upgrade for MariaDB packages
 - Fixed error in DirectAdmin installation
+- Added xml escaping and prettyfying
+- Added read duplicate of config for non user list
 
 * Mon Feb 27 2017 Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-16
 - Check log-error existings on installation of MySQL packages

@@ -16,7 +16,7 @@
 #include <string.h>
 #include <glib.h>
 
-#include "ezxml.h"
+#include "xml.h"
 
 typedef struct dbctl_limit_attr
 {
@@ -45,7 +45,7 @@ void FreeCfg (void);
 GPtrArray *GetCfg ();
 
 //---------------------------------------------------
-ezxml_t SearchTagByName (ezxml_t cfg, char *name_tag, char *name);
+void *SearchTagByName (xml_data *cfg, char *name_tag, char *name);
 
 char *GetUserName (GHashTable * attr);
 char *GetAttr (GHashTable * attr, char *name_attr);
@@ -55,10 +55,10 @@ char *GetDefault (GPtrArray * tags, int flag);
 char *GetDefaultForUsers (GPtrArray * tags, DbCtlLimitAttr * cpu_def,
 			  DbCtlLimitAttr * read_def,
 			  DbCtlLimitAttr * write_def, int flag);
-ezxml_t ParseXmlCfg (char *file_name);
+xml_data *ParseXmlCfg (char *file_name);
 
 //---------------------------------------------------
-void rewrite_cfg (char *data);
+void rewrite_cfg (xml_data *xml);
 void reread_cfg_cmd (void);
 void reinit_users_list_cmd (void);
 

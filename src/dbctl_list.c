@@ -157,6 +157,10 @@ print_list (FILE * in, int flag, int non_priv)
   char val = 'M';
   if (flag == 1) val = 'K';
   else if ( flag == 2 ) val = ' ';
+  non_priv = 1;
+  if (access(CONFIG_PATH, R_OK) == 0){
+	  non_priv = 0;
+  }
   ReadCfg ((non_priv?DUPLICATE_CONFIG_PATH:CONFIG_PATH), "default");
   if (flag)
 	 printf (" user\tcpu(%%)\tread(%cB/s)\twrite(%cB/s)\n", val, val);
