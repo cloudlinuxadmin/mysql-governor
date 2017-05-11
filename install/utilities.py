@@ -928,7 +928,11 @@ def fix_broken_governor_xml_config():
 
     # perform escaping in login and password attributes
     for p in (pattern_login, pattern_passwd):
-        data = p.findall(config_str)[0]
+        try:
+            data = p.findall(config_str)[0]
+        except IndexError:
+            # in case of no login or no password
+            continue
         for r in replacements:
             data = r.sub(replacements[r], data)
         res = p.sub(data, res)
