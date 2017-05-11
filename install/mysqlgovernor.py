@@ -14,7 +14,7 @@ from clcommon import cpapi
 from modules import InstallManager, Storage
 from utilities import exec_command, bcolors, query_yes_no, \
     correct_mysqld_service_for_cl7, set_debug, shadow_tracing, set_path_environ, \
-    check_mysqld_is_alive
+    check_mysqld_is_alive, fix_broken_governor_xml_config
 
 LOG_FILE_NAME = "/usr/share/lve/dbgovernor/governor_install.log"
 
@@ -139,6 +139,10 @@ def build_parser():
                         help="Fix error in cloudlinux.versions file",
                         dest="clver_correct", action="store_true",
                         default=False)
+    parser.add_argument("--fix-config",
+                        help="Fix unescaped xml and wrong limits in config file",
+                        dest="fix_govervor_config", action="store_true",
+                        default=False)
     return parser
 
 
@@ -244,6 +248,8 @@ def main(argv):
     elif opts.cl7_correct:
         correct_mysqld_service_for_cl7("mysql")
         correct_mysqld_service_for_cl7("mysqld")
+    elif opts.fix_govervor_config:
+        fix_broken_governor_xml_config()
     else:
         parser.print_help()
         sys.exit(2)

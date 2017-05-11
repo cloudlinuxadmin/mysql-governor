@@ -898,3 +898,45 @@ def patch_governor_config(username, password):
         connector.set('login', username)
         connector.set('password', password)
         tree.write(governor_config_file)
+
+
+def fix_broken_governor_xml_config():
+    """
+    Fix unescaped xml characters in connector login and password of governor
+    config file; replace 18446744073708503040 limits with -1
+    """
+    governor_config_file = '/etc/container/mysql-governor.xml'
+    # declare regular expressions for finding data
+    pattern_limit = re.compile('(?<=current=\")18446744073708503040|(?<=short=\")18446744073708503040|(?<=mid=\")18446744073708503040|(?<=long=\")18446744073708503040')
+    pattern_login = re.compile('(?<=login=\")(?P<data>\S+)(?=\")')
+    pattern_passwd = re.compile('(?<=password=\")(?P<data>\S+)(?=\")')
+    # declare regular expressions for escaping control characters
+    replacements = {
+        re.compile('<'): '&lt;',
+        re.compile('>'): '&gt;',
+        re.compile("'"): '&apos;',
+        re.compile('"'): '&quot;',
+        re.compile('&(?!amp;|lt;|gt;|apos;|quot;)'): '&amp;'
+    }
+
+    with open(governor_config_file, 'rb') as governor_config:
+        contents = governor_config.readlines()
+
+    config_str = ''.join(contents)
+    # replace wrong limits
+    res = pattern_limit.sub('-1', config_str)
+
+    # perform escaping in login and password attributes
+    for p in (pattern_login, pattern_passwd):
+        try:
+            data = p.findall(config_str)[0]
+        except IndexError:
+            # in case of no login or no password
+            continue
+        for r in replacements:
+            data = r.sub(replacements[r], data)
+        res = p.sub(data, res)
+
+    # rewrite governor config
+    with open(governor_config_file, 'wb') as governor_config:
+        governor_config.write(res)
