@@ -348,6 +348,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Wed May 16 2017 Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-20
+- Added Percona56 for Endurance support
+
 * Mon May 08 2017 Alexey Berezhok <aberezhok@cloudlinux.com>, Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-19
 - Spell fixes
 - MYSQLG-178: store read write mysql limits as signed values
