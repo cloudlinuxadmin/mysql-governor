@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   19
+%define g_release   20
 %define g_key_library 8
 
 %if %{undefined _unitdir}
@@ -306,6 +306,14 @@ fi
 ldconfig
 
 if [ $1 -eq 0 ]; then
+
+if [ -e /usr/share/lve/dbgovernor/mysqlgovernor.py ]; then
+    if [ ! -e /usr/share/lve/dbgovernor/MYSQLG-178 ]; then
+        /usr/share/lve/dbgovernor/mysqlgovernor.py --fix-config
+        touch /usr/share/lve/dbgovernor/MYSQLG-178
+    fi
+fi
+
 %if 0%{?rhel} >= 7
 /bin/systemctl daemon-reload >/dev/null 2>&1 || :
 /bin/systemctl restart db_governor.service >/dev/null 2>&1 || :
@@ -340,7 +348,10 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
-* Mon May 08 2017 Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-19
+* Wed May 16 2017 Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-20
+- Added Percona56 for Endurance support
+
+* Mon May 08 2017 Alexey Berezhok <aberezhok@cloudlinux.com>, Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-19
 - Spell fixes
 - MYSQLG-178: store read write mysql limits as signed values
 
