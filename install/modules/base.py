@@ -597,7 +597,6 @@ class InstallManager(object):
         print "Start download packages for new installation"
         # based on sql_version get packages names list and repo name
         packages, requires = [], []
-        new_version = sql_version or self._get_new_version()
         arch = ".x86_64" if os.uname()[-1] == "x86_64" else ""
         sql_version = self._get_result_mysql_version(sql_version)
 
@@ -614,8 +613,8 @@ class InstallManager(object):
             packages = ["%s%s" % (x, arch) for x in packages]
             for line in exec_command("yum info %s" % packages[0]):
                 if line.startswith("Version"):
-                    new_version = "%s%s" % (
-                        packages[0], "".join(line.split(":")[1].split(".")[:2]))
+                    sql_version = "%s%s" % (
+                        packages[0].split('.')[0], "".join(line.split(":")[1].split(".")[:2]).strip())
 
         else:
             repo = "cl-%s-common.repo" % self.REPO_NAMES.get(sql_version, None)
@@ -641,17 +640,17 @@ class InstallManager(object):
                 print >> sys.stderr, "Unknown SQL VERSION"
                 sys.exit(2)
 
-        if new_version == "mysql50":
+        if sql_version == "mysql50":
             packages += ["mysqlclient18", "mysqlclient16"]
-        elif new_version == "mysql51":
+        elif sql_version == "mysql51":
             packages += ["mysqlclient18", "mysqlclient15"]
-        elif new_version in ["mysql55", "mysql56", "mysql57"]:
+        elif sql_version in ["mysql55", "mysql56", "mysql57"]:
             packages += ["mysqlclient16", "mysqlclient15"]
-            if new_version in ["mysql57"]:
+            if sql_version in ["mysql57"]:
                 packages += ["numactl-devel%s" % arch, "numactl%s" % arch, "mysqlclient18"]
-        elif new_version.startswith("mariadb"):
+        elif sql_version.startswith("mariadb"):
             packages += ["mysqlclient16", "mysqlclient15"]
-        elif new_version.startswith("percona"):
+        elif sql_version.startswith("percona"):
             packages += ["mysqlclient16", "mysqlclient15"]
 
         packages.append("libaio%s" % arch)
