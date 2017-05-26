@@ -46,7 +46,8 @@ class InstallManager(object):
         "mysql57": "mysql-5.7",
         "mariadb55": "mariadb-5.5",
         "mariadb100": "mariadb-10.0",
-        "mariadb101": "mariadb-10.1"
+        "mariadb101": "mariadb-10.1",
+        "percona56": "percona-5.6"
     }
     ALL_PACKAGES_NEW_NOT_DOWNLOADED = False
     ALL_PACKAGES_OLD_NOT_DOWNLOADED = False
@@ -228,6 +229,10 @@ class InstallManager(object):
         if version.startswith("mysql") \
                 and self.cl_version == 7:
             self._enable_mysql()
+
+        if version.startswith("percona") \
+                and self.cl_version == 7:
+            self._enable_percona()
 
         self._mysqlservice("restart")
 
@@ -502,8 +507,8 @@ class InstallManager(object):
                                 only return list of installed packages
         """
         print "Start download current installed packages"
-        PATTERNS = ["cl-mysql", "cl-mariadb", "mysql", "mariadb",
-                    "compat-mysql5"]
+        PATTERNS = ["cl-mysql", "cl-mariadb", "cl-percona", "mysql", "mariadb",
+                    "compat-mysql5", "Percona"]
         mysqld_path = exec_command("which mysqld", True, silent=True)
         pkg_name = False
         if mysqld_path:
@@ -592,7 +597,6 @@ class InstallManager(object):
         print "Start download packages for new installation"
         # based on sql_version get packages names list and repo name
         packages, requires = [], []
-        new_version = sql_version or self._get_new_version()
         arch = ".x86_64" if os.uname()[-1] == "x86_64" else ""
         sql_version = self._get_result_mysql_version(sql_version)
 
@@ -609,8 +613,8 @@ class InstallManager(object):
             packages = ["%s%s" % (x, arch) for x in packages]
             for line in exec_command("yum info %s" % packages[0]):
                 if line.startswith("Version"):
-                    new_version = "%s%s" % (
-                        packages[0], "".join(line.split(":")[1].split(".")[:2]))
+                    sql_version = "%s%s" % (
+                        packages[0].split('.')[0], "".join(line.split(":")[1].split(".")[:2]).strip())
 
         else:
             repo = "cl-%s-common.repo" % self.REPO_NAMES.get(sql_version, None)
@@ -628,19 +632,25 @@ class InstallManager(object):
                 packages = ["cl-MariaDB-meta", "cl-MariaDB-meta-client",
                             "cl-MariaDB-meta-devel"]
                 requires = packages[:3]
+            elif sql_version in ["percona56"]:
+                packages = ["cl-Percona-meta", "cl-Percona-meta-client",
+                            "cl-Percona-meta-devel"]
+                requires = packages[:3]
             else:
                 print >> sys.stderr, "Unknown SQL VERSION"
                 sys.exit(2)
 
-        if new_version == "mysql50":
+        if sql_version == "mysql50":
             packages += ["mysqlclient18", "mysqlclient16"]
-        elif new_version == "mysql51":
+        elif sql_version == "mysql51":
             packages += ["mysqlclient18", "mysqlclient15"]
-        elif new_version in ["mysql55", "mysql56", "mysql57"]:
+        elif sql_version in ["mysql55", "mysql56", "mysql57"]:
             packages += ["mysqlclient16", "mysqlclient15"]
-            if new_version in ["mysql57"]:
+            if sql_version in ["mysql57"]:
                 packages += ["numactl-devel%s" % arch, "numactl%s" % arch, "mysqlclient18"]
-        elif new_version.startswith("mariadb"):
+        elif sql_version.startswith("mariadb"):
+            packages += ["mysqlclient16", "mysqlclient15"]
+        elif sql_version.startswith("percona"):
             packages += ["mysqlclient16", "mysqlclient15"]
 
         packages.append("libaio%s" % arch)
@@ -850,6 +860,13 @@ class InstallManager(object):
             exec_command_out("systemctl enable mysql.service")
             exec_command_out("systemctl enable mysqld.service")
 
+    def _enable_percona(self):
+        """
+        Enable Percona service
+        """
+        if 7 == self.cl_version:
+            exec_command_out("systemctl enable mysql.service")
+
     @staticmethod
     def _check_leave_pid():
         """
@@ -908,10 +925,11 @@ class InstallManager(object):
         Stop mysql service
         """
         version = mysql_version()
-        name = "mysqld"
+        name = "mysql" if version in ["percona56", "mariadb55", "mariadb100"] \
+            else "mysqld"
         if 6 == self.cl_version:
             if version in ["mysql50", "mysql51", "mysql55", "mysql56",
-                           "mysql57", "mariadb55", "mariadb100", "mariadb101"]:
+                           "mysql57", "mariadb101"]:
                 name = "mysql"
 
         service(action, name)

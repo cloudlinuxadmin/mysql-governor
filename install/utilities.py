@@ -144,6 +144,8 @@ def mysql_version():
         name = "mariadb"
     elif name.startswith("cl-mysql"):
         name = "mysql"
+    elif name.startswith("cl-percona"):
+        name = "percona"
     else:
         # non-CL sql package
         return "auto"
@@ -651,8 +653,10 @@ def correct_mysqld_service_for_cl7(mysql_type):
     name = "mysqld"
     if mysql_type in ["mysql50", "mysql51", "mysql55", "mysql56", "mysql57", "auto"]:
         name = "mysqld"
-    elif mysql_type in ["mariadb55", "mariadb100", "mariadb101"]:
+    elif mysql_type in ["mariadb101"]:
         name = "mariadb"
+    elif mysql_type in ["mariadb55", "mariadb100", "percona56"]:
+        name = "mysql"
     cl_ver = get_cl_num()
     if cl_ver == 7:
         service_name = name + ".service"
