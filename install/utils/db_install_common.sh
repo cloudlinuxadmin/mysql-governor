@@ -134,6 +134,16 @@ function installDb(){
 	  enableMariaDB
 	fi
 
+	if [ "$SQL_VERSION" == "percona56" ]; then
+	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqlmeta/cl-percona-5.6-common.repo
+	  if [ -e /usr/libexec/mysqld ]; then
+	   mv -f /usr/libexec/mysqld /usr/libexec/mysqld.bak
+          fi
+	  yum install libaio --nogpgcheck -y
+	  yum install cl-Percona-meta cl-Percona-meta-client cl-Percona-meta-devel libaio --nogpgcheck -y
+	  ln -sf /etc/init.d/mysql /etc/init.d/mysqld
+	fi
+
 	if [ ! -e /etc/my.cnf.bkp ]; then
 	    cp -f /etc/my.cnf /etc/my.cnf.bkp
 	fi
@@ -243,6 +253,16 @@ function installDbTest(){
 	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqlmeta/cl-mariadb-10.1-common.repo
 	  yum install libaio --nogpgcheck -y
 	  yum install cl-MariaDB-meta cl-MariaDB-meta-client cl-MariaDB-meta-devel libaio --nogpgcheck -y --enablerepo=cloudlinux-updates-testing
+	fi
+
+	if [ "$SQL_VERSION" == "percona56" ]; then
+	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqlmeta/cl-percona-5.6-common.repo
+	  if [ -e /usr/libexec/mysqld ]; then
+	   mv -f /usr/libexec/mysqld /usr/libexec/mysqld.bak
+          fi
+	  yum install libaio --nogpgcheck -y
+    	  yum install cl-Percona-meta cl-Percona-meta-client cl-Percona-meta-devel libaio --nogpgcheck -y --enablerepo=cloudlinux-updates-testing
+	  ln -sf /etc/init.d/mysql /etc/init.d/mysqld
 	fi
 
 	if [ ! -e /etc/my.cnf.bkp ]; then

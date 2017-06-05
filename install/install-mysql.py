@@ -506,6 +506,16 @@ def remove_percona_justdb():
 
         print "Cleaning of Percona-Server packages completed"
 
+
+def remove_percona_justdb_cl():
+	yb = yum.YumBase()
+	remove_sepcific_mysql('cl-Percona-meta', yb)
+	remove_sepcific_mysql('cl-Percona-meta-client', yb)
+	remove_sepcific_mysql('cl-Percona-meta-devel', yb)
+	remove_sepcific_mysql('cl-Percona56', yb)
+
+	print "Cleaning of cl-Percona packages completed"
+
 def check_sepcific_mysql(pname, yb):
 	if yb.rpmdb.searchNevra(name=pname):
 	    print "Percona package deteced:" + pname 
@@ -686,11 +696,12 @@ for o, a in opts:
                 warn_message()
                 if safe_mysql == 1:
     			safe_mysql_op()
-                detect_percona(force_percona)
+                # detect_percona(force_percona)
                 remove_mysqlclients()
             	remove_mysql_justdb()
                 remove_mysql_justdb_cl()
                 remove_percona_justdb()
+                remove_percona_justdb_cl()
                 remove_mysql_target_for_cPanel()
 		install_mysql_beta()
                 if os.path.exists("/usr/share/lve/dbgovernor/chk-mysqlclient"):
@@ -704,10 +715,11 @@ for o, a in opts:
                 warn_message()
                 if safe_mysql == 1:
     			safe_mysql_op()
-                detect_percona(force_percona)
+                # detect_percona(force_percona)
 		remove_mysqlclients()
 		remove_mysql_justdb_cl()
                 remove_percona_justdb()
+                remove_percona_justdb_cl()
 		install_mysql_beta()
 		remove_mysql_justdb()
 		if os.path.exists("/usr/bin/mysql_upgrade"):
@@ -722,6 +734,7 @@ for o, a in opts:
                 remove_repo_file()
 		remove_mysql_justdb_cl()
                 remove_percona_justdb()
+                remove_percona_justdb_cl()
                 restore_mysql_target_for_cPanel()
                 delete_mysql()
                 delete_governor_rpm()
@@ -729,10 +742,12 @@ for o, a in opts:
     		warn_message()
     		if safe_mysql == 1:
     			safe_mysql_op()
-    		detect_percona(force_percona)
+    		# detect_percona(force_percona)
                 remove_mysqlclients()
                 remove_mysql_justdb_cl()
                 remove_mysql_justdb()
+                remove_percona_justdb()
+                remove_percona_justdb_cl()
                 remove_mysql_target_for_cPanel()
 		install_mysql_beta_testing()
                 if os.path.exists("/usr/share/lve/dbgovernor/chk-mysqlclient"):
