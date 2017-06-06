@@ -1,5 +1,5 @@
 %define g_version   1.1
-%define g_release   21
+%define g_release   22
 %define g_key_library 7
 
 %if %{undefined _unitdir}
@@ -360,6 +360,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Tue Jun 06 2017 Daria Kavchuk <dkavchuk@cloudlinux.com> 1.1-22
+- Added Percona 5.6 support
+
 * Mon Mar 06 2017 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-21
 - MYSQLG-154: Fix ""dbctl list"" show io limits equals to default when they are less then 1mb/s
 - MYSQLG-159: add ability to specify units for io limits
