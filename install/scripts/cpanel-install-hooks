@@ -22,7 +22,8 @@ mysqluserkill="/scripts/postkillacct"
 ####################################################
 
 postupcp_hook="$common_path_of_cpanel/upgrade-mysql-disabler.sh"
-mysqlupdate_hook="/usr/share/lve/dbgovernor/utils/dbgovernor_map"
+map_hook="/usr/share/lve/dbgovernor/utils/dbgovernor_map"
+mysql_hook="/usr/share/lve/dbgovernor/scripts/mysql_hooks"
 
 createHookHeader "$postupcp"
 checkHookString "$postupcp" "$postupcp_hook" "dbgovernor"
@@ -36,16 +37,29 @@ createHookHeader "$mysqluserkill"
 checkHookString "$mysqluserkill" "$postupcp_hook" "dbgovernor"
 removeEmptyStringsFromFile "$mysqluserkill"
 
-createHookHeader "$mysqluserupdate1"
-checkHookStringParam "$mysqluserupdate1" "$mysqlupdate_hook" "dbgovernor"
-rewriteDBUserHook "$mysqluserupdate1"
-removeEmptyStringsFromFile "$mysqluserupdate1"
-
-createHookHeader "$mysqluserupdate2"
-checkHookStringParam "$mysqluserupdate2" "$mysqlupdate_hook" "dbgovernor"
-rewriteDBUserHook "$mysqluserupdate2"
-removeEmptyStringsFromFile "$mysqluserupdate2"
+#createHookHeader "$mysqluserupdate1"
+#checkHookStringParam "$mysqluserupdate1" "$mysqlupdate_hook" "dbgovernor"
+#rewriteDBUserHook "$mysqluserupdate1"
+#removeEmptyStringsFromFile "$mysqluserupdate1"
+#
+#createHookHeader "$mysqluserupdate2"
+#checkHookStringParam "$mysqluserupdate2" "$mysqlupdate_hook" "dbgovernor"
+#rewriteDBUserHook "$mysqluserupdate2"
+#removeEmptyStringsFromFile "$mysqluserupdate2"
 
 /usr/local/cpanel/bin/register_hooks
+
+####################################################
+# Standardized hooks list                                       #
+####################################################
+
+hook_manager="/usr/local/cpanel/bin/manage_hooks"
+"$hook_manager" add script "$map_hook" --category=Whostmgr --event=Accounts::Create --stage=post --manual 1
+"$hook_manager" add script "$map_hook" --category=Whostmgr --event=Accounts::Modify --stage=post --manual 1
+"$hook_manager" add script "$map_hook" --category=Whostmgr --event=Accounts::Remove --stage=post --manual 1
+
+"$hook_manager" add script "$mysql_hook" --category=Cpanel --event=UAPI::Mysql::create_user --stage=post --manual 1
+"$hook_manager" add script "$mysql_hook" --category=Cpanel --event=UAPI::Mysql::rename_user --stage=post --manual 1
+"$hook_manager" add script "$mysql_hook" --category=Cpanel --event=UAPI::Mysql::delete_user --stage=post --manual 1
 
 echo
