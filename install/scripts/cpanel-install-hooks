@@ -23,7 +23,7 @@ mysqluserkill="/scripts/postkillacct"
 
 postupcp_hook="$common_path_of_cpanel/upgrade-mysql-disabler.sh"
 map_hook="/usr/share/lve/dbgovernor/utils/dbgovernor_map"
-mysql_hook="/usr/share/lve/dbgovernor/scripts/mysql_hooks"
+mysql_hook="/usr/share/lve/dbgovernor/scripts/mysql_hook"
 
 createHookHeader "$postupcp"
 checkHookString "$postupcp" "$postupcp_hook" "dbgovernor"

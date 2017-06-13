@@ -21,7 +21,7 @@ deleteAllInclude "$mysqluserkill" "mysqluserkill" "/#dbgovernor/d"
 
 hook_manager="/usr/local/cpanel/bin/manage_hooks"
 map_hook="/usr/share/lve/dbgovernor/utils/dbgovernor_map"
-mysql_hook="/usr/share/lve/dbgovernor/scripts/mysql_hooks"
+mysql_hook="/usr/share/lve/dbgovernor/scripts/mysql_hook"
 "$hook_manager" del script "$map_hook" --category=Whostmgr --event=Accounts::Create --stage=post --manual 1
 "$hook_manager" del script "$map_hook" --category=Whostmgr --event=Accounts::Modify --stage=post --manual 1
 "$hook_manager" del script "$map_hook" --category=Whostmgr --event=Accounts::Remove --stage=post --manual 1
