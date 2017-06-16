@@ -211,6 +211,51 @@ accept_connections (int s)
     }
 }
 
+volatile static int flag_need_to_renew_dbmap = 0;
+
+void *
+renew_map_on_request (void *data)
+{
+  char buffer[_DBGOVERNOR_BUFFER_2048];
+  time_t last_renew = 0;
+  flag_need_to_renew_dbmap = 0;
+  struct governor_config data_cfg;
+  get_config_data (&data_cfg);
+
+  while (1)
+    {
+	  if (flag_need_to_renew_dbmap){
+		  time_t current_check = time(NULL);
+		  if ((last_renew+DBMAPHOOK_ANTIDDOS)<current_check){
+		  		 flag_need_to_renew_dbmap = 0;
+		  		 last_renew = current_check;
+		  		 pid_t renew_pid = fork ();
+ 	 		     if (renew_pid < 0)
+ 	 		 	{
+ 	 		 	  WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
+ 	 		 		     "(%d)Fork error (renew dbmap). Path %s", data_cfg.log_mode,
+ 	 		 		     errno, "dbupdate");
+ 	 		 	}
+ 	 		       else
+ 	 		 	{
+ 	 		 	  if (!renew_pid)
+ 	 		 	    {
+ 	 		 	      execl ("/usr/share/lve/dbgovernor/mysqlgovernor.py",
+ 	 		 	    		  "/usr/share/lve/dbgovernor/mysqlgovernor.py", "--dbupdate", NULL);
+ 	 		 	      WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
+ 	 		 			 "(%d)Exec error (renew dbmap). Path %s",
+ 	 		 			 data_cfg.log_mode, errno, "dbupdate");
+ 	 		 	      exit (0);
+ 	 		 	    }
+ 	 		 	}
+		  	}
+	  }
+	  sleep(DBMAPHOOK_RECHECK);
+    }
+
+  return NULL;
+}
+
 void *
 run_dbctl_command (void *data)
 {
@@ -304,6 +349,10 @@ run_dbctl_command (void *data)
 	}
       fclose (out);
     }
+  else if (command.command == DBUSER_MAP_CMD)
+  {
+	  flag_need_to_renew_dbmap = 1;
+  }
 
   close (ns);
 
