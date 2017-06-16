@@ -3,16 +3,31 @@
 . /usr/share/lve/dbgovernor/scripts/cpanel-common-lve
 
 postupcp="/scripts/postupcp"
-mysqluserupdate1="/usr/local/cpanel/hooks/mysql/adduser"
-mysqluserupdate2="/usr/local/cpanel/hooks/mysql/deluser"
+#mysqluserupdate1="/usr/local/cpanel/hooks/mysql/adduser"
+#mysqluserupdate2="/usr/local/cpanel/hooks/mysql/deluser"
 mysqlusercreate="/scripts/postwwwacct"
 mysqluserkill="/scripts/postkillacct"
 
 deleteAllInclude "$postupcp" "postupcp" "/#dbgovernor/d"
-deleteAllInclude "$mysqluserupdate1" "mysqluserupdate1" "/#dbgovernor/d"
-deleteAllInclude "$mysqluserupdate2" "mysqluserupdate2" "/#dbgovernor/d"
+#deleteAllInclude "$mysqluserupdate1" "mysqluserupdate1" "/#dbgovernor/d"
+#deleteAllInclude "$mysqluserupdate2" "mysqluserupdate2" "/#dbgovernor/d"
 
 deleteAllInclude "$mysqlusercreate" "mysqlusercreate" "/#dbgovernor/d"
 deleteAllInclude "$mysqluserkill" "mysqluserkill" "/#dbgovernor/d"
+
+####################################################
+# Standardized hooks list                                       #
+####################################################
+
+hook_manager="/usr/local/cpanel/bin/manage_hooks"
+map_hook="/usr/share/lve/dbgovernor/utils/dbgovernor_map"
+mysql_hook="/usr/share/lve/dbgovernor/scripts/mysql_hook"
+"$hook_manager" del script "$map_hook" --category=Whostmgr --event=Accounts::Create --stage=post --manual 1
+"$hook_manager" del script "$map_hook" --category=Whostmgr --event=Accounts::Modify --stage=post --manual 1
+"$hook_manager" del script "$map_hook" --category=Whostmgr --event=Accounts::Remove --stage=post --manual 1
+
+"$hook_manager" del script "$mysql_hook" --category=Cpanel --event=UAPI::Mysql::create_user --stage=post --manual 1
+"$hook_manager" del script "$mysql_hook" --category=Cpanel --event=UAPI::Mysql::rename_user --stage=post --manual 1
+"$hook_manager" del script "$mysql_hook" --category=Cpanel --event=UAPI::Mysql::delete_user --stage=post --manual 1
 
 echo
