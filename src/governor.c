@@ -367,7 +367,7 @@ void trackingDaemon(void) {
 int main(int argc, char *argv[]) {
 	int ret;
 	pthread_t thread, thread_governor, thread_dbtop, thread_prcd,
-			thread_user_map, thread_slow_query;
+			thread_user_map, thread_slow_query, therad_renew_dbusermap;
 	char buffer[_DBGOVERNOR_BUFFER_2048];
 	int only_print = 0;
 
@@ -628,6 +628,30 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
+
+	ret = pthread_create(&therad_renew_dbusermap, NULL, renew_map_on_request, NULL);
+	if (ret < 0) {
+		pthread_cancel(thread);
+		pthread_cancel(thread_governor);
+		pthread_cancel(thread_dbtop);
+		pthread_cancel(thread_prcd);
+		pthread_cancel(thread_user_map);
+		if (data_cfg.slow_queries) {
+			pthread_cancel(thread_slow_query);
+		}
+		if (!data_cfg.is_gpl && data_cfg.use_lve) {
+			remove_bad_users_list();
+		}
+		db_close();
+		delete_mysql_function();
+		close_log();
+		close_restrict_log();
+		close_slow_queries_log();
+		config_free();
+		exit(EXIT_FAILURE);
+	}
+
+
 	pthread_detach(thread_governor);
 	pthread_detach(thread_dbtop);
 	pthread_detach(thread_prcd);
@@ -635,6 +659,7 @@ int main(int argc, char *argv[]) {
 	if (data_cfg.slow_queries) {
 		pthread_detach(thread_slow_query);
 	}
+	pthread_detach(therad_renew_dbusermap);
 	pthread_join(thread, NULL);
 
 	pthread_cancel(thread_governor);
@@ -644,6 +669,7 @@ int main(int argc, char *argv[]) {
 	if (data_cfg.slow_queries) {
 		pthread_cancel(thread_slow_query);
 	}
+	pthread_cancel(therad_renew_dbusermap);
 	if (!data_cfg.is_gpl) {
 		remove_bad_users_list();
 	}
