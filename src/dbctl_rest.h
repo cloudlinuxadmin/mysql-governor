@@ -25,5 +25,6 @@ typedef struct rest_levels
 int restrict_user (char *user, char *level);
 int unrestrict (char *user);
 int unrestrict_all (void);
+int dbupdatecmd(void);
 
 #endif /* __DBCTL_REST__ */
