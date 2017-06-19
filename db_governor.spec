@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   21
+%define g_release   22
 %define g_key_library 8
 
 %if %{undefined _unitdir}
@@ -348,6 +348,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Mon Jun 19 2017 Daria Kavchuk <dkavchuk@cloudlinux.com>, Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-22
+- MYSQLG-183: Missed file /etc/container/dbuser-map after installation of Governor
+
 * Fri May 26 2017 Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-21
 - MYSQLG-182: Make MySQL-governor work with EIG Percona
 - MYSQLG-185: Add installation of mysqlclientXX when new_version=auto in _load_new_packages
