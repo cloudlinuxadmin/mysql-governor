@@ -135,6 +135,7 @@ install -D -m 755 install/scripts/dbgovernor_map $RPM_BUILD_ROOT/usr/share/lve/d
 install -D -m 755 install/scripts/dbgovernor_map.py $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/dbgovernor_map.py
 install -D -m 755 install/scripts/detect-cpanel-mysql-version.pm $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/detect-cpanel-mysql-version.pm
 install -D -m 755 install/scripts/cpanel-mysql-url-detect.pm $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/cpanel-mysql-url-detect.pm
+install -D -m 755 install/scripts/mysql_hook $RPM_BUILD_ROOT//usr/share/lve/dbgovernor/scripts/mysql_hook
 
 install -D -m 644 install/utils/cloudlinux.versions $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/cloudlinux.versions
 install -D -m 644 install/utils/dbgovernor $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/db_governor
