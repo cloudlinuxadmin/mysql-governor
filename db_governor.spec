@@ -351,6 +351,7 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 %changelog
 * Mon Jun 19 2017 Daria Kavchuk <dkavchuk@cloudlinux.com>, Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-22
 - MYSQLG-183: Missed file /etc/container/dbuser-map after installation of Governor
+- MYSQLG-188: Add support MariaDB 10.2 with governor
 
 * Fri May 26 2017 Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-21
 - MYSQLG-182: Make MySQL-governor work with EIG Percona
