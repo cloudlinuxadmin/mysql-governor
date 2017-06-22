@@ -47,6 +47,7 @@ class InstallManager(object):
         "mariadb55": "mariadb-5.5",
         "mariadb100": "mariadb-10.0",
         "mariadb101": "mariadb-10.1",
+        "mariadb102": "mariadb-10.2",
         "percona56": "percona-5.6"
     }
     ALL_PACKAGES_NEW_NOT_DOWNLOADED = False
@@ -628,7 +629,8 @@ class InstallManager(object):
                 # if sql_version in ["mysql56", "mysql57"]:
                 # packages.append("libaio%s" % arch)
 
-            elif sql_version in ["mariadb55", "mariadb100", "mariadb101"]:
+            elif sql_version in ["mariadb55", "mariadb100", "mariadb101",
+                                 "mariadb102"]:
                 packages = ["cl-MariaDB-meta", "cl-MariaDB-meta-client",
                             "cl-MariaDB-meta-devel"]
                 requires = packages[:3]
@@ -929,7 +931,7 @@ class InstallManager(object):
             else "mysqld"
         if 6 == self.cl_version:
             if version in ["mysql50", "mysql51", "mysql55", "mysql56",
-                           "mysql57", "mariadb101"]:
+                           "mysql57", "mariadb101", "mariadb102"]:
                 name = "mysql"
 
         service(action, name)
