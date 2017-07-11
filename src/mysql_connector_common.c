@@ -629,15 +629,6 @@ governor_enable (MODE_TYPE debug_mode)
 		     data_cfg.log_mode);
 
 	}
-      if (db_mysql_exec_query (QUERY_GOVERNOR_RECON_LVE_PLG2,
-			       &mysql_send_governor, debug_mode))
-	{
-
-	  WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		     "Can't execute sql request. ENABLE_GOVERNOR_SECOND",
-		     data_cfg.log_mode);
-
-	}
     }
   else
     {
@@ -674,15 +665,6 @@ governor_enable_reconn (MODE_TYPE debug_mode)
 
 	  WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
 		     "Can't execute sql request. ENABLE_GOVERNOR",
-		     data_cfg.log_mode);
-
-	}
-      if (db_mysql_exec_query (QUERY_GOVERNOR_RECON_LVE_PLG2,
-			       &mysql_send_governor, debug_mode))
-	{
-
-	  WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		     "Can't execute sql request. ENABLE_GOVERNOR_SECOND",
 		     data_cfg.log_mode);
 
 	}
@@ -725,15 +707,6 @@ governor_enable_lve (MODE_TYPE debug_mode)
 		     data_cfg.log_mode);
 
 	}
-      if (db_mysql_exec_query (QUERY_GOVERNOR_RECON_LVE_PLG2,
-			       &mysql_send_governor, debug_mode))
-	{
-
-	  WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		     "Can't execute sql request. ENABLE_GOVERNOR_SECOND",
-		     data_cfg.log_mode);
-
-	}
     }
   else
     {
@@ -770,15 +743,6 @@ governor_enable_reconn_lve (MODE_TYPE debug_mode)
 
 	  WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
 		     "Can't execute sql request. ENABLE_GOVERNOR",
-		     data_cfg.log_mode);
-
-	}
-      if (db_mysql_exec_query (QUERY_GOVERNOR_RECON_LVE_PLG2,
-			       &mysql_send_governor, debug_mode))
-	{
-
-	  WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		     "Can't execute sql request. ENABLE_GOVERNOR_SECOND",
 		     data_cfg.log_mode);
 
 	}
@@ -924,33 +888,48 @@ check_mysql_version (MODE_TYPE debug_mode)
 	  lengths = (*_mysql_fetch_lengths) (res);
 	  db_mysql_get_string (buffer, row[0], lengths[0],
 			       _DBGOVERNOR_BUFFER_2048);
+          (*_mysql_free_result) (res);
 	  if (strstr (buffer, "-cll-lve"))
 	    {
 	      snprintf (outbuffer, _DBGOVERNOR_BUFFER_2048 - 1,
 			"MySQL version correct %s", buffer);
 	      WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
 			 outbuffer, data_cfg.log_mode);
+	      
+	      return 1;
+	    }
+	  else
+	    {
 	      (*_mysql_free_result) (res);
-	      if (strstr (buffer, "-cll-lve-plg"))
-		{
+              if (db_mysql_exec_query (QUERY_GOVERNOR_CHECK_PLUGIN, &mysql_send_governor,
+			       debug_mode))
+	      {
+	             WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
+		     "Get mysql vesrion request failed", data_cfg.log_mode);
+
+	             return 0;
+	      }
+             res = (*_mysql_store_result) (mysql_send_governor);
+             row = (*_mysql_fetch_row) (res);
+             if (row){
 		  is_plugin_version = 1;
 		  snprintf (outbuffer, _DBGOVERNOR_BUFFER_2048 - 1,
 			    "Governor with plugin mode enabled");
 		  WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
 			     outbuffer, data_cfg.log_mode);
-		}
-	      return 1;
-	    }
-	  else
-	    {
+		  return 1;
+
+             } else {
+
 	      snprintf (outbuffer,
 			_DBGOVERNOR_BUFFER_2048 - 1,
-			"Update your MySQL to CLL version from repo.cloudlinux.com. Current is %s",
+			"Update your MySQL to CLL version from repo.cloudlinux.com or install plugin. Current is %s",
 			buffer);
 	      WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
 			 outbuffer, data_cfg.log_mode);
 	      (*_mysql_free_result) (res);
 	      return 0;
+             }
 	    }
 
 	}

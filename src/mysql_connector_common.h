@@ -89,11 +89,11 @@ enum mysql_option
 #define QUERY_GOVERNOR_MODE_ENABLE_LVE "ENABLE_GOVERNOR_LVE"
 #define QUERY_GOVERNOR_MODE_ENABLE_RECON_LVE "ENABLE_GOVERNOR_RECON_LVE"
 
-#define QUERY_GOVERNOR_MODE_ENABLE_PLG "set global governor_governor_get_command = 1"
-#define QUERY_GOVERNOR_MODE_ENABLE_RECON_PLG "set global governor_governor_get_command = 1"
-#define QUERY_GOVERNOR_MODE_ENABLE_LVE_PLG "set global governor_governor_get_command = 2"
-#define QUERY_GOVERNOR_MODE_ENABLE_RECON_LVE_PLG "set global governor_governor_get_command = 2"
-#define QUERY_GOVERNOR_RECON_LVE_PLG2 "set global governor_enable_governor_recon_lve = 0"
+#define QUERY_GOVERNOR_MODE_ENABLE_PLG "SET GLOBAL governor_enable = true"
+#define QUERY_GOVERNOR_MODE_ENABLE_RECON_PLG "SET GLOBAL governor_enable_reconnect = true"
+#define QUERY_GOVERNOR_MODE_ENABLE_LVE_PLG "SET GLOBAL governor_enable_lve = true"
+#define QUERY_GOVERNOR_MODE_ENABLE_RECON_LVE_PLG "SET GLOBAL governor_enable_reconnect_lve = true"
+#define QUERY_GOVERNOR_CHECK_PLUGIN "select PLUGIN_NAME from INFORMATION_SCHEMA.PLUGINS where PLUGIN_NAME='GOVERNOR'"
 
 /*
  * Функция соединения с БД mysql

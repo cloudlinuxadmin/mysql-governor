@@ -1,113 +1,188 @@
-#--------------------------------------------------------
-# Copyright (C) 1995-2007 MySQL AB
+##############################################################################
+# Try to find MySQL include dirs ad libraries
+##############################################################################
 #
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of version 2 of the GNU General Public License as
-# published by the Free Software Foundation.
+# Usage of this module as follows:
 #
-# There are special exceptions to the terms and conditions of the GPL
-# as it is applied to this software. View the full text of the exception
-# in file LICENSE.exceptions in the top-level directory of this software
-# distribution.
+#   find_package( MySQL )
+#   if(MySQL_FOUND)
+#     include_directories(${MySQL_INCLUDE_DIRS})
+#     add_executable(foo foo.cc)
+#   endif()
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+##############################################################################
 #
-# The MySQL Connector/ODBC is licensed under the terms of the
-# GPL, like most MySQL Connectors. There are special exceptions
-# to the terms and conditions of the GPL as it is applied to
-# this software, see the FLOSS License Exception available on
-# mysql.com.
+# Variables used by this module, they can change the default behaviour and
+# need to set before calling find_package:
+#
+#   MYSQL_INCLUDEDIR             Set this to the include directory of MySQL.
+#   MYSQL_LIBRARYDIR             Set this to the lib directory of MySQL.
+#
+#
+##############################################################################
+#
+# Variables defined by this module.
+#
+#  MySQL_FOUND                   System has MySQL, this means the include dir
+#                                was found as well as the library.
+#  MySQL_INCLUDE_DIR             MySQL include directory.
+#  MySQL_LIBRARIES               Link to this to use the MySQL library.
+#  MySQL_MAJOR_VERSION           Major version number of MySQL.
+#  MySQL_MINOR_VERSION           Minor version number of MySQL.
+#  MySQL_PLUGIN_DIR              Plugin directory.
+#  MySQL_VERSION                 The version numer of MySQL.
+#
+#
+##############################################################################
+#
+# Copyright (c) 2006, Jaroslaw Staniek, <js@iidea.pl>
+# Copyright (c) 2010, CNRS
+#
+# Redistribution and use is allowed according to the terms of the BSD license.
+# For details see the accompanying COPYING-CMAKE-SCRIPTS file.
+#
+##############################################################################
 
-##########################################################################
 
+if(UNIX)
+    set(MYSQL_CONFIG_PREFER_PATH "$ENV{MYSQL_HOME}/bin" CACHE FILEPATH
+        "preferred path to MySQL (mysql_config)")
+    find_program(MYSQL_CONFIG mysql_config
+                 ${MYSQL_CONFIG_PREFER_PATH}
+                 /usr/local/mysql/bin/
+                 /usr/local/bin/
+                 /usr/bin/
+    )
 
-#-------------- FIND MYSQL_INCLUDE_DIR ------------------
-FIND_PATH(MYSQL_INCLUDE_DIR mysql/mysql.h
-$ENV{MYSQL_INCLUDE_DIR}
-$ENV{MYSQL_DIR}/include
-/usr/include/mysql
-/usr/local/include/mysql
-/opt/mysql/mysql/include
-/opt/mysql/mysql/include/mysql
-/usr/local/mysql/include
-/usr/local/mysql/include/mysql
-$ENV{ProgramFiles}/MySQL/*/include
-$ENV{SystemDrive}/MySQL/*/include)
+    if(MYSQL_CONFIG)
+        message(STATUS "Using mysql-config: ${MYSQL_CONFIG}")
 
-#----------------- FIND MYSQL_LIB_DIR -------------------
-IF (WIN32)
-# Set lib path suffixes
-# dist = for mysql binary distributions
-# build = for custom built tree
-IF (CMAKE_BUILD_TYPE STREQUAL Debug)
-SET(libsuffixDist debug)
-SET(libsuffixBuild Debug)
-ELSE (CMAKE_BUILD_TYPE STREQUAL Debug)
-SET(libsuffixDist opt)
-SET(libsuffixBuild Release)
-ADD_DEFINITIONS(-DDBUG_OFF)
-ENDIF (CMAKE_BUILD_TYPE STREQUAL Debug)
+        # set INCLUDE_DIR
+        exec_program(${MYSQL_CONFIG}
+                     ARGS --include
+                     OUTPUT_VARIABLE MY_TMP)
+        string(REGEX REPLACE "-I([^ ]+)( .*)?" "\\1" MY_TMP "${MY_TMP}")
+        set(MYSQL_ADD_INCLUDE_DIR ${MY_TMP} CACHE FILEPATH INTERNAL)
 
-FIND_LIBRARY(MYSQL_LIB NAMES mysqlclient
-PATHS
-$ENV{MYSQL_DIR}/lib/${libsuffixDist}
-$ENV{MYSQL_DIR}/libmysql
-$ENV{MYSQL_DIR}/libmysql/${libsuffixBuild}
-$ENV{MYSQL_DIR}/client/${libsuffixBuild}
-$ENV{MYSQL_DIR}/libmysql/${libsuffixBuild}
-$ENV{ProgramFiles}/MySQL/*/lib/${libsuffixDist}
-$ENV{SystemDrive}/MySQL/*/lib/${libsuffixDist})
-ELSE (WIN32)
-FIND_LIBRARY(MYSQL_LIB NAMES mysqlclient_r
-PATHS
-$ENV{MYSQL_DIR}/libmysql_r/.libs
-$ENV{MYSQL_DIR}/lib
-$ENV{MYSQL_DIR}/lib/mysql
-/usr/lib/mysql
-/usr/local/lib/mysql
-/usr/local/mysql/lib
-/usr/local/mysql/lib/mysql
-/opt/mysql/mysql/lib
-/opt/mysql/mysql/lib/mysql)
-ENDIF (WIN32)
+        # set LIBRARY_DIR
+        exec_program(${MYSQL_CONFIG}
+                     ARGS --libs
+                     OUTPUT_VARIABLE MY_TMP)
+        set(MYSQL_ADD_LIBRARIES "")
+        string(REGEX MATCHALL "(^| )-l[^ ]+" MYSQL_LIB_LIST "${MY_TMP}")
+        foreach(LIB ${MYSQL_LIB_LIST})
+            string(REGEX REPLACE "[ ]*-l([^ ]*)" "\\1" LIB "${LIB}")
+            list(APPEND MYSQL_ADD_LIBRARIES "${LIB}")
+        endforeach(LIB ${MYSQL_LIBS})
 
-IF(MYSQL_LIB)
-GET_FILENAME_COMPONENT(MYSQL_LIB_DIR ${MYSQL_LIB} PATH)
-ENDIF(MYSQL_LIB)
+        # Add mysqlclient library
+        set(MYSQL_ADD_LIBRARY_PATH "")
+        string(REGEX MATCHALL "-L[^ ]+" MYSQL_LIBDIR_LIST "${MY_TMP}")
+        foreach(LIB ${MYSQL_LIBDIR_LIST})
+            string(REGEX REPLACE "[ ]*-L([^ ]*)" "\\1" LIB "${LIB}")
+            list(APPEND MYSQL_ADD_LIBRARY_PATH "${LIB}")
+        endforeach(LIB ${MYSQL_LIBS})
 
-IF (MYSQL_INCLUDE_DIR AND MYSQL_LIB_DIR)
-SET(MYSQL_FOUND TRUE)
+        # Set MYSQL_VERSION
+        exec_program(${MYSQL_CONFIG}
+                     ARGS --version
+                     OUTPUT_VARIABLE MY_TMP)
+        set(MySQL_VERSION "")
+        set(MySQL_VERSION ${MY_TMP})
 
-INCLUDE_DIRECTORIES(${MYSQL_INCLUDE_DIR})
-LINK_DIRECTORIES(${MYSQL_LIB_DIR})
+    else(MYSQL_CONFIG)
+        set(MYSQL_ADD_LIBRARIES "")
+        list(APPEND MYSQL_ADD_LIBRARIES "mysqlclient")
+    endif(MYSQL_CONFIG)
 
-FIND_LIBRARY(MYSQL_ZLIB zlib PATHS ${MYSQL_LIB_DIR})
-FIND_LIBRARY(MYSQL_YASSL yassl PATHS ${MYSQL_LIB_DIR})
-FIND_LIBRARY(MYSQL_TAOCRYPT taocrypt PATHS ${MYSQL_LIB_DIR})
-SET(MYSQL_CLIENT_LIBS mysqlclient_r)
-IF (MYSQL_ZLIB)
-SET(MYSQL_CLIENT_LIBS ${MYSQL_CLIENT_LIBS} zlib)
-ENDIF (MYSQL_ZLIB)
-IF (MYSQL_YASSL)
-SET(MYSQL_CLIENT_LIBS ${MYSQL_CLIENT_LIBS} yassl)
-ENDIF (MYSQL_YASSL)
-IF (MYSQL_TAOCRYPT)
-SET(MYSQL_CLIENT_LIBS ${MYSQL_CLIENT_LIBS} taocrypt)
-ENDIF (MYSQL_TAOCRYPT)
-# Added needed mysqlclient dependencies on Windows
-IF (WIN32)
-SET(MYSQL_CLIENT_LIBS ${MYSQL_CLIENT_LIBS} ws2_32)
-ENDIF (WIN32)
+else(UNIX)
+    if (WIN32)
+        set(MYSQL_ADD_LIBRARIES "")
+        list(APPEND MYSQL_ADD_LIBRARIES "mysql")
+    endif (WIN32)
+    set(MYSQL_ADD_INCLUDE_DIR "c:/msys/local/include" CACHE FILEPATH INTERNAL)
+    set(MYSQL_ADD_LIBRARY_PATH "c:/msys/local/lib" CACHE FILEPATH INTERNAL)
+ENDIF(UNIX)
 
-MESSAGE(STATUS "MySQL Include dir: ${MYSQL_INCLUDE_DIR} library dir: ${MYSQL_LIB_DIR}")
-MESSAGE(STATUS "MySQL client libraries: ${MYSQL_CLIENT_LIBS}")
-ELSE (MYSQL_INCLUDE_DIR AND MYSQL_LIB_DIR)
-MESSAGE(FATAL_ERROR "Cannot find MySQL. Include dir: ${MYSQL_INCLUDE_DIR} library dir: ${MYSQL_LIB_DIR}")
-ENDIF (MYSQL_INCLUDE_DIR AND MYSQL_LIB_DIR)
+find_path(MySQL_INCLUDE_DIR mysql.h
+          /usr/local/include
+          /usr/local/include/mysql
+          /usr/local/mysql/include
+          /usr/local/mysql/include/mysql
+          /opt/mysql/mysql/include
+          /opt/mysql/mysql/include/mysql
+          /usr/include
+          /usr/include/mysql
+          ${MYSQL_INCLUDEDIR}
+)
+
+set(TMP_MYSQL_LIBRARIES "")
+
+foreach(LIB ${MYSQL_ADD_LIBRARIES})
+    find_library("MYSQL_LIBRARIES_${LIB}" NAMES ${LIB}
+        PATHS
+        ${MYSQL_LIBRARYDIR}
+        /usr/lib64/mysql
+        /usr/lib/mysql
+        /usr/local/lib64
+        /usr/local/lib
+        /usr/local/lib64/mysql
+        /usr/local/lib/mysql
+        /usr/local/mysql64/lib
+        /usr/local/mysql/lib
+    )
+    list(APPEND TMP_MYSQL_LIBRARIES "${MYSQL_LIBRARIES_${LIB}}")
+endforeach(LIB ${MYSQL_ADD_LIBRARIES})
+
+set(MySQL_LIBRARIES ${TMP_MYSQL_LIBRARIES} CACHE FILEPATH INTERNAL)
+
+if(MySQL_VERSION)
+        STRING(REGEX REPLACE ".*([456])\\.[0-9]\\..*" "\\1" MySQL_MAJOR_VERSION "${MySQL_VERSION}")
+        STRING(REGEX REPLACE ".*[456]\\.([0-9])\\..*" "\\1" MySQL_MINOR_VERSION "${MySQL_VERSION}")
+else(MySQL_VERSION)
+    if(MySQL_INCLUDE_DIR)
+        FILE(READ "${MySQL_INCLUDE_DIR}/mysql_version.h" _MYSQL_VERSION_H_CONTENTS)
+        STRING(REGEX REPLACE "^.*#define MYSQL_SERVER_VERSION.*\"([456]\\.[0-9]\\.[0-9]+).*\".*$" "\\1" MySQL_VERSION ${_MYSQL_VERSION_H_CONTENTS})
+        STRING(REGEX REPLACE ".*([456])\\.[0-9]\\..*" "\\1" MYSQL_MAJOR_VERSION "${MySQL_VERSION}")
+        STRING(REGEX REPLACE ".*[456]\\.([0-9])\\..*" "\\1" MYSQL_MINOR_VERSION "${MySQL_VERSION}")
+    endif(MySQL_INCLUDE_DIR)
+endif(MySQL_VERSION)
+
+set(MYSQL_DIRECTORIES
+    ${MYSQL_LIBRARYDIR}
+    /usr/lib64/mysql
+    /usr/lib/mysql
+    /usr/local/lib64/mysql
+    /usr/local/lib/mysql
+)
+message(STATUS "MySQL Version: ${MySQL_VERSION}")
+
+set ( ${MySQL_PLUGIN_DIR} "")
+
+exec_program(${MYSQL_CONFIG}
+     ARGS --plugindir
+     OUTPUT_VARIABLE MY_PLUGIN_TEMP)
+
+if (MY_PLUGIN_TEMP)
+    set ( MySQL_PLUGIN_DIR ${MY_PLUGIN_TEMP})
+else (MY_PLUGIN_TEMP)
+    if (${MySQL_VERSION} MATCHES "^5\\.[15]|^6\\.")
+      foreach (MYSQL_DIR ${MYSQL_DIRECTORIES})
+        if (IS_DIRECTORY "${MYSQL_DIR}/plugin")
+          set (MySQL_PLUGIN_DIR "${MYSQL_DIR}/plugin")
+        endif (IS_DIRECTORY "${MYSQL_DIR}/plugin")
+      endforeach (MYSQL_DIR MYSQL_DIRECTORIES)
+    endif (${MySQL_VERSION} MATCHES "^5\\.[15]|^6\\.")
+endif (MY_PLUGIN_TEMP)
+
+message(STATUS "MySQL Plugin Dir: ${MySQL_PLUGIN_DIR}")
+
+if(MySQL_INCLUDE_DIR AND MySQL_LIBRARIES)
+    set(MySQL_FOUND TRUE CACHE INTERNAL "MySQL found")
+    message(STATUS "Found MySQL ${MySQL_VERSION}: ${MySQL_INCLUDE_DIR}, ${MySQL_LIBRARIES}")
+else(MySQL_INCLUDE_DIR AND MySQL_LIBRARIES)
+    set(MySQL_FOUND FALSE CACHE INTERNAL "MySQL found")
+    message(STATUS "MySQL not found.")
+endif(MySQL_INCLUDE_DIR AND MySQL_LIBRARIES)
+mark_as_advanced(MySQL_INCLUDE_DIR MySQL_LIBRARIES)
