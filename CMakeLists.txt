@@ -131,7 +131,7 @@ SET(governor_plugin_src ${SRC}/plugin.c
                      ${SRC}/fifo_stats.c
                      ${SRC}/tick_generator.c
                      ${SRC}/governor_config.c
-                     ${SRC}/ezxml.c
+                     ${SRC}/xml.c
                      ${SRC}/log.c
                      ${SRC}/user_account.c
                      ${SRC}/commands.c
