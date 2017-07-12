@@ -900,7 +900,6 @@ check_mysql_version (MODE_TYPE debug_mode)
 	    }
 	  else
 	    {
-	      (*_mysql_free_result) (res);
               if (db_mysql_exec_query (QUERY_GOVERNOR_CHECK_PLUGIN, &mysql_send_governor,
 			       debug_mode))
 	      {
@@ -912,12 +911,18 @@ check_mysql_version (MODE_TYPE debug_mode)
              res = (*_mysql_store_result) (mysql_send_governor);
              row = (*_mysql_fetch_row) (res);
              if (row){
-		  is_plugin_version = 1;
-		  snprintf (outbuffer, _DBGOVERNOR_BUFFER_2048 - 1,
+                  lengths = (*_mysql_fetch_lengths) (res);
+                  db_mysql_get_string (buffer, row[0], lengths[0],
+			       _DBGOVERNOR_BUFFER_2048);
+                  (*_mysql_free_result) (res);
+                      if (strstr (buffer, "ACTIVE")){
+		      is_plugin_version = 1;
+		      snprintf (outbuffer, _DBGOVERNOR_BUFFER_2048 - 1,
 			    "Governor with plugin mode enabled");
-		  WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
+		      WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
 			     outbuffer, data_cfg.log_mode);
 		  return 1;
+	          }
 
              } else {
 
