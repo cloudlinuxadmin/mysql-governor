@@ -144,7 +144,7 @@ SET(governor_plugin_src ${SRC}/plugin.c
 
 SET(governor_ld_src ${SRC}/ld.c)
 
-SET_SOURCE_FILES_PROPERTIES(${db_governor_SRC} ${dbtop_SRC} ${mysql_unfreeze_SRC} ${dbctl_SRC} ${governor_plugin_src} ${governor_ld_src} PROPERTIES COMPILE_FLAGS "-DOK -ggdb -fstack-protector-all -DMYSQL_DYNAMIC_PLUGIN")
+SET_SOURCE_FILES_PROPERTIES(${db_governor_SRC} ${dbtop_SRC} ${mysql_unfreeze_SRC} ${dbctl_SRC} ${governor_plugin_src} $(governor_lib_src) ${governor_ld_src} PROPERTIES COMPILE_FLAGS "-DOK -ggdb -fstack-protector-all -DMYSQL_DYNAMIC_PLUGIN")
 
 ADD_EXECUTABLE(db_governor ${db_governor_SRC})
 ADD_EXECUTABLE(dbtop ${dbtop_SRC})
@@ -152,14 +152,15 @@ ADD_EXECUTABLE(mysql_unfreeze ${mysql_unfreeze_SRC})
 ADD_LIBRARY(governor SHARED ${governor_lib_src})
 ADD_EXECUTABLE(dbctl ${dbctl_SRC})
 
-ADD_LIBRARY(governor SHARED ${governor_plugin_src})
+ADD_LIBRARY(governorplugin SHARED ${governor_plugin_src})
+ADD_LIBRARY(governor SHARED ${governor_lib_src})
 ADD_LIBRARY(governorld SHARED ${governor_ld_src})
 
 INSTALL(TARGETS db_governor dbtop mysql_unfreeze dbctl
   DESTINATION bin
   COMPONENT Runtime)
   
-INSTALL(TARGETS governor governorld
+INSTALL(TARGETS governor governorld governorplugin
         DESTINATION lib
         PERMISSIONS OWNER_READ GROUP_READ WORLD_READ)
 
