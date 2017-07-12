@@ -107,6 +107,8 @@ mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils
 mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/tmp
 mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/storage
 mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/history
+mkdir -p $RPM_BUILD_ROOT%{_libdir}/mysql
+mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/conf.d
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
 # install systemd unit files and scripts for handling server startup
 mkdir -p ${RPM_BUILD_ROOT}%{_unitdir}
@@ -123,6 +125,9 @@ install -D -m 755 bin/dbctl $RPM_BUILD_ROOT%{_sbindir}/
 install -D -m 600 db-governor.xml $RPM_BUILD_ROOT%{_sysconfdir}/container/mysql-governor.xml
 install -D -m 755 lib/libgovernor.so $RPM_BUILD_ROOT%{_libdir}/libgovernor.so.%{version} 
 ln -fs libgovernor.so.%{version} $RPM_BUILD_ROOT%{_libdir}/libgovernor.so
+install -D -m 755 lib/libgovernorld.so $RPM_BUILD_ROOT%{_libdir}/libgovernorld.so.%{version} 
+ln -fs libgovernorld.so.%{version} $RPM_BUILD_ROOT%{_libdir}/libgovernorld.so
+install -D -m 755 lib/libgovernorplugin.so governor.so.
 
 #install utility
 install -D -m 755 install/db-select-mysql $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/db-select-mysql
@@ -145,6 +150,8 @@ install -D -m 755 install/utils/mysql_export $RPM_BUILD_ROOT/usr/share/lve/dbgov
 
 install -D -m 755 install/cpanel/upgrade-mysql-disabler.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/upgrade-mysql-disabler.sh
 ln -s ../scripts/dbgovernor_map $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/dbgovernor_map
+
+install -D -m 644 script/mysql $RPM_BUILD_ROOT%{_sysconfdir}/conf.d/mysql
 
 #install cron utility
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/cron.d/
@@ -336,6 +343,8 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 %{_sbindir}/dbctl
 %{_libdir}/libgovernor.so
 %{_libdir}/libgovernor.so.%{version}
+%{_libdir}/libgovernorld.so
+%{_libdir}/libgovernorld.so.%{version}
 %config(noreplace) %{_sysconfdir}/container/mysql-governor.xml
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
 %{_unitdir}/db_governor.service
@@ -347,6 +356,8 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /var/lve/dbgovernor
 /var/lve/dbgovernor-store
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
+%{_libdir}/mysql/governor.so
+%config(noreplace) %{_sysconfdir}/conf.d/mysql
 
 %changelog
 * Mon Jun 19 2017 Daria Kavchuk <dkavchuk@cloudlinux.com>, Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-22

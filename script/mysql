@@ -1,0 +1,2 @@
+export LD_PRELOAD=/usr/lib64/libgovernorld.so
+export LD_PRELOAD=/usr/lib/libgovernorld.so
