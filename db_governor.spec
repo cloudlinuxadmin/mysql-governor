@@ -113,6 +113,12 @@ mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/conf.d
 # install systemd unit files and scripts for handling server startup
 mkdir -p ${RPM_BUILD_ROOT}%{_unitdir}
 install -m 644 db_governor.service ${RPM_BUILD_ROOT}%{_unitdir}/
+mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/systemd/system/mysql.service.d
+mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/systemd/system/mysqld.service.d
+mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/systemd/system/mariadb.service.d
+install -D -m 644 script/governor.conf $RPM_BUILD_ROOT%{_sysconfdir}/systemd/system/mariadb.service.d/
+install -D -m 644 script/governor.conf $RPM_BUILD_ROOT%{_sysconfdir}/systemd/system/mysqld.service.d/
+install -D -m 644 script/governor.conf $RPM_BUILD_ROOT%{_sysconfdir}/systemd/system/mysql.service.d/
 %else
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/
 install -D -m 755 script/db_governor $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/
@@ -152,6 +158,7 @@ install -D -m 755 install/cpanel/upgrade-mysql-disabler.sh $RPM_BUILD_ROOT/usr/s
 ln -s ../scripts/dbgovernor_map $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/dbgovernor_map
 
 install -D -m 644 script/mysql $RPM_BUILD_ROOT%{_sysconfdir}/conf.d/mysql
+
 
 #install cron utility
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/cron.d/
@@ -348,6 +355,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 %config(noreplace) %{_sysconfdir}/container/mysql-governor.xml
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
 %{_unitdir}/db_governor.service
+%{_sysconfdir}/systemd/system/mariadb.service.d/governor.conf
+%{_sysconfdir}/systemd/system/mysqld.service.d/governor.conf
+%{_sysconfdir}/systemd/system/mysql.service.d/governor.conf
 %else
 %{_sysconfdir}/rc.d/init.d/*
 %endif
