@@ -115,13 +115,16 @@ static int governor_plugin_init(void *arg __attribute__ ((unused))) {
 
     // Find libgovernordl
     if (lve_hooks.enter && (gr_init_hooks = dlsym(RTLD_DEFAULT, "gr_init_hooks")) != NULL) {
-        gr_lve_begin = dlsym(RTLD_DEFAULT, "gr_hooks_enable");
-        gr_lve_end = dlsym(RTLD_DEFAULT, "gr_hooks_disable");
+        gr_lve_begin = dlsym(RTLD_DEFAULT, "gr_lve_begin");
+        gr_lve_end = dlsym(RTLD_DEFAULT, "gr_lve_end");
 
         real = gr_init_hooks(&lve_hooks);
 
         fprintf(stderr, "Governor LD  ver. %d found\n", real->ver);
     }
+
+    fprintf(stderr, "111gr_lve_begin %p, enter %p, command %d\n",
+                    gr_lve_begin, lve_hooks.enter, governor_get_command);
 
     fprintf(stderr, "Governor Plugin Inited\n");
 
@@ -164,6 +167,9 @@ static void governor_notify(MYSQL_THD thd __attribute__ ((unused)), unsigned int
                         if (!send_info_begin(uname))
                             is_begined = 1;
                         
+		    fprintf(stderr, "is_begined %d, gr_lve_begin %p, enter %p, command %d\n",
+                    is_begined, gr_lve_begin, lve_hooks.enter, governor_get_command);
+
                         if(is_begined && gr_lve_begin && lve_hooks.enter && (governor_get_command==2))
                             gr_lve_begin(uname);
                     }
@@ -200,11 +206,13 @@ static my_bool opt_governor_enable_reconnect_lve = 0;
 static void query_governor_enable(MYSQL_THD thd __attribute__ ((unused)), struct st_mysql_sys_var *var __attribute__ ((unused)),
         void *tgt __attribute__ ((unused)), const void *save __attribute__ ((unused))) {
     governor_get_command = 1;
+    opt_governor_enable = 1;
 }
 
 static void query_governor_enable_reconnect(MYSQL_THD thd __attribute__ ((unused)), struct st_mysql_sys_var *var __attribute__ ((unused)),
         void *tgt __attribute__ ((unused)), const void *save __attribute__ ((unused))) {
     governor_get_command = 1;
+    opt_governor_enable_reconnect = 1;
     close_sock();
     connect_to_server();
 }
@@ -212,11 +220,13 @@ static void query_governor_enable_reconnect(MYSQL_THD thd __attribute__ ((unused
 static void query_governor_enable_lve(MYSQL_THD thd __attribute__ ((unused)), struct st_mysql_sys_var *var __attribute__ ((unused)),
         void *tgt __attribute__ ((unused)), const void *save __attribute__ ((unused))) {
     governor_get_command = 2;
+    opt_governor_enable_lve = 1;
 }
 
 static void query_governor_enable_reconnect_lve(MYSQL_THD thd __attribute__ ((unused)), struct st_mysql_sys_var *var __attribute__ ((unused)),
         void *tgt __attribute__ ((unused)), const void *save __attribute__ ((unused))) {
     governor_get_command = 2;
+    opt_governor_enable_reconnect_lve = 1;
     close_sock();
     connect_to_server();
 }
