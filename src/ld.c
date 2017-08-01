@@ -153,7 +153,7 @@ int pthread_mutex_unlock(pthread_mutex_t *mutex) {
 
     ret = real.pthread_mutex_unlock(mutex);
 
-    if (ret && hooks && in_lve && !in_hook)
+    if (!ret && hooks && in_lve && !in_hook)
         __mutex_leave();
 
     return ret;
