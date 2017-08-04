@@ -666,6 +666,28 @@ def restore_mysql_target_for_cPanel():
 	else:
 		print "No need in fix"
 
+
+def enable_mysql_monitor(enable=True):
+	"""
+	Enable or disable mysql monitoring (for cPanel only)
+	:param enable: if True - enable monitor
+                   if False - disable monitor
+    """
+	if cp.name == "Plesk":
+		print "No need to inspect MySQL monitoring"
+	elif cp.name == "cPanel":
+		exec_command_out(
+			"whmapi1 configureservice service=mysql enabled=1 monitored={}".format(int(enable)))
+	elif cp.name == "InterWorx":
+		print "No need to inspect MySQL monitoring"
+	elif cp.name == "ISPManager":
+		print "No need to inspect MySQL monitoring"
+	elif cp.name == "DirectAdmin":
+		print "No need to inspect MySQL monitoring"
+	else:
+		print "No need to inspect MySQL monitoring"
+
+
 cp = get_cp(True)
 
 try:
@@ -687,7 +709,8 @@ for o, a in opts:
 		sys.exit(0)
 
 cp = get_cp()
-	                                                          
+
+enable_mysql_monitor(False)	                                                          
 for o, a in opts:
 	if o in ("-h", "--help"):
 		usage()
@@ -772,5 +795,7 @@ for o, a in opts:
 	elif o in ("--fix-cpanel-cl-mysql",):
 		fix_cl7_mysql()
 	else:
+                enable_mysql_monitor()
 		usage()
 		sys.exit(2)
+enable_mysql_monitor()
