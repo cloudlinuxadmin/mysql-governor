@@ -146,6 +146,8 @@ class InstallManager(object):
             print "Unknown system type. Installation aborted"
             sys.exit(2)
 
+        self._before_install()
+
         # remember installed mysql version
         self.prev_version = self._check_mysql_version()
 
@@ -247,6 +249,8 @@ class InstallManager(object):
         self._after_install_new_packages()
 
         self._ld_fix()
+
+        self._after_install()
 
         return True
 
@@ -815,6 +819,16 @@ class InstallManager(object):
     def _after_delete(self):
         """
         Specific actions after delete
+        """
+
+    def _before_install(self):
+        """
+        Specific actions before governor installation
+        """
+
+    def _after_install(self):
+        """
+        Specific actions after governor installation
         """
 
     def _set_mysql_access(self):
