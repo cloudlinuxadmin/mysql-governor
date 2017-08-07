@@ -64,7 +64,7 @@ init_bad_users_list_utility ()
       return -1;
     }
 
-  sem = sem_open (SHARED_MEMORY_SEM, O_CREAT, 0777, 1);
+  sem = sem_open (SHARED_MEMORY_SEM, O_CREAT, 0600, 1);
 
   if (sem == SEM_FAILED)
     {
@@ -176,7 +176,7 @@ init_bad_users_list ()
       return -1;
     }
 
-  sem = sem_open (SHARED_MEMORY_SEM, O_CREAT, 0777, 1);
+  sem = sem_open (SHARED_MEMORY_SEM, O_CREAT, 0600, 1);
   umask (old_umask);
 
   if (sem == SEM_FAILED)
@@ -362,7 +362,7 @@ is_user_in_bad_list_cleint (char *username)
       return 0;
     }
 
-  sem_t *sem_client = sem_open (SHARED_MEMORY_SEM, 0, 0777, 1);
+  sem_t *sem_client = sem_open (SHARED_MEMORY_SEM, 0, 0600, 1);
   int trys = 1, sem_reopen = 0;
 
   if (sem_client != SEM_FAILED)
@@ -396,7 +396,7 @@ is_user_in_bad_list_cleint (char *username)
 		    {
 		      trys = 1;
 		      sem_close (sem_client);
-		      sem_client = sem_open (SHARED_MEMORY_SEM, 0, 0777, 1);
+		      sem_client = sem_open (SHARED_MEMORY_SEM, 0, 0600, 1);
 		      sem_reopen++;
 		      if (sem_reopen == 4)
 			break;
@@ -440,7 +440,7 @@ user_in_bad_list_cleint_show ()
       return 0;
     }
 
-  sem_t *sem_client = sem_open (SHARED_MEMORY_SEM, 0, 0777, 1);
+  sem_t *sem_client = sem_open (SHARED_MEMORY_SEM, 0, 0600, 1);
   umask (old_umask);
   int trys = 1;
 
@@ -469,7 +469,7 @@ user_in_bad_list_cleint_show ()
 		    {
 		      trys = 1;
 		      sem_post (sem_client);
-		      sem_client = sem_open (SHARED_MEMORY_SEM, 0, 0777, 1);
+		      sem_client = sem_open (SHARED_MEMORY_SEM, 0, 0600, 1);
 		    }
 		}
 	      else
@@ -531,7 +531,7 @@ init_bad_users_list_client ()
     {
       ftruncate (shm_fd_clents_global, sizeof (shm_structure));
 
-      sem_in = sem_open (SHARED_MEMORY_SEM, O_CREAT, 0777, 1);
+      sem_in = sem_open (SHARED_MEMORY_SEM, O_CREAT, 0600, 1);
 
       if (sem_in == SEM_FAILED)
 	{
@@ -570,7 +570,7 @@ remove_bad_users_list_client ()
 int32_t
 is_user_in_bad_list_cleint_persistent (char *username)
 {
-  sem_t *sem_client = sem_open (SHARED_MEMORY_SEM, 0, 0777, 1);
+  sem_t *sem_client = sem_open (SHARED_MEMORY_SEM, 0, 0600, 1);
   int trys = 1, sem_reopen = 0;
   int32_t fnd = 0;
 
@@ -607,7 +607,7 @@ is_user_in_bad_list_cleint_persistent (char *username)
 		    {
 		      trys = 1;
 		      sem_close (sem_client);
-		      sem_client = sem_open (SHARED_MEMORY_SEM, 0, 0777, 1);
+		      sem_client = sem_open (SHARED_MEMORY_SEM, 0, 0600, 1);
 		      sem_reopen++;
 		      if (sem_reopen == 4)
 			break;
@@ -631,7 +631,7 @@ void
 printf_bad_list_cleint_persistent (void)
 {
   printf (" USER             NUMBER\n");
-  sem_t *sem_client = sem_open (SHARED_MEMORY_SEM, 0, 0777, 1);
+  sem_t *sem_client = sem_open (SHARED_MEMORY_SEM, 0, 0600, 1);
   int trys = 1, sem_reopen = 0;
 
   if (sem_client != SEM_FAILED)
@@ -663,7 +663,7 @@ printf_bad_list_cleint_persistent (void)
 		    {
 		      trys = 1;
 		      sem_close (sem_client);
-		      sem_client = sem_open (SHARED_MEMORY_SEM, 0, 0777, 1);
+		      sem_client = sem_open (SHARED_MEMORY_SEM, 0, 0600, 1);
 		      sem_reopen++;
 		      if (sem_reopen == 4)
 			break;
