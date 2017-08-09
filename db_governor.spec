@@ -1,6 +1,6 @@
 %define g_version   1.2
-%define g_release   22
-%define g_key_library 8
+%define g_release   23
+%define g_key_library 9
 
 %if %{undefined _unitdir}
 %define _unitdir /usr/lib/systemd/system
@@ -349,6 +349,10 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Tue Aug 08 2017 Daria Kavchuk <dkavchuk@cloudlinux.com>, Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-23
+- MYSQLG-199: disable mysql monitoring on cPanel while governor installing.
+- MYSQLG-198: CageFS MySQL Vulnerability
+
 * Mon Jun 19 2017 Daria Kavchuk <dkavchuk@cloudlinux.com>, Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-22
 - MYSQLG-183: Missed file /etc/container/dbuser-map after installation of Governor
 - MYSQLG-188: Add support MariaDB 10.2 with governor
