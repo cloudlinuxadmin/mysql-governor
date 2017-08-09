@@ -444,6 +444,12 @@ class InstallManager(object):
         # self.set_fs_suid_dumpable()
         print "No need in fix"
 
+    def fix_mysqld_service(self):
+        """
+        DA specific action
+        """
+        print "No need in fix"
+
     def set_mysql_version(self, version):
         """
         Set new mysql version for next install

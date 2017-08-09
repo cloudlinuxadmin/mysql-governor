@@ -143,6 +143,10 @@ def build_parser():
                         help="Fix unescaped xml and wrong limits in config file",
                         dest="fix_govervor_config", action="store_true",
                         default=False)
+    parser.add_argument("--fix-mysqld-service",
+                        help="Restore mysqld.service for DirectAdmin",
+                        dest="fix_mysqld_service", action="store_true",
+                        default=False)
     return parser
 
 
@@ -250,6 +254,8 @@ def main(argv):
         correct_mysqld_service_for_cl7("mysqld")
     elif opts.fix_govervor_config:
         fix_broken_governor_xml_config()
+    elif opts.fix_mysqld_service:
+        manager.fix_mysqld_service()
     else:
         parser.print_help()
         sys.exit(2)
