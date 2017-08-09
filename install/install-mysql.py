@@ -129,6 +129,7 @@ def usage():
         print "    | --fix-cpanel-hooks    : fix adduser and deluser hooks for cPanel"
 	print "    | --fix-cpanel-cl-mysql : fix mysqld service for cPanel(CL7)"
 	print " -s | --safe-install        : show which vesrion of MySQL/MariaDB will be installed before installation"
+	print "    | --fix-mysqld-service        : restore mysqld.service for DirectAdmin(CL7)"
 
 def check_leave_pid():
 	if cp.name == "Plesk" and verCompare (cp.version, "10") >= 0:
@@ -688,10 +689,33 @@ def enable_mysql_monitor(enable=True):
 		print "No need to inspect MySQL monitoring"
 
 
+def restore_mysqld_service():
+	"""
+	Restore mysqld.service (for DA CL7 only)
+    """
+	if cp.name == "Plesk":
+		print "No need in fix"
+	elif cp.name == "cPanel":
+		print "No need in fix"
+	elif cp.name == "InterWorx":
+		print "No need in fix"
+	elif cp.name == "ISPManager":
+		print "No need in fix"
+	elif cp.name == "DirectAdmin":
+		try:
+			shutil.copy(SOURCE+"utils/mysqld.service",
+						'/usr/local/directadmin/custombuild/configure/systemd/mysqld.service')
+			print 'mysqld.service restored!'
+		except Exception:
+			print 'ERROR occurred while attempt to restore mysqld.service!'
+	else:
+		print "No need in fix"
+
+
 cp = get_cp(True)
 
 try:
-	opts, args = getopt.getopt(sys.argv[1:], "hidcmuts", ["help", "install", "delete", "install-beta", "clean-mysql", "clean-mysql-delete", "upgrade", "dbupdate", "update-mysql-beta", "force", "fix-cpanel-hooks", "fix-cpanel-cl-mysql", "safe-install"])
+	opts, args = getopt.getopt(sys.argv[1:], "hidcmuts", ["help", "install", "delete", "install-beta", "clean-mysql", "clean-mysql-delete", "upgrade", "dbupdate", "update-mysql-beta", "force", "fix-cpanel-hooks", "fix-cpanel-cl-mysql", "safe-install", "fix-mysqld-service"])
 except getopt.GetoptError, err:
 	# print help information and exit:
 	print str(err) # will print something like "option -a not recognized"
@@ -794,6 +818,8 @@ for o, a in opts:
 		install_mysql_beta_testing_hooks()
 	elif o in ("--fix-cpanel-cl-mysql",):
 		fix_cl7_mysql()
+	elif o in ("--fix-mysqld-service",):
+		restore_mysqld_service()
 	else:
                 enable_mysql_monitor()
 		usage()
