@@ -3,6 +3,7 @@
 This module contains class for managing governor on DirectAdmin server
 """
 import os
+import shutil
 from glob import glob
 
 from utilities import exec_command_out, check_file, grep, write_file, \
@@ -123,34 +124,28 @@ class DirectAdminManager(InstallManager):
 
         print "I got %s and %s" % (MYSQL_DA_VER, MYSQL_DA_TYPE)
 
+        mysql_version_map = {
+            "5.0": "mysql50",
+            "5.1": "mysql51",
+            "5.5": "mysql55",
+            "5.6": "mysql56",
+            "5.7": "mysql57",
+            "10.0.0": "mariadb100",
+            "10.1.1": "mariadb101"
+        }
+        mariadb_version_map = {
+            "10.1": "mariadb101",
+            "10.0": "mariadb100",
+            "5.6": "mariadb100",
+            "5.5": "mariadb100",
+            "10.0.0": "mariadb100",
+            "10.1.1": "mariadb100"
+        }
+
         if MYSQL_DA_TYPE == "mysql":
-            if MYSQL_DA_VER == "5.0":
-                MYSQL_DA_VER = "mysql50"
-            elif MYSQL_DA_VER == "5.1":
-                MYSQL_DA_VER = "mysql51"
-            elif MYSQL_DA_VER == "5.5":
-                MYSQL_DA_VER = "mysql55"
-            elif MYSQL_DA_VER == "5.6":
-                MYSQL_DA_VER = "mysql56"
-            elif MYSQL_DA_VER == "5.7":
-                MYSQL_DA_VER = "mysql57"
-            elif MYSQL_DA_VER == "10.0.0":
-                MYSQL_DA_VER = "mariadb100"
-            elif MYSQL_DA_VER == "10.1.1":
-                MYSQL_DA_VER = "mariadb101"
+            MYSQL_DA_VER = mysql_version_map[MYSQL_DA_VER]
         elif MYSQL_DA_TYPE == "mariadb":
-            if MYSQL_DA_VER == "10.1":
-                MYSQL_DA_VER = "mariadb101"
-            elif MYSQL_DA_VER == "10.0":
-                MYSQL_DA_VER = "mariadb100"
-            elif MYSQL_DA_VER == "5.6":
-                MYSQL_DA_VER = "mariadb100"
-            elif MYSQL_DA_VER == "5.5":
-                MYSQL_DA_VER = "mariadb100"
-            elif MYSQL_DA_VER == "10.0.0":
-                MYSQL_DA_VER = "mariadb100"
-            elif MYSQL_DA_VER == "10.1.1":
-                MYSQL_DA_VER = "mariadb100"
+            MYSQL_DA_VER = mariadb_version_map[MYSQL_DA_VER]
 
         return MYSQL_DA_VER
 
@@ -186,3 +181,14 @@ class DirectAdminManager(InstallManager):
             return ""
         else:
             return "yes"
+
+    def fix_mysqld_service(self):
+        """
+        Restore mysqld.service
+        """
+        try:
+            shutil.copy(self._rel("scripts/mysqld.service"),
+                        '/usr/local/directadmin/custombuild/configure/systemd/mysqld.service')
+            print 'mysqld.service restored!'
+        except Exception:
+            print 'ERROR occurred while attempt to restore mysqld.service!'
