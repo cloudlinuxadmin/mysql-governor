@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   23
+%define g_release   24
 %define g_key_library 9
 
 %if %{undefined _unitdir}
@@ -349,6 +349,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Tue Aug 22 2017 Daria Kavchuk <dkavchuk@cloudlinux.com>, Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-24
+- MYSQLG-197: Stop to delete mysqld.service for DirectAdmin in cl-MySQL packages
+
 * Tue Aug 08 2017 Daria Kavchuk <dkavchuk@cloudlinux.com>, Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-23
 - MYSQLG-199: disable mysql monitoring on cPanel while governor installing.
 - MYSQLG-198: CageFS MySQL Vulnerability
