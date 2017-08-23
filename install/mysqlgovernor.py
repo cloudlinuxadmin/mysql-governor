@@ -11,10 +11,9 @@ import os
 
 from clcommon import cpapi
 
-from modules import InstallManager, Storage
-from utilities import exec_command, bcolors, query_yes_no, \
-    correct_mysqld_service_for_cl7, set_debug, shadow_tracing, set_path_environ, \
-    check_mysqld_is_alive, fix_broken_governor_xml_config
+from modules import InstallManager
+from utilities import bcolors, set_debug, shadow_tracing, set_path_environ, \
+    fix_broken_governor_xml_config
 
 LOG_FILE_NAME = "/usr/share/lve/dbgovernor/governor_install.log"
 
@@ -166,9 +165,6 @@ def main(argv):
 
     opts = parser.parse_args(argv)
 
-    storage_holder = Storage()
-    storage_holder.check_root_permissions()
-
     # create install manager instance for current cp
     manager = InstallManager.factory(cpapi.CP_NAME)
 
@@ -176,50 +172,23 @@ def main(argv):
         set_debug(True)
 
     if opts.install or opts.install_beta:
-        warn_message()
-        manager.cleanup()
-        # detect_percona(opts.force, manager)
-
-        # remove current packages and install new packages
-        if manager.install(opts.install_beta, opts.yes) == True:
-            print "Give mysql service time to start " \
-                  "before service checking(15 sec)"
-            time.sleep(15)
-
-        # check mysqld service status
-        if manager.ALL_PACKAGES_NEW_NOT_DOWNLOADED == False and manager.DISABLED == False:
-            if check_mysqld_is_alive():
-                manager.save_installed_version()
-                print "Installation mysql for db_governor completed"
-
-            # if sql server failed to start ask user to restore old packages
-            elif query_yes_no(
-                    "Installation is failed. Restore previous version?"):
-                print "Installation mysql for db_governor was failed. " \
-                      "Restore previous mysql version"
-                manager.install_rollback(opts.install_beta)
-
-        manager.cleanup()
+        manager.install()
 
     elif opts.delete:
         manager.delete()
-        print "Deletion is complete"
-
-        manager.cleanup()
 
     elif opts.mysql_version:
-        manager.set_mysql_version(opts.mysql_version)
-        print "Now set MySQL to type '%s'" % opts.mysql_version
+        print "Option is deprecated."
     elif opts.dbupdate:
         manager.update_user_map_file()
     elif opts.fix_cpanel_hooks:
-        manager.install_mysql_beta_testing_hooks()
+        print "Option is deprecated."
     elif opts.install_from_history:
-        manager.install_from_history(opts.install_from_history)
+        print "Option is deprecated."
     elif opts.show_previous_packages:
-        manager.show_packages_history()
+        print "Option is deprecated."
     elif opts.clear_history:
-        manager.clear_history_folder()
+        print "Option is deprecated."
     elif opts.clean_mysql:
         print "Option is deprecated."
     elif opts.clean_mysql_delete:
@@ -229,53 +198,27 @@ def main(argv):
     elif opts.update_mysql_beta:
         print "Option is deprecated. Use --install-beta instead."
     elif opts.fs_suid:
-        manager.set_fs_suid_dumpable()
+        print "Option is deprecated."
     elif opts.store_list:
-        storage_holder.list_files_from_storage(False)
+        print "Option is deprecated."
     elif opts.clver_correct:
-        manager.make_additional_panel_related_check()
+        print "Option is deprecated."
     elif opts.store_save:
-        storage_holder.save_file_to_storage(opts.store_save)
+        print "Option is deprecated."
     elif opts.store_restore:
-        storage_holder.restore_file_from_storage(opts.store_restore)
+        print "Option is deprecated."
     elif opts.store_list_files:
-        storage_holder.apply_files_from_list(
-            "/usr/share/lve/dbgovernor/list_problem_files.txt")
+        print "Option is deprecated."
     elif opts.restore_list_all:
-        storage_holder.list_files_from_storage(True)
+        print "Option is deprecated."
     elif opts.store_clean:
-        storage_holder.empty_storage()
+        print "Option is deprecated."
     elif opts.cl7_correct:
-        correct_mysqld_service_for_cl7("mysql")
-        correct_mysqld_service_for_cl7("mysqld")
+        print "Option is deprecated."
     elif opts.fix_govervor_config:
         fix_broken_governor_xml_config()
     else:
         parser.print_help()
-        sys.exit(2)
-
-
-def detect_percona(force, install_manager_instance):
-    """
-    Detect unsupported Percona packages
-    :param force:
-    :param install_manager_instance:
-    """
-    if force:
-        return None
-
-    packages = exec_command("""rpm -qa|grep -iE "^percona-" """, silent=True)
-    if len(packages):
-        print "Percona packages deteced:" + ",".join(packages)
-        print "You are running Percona, which is not supported by " \
-              "MySQL Governor. If you want to run MySQL governor, " \
-              "we would have to uninstall Percona, and substitute it " \
-              "for MariaDB or MySQL. Run installator next commands for install:"
-        print install_manager_instance.rel("mysqlgovernor.py") + \
-              " --mysql-version=mysql56 (or mysql50, mysql51, mysql55, " \
-              "mysql57, mariadb55, mariadb100, mariadb101)"
-        print install_manager_instance.rel("mysqlgovernor.py") + \
-              " --install --force"
         sys.exit(2)
 
 
