@@ -1,6 +1,6 @@
 %define g_version   2.0
 %define g_release   1
-%define g_key_library 8
+%define g_key_library 9
 
 %if %{undefined _unitdir}
 %define _unitdir /usr/lib/systemd/system
@@ -9,15 +9,40 @@
 %define __python /opt/alt/python27/bin/python2.7
 %global __os_install_post %(echo '%{__os_install_post}' | sed -e 's!/usr/lib[^[:space:]]*/brp-python-bytecompile[[:space:]].*$!!g')
 
+%if 0%{?mariadb55:1}
+%define pkgnm -mariadb55
+%endif
+%if 0%{?mariadb100:1}
+%define pkgnm -mariadb100
+%endif
+%if 0%{?mariadb101:1}
+%define pkgnm -mariadb101
+%endif
+%if 0%{?mariadb102:1}
+%define pkgnm -mariadb102
+%endif
+%if 0%{?mysql55:1}
+%define pkgnm -mysql55
+%endif
+%if 0%{?mysql56:1}
+%define pkgnm -mysql56
+%endif
+%if 0%{?mysql57:1}
+%define pkgnm -mysql57
+%endif
 
+%if 0%{?pkgnm:1}
+Name: governor-mysql%{pkgnm}
+%else
 Name: governor-mysql
+%endif
 Version: %{g_version}
 Release: %{g_release}%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
 Group: System Environment/Base
-Source0: %{name}-%{version}.tar.bz2
+Source0: governor-mysql-%{version}.tar.bz2
 Requires: glib2
 Requires: ncurses
 Requires: lve-utils >= 1.1-3
@@ -58,12 +83,44 @@ Requires(preun): initscripts
 Requires(postun): initscripts
 %endif
 
+%if 0%{?mariadb55:1}
+BuildRequires: cl-MariaDB55-devel cl-MariaDB55-server cl-MariaDB55 cl-MariaDB55-libs
+%endif
+%if 0%{?mariadb100:1}
+BuildRequires: cl-MariaDB100-devel cl-MariaDB100-server cl-MariaDB100 cl-MariaDB100-libs
+%endif
+%if 0%{?mariadb101:1}
+BuildRequires: cl-MariaDB101-devel cl-MariaDB101-server cl-MariaDB101 cl-MariaDB101-libs
+%endif
+%if 0%{?mariadb102:1}
+BuildRequires: cl-MariaDB102-devel cl-MariaDB102-server cl-MariaDB102 cl-MariaDB102-libs
+%endif
+%if 0%{?mysql55:1}
+BuildRequires: cl-MySQL55-devel cl-MySQL55-server cl-MySQL55 cl-MySQL55-shared
+%endif
+%if 0%{?mysql56:1}
+BuildRequires: cl-MySQL56-devel cl-MySQL56-server cl-MySQL56 cl-MySQL56-shared
+%endif
+%if 0%{?mysql57:1}
+BuildRequires: cl-MySQL57-devel cl-MySQL57-server cl-MySQL57 cl-MySQL57-shared
+%endif
+
+%if ! 0%{?pkgnm:1}
+Requires: %{name}-mariadb55
+Requires: %{name}-mariadb100
+Requires: %{name}-mariadb101
+Requires: %{name}-mariadb102
+Requires: %{name}-mysql55
+Requires: %{name}-mysql56
+Requires: %{name}-mysql57
+%endif
+
 %description
 This package provides dbtop, db_governor utilities.
 
 %prep
 
-%setup -q
+%setup -n governor-mysql-%{version}
 
 %build
 export PYTHONINTERPRETER=%{__python}
@@ -91,6 +148,7 @@ if [ -e autoconf ]; then
   export PATH=.:$PATH 
 fi
 
+%if ! 0%{?pkgnm:1}
 cd install
 make DESTDIR=$RPM_BUILD_ROOT install
 cd -
@@ -133,28 +191,16 @@ install -D -m 755 lib/libgovernor.so $RPM_BUILD_ROOT%{_libdir}/libgovernor.so.%{
 ln -fs libgovernor.so.%{version} $RPM_BUILD_ROOT%{_libdir}/libgovernor.so
 install -D -m 755 lib/libgovernorld.so $RPM_BUILD_ROOT%{_libdir}/libgovernorld.so.%{version} 
 ln -fs libgovernorld.so.%{version} $RPM_BUILD_ROOT%{_libdir}/libgovernorld.so
-install -D -m 755 lib/libgovernorplugin.so governor.so.
+
+
 
 #install utility
-install -D -m 755 install/db-select-mysql $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/db-select-mysql
 
-install -D -m 755 install/scripts/chek_mysql_rpms_local $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/chek_mysql_rpms_local
-install -D -m 755 install/scripts/cpanel-delete-hooks $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/cpanel-delete-hooks
-install -D -m 755 install/scripts/cpanel-install-hooks $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/cpanel-install-hooks
-install -D -m 755 install/scripts/cpanel-common-lve $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/cpanel-common-lve
 install -D -m 755 install/scripts/dbgovernor_map $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/dbgovernor_map
 install -D -m 755 install/scripts/dbgovernor_map.py $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/dbgovernor_map.py
-install -D -m 755 install/scripts/detect-cpanel-mysql-version.pm $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/detect-cpanel-mysql-version.pm
-install -D -m 755 install/scripts/cpanel-mysql-url-detect.pm $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/cpanel-mysql-url-detect.pm
-install -D -m 755 install/scripts/mysql_hook $RPM_BUILD_ROOT//usr/share/lve/dbgovernor/scripts/mysql_hook
 
-install -D -m 644 install/utils/cloudlinux.versions $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/cloudlinux.versions
-install -D -m 644 install/utils/dbgovernor $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/db_governor
 install -D -m 600 install/list_problem_files.txt $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/
 
-install -D -m 755 install/utils/mysql_export $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/mysql_export
-
-install -D -m 755 install/cpanel/upgrade-mysql-disabler.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/upgrade-mysql-disabler.sh
 ln -s ../scripts/dbgovernor_map $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/dbgovernor_map
 
 install -D -m 644 script/mysql $RPM_BUILD_ROOT%{_sysconfdir}/conf.d/mysql
@@ -166,9 +212,19 @@ install -D -m 644 cron/lvedbgovernor-utils-cron $RPM_BUILD_ROOT%{_sysconfdir}/cr
 
 touch $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/tmp/INFO
 echo "CloudLinux" > $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/tmp/INFO
+%else
+mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/plugins
+install -D -m 755 lib/libgovernorplugin.so $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/plugins/governor.so%{pkgnm}
+%endif
+
 
 %clean
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -rf "$RPM_BUILD_ROOT"
+
+
+%if ! 0%{?pkgnm:1}
+%triggerin -- %{name}-mariadb55 %{name}-mariadb100 %{name}-mariadb101 %{name}-mariadb102 %{name}-mysql55 %{name}-mysql56 %{name}-mysql57
+#Here should be: /usr/share/lve/dbgovernor/mysqlgovernor.py --check-mysql-plugin
 
 %pre
 /sbin/service db_governor stop > /dev/null 2>&1
@@ -329,6 +385,8 @@ if [ -e /usr/share/lve/dbgovernor/mysqlgovernor.py ]; then
     fi
 fi
 
+#Here should be: /usr/share/lve/dbgovernor/mysqlgovernor.py --check-mysql-plugin
+
 %if 0%{?rhel} >= 7
 /bin/systemctl daemon-reload >/dev/null 2>&1 || :
 /bin/systemctl restart db_governor.service >/dev/null 2>&1 || :
@@ -339,9 +397,11 @@ fi
 echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
 echo "!!!Before making any changing with database make sure that you have reserve copy of users data!!!"
 echo "Instruction: how to create whole database backup - http://docs.cloudlinux.com/index.html?backing_up_mysql.html"
+%endif
 
 %files
 %defattr(-,root,root)
+%if ! 0%{?pkgnm:1}
 %doc LICENSE.TXT
 
 %{_sbindir}/db_governor
@@ -366,10 +426,23 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /var/lve/dbgovernor
 /var/lve/dbgovernor-store
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
-%{_libdir}/mysql/governor.so
+#%{_libdir}/mysql/governor.so
 %config(noreplace) %{_sysconfdir}/conf.d/mysql
+%else
+/usr/share/lve/dbgovernor/plugins/*
+%endif
 
 %changelog
+* Sat Aug 26 2017 Daria Kavchuk <dkavchuk@cloudlinux.com>, Alexey Berezhok <aberezhok@cloudlinux.com> 2.0-1
+- Rebuild governor as MySQL plugin
+
+* Tue Aug 22 2017 Daria Kavchuk <dkavchuk@cloudlinux.com>, Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-24
+- MYSQLG-197: Stop to delete mysqld.service for DirectAdmin in cl-MySQL packages
+
+* Tue Aug 08 2017 Daria Kavchuk <dkavchuk@cloudlinux.com>, Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-23
+- MYSQLG-199: disable mysql monitoring on cPanel while governor installing.
+- MYSQLG-198: CageFS MySQL Vulnerability
+
 * Mon Jun 19 2017 Daria Kavchuk <dkavchuk@cloudlinux.com>, Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-22
 - MYSQLG-183: Missed file /etc/container/dbuser-map after installation of Governor
 - MYSQLG-188: Add support MariaDB 10.2 with governor
