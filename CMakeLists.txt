@@ -152,7 +152,9 @@ ADD_EXECUTABLE(mysql_unfreeze ${mysql_unfreeze_SRC})
 ADD_LIBRARY(governor SHARED ${governor_lib_src})
 ADD_EXECUTABLE(dbctl ${dbctl_SRC})
 
-ADD_LIBRARY(governorplugin SHARED ${governor_plugin_src})
+ADD_LIBRARY(governorplugin3 SHARED ${governor_plugin_src})
+ADD_LIBRARY(governorplugin4 SHARED ${governor_plugin_src})
+target_compile_definitions(governorplugin4 PRIVATE MYSQL_PLUGIN_AUDIT4=1)
 ADD_LIBRARY(governor SHARED ${governor_lib_src})
 ADD_LIBRARY(governorld SHARED ${governor_ld_src})
 
@@ -160,7 +162,7 @@ INSTALL(TARGETS db_governor dbtop mysql_unfreeze dbctl
   DESTINATION bin
   COMPONENT Runtime)
   
-INSTALL(TARGETS governor governorld governorplugin
+INSTALL(TARGETS governor governorld governorplugin3 governorplugin4
         DESTINATION lib
         PERMISSIONS OWNER_READ GROUP_READ WORLD_READ)
 

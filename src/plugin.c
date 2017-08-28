@@ -22,8 +22,8 @@
 #include <string.h>
 #include <errno.h>
 #include <pthread.h>
-#include <mysql/plugin.h>
-#include <mysql/plugin_audit.h>
+//#include <mysql/plugin.h>
+//#include <mysql/plugin_audit.h>
 #include <unistd.h>
 #include <linux/limits.h>
 #include <sys/types.h>
@@ -34,6 +34,18 @@
 #include <link.h>
 
 #include "governor_write_data.h"
+
+#include "plugin.h"
+
+#ifndef MYSQL_PLUGIN_AUDIT4
+#include "plugin_audit3.h"
+#define NOTIFYR(r)
+#define NOTIFYRTYPE void
+#else
+#include "plugin_audit4.h"
+#define NOTIFYR(r) return r
+#define NOTIFYRTYPE int
+#endif
 
 #if !defined(__attribute__) && (defined(__cplusplus) || !defined(__GNUC__)  || __GNUC__ == 2 && __GNUC_MINOR__ < 8)
 #define __attribute__(A)
@@ -149,7 +161,7 @@ static size_t getunlen(const char *uname) {
     return un_end - uname;
 }
 
-static void governor_notify(MYSQL_THD thd __attribute__ ((unused)), unsigned int event_class, const void *event) {
+static NOTIFYRTYPE governor_notify(MYSQL_THD thd __attribute__ ((unused)), unsigned int event_class, const void *event) {
     const struct mysql_event_general *event_general = (const struct mysql_event_general *)event;
     if (event_class == MYSQL_AUDIT_GENERAL_CLASS) {
         size_t uname_size = getunlen(event_general->general_user);
@@ -196,6 +208,8 @@ static void governor_notify(MYSQL_THD thd __attribute__ ((unused)), unsigned int
                 break;
         }
     }
+    
+    NOTIFYR(0);
 }
 
 static my_bool opt_governor_enable = 0;
@@ -254,7 +268,12 @@ static struct st_mysql_sys_var *governor_vars[] ={
 
 static struct st_mysql_audit governor_descriptor = {
     MYSQL_AUDIT_INTERFACE_VERSION, NULL, governor_notify,
-    { MYSQL_AUDIT_GENERAL_CLASSMASK}
+    { 
+        MYSQL_AUDIT_GENERAL_CLASSMASK
+#ifdef MYSQL_PLUGIN_AUDIT4
+        ,0,0,0,0,0,0,0,0,0,0
+#endif
+    }
 };
 
 /*
