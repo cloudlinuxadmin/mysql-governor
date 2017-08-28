@@ -142,6 +142,10 @@ def build_parser():
                         help="Fix unescaped xml and wrong limits in config file",
                         dest="fix_govervor_config", action="store_true",
                         default=False)
+    parser.add_argument("--check-mysql-plugin",
+                        help="Install governor-mysql plugin",
+                        dest="check_plugin", action="store_true",
+                        default=False)
     return parser
 
 
@@ -171,12 +175,12 @@ def main(argv):
     if opts.debug_flag:
         set_debug(True)
 
-    if opts.install or opts.install_beta:
+    if opts.check_plugin:
         manager.install()
-
+    elif opts.install or opts.install_beta:
+        print "Option is deprecated."
     elif opts.delete:
         manager.delete()
-
     elif opts.mysql_version:
         print "Option is deprecated."
     elif opts.dbupdate:

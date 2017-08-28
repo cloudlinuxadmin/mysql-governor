@@ -6,6 +6,7 @@ control panels
 import os
 import sys
 import re
+import shutil
 
 sys.path.append("../")
 
@@ -18,6 +19,8 @@ class InstallManager(object):
     """
     # installation path
     SOURCE = "/usr/share/lve/dbgovernor/"
+    PLUGIN_PATH = '/usr/share/lve/dbgovernor/plugins/governor.so-%(mysql_version)s'
+    PLUGIN_DEST = '/usr/lib64/mysql/plugin/governor.so'
     MYSQLUSER = ''
     MYSQLPASSWORD = ''
 
@@ -53,7 +56,7 @@ class InstallManager(object):
 
     def install(self):
         """
-        Governor installation
+        Governor plugin installation
         """
         if not self.cl_version:
             print "Unknown system type. Installation aborted"
@@ -65,6 +68,11 @@ class InstallManager(object):
         else:
             print '{} {} is installed here'.format(current_version['mysql_type'],
                                                    current_version['extended'])
+            # copy corresponding plugin to mysql plugins' location
+            governor_plugin = self.PLUGIN_PATH % {'mysql_version': current_version['full']}
+            if os.path.exists(governor_plugin):
+                print 'found file %s' % governor_plugin
+                shutil.copy(governor_plugin, self.PLUGIN_DEST)
 
         return True
 
