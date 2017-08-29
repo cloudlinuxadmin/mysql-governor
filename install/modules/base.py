@@ -7,6 +7,7 @@ import os
 import sys
 import re
 import shutil
+from distutils.version import LooseVersion
 
 sys.path.append("../")
 
@@ -19,10 +20,16 @@ class InstallManager(object):
     """
     # installation path
     SOURCE = "/usr/share/lve/dbgovernor/"
-    PLUGIN_PATH = '/usr/share/lve/dbgovernor/plugins/governor.so-%(mysql_version)s'
-    PLUGIN_DEST = '/usr/lib64/mysql/plugin/governor.so'
+    PLUGIN_3 = '/usr/share/lve/dbgovernor/plugins/libgovernorplugin3.so'
+    PLUGIN_4 = '/usr/share/lve/dbgovernor/plugins/libgovernorplugin4.so'
+    PLUGIN_DEST = '%(plugin_path)sgovernor.so'
     MYSQLUSER = ''
     MYSQLPASSWORD = ''
+
+    supported = {
+        'mysql': '5.5.14',
+        'mariadb': '5.5.37'
+    }
 
     @staticmethod
     def factory(cp_name):
@@ -65,15 +72,32 @@ class InstallManager(object):
         current_version = self._check_mysql_version()
         if not current_version:
             print 'No installed MySQL/MariaDB found'
+            print 'Cannot install plugin'
         else:
             print '{} {} is installed here'.format(current_version['mysql_type'],
                                                    current_version['extended'])
-            # copy corresponding plugin to mysql plugins' location
-            governor_plugin = self.PLUGIN_PATH % {'mysql_version': current_version['full']}
-            if os.path.exists(governor_plugin):
-                print 'found file %s' % governor_plugin
-                shutil.copy(governor_plugin, self.PLUGIN_DEST)
+            if LooseVersion(current_version['extended']) < LooseVersion(self.supported[current_version['mysql_type']]):
+                print "{t} {v} is unsupported by governor plugin. " \
+                      "Support starts from {s}".format(t=current_version['mysql_type'],
+                                                       v=current_version['extended'],
+                                                       s=self.supported[current_version['mysql_type']])
+                sys.exit(2)
 
+            if self.check_patch():
+                print 'This is PATCHED {}!'. format(current_version['mysql_type'])
+                print 'Abort plugin installation'
+            else:
+                print 'Installing plugin...'
+                # copy corresponding plugin to mysql plugins' location
+                governor_plugin = self.PLUGIN_4 if self.plugin4(current_version) else self.PLUGIN_3
+                if os.path.exists(governor_plugin):
+                    print 'Selected file %s' % governor_plugin
+                    _, plugin_path = self.mysql_command('select @@plugin_dir')
+                    shutil.copy(governor_plugin, self.PLUGIN_DEST % {'plugin_path': plugin_path})
+                    # install plugin
+                    self.mysql_command('uninstall plugin governor')
+                    self.mysql_command('install plugin governor soname "governor.so"')
+                    print 'Governor plugin installed successfully.'
         return True
 
     def delete(self):
@@ -119,6 +143,36 @@ class InstallManager(object):
         except Exception:
             return {}
         return version
+
+    def check_patch(self):
+        """
+        Determine if installed MySQL is patched
+        :return: True if patched False otherwise
+        """
+        self.get_mysql_user()
+        _, ver = self.mysql_command('select @@version')
+        return 'cll-lve' in ver
+
+    def plugin4(self, version_dict):
+        """
+        Should we set plugin of 4th version or not
+        :return: True if plugin 4 is needed False otherwise
+        """
+        return version_dict['mysql_type'] == 'mysql' and LooseVersion(version_dict['extended']) >= LooseVersion('5.7.9')
+
+    def mysql_command(self, command):
+        """
+        Execute mysql query via command line
+        :param command: query to execute
+        :return: result of query execution
+        """
+        if self.MYSQLUSER and self.MYSQLPASSWORD:
+            result = exec_command("""mysql -u {user} -p {passwd} -e '{cmd};'""".format(user=self.MYSQLUSER,
+                                                                                passwd=self.MYSQLPASSWORD,
+                                                                                cmd=command))
+        else:
+            result = exec_command("""mysql -e '{cmd};'""".format(cmd=command))
+        return result
 
     def _set_mysql_access(self):
         """
