@@ -9,40 +9,15 @@
 %define __python /opt/alt/python27/bin/python2.7
 %global __os_install_post %(echo '%{__os_install_post}' | sed -e 's!/usr/lib[^[:space:]]*/brp-python-bytecompile[[:space:]].*$!!g')
 
-%if 0%{?mariadb55:1}
-%define pkgnm -mariadb55
-%endif
-%if 0%{?mariadb100:1}
-%define pkgnm -mariadb100
-%endif
-%if 0%{?mariadb101:1}
-%define pkgnm -mariadb101
-%endif
-%if 0%{?mariadb102:1}
-%define pkgnm -mariadb102
-%endif
-%if 0%{?mysql55:1}
-%define pkgnm -mysql55
-%endif
-%if 0%{?mysql56:1}
-%define pkgnm -mysql56
-%endif
-%if 0%{?mysql57:1}
-%define pkgnm -mysql57
-%endif
 
-%if 0%{?pkgnm:1}
-Name: governor-mysql%{pkgnm}
-%else
 Name: governor-mysql
-%endif
 Version: %{g_version}
 Release: %{g_release}%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
 Group: System Environment/Base
-Source0: governor-mysql-%{version}.tar.bz2
+Source0: %{name}-%{version}.tar.bz2
 Requires: glib2
 Requires: ncurses
 Requires: lve-utils >= 1.1-3
@@ -83,38 +58,6 @@ Requires(preun): initscripts
 Requires(postun): initscripts
 %endif
 
-%if 0%{?mariadb55:1}
-BuildRequires: cl-MariaDB55-devel cl-MariaDB55-server cl-MariaDB55 cl-MariaDB55-libs
-%endif
-%if 0%{?mariadb100:1}
-BuildRequires: cl-MariaDB100-devel cl-MariaDB100-server cl-MariaDB100 cl-MariaDB100-libs
-%endif
-%if 0%{?mariadb101:1}
-BuildRequires: cl-MariaDB101-devel cl-MariaDB101-server cl-MariaDB101 cl-MariaDB101-libs
-%endif
-%if 0%{?mariadb102:1}
-BuildRequires: cl-MariaDB102-devel cl-MariaDB102-server cl-MariaDB102 cl-MariaDB102-libs
-%endif
-%if 0%{?mysql55:1}
-BuildRequires: cl-MySQL55-devel cl-MySQL55-server cl-MySQL55 cl-MySQL55-shared
-%endif
-%if 0%{?mysql56:1}
-BuildRequires: cl-MySQL56-devel cl-MySQL56-server cl-MySQL56 cl-MySQL56-shared
-%endif
-%if 0%{?mysql57:1}
-BuildRequires: cl-MySQL57-devel cl-MySQL57-server cl-MySQL57 cl-MySQL57-shared
-%endif
-
-%if ! 0%{?pkgnm:1}
-Requires: %{name}-mariadb55
-Requires: %{name}-mariadb100
-Requires: %{name}-mariadb101
-Requires: %{name}-mariadb102
-Requires: %{name}-mysql55
-Requires: %{name}-mysql56
-Requires: %{name}-mysql57
-%endif
-
 %description
 This package provides dbtop, db_governor utilities.
 
@@ -148,7 +91,6 @@ if [ -e autoconf ]; then
   export PATH=.:$PATH 
 fi
 
-%if ! 0%{?pkgnm:1}
 cd install
 make DESTDIR=$RPM_BUILD_ROOT install
 cd -
@@ -212,19 +154,13 @@ install -D -m 644 cron/lvedbgovernor-utils-cron $RPM_BUILD_ROOT%{_sysconfdir}/cr
 
 touch $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/tmp/INFO
 echo "CloudLinux" > $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/tmp/INFO
-%else
 mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/plugins
-install -D -m 755 lib/libgovernorplugin.so $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/plugins/governor.so%{pkgnm}
-%endif
+install -D -m 755 lib/libgovernorplugin3.so $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/plugins/libgovernorplugin3.so
+install -D -m 755 lib/libgovernorplugin4.so $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/plugins/libgovernorplugin4.so
 
 
 %clean
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -rf "$RPM_BUILD_ROOT"
-
-
-%if ! 0%{?pkgnm:1}
-%triggerin -- %{name}-mariadb55 %{name}-mariadb100 %{name}-mariadb101 %{name}-mariadb102 %{name}-mysql55 %{name}-mysql56 %{name}-mysql57
-#Here should be: /usr/share/lve/dbgovernor/mysqlgovernor.py --check-mysql-plugin
 
 %pre
 /sbin/service db_governor stop > /dev/null 2>&1
@@ -397,11 +333,9 @@ fi
 echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
 echo "!!!Before making any changing with database make sure that you have reserve copy of users data!!!"
 echo "Instruction: how to create whole database backup - http://docs.cloudlinux.com/index.html?backing_up_mysql.html"
-%endif
 
 %files
 %defattr(-,root,root)
-%if ! 0%{?pkgnm:1}
 %doc LICENSE.TXT
 
 %{_sbindir}/db_governor
@@ -428,9 +362,7 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 #%{_libdir}/mysql/governor.so
 %config(noreplace) %{_sysconfdir}/conf.d/mysql
-%else
 /usr/share/lve/dbgovernor/plugins/*
-%endif
 
 %changelog
 * Sat Aug 26 2017 Daria Kavchuk <dkavchuk@cloudlinux.com>, Alexey Berezhok <aberezhok@cloudlinux.com> 2.0-1
