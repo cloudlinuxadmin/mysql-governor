@@ -22,19 +22,6 @@ LINK_LIBRARIES(rt)
 LINK_LIBRARIES(dl)
 LINK_LIBRARIES(ncurses)
 
-FIND_PACKAGE(MySQL REQUIRED)
-INCLUDE_DIRECTORIES(${MySQL_INCLUDE_DIR})
-
-CHECK_INCLUDE_FILE(mysql/plugin.h HAVE_MYSQL_PLUGIN_H)
-IF(NOT HAVE_MYSQL_PLUGIN_H)
-    message(FATAL_ERROR "mysql/plugin.h is required")
-ENDIF()
-
-CHECK_INCLUDE_FILE(mysql/plugin_audit.h HAVE_MYSQL_PLUGIN_AUDIT_H)
-IF(NOT HAVE_MYSQL_PLUGIN_AUDIT_H)
-    message(FATAL_ERROR "mysql/plugin_audit.h is required")
-ENDIF()
-
 IF (${SYSTEMD_FLAG})
     add_definitions(-DSYSTEMD_FLAG=1)
     LINK_LIBRARIES(systemd)
