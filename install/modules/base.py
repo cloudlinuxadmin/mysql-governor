@@ -95,7 +95,11 @@ class InstallManager(object):
                     _, plugin_path = self.mysql_command('select @@plugin_dir')
                     shutil.copy(governor_plugin, self.PLUGIN_DEST % {'plugin_path': plugin_path})
                     # install plugin
-                    self.mysql_command('uninstall plugin governor')
+                    try:
+                        print 'Try to uninstall old governor plugin...'
+                        self.mysql_command('uninstall plugin governor')
+                    except RuntimeError as e:
+                        pass
                     self.mysql_command('install plugin governor soname "governor.so"')
                     print 'Governor plugin installed successfully.'
         return True
