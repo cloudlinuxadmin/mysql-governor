@@ -103,9 +103,9 @@ static int governor_plugin_init(void *arg __attribute__ ((unused))) {
     sock = get_sock();
 
     if (!connect_to_server()) {
-        fprintf(stderr, "Governor connected\n");
+        fprintf(stderr, "Governor: connected\n");
     } else {
-        fprintf(stderr, "Governor not connected\n");
+        fprintf(stderr, "Governor: not connected\n");
     }
 
     lve_hooks.enter = governor_enter_lve;
@@ -116,14 +116,14 @@ static int governor_plugin_init(void *arg __attribute__ ((unused))) {
     lve_hooks.is_in = governor_is_in_lve;
 
     if (!governor_load_lve_library()) {
-        fprintf(stderr, "Can't get LVE functions\n");
+        fprintf(stderr, "Governor: Can't get LVE functions\n");
         governor_set_fn_ptr_to_null();
     } else {
         if (governor_init_lve()) {
-            fprintf(stderr, "Governor LVE initialization error\n");
+            fprintf(stderr, "Governor: LVE initialization error\n");
             governor_set_fn_ptr_to_null();
         } else {
-            fprintf(stderr, "Governor LVE initialized\n");
+            fprintf(stderr, "Governor: LVE initialized\n");
         }
     }
 
@@ -134,15 +134,15 @@ static int governor_plugin_init(void *arg __attribute__ ((unused))) {
 
         real = gr_init_hooks(&lve_hooks);
 
-        fprintf(stderr, "Governor LD ver. %d found\n", real->ver);
+        fprintf(stderr, "Governor: LD ver. %d found\n", real->ver);
     } else {
-        fprintf(stderr, "Governor LD not found\n", real->ver);
+        fprintf(stderr, "Governor: LD not found\n", real->ver);
     }
 
-    fprintf(stderr, "111gr_lve_begin %p, enter %p, command %d\n",
+    fprintf(stderr, "Governor: gr_lve_begin %p, enter %p, command %d\n",
                     gr_lve_begin, lve_hooks.enter, governor_get_command);
 
-    fprintf(stderr, "Governor Plugin Inited\n");
+    fprintf(stderr, "Governor: Plugin Inited\n");
 
     return 0;
 }
