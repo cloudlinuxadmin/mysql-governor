@@ -116,12 +116,14 @@ static int governor_plugin_init(void *arg __attribute__ ((unused))) {
     lve_hooks.is_in = governor_is_in_lve;
 
     if (!governor_load_lve_library()) {
-        fprintf(stderr, "Can't get LVE functions");
+        fprintf(stderr, "Can't get LVE functions\n");
         governor_set_fn_ptr_to_null();
     } else {
         if (governor_init_lve()) {
-            fprintf(stderr, "Governor LVE initialization error");
+            fprintf(stderr, "Governor LVE initialization error\n");
             governor_set_fn_ptr_to_null();
+        } else {
+            fprintf(stderr, "Governor LVE initialized\n");
         }
     }
 
@@ -132,7 +134,9 @@ static int governor_plugin_init(void *arg __attribute__ ((unused))) {
 
         real = gr_init_hooks(&lve_hooks);
 
-        fprintf(stderr, "Governor LD  ver. %d found\n", real->ver);
+        fprintf(stderr, "Governor LD ver. %d found\n", real->ver);
+    } else {
+        fprintf(stderr, "Governor LD not found\n", real->ver);
     }
 
     fprintf(stderr, "111gr_lve_begin %p, enter %p, command %d\n",
