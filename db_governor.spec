@@ -36,6 +36,7 @@ BuildRequires: autoconf
 BuildRequires: tar
 BuildRequires: alt-python27
 BuildRequires: libxml2-devel
+BuildRequires: pcre-devel
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
 BuildRequires: systemd
 BuildRequires: systemd-devel
