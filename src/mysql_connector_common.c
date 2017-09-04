@@ -933,7 +933,7 @@ check_mysql_version (MODE_TYPE debug_mode)
 	      WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
 			 outbuffer, data_cfg.log_mode);
 	      (*_mysql_free_result) (res);
-	      return 0;
+	      return 1;
              }
 	    }
 
