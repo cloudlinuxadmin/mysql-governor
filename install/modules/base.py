@@ -7,6 +7,7 @@ import os
 import sys
 import re
 import shutil
+import time
 from distutils.version import LooseVersion
 
 sys.path.append("../")
@@ -69,6 +70,15 @@ class InstallManager(object):
             print "Unknown system type. Installation aborted"
             sys.exit(2)
 
+        self._governorservice('stop')
+        # try uninstalling old governor plugin
+        try:
+            print 'Try to uninstall old governor plugin...'
+            self.mysql_command('uninstall plugin governor')
+        except RuntimeError as e:
+            print e
+        self._mysqlservice('restart')
+
         current_version = self._check_mysql_version()
         if not current_version:
             print 'No installed MySQL/MariaDB found'
@@ -91,17 +101,13 @@ class InstallManager(object):
                 # copy corresponding plugin to mysql plugins' location
                 governor_plugin = self.PLUGIN_4 if self.plugin4(current_version) else self.PLUGIN_3
                 if os.path.exists(governor_plugin):
+                    # install plugin
                     print 'Selected file %s' % governor_plugin
                     _, plugin_path = self.mysql_command('select @@plugin_dir')
                     shutil.copy(governor_plugin, self.PLUGIN_DEST % {'plugin_path': plugin_path})
-                    # install plugin
-                    try:
-                        print 'Try to uninstall old governor plugin...'
-                        self.mysql_command('uninstall plugin governor')
-                    except RuntimeError as e:
-                        pass
                     self.mysql_command('install plugin governor soname "governor.so"')
                     print 'Governor plugin installed successfully.'
+        self._governorservice('start')
         return True
 
     def delete(self):
@@ -121,6 +127,11 @@ class InstallManager(object):
         """
         Retrieve MySQL user name and password and save it into self attributes
         """
+        try:
+            with open('/etc/mysql_user') as user_data_file:
+                self.MYSQLUSER, self.MYSQLPASSWORD = [l.strip() for l in user_data_file.readlines()]
+        except IOError or OSError:
+            pass
 
     @staticmethod
     def _check_mysql_version():
@@ -171,7 +182,7 @@ class InstallManager(object):
         :return: result of query execution
         """
         if self.MYSQLUSER and self.MYSQLPASSWORD:
-            result = exec_command("""mysql -u {user} -p {passwd} -e '{cmd};'""".format(user=self.MYSQLUSER,
+            result = exec_command("""mysql -u{user} -p{passwd} -e '{cmd};'""".format(user=self.MYSQLUSER,
                                                                                 passwd=self.MYSQLPASSWORD,
                                                                                 cmd=command))
         else:
@@ -209,3 +220,19 @@ class InstallManager(object):
         Execute package script which locate in SOURCE directory
         """
         exec_command_out("%s %s" % (self._rel("scripts/%s" % path), args or ""))
+
+    def _mysqlservice(self, action):
+        """
+        Manage mysql service
+        """
+        service(action, 'mysql')
+        time.sleep(5)
+
+    def _governorservice(self, action):
+        """
+        Manage db_governor service
+        :param action:
+        :return:
+        """
+        service(action, 'db_governor')
+        time.sleep(5)
