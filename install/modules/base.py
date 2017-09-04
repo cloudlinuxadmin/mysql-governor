@@ -61,6 +61,7 @@ class InstallManager(object):
     def __init__(self, cp_name):
         self.cl_version = get_cl_num()
         self.cp_name = cp_name
+        self.get_mysql_user()
 
     def install(self):
         """
@@ -79,6 +80,7 @@ class InstallManager(object):
             print e
         self._mysqlservice('restart')
 
+        # check MySQL version
         current_version = self._check_mysql_version()
         if not current_version:
             print 'No installed MySQL/MariaDB found'
@@ -107,6 +109,8 @@ class InstallManager(object):
                     shutil.copy(governor_plugin, self.PLUGIN_DEST % {'plugin_path': plugin_path})
                     self.mysql_command('install plugin governor soname "governor.so"')
                     print 'Governor plugin installed successfully.'
+        # patch governor and start service
+        self._set_mysql_access()
         self._governorservice('start')
         return True
 
@@ -114,7 +118,17 @@ class InstallManager(object):
         """
         Delete governor
         """
-        print 'This option is to delete governor package. Dummy for now'
+        self._governorservice('stop')
+        # try uninstalling old governor plugin
+        try:
+            print 'Try to uninstall old governor plugin...'
+            self.mysql_command('uninstall plugin governor')
+        except RuntimeError as e:
+            print e
+        self._mysqlservice('restart')
+
+        _, plugin_path = self.mysql_command('select @@plugin_dir')
+        os.unlink(self.PLUGIN_DEST % {'plugin_path': plugin_path})
 
     def update_user_map_file(self):
         """
@@ -164,7 +178,6 @@ class InstallManager(object):
         Determine if installed MySQL is patched
         :return: True if patched False otherwise
         """
-        self.get_mysql_user()
         _, ver = self.mysql_command('select @@version')
         return 'cll-lve' in ver
 
@@ -193,7 +206,7 @@ class InstallManager(object):
         """
         Set mysql admin login and password and save it to governor config
         """
-        self.get_mysql_user()
+        # self.get_mysql_user()
         if self.MYSQLUSER and self.MYSQLPASSWORD:
             print "Patch governor configuration file"
             check_file("/etc/container/mysql-governor.xml")
