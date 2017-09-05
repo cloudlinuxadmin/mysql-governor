@@ -110,6 +110,7 @@ mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/storage
 mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/history
 mkdir -p $RPM_BUILD_ROOT%{_libdir}/mysql
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/conf.d
+mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
 # install systemd unit files and scripts for handling server startup
 mkdir -p ${RPM_BUILD_ROOT}%{_unitdir}
@@ -147,6 +148,7 @@ install -D -m 600 install/list_problem_files.txt $RPM_BUILD_ROOT/usr/share/lve/d
 ln -s ../scripts/dbgovernor_map $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/dbgovernor_map
 
 install -D -m 644 script/mysql $RPM_BUILD_ROOT%{_sysconfdir}/conf.d/mysql
+install -D -m 644 script/mysql $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/mysqld
 
 
 #install cron utility
@@ -363,6 +365,7 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 #%{_libdir}/mysql/governor.so
 %config(noreplace) %{_sysconfdir}/conf.d/mysql
+%config(noreplace) %{_sysconfdir}/sysconfig/mysqld
 /usr/share/lve/dbgovernor/plugins/*
 
 %changelog
