@@ -109,9 +109,9 @@ class InstallManager(object):
                     shutil.copy(governor_plugin, self.PLUGIN_DEST % {'plugin_path': plugin_path})
                     self.mysql_command('install plugin governor soname "governor.so"')
                     print 'Governor plugin installed successfully.'
-        # patch governor and start service
-        self._set_mysql_access()
         self._governorservice('start')
+        # patch governor config
+        self._set_mysql_access()
         return True
 
     def delete(self):
@@ -195,7 +195,7 @@ class InstallManager(object):
         :return: result of query execution
         """
         if self.MYSQLUSER and self.MYSQLPASSWORD:
-            result = exec_command("""mysql -u{user} -p{passwd} -e '{cmd};'""".format(user=self.MYSQLUSER,
+            result = exec_command("""mysql -u'{user}' -p'{passwd}' -e '{cmd};'""".format(user=self.MYSQLUSER,
                                                                                 passwd=self.MYSQLPASSWORD,
                                                                                 cmd=command))
         else:
