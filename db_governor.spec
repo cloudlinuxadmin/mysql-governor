@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   24
+%define g_release   25
 %define g_key_library 9
 
 %if %{undefined _unitdir}
@@ -36,6 +36,7 @@ BuildRequires: autoconf
 BuildRequires: tar
 BuildRequires: alt-python27
 BuildRequires: libxml2-devel
+BuildRequires: pcre-devel
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
 BuildRequires: systemd
 BuildRequires: systemd-devel
@@ -349,6 +350,10 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Wed Sep 07 2017 Eugen Vodilov <evodilov@cloudlinux.com> 1.2-25
+- MYSQLG-204: Perfomance fix for statistic enabled servers
+- Fix build dependency on CL7 (broken glib-2.0 dependency to pcre-devel)
+
 * Tue Aug 22 2017 Daria Kavchuk <dkavchuk@cloudlinux.com>, Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-24
 - MYSQLG-197: Stop to delete mysqld.service for DirectAdmin in cl-MySQL packages
 
