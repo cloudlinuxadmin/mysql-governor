@@ -757,39 +757,41 @@ dbgov_was_user_activity (dbgov_statitrics * dbgovst)
     return 0;
 }
 
+static GHashTable *pwdusers = NULL;
+
+static GHashTable *pwdload() {
+    GHashTable *r = NULL;
+    FILE *stream = fopen("/etc/passwd", "r");
+    size_t buflen = sysconf(_SC_GETPW_R_SIZE_MAX);
+    char *buf = malloc(buflen);
+    struct passwd pwbuf, *pwbufp;
+
+    if (stream == NULL)
+        return NULL;
+
+    r = g_hash_table_new_full(g_str_hash, g_str_equal, free, NULL);
+
+    while (!fgetpwent_r(stream, &pwbuf, buf, buflen, &pwbufp))
+        g_hash_table_insert(r, (gpointer)strdup(pwbuf.pw_name), ((gpointer) pwbuf.pw_uid));
+
+    if (!g_hash_table_size(r)) {
+        g_hash_table_unref(r);
+        r = NULL;
+    }
+
+    fclose(stream);
+    return r;
+}
+
 void
 dbstat_print_table (gpointer key, dbgov_statitrics * dbgov_statitrics__,
 		    void *data)
 {
-  FILE *dbgov_stats = (FILE *) data;
-  struct passwd *result = NULL;
-  struct passwd pwd = { 0 };
-  char *buf_pwd = NULL;
-  size_t bufsize = 0;
-  int res = 0;
-  uid_t need_uid = 0;
+  FILE *dbgov_stats =  (FILE *)data;
   struct governor_config data_cfg;
 
   int number_of_iterations = dbgov_statitrics__->number_of_iterations,
     mb_s = 1000000;
-
-
-  bufsize = sysconf (_SC_GETPW_R_SIZE_MAX);
-  if (bufsize == -1)
-    bufsize = 16384;
-
-  buf_pwd = malloc (bufsize);
-  if (buf_pwd != NULL)
-    {
-      res =
-	getpwnam_r (dbgov_statitrics__->username, &pwd, buf_pwd, bufsize,
-		    &result);
-      if (result != NULL)
-	{
-	  need_uid = pwd.pw_uid;
-	}
-      free (buf_pwd);
-    }
 
   get_config_data (&data_cfg);
 
@@ -798,6 +800,15 @@ dbstat_print_table (gpointer key, dbgov_statitrics * dbgov_statitrics__,
 
       if (data_cfg.save_statistic_uid)
 	{
+          gpointer pwdkey, pwdval;
+          uid_t need_uid = -1;
+          
+          if (pwdusers == NULL)
+              pwdusers = pwdload();
+          
+          if (pwdusers && g_hash_table_lookup_extended(pwdusers, dbgov_statitrics__->username, &pwdkey, &pwdval)) 
+              need_uid = (uid_t)pwdval;
+
 	  fprintf (dbgov_stats,
 		   "%s;%d;%f;%f;%f;%f;%f;%f;%d;%ld;%ld;%ld;%d;%d\n",
 		   dbgov_statitrics__->username,
@@ -818,7 +829,7 @@ dbstat_print_table (gpointer key, dbgov_statitrics * dbgov_statitrics__,
 			   mb_s),
 		   (long) (dbgov_statitrics__->limit_write_on_period_end /
 			   mb_s), dbgov_statitrics__->cause,
-		   ((!need_uid) ? -1 : (int) need_uid));
+		   (int) need_uid);
 	}
       else
 	{
@@ -877,6 +888,11 @@ WriteDbGovStatitrics (void)
 			    dbgov_stats);
       _size = fileSize (dbgov_stats);
       fclose (dbgov_stats);
+      
+      if (pwdusers) {
+          g_hash_table_unref(pwdusers);
+          pwdusers = NULL;
+      }
 
       if (_size > 0)
 	{
