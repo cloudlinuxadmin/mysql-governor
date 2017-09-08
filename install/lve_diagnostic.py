@@ -264,8 +264,8 @@ class iWorx(CP):
     def __init__(self, lite):
         super(iWorx, self).__init__(lite)
         self.name = "InterWorx"
-        self.version = self.rpms.find_version("interworx")
         if lite!=True:
+            self.version = self.rpms.find_version("interworx")
             self.apache = ApacheInfo('/usr/sbin/apachectl')
 
 class ISPMgr(CP):
