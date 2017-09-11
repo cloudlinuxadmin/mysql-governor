@@ -72,13 +72,18 @@ class InstallManager(object):
             sys.exit(2)
 
         self._governorservice('stop')
+        self._mysqlservice('stop')
+
+        # patch governor config
+        self._set_mysql_access()
+
         # try uninstalling old governor plugin
         try:
             print 'Try to uninstall old governor plugin...'
             self.mysql_command('uninstall plugin governor')
         except RuntimeError as e:
             print e
-        self._mysqlservice('restart')
+        self._mysqlservice('start')
 
         # check MySQL version
         current_version = self._check_mysql_version()
@@ -110,8 +115,6 @@ class InstallManager(object):
                     self.mysql_command('install plugin governor soname "governor.so"')
                     print 'Governor plugin installed successfully.'
         self._governorservice('start')
-        # patch governor config
-        self._set_mysql_access()
         return True
 
     def delete(self):
@@ -119,13 +122,14 @@ class InstallManager(object):
         Delete governor
         """
         self._governorservice('stop')
+        self._mysqlservice('stop')
         # try uninstalling old governor plugin
         try:
             print 'Try to uninstall old governor plugin...'
             self.mysql_command('uninstall plugin governor')
         except RuntimeError as e:
             print e
-        self._mysqlservice('restart')
+        self._mysqlservice('start')
 
         _, plugin_path = self.mysql_command('select @@plugin_dir')
         os.unlink(self.PLUGIN_DEST % {'plugin_path': plugin_path})
