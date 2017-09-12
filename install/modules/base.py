@@ -71,19 +71,17 @@ class InstallManager(object):
             print "Unknown system type. Installation aborted"
             sys.exit(2)
 
-        self._governorservice('stop')
-        self._mysqlservice('stop')
-
         # patch governor config
         self._set_mysql_access()
 
+        self._governorservice('stop')
         # try uninstalling old governor plugin
         try:
             print 'Try to uninstall old governor plugin...'
             self.mysql_command('uninstall plugin governor')
         except RuntimeError as e:
             print e
-        self._mysqlservice('start')
+        self._mysqlservice('restart')
 
         # check MySQL version
         current_version = self._check_mysql_version()
@@ -121,18 +119,18 @@ class InstallManager(object):
         """
         Delete governor
         """
+        _, plugin_path = self.mysql_command('select @@plugin_dir')
         self._governorservice('stop')
-        self._mysqlservice('stop')
         # try uninstalling old governor plugin
         try:
             print 'Try to uninstall old governor plugin...'
             self.mysql_command('uninstall plugin governor')
         except RuntimeError as e:
             print e
-        self._mysqlservice('start')
 
-        _, plugin_path = self.mysql_command('select @@plugin_dir')
+        self._mysqlservice('stop')
         os.unlink(self.PLUGIN_DEST % {'plugin_path': plugin_path})
+        self._mysqlservice('start')
 
     def update_user_map_file(self):
         """
