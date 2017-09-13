@@ -146,6 +146,10 @@ def build_parser():
                         help="Install governor-mysql plugin",
                         dest="check_plugin", action="store_true",
                         default=False)
+    parser.add_argument("--update-mysql-plugin",
+                        help="Update governor-mysql plugin",
+                        dest="update_plugin", action="store_true",
+                        default=False)
     return parser
 
 
@@ -177,6 +181,8 @@ def main(argv):
 
     if opts.check_plugin:
         manager.install()
+    elif opts.update_plugin:
+        manager.update_plugin()
     elif opts.install or opts.install_beta:
         print "Option is deprecated."
     elif opts.delete:

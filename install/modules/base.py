@@ -8,6 +8,7 @@ import sys
 import re
 import shutil
 import time
+import hashlib
 from distutils.version import LooseVersion
 
 sys.path.append("../")
@@ -24,6 +25,7 @@ class InstallManager(object):
     PLUGIN_3 = '/usr/share/lve/dbgovernor/plugins/libgovernorplugin3.so'
     PLUGIN_4 = '/usr/share/lve/dbgovernor/plugins/libgovernorplugin4.so'
     PLUGIN_DEST = '%(plugin_path)sgovernor.so'
+    PLUGIN_MD5 = '/usr/share/lve/dbgovernor/plugin.md5'
     MYSQLUSER = ''
     MYSQLPASSWORD = ''
 
@@ -62,6 +64,9 @@ class InstallManager(object):
         self.cl_version = get_cl_num()
         self.cp_name = cp_name
         self.get_mysql_user()
+        self.mysql_version = self._check_mysql_version()
+        _, plugin_path = self.mysql_command('select @@plugin_dir')
+        self.installed_plugin = self.PLUGIN_DEST % {'plugin_path': plugin_path}
 
     def install(self):
         """
@@ -83,34 +88,32 @@ class InstallManager(object):
             print e
         self._mysqlservice('restart')
 
-        # check MySQL version
-        current_version = self._check_mysql_version()
-        if not current_version:
+        if not self.mysql_version:
             print 'No installed MySQL/MariaDB found'
             print 'Cannot install plugin'
         else:
-            print '{} {} is installed here'.format(current_version['mysql_type'],
-                                                   current_version['extended'])
-            if LooseVersion(current_version['extended']) < LooseVersion(self.supported[current_version['mysql_type']]):
+            print '{} {} is installed here'.format(self.mysql_version['mysql_type'],
+                                                   self.mysql_version['extended'])
+            if LooseVersion(self.mysql_version['extended']) < LooseVersion(self.supported[self.mysql_version['mysql_type']]):
                 print "{t} {v} is unsupported by governor plugin. " \
-                      "Support starts from {s}".format(t=current_version['mysql_type'],
-                                                       v=current_version['extended'],
-                                                       s=self.supported[current_version['mysql_type']])
+                      "Support starts from {s}".format(t=self.mysql_version['mysql_type'],
+                                                       v=self.mysql_version['extended'],
+                                                       s=self.supported[self.mysql_version['mysql_type']])
                 sys.exit(2)
 
             if self.check_patch():
-                print 'This is PATCHED {}!'. format(current_version['mysql_type'])
+                print 'This is PATCHED {}!'. format(self.mysql_version['mysql_type'])
                 print 'Abort plugin installation'
             else:
                 print 'Installing plugin...'
                 # copy corresponding plugin to mysql plugins' location
-                governor_plugin = self.PLUGIN_4 if self.plugin4(current_version) else self.PLUGIN_3
+                governor_plugin = self.PLUGIN_4 if self.plugin4() else self.PLUGIN_3
                 if os.path.exists(governor_plugin):
                     # install plugin
                     print 'Selected file %s' % governor_plugin
-                    _, plugin_path = self.mysql_command('select @@plugin_dir')
-                    shutil.copy(governor_plugin, self.PLUGIN_DEST % {'plugin_path': plugin_path})
+                    shutil.copy(governor_plugin, self.installed_plugin)
                     self.mysql_command('install plugin governor soname "governor.so"')
+                    self.plugin_md5('write')
                     print 'Governor plugin installed successfully.'
         self._governorservice('start')
         return True
@@ -119,7 +122,6 @@ class InstallManager(object):
         """
         Delete governor
         """
-        _, plugin_path = self.mysql_command('select @@plugin_dir')
         self._governorservice('stop')
         # try uninstalling old governor plugin
         try:
@@ -129,8 +131,47 @@ class InstallManager(object):
             print e
 
         self._mysqlservice('stop')
-        os.unlink(self.PLUGIN_DEST % {'plugin_path': plugin_path})
+        os.unlink(self.installed_plugin)
+        os.unlink(self.PLUGIN_MD5)
         self._mysqlservice('start')
+
+    def update_plugin(self):
+        """
+        Determine if plugin should be updated with the help of md5 sum
+        :return: True if should False otherwise
+        """
+        new_plugin = self.PLUGIN_4 if self.plugin4() else self.PLUGIN_3
+        plugin_md5_sum = self.plugin_md5('read')
+        if plugin_md5_sum:
+            new_plugin_md5 = hashlib.md5(open(new_plugin, 'rb').read()).hexdigest()
+            if new_plugin_md5 != plugin_md5_sum:
+                shutil.copy(new_plugin, self.installed_plugin)
+                self.plugin_md5('write')
+                self._mysqlservice('restart')
+                print 'Governor plugin updated successfully'
+            else:
+                print 'No need in updating governor plugin'
+        else:
+            print 'Nothing to update. Governor plugin is not installed?'
+
+    def plugin_md5(self, action):
+        """
+        Read/write md5_sum to file for installed plugin
+        :param action: read or write
+        :return: calculated md5 sum
+        """
+        # read file if file exists
+        if action == 'read' and os.path.exists(self.PLUGIN_MD5):
+            with open(self.PLUGIN_MD5, 'rb') as md5_file:
+                md5 = md5_file.read()
+        # write file if plugin is installed
+        elif action == 'write' and os.path.exists(self.installed_plugin):
+            md5 = hashlib.md5(open(self.installed_plugin, 'rb').read()).hexdigest()
+            with open(self.PLUGIN_MD5, 'wb') as md5_file:
+                md5_file.write(md5)
+        else:
+            return None
+        return md5.strip()
 
     def update_user_map_file(self):
         """
@@ -183,12 +224,12 @@ class InstallManager(object):
         _, ver = self.mysql_command('select @@version')
         return 'cll-lve' in ver
 
-    def plugin4(self, version_dict):
+    def plugin4(self):
         """
         Should we set plugin of 4th version or not
         :return: True if plugin 4 is needed False otherwise
         """
-        return version_dict['mysql_type'] == 'mysql' and LooseVersion(version_dict['extended']) >= LooseVersion('5.7.9')
+        return self.mysql_version['mysql_type'] == 'mysql' and LooseVersion(self.mysql_version['extended']) >= LooseVersion('5.7.9')
 
     def mysql_command(self, command):
         """
