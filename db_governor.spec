@@ -337,6 +337,11 @@ echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
 echo "!!!Before making any changing with database make sure that you have reserve copy of users data!!!"
 echo "Instruction: how to create whole database backup - http://docs.cloudlinux.com/index.html?backing_up_mysql.html"
 
+%triggerin -- MariaDB-server, mysql-community-server, MySQL55-server, MySQL56-server
+%if 0%{?rhel} == 6
+/usr/share/lve/dbgovernor/mysqlgovernor.py --initd-patch
+%endif
+
 %files
 %defattr(-,root,root)
 %doc LICENSE.TXT

@@ -133,6 +133,11 @@ class InstallManager(object):
         self._mysqlservice('stop')
         os.unlink(self.installed_plugin)
         os.unlink(self.PLUGIN_MD5)
+        for script in ('/etc/init.d/mysql', '/etc/init.d/mysqld', '/etc/init.d/mariadb'):
+            try:
+                shutil.copy(script + '.bak', script)
+            except IOError or OSError:
+                continue
         self._mysqlservice('start')
 
     def update_plugin(self):

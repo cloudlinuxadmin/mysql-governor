@@ -944,3 +944,34 @@ def fix_broken_governor_xml_config():
     # rewrite governor config
     with open(governor_config_file, 'wb') as governor_config:
         governor_config.write(res)
+
+
+def patch_init_d_scripts():
+    """
+    Add sysconfig into init.d files
+    """
+    if get_cl_num() > 6:
+        print 'No need to apply init.d scripts patch'
+        return
+
+    patch = '[ -e /etc/sysconfig/mysqld ] && . /etc/sysconfig/mysqld\n'
+    pattern = '[ -e /etc/sysconfig/$prog ] && . /etc/sysconfig/$prog\n'
+
+    for script in ('/etc/init.d/mysql', '/etc/init.d/mysqld', '/etc/init.d/mariadb'):
+        print 'Try to apply sysconfig patch for {}'.format(script)
+        try:
+            with open(script, 'rb') as f:
+                lines = f.readlines()
+        except IOError or OSError:
+            continue
+
+        if patch not in lines and pattern not in lines:
+            shutil.copy(script, script + '.bak')
+            try:
+                position = lines.index('MYSQLD_OPTS=\n')
+            except ValueError:
+                position = 0
+            lines.insert(position + 1, '\n' + patch)
+            with open(script, 'wb') as f:
+                f.writelines(lines)
+            print 'sysconfig patch applied for {}'.format(script)

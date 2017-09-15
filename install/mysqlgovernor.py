@@ -13,7 +13,7 @@ from clcommon import cpapi
 
 from modules import InstallManager
 from utilities import bcolors, set_debug, shadow_tracing, set_path_environ, \
-    fix_broken_governor_xml_config
+    fix_broken_governor_xml_config, patch_init_d_scripts
 
 LOG_FILE_NAME = "/usr/share/lve/dbgovernor/governor_install.log"
 
@@ -150,6 +150,10 @@ def build_parser():
                         help="Update governor-mysql plugin",
                         dest="update_plugin", action="store_true",
                         default=False)
+    parser.add_argument("--initd-patch",
+                        help="Patch init.d mysql scripts",
+                        dest="initd_patch", action="store_true",
+                        default=False)
     return parser
 
 
@@ -227,6 +231,8 @@ def main(argv):
         print "Option is deprecated."
     elif opts.fix_govervor_config:
         fix_broken_governor_xml_config()
+    elif opts.initd_patch:
+        patch_init_d_scripts()
     else:
         parser.print_help()
         sys.exit(2)
