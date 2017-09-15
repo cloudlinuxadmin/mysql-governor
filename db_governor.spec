@@ -339,6 +339,11 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 
 %triggerin -- MariaDB-server, mysql-community-server, MySQL55-server, MySQL56-server
 %if 0%{?rhel} == 6
+# clean existing backups
+[ -e /etc/init.d/mysql.bak ] && rm -rf /etc/init.d/mysql.bak && echo 'Clean old /etc/init.d/mysql.bak backup'
+[ -e /etc/init.d/mysqld.bak ] && rm -rf /etc/init.d/mysqld.bak && echo 'Clean old /etc/init.d/mysqld.bak backup'
+[ -e /etc/init.d/mariadb.bak ] && rm -rf /etc/init.d/mariadb.bak && echo 'Clean old /etc/init.d/mariadb.bak backup'
+# patch init.d scripts
 /usr/share/lve/dbgovernor/mysqlgovernor.py --initd-patch
 %endif
 

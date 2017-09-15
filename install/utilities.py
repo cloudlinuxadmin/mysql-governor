@@ -955,17 +955,19 @@ def patch_init_d_scripts():
         return
 
     patch = '[ -e /etc/sysconfig/mysqld ] && . /etc/sysconfig/mysqld\n'
-    pattern = '[ -e /etc/sysconfig/$prog ] && . /etc/sysconfig/$prog\n'
+    p = '|'.join(map(re.escape, ['. /etc/sysconfig/{}'.format(n) for n in ('mysql', 'mysqld', 'mariadb', '$prog')]))
+    pattern = re.compile(p)
 
     for script in ('/etc/init.d/mysql', '/etc/init.d/mysqld', '/etc/init.d/mariadb'):
-        print 'Try to apply sysconfig patch for {}'.format(script)
+        print "Try to apply governor's sysconfig patch for {}".format(script)
         try:
             with open(script, 'rb') as f:
                 lines = f.readlines()
         except IOError or OSError:
             continue
 
-        if patch not in lines and pattern not in lines:
+        content = ''.join(lines)
+        if not pattern.findall(content):
             shutil.copy(script, script + '.bak')
             try:
                 position = lines.index('MYSQLD_OPTS=\n')

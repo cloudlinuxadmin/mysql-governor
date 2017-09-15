@@ -26,6 +26,7 @@ class InstallManager(object):
     PLUGIN_4 = '/usr/share/lve/dbgovernor/plugins/libgovernorplugin4.so'
     PLUGIN_DEST = '%(plugin_path)sgovernor.so'
     PLUGIN_MD5 = '/usr/share/lve/dbgovernor/plugin.md5'
+    PLUGIN_PATH = '/usr/share/lve/dbgovernor/plugin.dir'
     MYSQLUSER = ''
     MYSQLPASSWORD = ''
 
@@ -65,8 +66,7 @@ class InstallManager(object):
         self.cp_name = cp_name
         self.get_mysql_user()
         self.mysql_version = self._check_mysql_version()
-        _, plugin_path = self.mysql_command('select @@plugin_dir')
-        self.installed_plugin = self.PLUGIN_DEST % {'plugin_path': plugin_path}
+        self.installed_plugin = self.find_plugin()
 
     def install(self):
         """
@@ -131,12 +131,20 @@ class InstallManager(object):
             print e
 
         self._mysqlservice('stop')
-        os.unlink(self.installed_plugin)
-        os.unlink(self.PLUGIN_MD5)
+        try:
+            os.unlink(self.installed_plugin)
+            print 'Plugin deleted'
+            os.unlink(self.PLUGIN_MD5)
+            print 'Plugin.md5 deleted'
+            os.unlink(self.PLUGIN_PATH)
+            print 'Plugin.dir deleted'
+        except (IOError, OSError) as e:
+            print e
         for script in ('/etc/init.d/mysql', '/etc/init.d/mysqld', '/etc/init.d/mariadb'):
             try:
-                shutil.copy(script + '.bak', script)
-            except IOError or OSError:
+                shutil.move(script + '.bak', script)
+                print '{} restored'.format(script)
+            except (IOError, OSError):
                 continue
         self._mysqlservice('start')
 
@@ -150,6 +158,7 @@ class InstallManager(object):
         if plugin_md5_sum:
             new_plugin_md5 = hashlib.md5(open(new_plugin, 'rb').read()).hexdigest()
             if new_plugin_md5 != plugin_md5_sum:
+                print 'Updating governor plugin...'
                 shutil.copy(new_plugin, self.installed_plugin)
                 self.plugin_md5('write')
                 self._mysqlservice('restart')
@@ -167,16 +176,34 @@ class InstallManager(object):
         """
         # read file if file exists
         if action == 'read' and os.path.exists(self.PLUGIN_MD5):
+            print 'Read plugin.md5'
             with open(self.PLUGIN_MD5, 'rb') as md5_file:
                 md5 = md5_file.read()
         # write file if plugin is installed
         elif action == 'write' and os.path.exists(self.installed_plugin):
+            print 'Write new plugin.md5'
             md5 = hashlib.md5(open(self.installed_plugin, 'rb').read()).hexdigest()
             with open(self.PLUGIN_MD5, 'wb') as md5_file:
                 md5_file.write(md5)
         else:
             return None
+        print '\t-->{}'.format(md5)
         return md5.strip()
+
+    def find_plugin(self):
+        """
+        Try to resolve path to installed governor plugin:
+        read file with path to plugin directory or ask mysql about plugin_dir
+        :return: path to governor plugin
+        """
+        if os.path.exists(self.PLUGIN_PATH):
+            with open(self.PLUGIN_PATH, 'rb') as plugin_dir_file:
+                plugin_path = plugin_dir_file.read()
+        else:
+            _, plugin_path = self.mysql_command('select @@plugin_dir')
+            with open(self.PLUGIN_PATH, 'wb') as plugin_dir_file:
+                plugin_dir_file.write(plugin_path)
+        return self.PLUGIN_DEST % {'plugin_path': plugin_path}
 
     def update_user_map_file(self):
         """
