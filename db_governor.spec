@@ -345,6 +345,7 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 [ -e /etc/init.d/mariadb.bak ] && rm -rf /etc/init.d/mariadb.bak && echo 'Clean old /etc/init.d/mariadb.bak backup'
 # patch init.d scripts
 /usr/share/lve/dbgovernor/mysqlgovernor.py --initd-patch
+/usr/share/lve/dbgovernor/mysqlgovernor.py --update-mysql-plugin
 %endif
 
 %files

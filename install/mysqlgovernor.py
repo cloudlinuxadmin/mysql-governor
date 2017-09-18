@@ -59,9 +59,9 @@ def build_parser():
                              "mysql55, mysql56, mysql57, mariadb55, "
                              "mariadb100, mariadb101, mariadb102, percona56",
                         dest="mysql_version", required=False)
-    parser.add_argument("-i", "--install", help="install MySQL for db-governor",
+    parser.add_argument("-i", "--install", help="install governor MySQL plugin",
                         dest="install", action="store_true", default=False)
-    parser.add_argument("-d", "--delete", help="delete MySQL for db-governor",
+    parser.add_argument("-d", "--delete", help="delete governor MySQL plugin",
                         dest="delete", action="store_true", default=False)
     parser.add_argument("--install-beta",
                         help="install MySQL beta for governor or update beta "
@@ -142,10 +142,6 @@ def build_parser():
                         help="Fix unescaped xml and wrong limits in config file",
                         dest="fix_govervor_config", action="store_true",
                         default=False)
-    parser.add_argument("--check-mysql-plugin",
-                        help="Install governor-mysql plugin",
-                        dest="check_plugin", action="store_true",
-                        default=False)
     parser.add_argument("--update-mysql-plugin",
                         help="Update governor-mysql plugin",
                         dest="update_plugin", action="store_true",
@@ -183,11 +179,11 @@ def main(argv):
     if opts.debug_flag:
         set_debug(True)
 
-    if opts.check_plugin:
+    if opts.install:
         manager.install()
     elif opts.update_plugin:
         manager.update_plugin()
-    elif opts.install or opts.install_beta:
+    elif opts.install_beta:
         print "Option is deprecated."
     elif opts.delete:
         manager.delete()
