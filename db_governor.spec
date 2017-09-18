@@ -149,7 +149,8 @@ ln -s ../scripts/dbgovernor_map $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/d
 
 install -D -m 644 script/mysql $RPM_BUILD_ROOT%{_sysconfdir}/conf.d/mysql
 install -D -m 644 script/mysql $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/mysqld
-
+install -D -m 644 script/mysql $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/mysql
+install -D -m 644 script/mysql $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/mariadb
 
 #install cron utility
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/cron.d/
@@ -377,6 +378,8 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 #%{_libdir}/mysql/governor.so
 %config(noreplace) %{_sysconfdir}/conf.d/mysql
 %config(noreplace) %{_sysconfdir}/sysconfig/mysqld
+%config(noreplace) %{_sysconfdir}/sysconfig/mysql
+%config(noreplace) %{_sysconfdir}/sysconfig/mariadb
 /usr/share/lve/dbgovernor/plugins/*
 
 %changelog
