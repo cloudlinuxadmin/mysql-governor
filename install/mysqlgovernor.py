@@ -188,7 +188,8 @@ def main(argv):
     elif opts.delete:
         manager.delete()
     elif opts.mysql_version:
-        print "Option is deprecated."
+        # print "Option is deprecated."
+        manager.migrate(opts.mysql_version)
     elif opts.dbupdate:
         manager.update_user_map_file()
     elif opts.fix_cpanel_hooks:

@@ -9,11 +9,13 @@ import re
 import shutil
 import time
 import hashlib
+import urllib2
 from distutils.version import LooseVersion
 
 sys.path.append("../")
 
-from utilities import get_cl_num, exec_command, exec_command_out, service, check_file, patch_governor_config
+from utilities import get_cl_num, exec_command, exec_command_out, service, \
+    check_file, patch_governor_config, remove_packages
 
 
 class InstallManager(object):
@@ -34,6 +36,9 @@ class InstallManager(object):
         'mysql': '5.5.14',
         'mariadb': '5.5.37'
     }
+
+    ALL_NEW_PKGS_LOADED = False
+    RPM_PATH = '/usr/share/lve/dbgovernor/rpms'
 
     @staticmethod
     def factory(cp_name):
@@ -66,7 +71,10 @@ class InstallManager(object):
         self.cp_name = cp_name
         self.get_mysql_user()
         self.mysql_version = self._check_mysql_version()
-        self.installed_plugin = self.find_plugin()
+        try:
+            self.installed_plugin = self.find_plugin()
+        except Exception:
+            print 'Cannot resolve plugin directory. MySQL/MariaDB is not running?'
 
     def install(self):
         """
@@ -91,6 +99,9 @@ class InstallManager(object):
         if not self.mysql_version:
             print 'No installed MySQL/MariaDB found'
             print 'Cannot install plugin'
+            print 'You may use mysqlgovernor.py to install officially supported MySQL/MariaDB: for example'
+            print '\t/usr/share/lve/dbgovernor/mysqlgovernor.py --mysql-version mysql56'
+            print '\t/usr/share/lve/dbgovernor/mysqlgovernor.py --mysql-version mariadb100'
         else:
             print '{} {} is installed here'.format(self.mysql_version['mysql_type'],
                                                    self.mysql_version['extended'])
@@ -101,9 +112,11 @@ class InstallManager(object):
                                                        s=self.supported[self.mysql_version['mysql_type']])
                 sys.exit(2)
 
-            if self.check_patch():
-                print 'This is PATCHED {}!'. format(self.mysql_version['mysql_type'])
+            if self.mysql_version['patched']:
+                print 'This is PATCHED {}!'.format(self.mysql_version['mysql_type'])
                 print 'Abort plugin installation'
+                print 'Please, install officially supported MySQL/MariaDB.\nYou may use mysqlgovernor.py for this: for example'
+                print '\t/usr/share/lve/dbgovernor/mysqlgovernor.py --mysql-version {}'.format(self.mysql_version['full'])
             else:
                 print 'Installing plugin...'
                 # copy corresponding plugin to mysql plugins' location
@@ -222,8 +235,7 @@ class InstallManager(object):
         except IOError or OSError:
             pass
 
-    @staticmethod
-    def _check_mysql_version():
+    def _check_mysql_version(self):
         """
         Retrieve MySQL version from mysql --version command
         :return: dictionary with version of form {
@@ -231,6 +243,7 @@ class InstallManager(object):
                 extended: all numbers of version (e.g. 5.5.52)
                 mysql_type: type flag (mysql or mariadb)
                 full: mysql_type + short version (e.g. mariadb55)
+                patched: cll-lve or not (e.g. True/False)
             }
         """
         try:
@@ -244,17 +257,11 @@ class InstallManager(object):
             }
             version.update({'full': '{m_type}{m_version}'.format(m_type=version['mysql_type'],
                                                                  m_version=version['short'].replace('.', ''))})
+            _, ver = self.mysql_command('select @@version')
+            version.update({'patched': 'cll-lve' in ver})
         except Exception:
             return {}
         return version
-
-    def check_patch(self):
-        """
-        Determine if installed MySQL is patched
-        :return: True if patched False otherwise
-        """
-        _, ver = self.mysql_command('select @@version')
-        return 'cll-lve' in ver
 
     def plugin4(self):
         """
@@ -290,6 +297,158 @@ class InstallManager(object):
             if exec_command("rpm -qa governor-mysql", True):
                 service("restart", "db_governor")
                 print "DB-Governor restarted..."
+
+    def migrate(self, new_version):
+        """
+        Perform migration to given version
+        """
+        self.install_official(new_version)
+        print 'Successfully migrated to {}!'.format(new_version)
+
+    def install_official(self, version):
+        """
+        Install official MySQL/MariaDB
+        :param version: version to install
+        """
+        # prepare repositories
+        exec_command('yum clean all')
+        if version.startswith('mysql'):
+            pkgs = self.prepare_official_mysql(version)
+        elif version.startswith('mariadb'):
+            pkgs = self.prepare_official_mariadb(version)
+        else:
+            print 'Unknown database requested!\nOnly official MySQL/MariDB supported'
+            sys.exit(2)
+        # download requested packages, then install them
+        print 'Downloading official packages'
+        self.ALL_NEW_PKGS_LOADED = self.download_packages(pkgs)
+        if self.ALL_NEW_PKGS_LOADED:
+            if self.mysql_version:
+                self.uninstall_mysql()
+            print 'Installing new packages for {v}:\n\t--> {pkgs}'.format(v=version,
+                                                                   pkgs='\n\t--> '.join(os.listdir(self.RPM_PATH)))
+            exec_command('yum install -y *', cwd=self.RPM_PATH)
+            self._mysqlservice('start')
+        else:
+            print 'FAILED to download packages for new MySQL/MariDB installation!'
+            print 'Unable to perform migration.'
+
+    def download_packages(self, names):
+        """
+        Download packages before installation
+        """
+        if not os.path.exists(self.RPM_PATH):
+            os.makedirs(self.RPM_PATH, 0755)
+        else:
+            shutil.rmtree(self.RPM_PATH)
+
+        res = exec_command(
+            "yum install -y --downloadonly --downloaddir={dst} {pkgs}".format(
+                dst=self.RPM_PATH,
+                pkgs=' '.join(names)), return_code=True)
+        return res == 'yes'
+
+    def prepare_official_mysql(self, version):
+        """
+        Prepare official MySQL repository and packages
+        :param version: mysql version
+        """
+        pkg = ('mysql-community-server', )
+        if not exec_command('rpm -qa | grep mysql57-community', silent=True):
+            self.download_and_install_mysql_repo()
+
+        # select and install MySQL
+        print 'Selected version %s' % version
+        if version != 'mysql57':
+            exec_command('yum-config-manager --disable mysql57-community')
+            exec_command('yum-config-manager --enable {version}-community'.format(version=version))
+        return pkg
+
+    def prepare_official_mariadb(self, version):
+        """
+        Prepare official MariaDB repository and packages
+        :param version: mariadb version
+        """
+        pkgs = ('MariaDB-server', 'MariaDB-client', 'MariaDB-shared')
+        self.install_mariadb_repo(version)
+        return pkgs
+
+    def download_and_install_mysql_repo(self):
+        """
+        Download mysql57-community-release repository and install it locally
+        """
+        # download repo file
+        url = 'https://dev.mysql.com/get/mysql57-community-release-el{v}-11.noarch.rpm'.format(v=self.cl_version)
+        repo_file = os.path.join(self.SOURCE, 'mysql-community-release.rpm')
+        repo_md5 = {
+            6: 'afe0706ac68155bf91ade1c55058fd78',
+            7: 'c070b754ce2de9f714ab4db4736c7e05'
+        }
+        opener = urllib2.build_opener()
+        opener.addheaders = [('User-agent', 'Mozilla/5.0')]
+
+        print 'Downloading %s' % url
+        rpm = opener.open(url).read()
+        with open(repo_file, 'wb') as f:
+            f.write(rpm)
+
+        if hashlib.md5(open(repo_file, 'rb').read()).hexdigest() != repo_md5[self.cl_version]:
+            print 'Failed to download MySQL repository file. File is corrupted!'
+            sys.exit(2)
+
+        # install repo
+        exec_command_out('yum localinstall -y {}'.format(repo_file))
+
+    def install_mariadb_repo(self, version):
+        """
+        Create MariaDB repository file
+        """
+        repo_data = """[mariadb]
+name = MariaDB
+baseurl = http://yum.mariadb.org/{maria_ver}/centos{cl_ver}-{arch}
+gpgkey=https://yum.mariadb.org/RPM-GPG-KEY-MariaDB
+gpgcheck=1
+"""
+        num = version.split('mariadb')[-1]
+        mariadb_version = '{base}.{suffix}'.format(base=num[:-1],
+                                                   suffix=num[-1])
+        arch = 'amd64' if os.uname()[-1] == 'x86_64' else 'x86'
+        with open('/etc/yum.repos.d/MariaDB.repo', 'wb') as repo_file:
+            repo_file.write(
+                repo_data.format(maria_ver=mariadb_version,
+                                 cl_ver=self.cl_version, arch=arch))
+
+    def uninstall_mysql(self):
+        """
+        Remove existing MySQL/MariaDB (for migration purposes)
+        """
+        print 'Going to uninstall existing MySQL/MariaDB --%s--' % self.mysql_version['full']
+        self._mysqlservice('stop')
+        installed_pkgs = self._get_installed_packages()
+        print 'These packages are going to be removed:\n\t--> {}'.format('\n\t--> '.join(installed_pkgs))
+        remove_packages(installed_pkgs)
+
+    @staticmethod
+    def _get_installed_packages():
+        """
+        Find out the list of currently installed DB packages
+        (this could be neither our packages, nor official ones)
+        """
+        packages = list()
+        mysqld_path = exec_command("which mysqld", True, silent=True)
+        if mysqld_path:
+            check_if_mysql_installed = exec_command('rpm -qf {}'.format(mysqld_path),
+                                                    True, silent=True,
+                                                    return_code=True)
+            if check_if_mysql_installed == "no":
+                print "No mysql packages installed, " \
+                      "but mysqld file presents on system"
+            else:
+                pkg_name = exec_command('rpm -qf {}'.format(mysqld_path), True,
+                                        silent=True)
+                packages = exec_command("""rpm -qa|grep -iE "^{}" """.format(pkg_name.split('-server')[0]),
+                                        silent=True)
+        return packages
 
     def _rel(self, path):
         """

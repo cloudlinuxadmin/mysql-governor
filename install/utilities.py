@@ -262,18 +262,12 @@ def remove_packages(packages_list):
     # don`t do anything if no packages
     if not packages_list:
         return
-    # Try to find server package, because it should be removed first
-    new_pkg = []
-    for pkg in packages_list:
-        if "-server" in pkg:
-            print exec_command("rpm -e --nodeps %s" % pkg, True,
-                               cmd_on_error="rpm -e --nodeps --noscripts %s" % pkg)
-        else:
-            new_pkg.append(pkg)
-    if len(new_pkg) > 0:
-        packages = " ".join(new_pkg)
-        print exec_command("rpm -e --nodeps %s" % packages, True,
-                           cmd_on_error="rpm -e --nodeps --noscripts %s" % packages)
+    # make server package become first in list, because it should be removed first
+    new_pkg = sorted(packages_list, key=lambda x: '-server' in x, reverse=True)
+    # now should only call rpm with sorted packages list
+    packages = " ".join(new_pkg)
+    print exec_command("rpm -e --nodeps %s" % packages, True,
+                       cmd_on_error="rpm -e --nodeps --noscripts %s" % packages)
 
 
 def confirm_packages_installation(rpm_dir, no_confirm=None):
@@ -409,12 +403,12 @@ def check_file(path):
 
 
 def exec_command(command, as_string=False, silent=False, return_code=False,
-                 cmd_on_error=""):
+                 cmd_on_error="", cwd=os.path.dirname(os.path.realpath(__file__))):
     """
     Advanced system exec call
     """
     p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE,
-                         stderr=subprocess.PIPE)
+                         stderr=subprocess.PIPE, cwd=cwd)
     out, err = p.communicate()
     debug_log("Executed command %s with retcode %d\n" % (command, p.returncode))
 
