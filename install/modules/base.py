@@ -63,9 +63,6 @@ class InstallManager(object):
         else:
             return InstallManager(cp_name)
 
-    cl_version = None
-    cp_name = None
-
     def __init__(self, cp_name):
         self.cl_version = get_cl_num()
         self.cp_name = cp_name
@@ -300,10 +297,37 @@ class InstallManager(object):
 
     def migrate(self, new_version):
         """
-        Perform migration to given version
+        Perform migration to given new_version
         """
-        self.install_official(new_version)
-        print 'Successfully migrated to {}!'.format(new_version)
+        if self.is_migration_possible(new_version):
+            self.install_official(new_version)
+        else:
+            print 'Unable to perform migration.'
+
+    def is_migration_possible(self, new_version):
+        """
+        Check if migration to given version is possible
+        :param new_version: version to migrate to
+        :return:
+        """
+        migration_table = {
+            'mysql55': ('mysql56', 'mariadb55'),
+            'mysql56': ('mysql57', 'mariadb100'),
+            'mariadb55': ('mysql56', 'mariadb100'),
+            'mariadb100': ('mysql56', 'mariadb101'),
+            'mariadb101': ('mysql57', 'mariadb102')
+        }
+        if not self.mysql_version or self.mysql_version['patched']:
+            return True
+        elif new_version == self.mysql_version['full']:
+            print 'No need to migrate, you have {} already installed'.format(new_version)
+            return False
+        else:
+            if new_version in migration_table[self.mysql_version['full']]:
+                print 'Starting migration to {}'.format(new_version)
+            else:
+                print 'You selected either downgrade, or upgrade over a generation, which are not allowed both.'
+            return new_version in migration_table[self.mysql_version['full']]
 
     def install_official(self, version):
         """
@@ -329,6 +353,7 @@ class InstallManager(object):
                                                                    pkgs='\n\t--> '.join(os.listdir(self.RPM_PATH)))
             exec_command('yum install -y *', cwd=self.RPM_PATH)
             self._mysqlservice('start')
+            print 'Successfully migrated to {}!'.format(version)
         else:
             print 'FAILED to download packages for new MySQL/MariDB installation!'
             print 'Unable to perform migration.'
@@ -336,17 +361,93 @@ class InstallManager(object):
     def download_packages(self, names):
         """
         Download packages before installation
+        Two steps:
+            normal download or update with yum
+            download of broken packages with yumdownloader if normal failed
+        :param names: packages names (iterable)
+        :return: True of False based on procedure success
         """
         if not os.path.exists(self.RPM_PATH):
             os.makedirs(self.RPM_PATH, 0755)
         else:
             shutil.rmtree(self.RPM_PATH)
 
+        download_proc = self.download_updates if self.is_update(names) else self.common_download
+
+        if not download_proc(names):
+            print 'Failed to download packages with yum. Trying yumdownloader instead...'
+            return self.download_broken(names)
+        else:
+            return True
+
+    def common_download(self, names):
+        """
+        Download packages with yum --downloadonly
+        :param names: packages names (iterable)
+        :return: True of False based on command success
+        """
         res = exec_command(
             "yum install -y --downloadonly --downloaddir={dst} {pkgs}".format(
                 dst=self.RPM_PATH,
                 pkgs=' '.join(names)), return_code=True)
         return res == 'yes'
+
+    def download_broken(self, names):
+        """
+        Download conflicting packages with yumdownloader
+        :param names: packages names (iterable)
+        :return: True of False based on command success
+        """
+        # utilize LC_ALL locale variable setting in order to grep control start string
+        old_var = os.getenv('LC_ALL')
+        os.putenv('LC_ALL', 'en_US.UTF-8')
+        # find out problem packages names
+        res = exec_command(
+            "yum install -y --skip-broken --downloadonly --downloaddir={dst} {pkgs}".format(
+                dst=self.RPM_PATH,
+                pkgs=' '.join(names)), silent=True)
+        try:
+            start = res.index('Packages skipped because of dependency problems:') + 1
+            conflicting_pkgs = [l.split('from')[0].strip() for l in res[start:]]
+        except Exception:
+            return False
+
+        # download packages
+        r = exec_command(
+            "yumdownloader --destdir={dst} {pkgs}".format(
+                dst=self.RPM_PATH,
+                pkgs=' '.join(conflicting_pkgs)), return_code=True)
+        # restore LC_ALL variable
+        os.putenv('LC_ALL', old_var if old_var else '')
+        return r == 'yes'
+
+    def download_updates(self, names):
+        """
+        Download packages in update mode
+        :param names: packages names (iterable) -- for compatibility purposes
+        :return: True of False based on command success
+        """
+        repo = names[0].split('-')[0].lower()
+        print 'Download updates from repo {}'.format(repo)
+        res = exec_command(
+            "yum update -y --downloadonly --downloaddir={dst} --disablerepo='*' --enablerepo='{name}'".format(
+                dst=self.RPM_PATH, name=repo), return_code=True)
+        return res == 'yes'
+
+    def is_update(self, pkgs_names):
+        """
+        Check if requested packages are an update for installed ones
+        This is specific for MariaDB packages
+        :param pkgs_names: packages names (iterable)
+        :return: True or False
+        """
+        name = pkgs_names[0].split('-')[0].lower()
+        if not self.mysql_version or self.mysql_version['patched']:
+            return False
+        elif name == 'mysql':
+            return False
+        else:
+            return self.mysql_version['mysql_type'] == name
 
     def prepare_official_mysql(self, version):
         """
@@ -359,9 +460,8 @@ class InstallManager(object):
 
         # select and install MySQL
         print 'Selected version %s' % version
-        if version != 'mysql57':
-            exec_command('yum-config-manager --disable mysql57-community')
-            exec_command('yum-config-manager --enable {version}-community'.format(version=version))
+        exec_command('yum-config-manager --disable mysql*-community')
+        exec_command('yum-config-manager --enable {version}-community'.format(version=version))
         return pkg
 
     def prepare_official_mariadb(self, version):
@@ -433,8 +533,14 @@ gpgcheck=1
         """
         Find out the list of currently installed DB packages
         (this could be neither our packages, nor official ones)
+            - check mysqld path
+            - find out which package owns mysqld server (e.g. *-server pkg)
+            - resolve packages list on the basis of the server name beginning
         """
+        known_patterns = ["cl-mysql", "cl-mariadb", "cl-percona", "mysql",
+                          "mariadb", "compat-mysql5", "Percona"]
         packages = list()
+        # check who owns mysqld
         mysqld_path = exec_command("which mysqld", True, silent=True)
         if mysqld_path:
             check_if_mysql_installed = exec_command('rpm -qf {}'.format(mysqld_path),
@@ -444,10 +550,20 @@ gpgcheck=1
                 print "No mysql packages installed, " \
                       "but mysqld file presents on system"
             else:
+                # find out server package name
                 pkg_name = exec_command('rpm -qf {}'.format(mysqld_path), True,
                                         silent=True)
+                # resolve other packages names
                 packages = exec_command("""rpm -qa|grep -iE "^{}" """.format(pkg_name.split('-server')[0]),
                                         silent=True)
+                # try to resolve out meta packages
+                if pkg_name.startswith('cl-'):
+                    packages.extend(exec_command("""rpm -qa|grep -iE "^cl-"|grep "meta" """,
+                                                 silent=True))
+        else:
+            # check known packages patterns if no mysqld found
+            packages = exec_command("""rpm -qa|grep -iE "^({})" """.format("|".join(known_patterns)),
+                                    silent=True)
         return packages
 
     def _rel(self, path):
