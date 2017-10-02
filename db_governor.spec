@@ -24,6 +24,7 @@ Requires(preun): /sbin/chkconfig
 BuildRequires: cmake
 BuildRequires: ncurses-devel
 BuildRequires: glib2-devel
+BuildRequires: pcre-devel
 BuildRequires: autoconf
 BuildRequires: tar
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
