@@ -1,5 +1,5 @@
 %define g_version   1.1
-%define g_release   23
+%define g_release   24
 %define g_key_library 7
 
 %if %{undefined _unitdir}
@@ -360,6 +360,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 /usr/share/lve/dbgovernor/cpanel/tmp
 
 %changelog
+* Tue Oct 03 2017 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-24
+- MYSQLG-209: Add percona56 to Usage output of db-select-mysql
+
 * Tue Sep 19 2017 Daria Kavchuk <dkavchuk@cloudlinux.com> 1.1-23
 - MYSQLG-205: fix code flow for IWorks object init
 

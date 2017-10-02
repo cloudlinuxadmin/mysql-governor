@@ -54,7 +54,7 @@ while( $#ARGV != -1 )
     print "Usage: db-select-mysql [options]\n";
     print "  options:\n";
     print "  --mysql-version=<mysql type> or -m <mysql type>     set version of mysql\n";
-    print "      mysql type: auto, mysql50, mysql51, mysql55, mysql56, mysql57, mariadb55, mariadb100, mariadb101\n";
+    print "      mysql type: auto, mysql50, mysql51, mysql55, mysql56, mysql57, mariadb55, mariadb100, mariadb101, percona56\n";
     print "  --install-now                                       deprecated moved option to mysqlgovernor\n";
     print "  --install-now-beta                                  deprecated moved option to mysqlgovernor\n";
     print "\n";
