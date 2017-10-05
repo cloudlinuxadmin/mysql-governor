@@ -313,9 +313,11 @@ class InstallManager(object):
         migration_table = {
             'mysql55': ('mysql56', 'mariadb55'),
             'mysql56': ('mysql57', 'mariadb100'),
+            'mysql57': (),
             'mariadb55': ('mysql56', 'mariadb100'),
             'mariadb100': ('mysql56', 'mariadb101'),
-            'mariadb101': ('mysql57', 'mariadb102')
+            'mariadb101': ('mysql57', 'mariadb102'),
+            'mariadb102': ()
         }
         if not self.mysql_version or self.mysql_version['patched']:
             return True
@@ -332,31 +334,32 @@ class InstallManager(object):
     def install_official(self, version):
         """
         Install official MySQL/MariaDB
+        Download required packages, then delete old, then install downloaded
         :param version: version to install
         """
-        # prepare repositories
-        exec_command('yum clean all')
-        if version.startswith('mysql'):
-            pkgs = self.prepare_official_mysql(version)
-        elif version.startswith('mariadb'):
-            pkgs = self.prepare_official_mariadb(version)
-        else:
-            print 'Unknown database requested!\nOnly official MySQL/MariDB supported'
-            sys.exit(2)
-        # download requested packages, then install them
-        print 'Downloading official packages'
+        # preparation
+        self._before_install_mysql()
+        pkgs = self.prepare(version)
+        # download packages
         self.ALL_NEW_PKGS_LOADED = self.download_packages(pkgs)
+        # uninstall old and install new
         if self.ALL_NEW_PKGS_LOADED:
             if self.mysql_version:
                 self.uninstall_mysql()
-            print 'Installing new packages for {v}:\n\t--> {pkgs}'.format(v=version,
-                                                                   pkgs='\n\t--> '.join(os.listdir(self.RPM_PATH)))
-            exec_command('yum install -y *', cwd=self.RPM_PATH)
-            self._mysqlservice('start')
+            self.install_packages()
+            self._after_install_mysql()
             print 'Successfully migrated to {}!'.format(version)
         else:
             print 'FAILED to download packages for new MySQL/MariDB installation!'
             print 'Unable to perform migration.'
+
+    def install_packages(self):
+        """
+        Install downloaded packages
+        :return:
+        """
+        print 'Installing new packages:\n\t--> {pkgs}'.format(pkgs='\n\t--> '.join(os.listdir(self.RPM_PATH)))
+        exec_command('yum install -y *', cwd=self.RPM_PATH)
 
     def download_packages(self, names):
         """
@@ -367,6 +370,7 @@ class InstallManager(object):
         :param names: packages names (iterable)
         :return: True of False based on procedure success
         """
+        print 'Downloading official packages'
         if not os.path.exists(self.RPM_PATH):
             os.makedirs(self.RPM_PATH, 0755)
         else:
@@ -387,7 +391,7 @@ class InstallManager(object):
         :return: True of False based on command success
         """
         res = exec_command(
-            "yum install -y --downloadonly --downloaddir={dst} {pkgs}".format(
+            "yum install -y --downloadonly --disableexcludes=all --downloaddir={dst} {pkgs}".format(
                 dst=self.RPM_PATH,
                 pkgs=' '.join(names)), return_code=True)
         return res == 'yes'
@@ -403,7 +407,7 @@ class InstallManager(object):
         os.putenv('LC_ALL', 'en_US.UTF-8')
         # find out problem packages names
         res = exec_command(
-            "yum install -y --skip-broken --downloadonly --downloaddir={dst} {pkgs}".format(
+            "yum install -y --skip-broken --downloadonly --disableexcludes=all --downloaddir={dst} {pkgs}".format(
                 dst=self.RPM_PATH,
                 pkgs=' '.join(names)), silent=True)
         try:
@@ -414,7 +418,7 @@ class InstallManager(object):
 
         # download packages
         r = exec_command(
-            "yumdownloader --destdir={dst} {pkgs}".format(
+            "yumdownloader --disableexcludes=all --destdir={dst} {pkgs}".format(
                 dst=self.RPM_PATH,
                 pkgs=' '.join(conflicting_pkgs)), return_code=True)
         # restore LC_ALL variable
@@ -430,7 +434,7 @@ class InstallManager(object):
         repo = names[0].split('-')[0].lower()
         print 'Download updates from repo {}'.format(repo)
         res = exec_command(
-            "yum update -y --downloadonly --downloaddir={dst} --disablerepo='*' --enablerepo='{name}'".format(
+            "yum update -y --downloadonly --disableexcludes=all --downloaddir={dst} --disablerepo='*' --enablerepo='{name}'".format(
                 dst=self.RPM_PATH, name=repo), return_code=True)
         return res == 'yes'
 
@@ -448,6 +452,22 @@ class InstallManager(object):
             return False
         else:
             return self.mysql_version['mysql_type'] == name
+
+    def prepare(self, version):
+        """
+        Prepare required official repository and resolve packages list
+        :param version: version to install
+        :return: packages list
+        """
+        exec_command('yum clean all')
+        if version.startswith('mysql'):
+            pkgs = self.prepare_official_mysql(version)
+        elif version.startswith('mariadb'):
+            pkgs = self.prepare_official_mariadb(version)
+        else:
+            print 'Unknown database requested!\nOnly official MySQL/MariDB supported'
+            sys.exit(2)
+        return pkgs
 
     def prepare_official_mysql(self, version):
         """
@@ -523,7 +543,6 @@ gpgcheck=1
         Remove existing MySQL/MariaDB (for migration purposes)
         """
         print 'Going to uninstall existing MySQL/MariaDB --%s--' % self.mysql_version['full']
-        self._mysqlservice('stop')
         installed_pkgs = self._get_installed_packages()
         print 'These packages are going to be removed:\n\t--> {}'.format('\n\t--> '.join(installed_pkgs))
         remove_packages(installed_pkgs)
@@ -565,6 +584,19 @@ gpgcheck=1
             packages = exec_command("""rpm -qa|grep -iE "^({})" """.format("|".join(known_patterns)),
                                     silent=True)
         return packages
+
+    def _before_install_mysql(self):
+        """
+        Actions, performed prior to MySQL/MariaDB installation process
+        """
+        if self.mysql_version:
+            self._mysqlservice('stop')
+
+    def _after_install_mysql(self):
+        """
+        Actions, performed after MySQL/MariaDB installation process
+        """
+        self._mysqlservice('start')
 
     def _rel(self, path):
         """
