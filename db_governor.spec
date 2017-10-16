@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   25
+%define g_release   26
 %define g_key_library 9
 
 %if %{undefined _unitdir}
@@ -350,6 +350,10 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Wed Oct 16 2017 Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-26
+- MYSQLG-216: the cPanel's Service Manager stucks on the governor restart
+- MYSQLG-217: The Governor is not starting with " Can't load mysql functions" error
+
 * Wed Sep 07 2017 Eugen Vodilov <evodilov@cloudlinux.com> 1.2-25
 - MYSQLG-204: Perfomance fix for statistic enabled servers
 - Fix build dependency on CL7 (broken glib-2.0 dependency to pcre-devel)

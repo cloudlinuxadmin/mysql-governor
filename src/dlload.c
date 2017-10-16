@@ -75,8 +75,8 @@ init_mysql_function ()
       LOAD_FUNCTION (mysql_free_result);
       LOAD_FUNCTION (mysql_fetch_lengths);
       LOAD_FUNCTION (mysql_fetch_row);
-      LOAD_FUNCTION (my_init);
-      LOAD_FUNCTION (load_defaults);
+      LOAD_FUNCTION_SKIP (my_init);
+      LOAD_FUNCTION_SKIP (load_defaults);
       LOAD_FUNCTION (mysql_init);
       LOAD_FUNCTION (mysql_real_connect);
       LOAD_FUNCTION (mysql_options);

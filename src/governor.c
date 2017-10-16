@@ -328,26 +328,25 @@ void initGovernor(void) {
 
 void trackingDaemon(void) {
 	char buffer[_DBGOVERNOR_BUFFER_2048];
-	int *status = (int *) malloc(sizeof(int));
+	int status = 0;
 	struct governor_config data_cfg;
+	becameDaemon(0);
 
 	bg_loop: ;
 	config_destroy_lock();
 	config_free();
 	initGovernor();
+	
+	
 	pid_t pid_daemon = fork();
 
-	if (pid_daemon == 0)
-		becameDaemon(0);
-	else if (pid_daemon > 0) {
+	if (pid_daemon > 0) {
 		//    config_free();
-		wait(status);
+		wait(&status);
 
 		get_config_data(&data_cfg);
 		WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
 				"Failed governor daemon, restart daemon", data_cfg.log_mode);
-		//fprintf( stderr, "Failed governor daemon, restart daemon.\n" );
-		//fflush( stderr );
 
 		int max_file_descriptor = sysconf(FOPEN_MAX), file_o;
 		struct stat buf_stat;
@@ -360,8 +359,6 @@ void trackingDaemon(void) {
 		sleep(60);
 		goto bg_loop;
 	}
-
-	free(status);
 }
 
 int main(int argc, char *argv[]) {
