@@ -23,7 +23,7 @@
 
 #define LOAD_FUNCTION_SKIP(x) _##x = dlsym(lib_handle, #x); \
                 if ((error = dlerror()) != NULL) {\
-                        _##x = NULL;
+                        _##x = NULL; \
                 }
 
 #define M_mysql_store_result void * (*_mysql_store_result)(void *)

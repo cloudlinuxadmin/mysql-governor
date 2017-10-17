@@ -155,9 +155,9 @@ db_connect_common (MYSQL ** internal_db, const char *host,
 	   }
       }
   } else {
-        if (mysql_options(*internal_db, MYSQL_READ_DEFAULT_GROUP, "client")){
-           if (mysql_options(*internal_db, MYSQL_READ_DEFAULT_GROUP, "mysqld")){
-               mysql_options(*internal_db, MYSQL_READ_DEFAULT_GROUP, "dbgovernor");
+        if ((*_mysql_options)(*internal_db, MYSQL_READ_DEFAULT_GROUP, "client")){
+           if ((*_mysql_options)(*internal_db, MYSQL_READ_DEFAULT_GROUP, "mysqld")){
+               (*_mysql_options)(*internal_db, MYSQL_READ_DEFAULT_GROUP, "dbgovernor");
            }
         }
   }
@@ -177,6 +177,9 @@ db_connect_common (MYSQL ** internal_db, const char *host,
       WRITE_LOG (NULL, 0, buf, _DBGOVERNOR_BUFFER_512,
 		 "Try to connect with no password under root",
 		 data_cfg.log_mode);
+	//Error again, stop to try
+      WRITE_LOG (NULL, 0, buf, _DBGOVERNOR_BUFFER_512,
+		    db_getlasterror (*internal_db), data_cfg.log_mode);
       //Try to connect again
       if (user)
 	strlcpy (work_user, user, USERNAMEMAXLEN);
@@ -187,7 +190,24 @@ db_connect_common (MYSQL ** internal_db, const char *host,
 	  WRITE_LOG (NULL, 0, buf, _DBGOVERNOR_BUFFER_512,
 		     db_getlasterror (*internal_db), data_cfg.log_mode);
 
-	  return -1;
+	  WRITE_LOG (NULL, 0, buf, _DBGOVERNOR_BUFFER_512,
+                 "Try to connect with no password, no host, no user under root",
+                 data_cfg.log_mode);
+          if (!_load_defaults){
+            if ((*_mysql_options)(*internal_db, MYSQL_READ_DEFAULT_GROUP, "client")){
+               if ((*_mysql_options)(*internal_db, MYSQL_READ_DEFAULT_GROUP, "mysqld")){
+                 (*_mysql_options)(*internal_db, MYSQL_READ_DEFAULT_GROUP, "dbgovernor");
+               }
+            }
+          }
+          if (!(*_mysql_real_connect) (*internal_db, NULL, NULL, NULL,
+                                   NULL, 0, unix_socket_address, 0)){
+              	  //Error again, stop to try
+	      WRITE_LOG (NULL, 0, buf, _DBGOVERNOR_BUFFER_512,
+		     db_getlasterror (*internal_db), data_cfg.log_mode);
+              return -1;
+          }
+
 	}
       else
 	{
