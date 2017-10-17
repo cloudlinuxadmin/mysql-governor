@@ -183,6 +183,7 @@ db_connect_common (MYSQL ** internal_db, const char *host,
       //Try to connect again
       if (user)
 	strlcpy (work_user, user, USERNAMEMAXLEN);
+      (*_mysql_options) (*internal_db, MYSQL_OPT_RECONNECT, &reconnect);
       if (!(*_mysql_real_connect) (*internal_db, host, user, password,
 				   db_name, 0, unix_socket_address, 0))
 	{
@@ -193,6 +194,7 @@ db_connect_common (MYSQL ** internal_db, const char *host,
 	  WRITE_LOG (NULL, 0, buf, _DBGOVERNOR_BUFFER_512,
                  "Try to connect with no password, no host, no user under root",
                  data_cfg.log_mode);
+          (*_mysql_options) (*internal_db, MYSQL_OPT_RECONNECT, &reconnect);
           if (!_load_defaults){
             if ((*_mysql_options)(*internal_db, MYSQL_READ_DEFAULT_GROUP, "client")){
                if ((*_mysql_options)(*internal_db, MYSQL_READ_DEFAULT_GROUP, "mysqld")){
