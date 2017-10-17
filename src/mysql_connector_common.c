@@ -111,39 +111,7 @@ db_connect_common (MYSQL ** internal_db, const char *host,
       return -1;
     }
 
-  (*_my_init) ();
-  /*
-   * Здесь мы читаем my.cnf и .my.cnf
-   * Это читает сам mysql, это его родное API
-   */
-  (*_load_defaults) ("my", groups_client, &argc, &argv);
-  opterr = 0;
-  optind = 0;
-  //Parse argc, argv modified by _load_defaults
-  while ((c = getopt_long (argc, argv, ":S:u:p:h:s:m:l:c:", long_options,
-			   &option_index)) != EOF)
-    {
-      switch (c)
-	{
-	case 'S':
-	  unix_socket_address = optarg;
-	  break;
-	case 'r':
-	  hst = optarg;
-	  break;
-	case 'g':
-	  user = optarg;
-	  break;
-	case 'j':
-	  password = optarg;
-	  break;
-	case 'i':
-	  password = optarg;
-	  break;
-	default:
-	  continue;
-	}
-    }
+  if (_my_init) (*_my_init) ();
 
   *internal_db = (*_mysql_init) (NULL);
   if (*internal_db == NULL)
@@ -152,6 +120,47 @@ db_connect_common (MYSQL ** internal_db, const char *host,
 		 "Can't init mysql structure", data_cfg.log_mode);
       return -1;
     }
+
+  /*
+   * Здесь мы читаем my.cnf и .my.cnf
+   * Это читает сам mysql, это его родное API
+   */
+  if(_load_defaults){
+      (*_load_defaults) ("my", groups_client, &argc, &argv);
+      opterr = 0;
+      optind = 0;
+      //Parse argc, argv modified by _load_defaults
+      while ((c = getopt_long (argc, argv, ":S:u:p:h:s:m:l:c:", long_options,
+			   &option_index)) != EOF)
+      {
+          switch (c)
+	    {
+	     case 'S':
+	       unix_socket_address = optarg;
+	       break;
+	     case 'r':
+	       hst = optarg;
+	       break;
+	     case 'g':
+	       user = optarg;
+	       break;
+	     case 'j':
+	       password = optarg;
+	       break;
+	     case 'i':
+	       password = optarg;
+	       break;
+	     default:
+	       continue;
+	   }
+      }
+  } else {
+        if ((*_mysql_options)(*internal_db, MYSQL_READ_DEFAULT_GROUP, "client")){
+           if ((*_mysql_options)(*internal_db, MYSQL_READ_DEFAULT_GROUP, "mysqld")){
+               (*_mysql_options)(*internal_db, MYSQL_READ_DEFAULT_GROUP, "dbgovernor");
+           }
+        }
+  }
 
   WRITE_LOG (NULL, 0, buf, _DBGOVERNOR_BUFFER_512,
 	     "Try to connect with options from dbgovernor config file",
@@ -168,9 +177,13 @@ db_connect_common (MYSQL ** internal_db, const char *host,
       WRITE_LOG (NULL, 0, buf, _DBGOVERNOR_BUFFER_512,
 		 "Try to connect with no password under root",
 		 data_cfg.log_mode);
+	//Error again, stop to try
+      WRITE_LOG (NULL, 0, buf, _DBGOVERNOR_BUFFER_512,
+		    db_getlasterror (*internal_db), data_cfg.log_mode);
       //Try to connect again
       if (user)
 	strlcpy (work_user, user, USERNAMEMAXLEN);
+      (*_mysql_options) (*internal_db, MYSQL_OPT_RECONNECT, &reconnect);
       if (!(*_mysql_real_connect) (*internal_db, host, user, password,
 				   db_name, 0, unix_socket_address, 0))
 	{
@@ -178,7 +191,25 @@ db_connect_common (MYSQL ** internal_db, const char *host,
 	  WRITE_LOG (NULL, 0, buf, _DBGOVERNOR_BUFFER_512,
 		     db_getlasterror (*internal_db), data_cfg.log_mode);
 
-	  return -1;
+	  WRITE_LOG (NULL, 0, buf, _DBGOVERNOR_BUFFER_512,
+                 "Try to connect with no password, no host, no user under root",
+                 data_cfg.log_mode);
+          (*_mysql_options) (*internal_db, MYSQL_OPT_RECONNECT, &reconnect);
+          if (!_load_defaults){
+            if ((*_mysql_options)(*internal_db, MYSQL_READ_DEFAULT_GROUP, "client")){
+               if ((*_mysql_options)(*internal_db, MYSQL_READ_DEFAULT_GROUP, "mysqld")){
+                 (*_mysql_options)(*internal_db, MYSQL_READ_DEFAULT_GROUP, "dbgovernor");
+               }
+            }
+          }
+          if (!(*_mysql_real_connect) (*internal_db, NULL, NULL, NULL,
+                                   NULL, 0, unix_socket_address, 0)){
+              	  //Error again, stop to try
+	      WRITE_LOG (NULL, 0, buf, _DBGOVERNOR_BUFFER_512,
+		     db_getlasterror (*internal_db), data_cfg.log_mode);
+              return -1;
+          }
+
 	}
       else
 	{
