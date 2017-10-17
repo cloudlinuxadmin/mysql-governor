@@ -106,11 +106,12 @@ int db_connect_common(MYSQL ** internal_db, const char *host,
 		return -1;
 	}
 
-	(*_my_init)();
+	if (_my_init) (*_my_init)();
 	/*
 	 * Здесь мы читаем my.cnf и .my.cnf
 	 * Это читает сам mysql, это его родное API
 	 */
+        if(_load_defaults){
 	(*_load_defaults)("my", groups_client, &argc, &argv);
 	opterr = 0;
 	optind = 0;
@@ -137,6 +138,13 @@ int db_connect_common(MYSQL ** internal_db, const char *host,
 			continue;
 		}
 	}
+	} else {
+        if ((*_mysql_options)(*internal_db, MYSQL_READ_DEFAULT_GROUP, "client")){
+           if ((*_mysql_options)(*internal_db, MYSQL_READ_DEFAULT_GROUP, "mysqld")){
+               (*_mysql_options)(*internal_db, MYSQL_READ_DEFAULT_GROUP, "dbgovernor");
+           }
+        }
+  }
 
 	*internal_db = (*_mysql_init)(NULL);
 	if (*internal_db == NULL) {
@@ -157,12 +165,16 @@ int db_connect_common(MYSQL ** internal_db, const char *host,
 	if (!(*_mysql_real_connect)(*internal_db, host, user_name, user_password,
 			db_name, 0, unix_socket_address, 0)) {
 		//Previous attempt failed, try with data from my.cnf, .my.cnf
+               //Error again, stop to try
+               WRITE_LOG (NULL, 0, buf, _DBGOVERNOR_BUFFER_512,
+		    db_getlasterror (*internal_db), data_cfg.log_mode);
 		WRITE_LOG(NULL, 0, buf, _DBGOVERNOR_BUFFER_512,
 				"Try to connect with no password under root",
 				data_cfg.log_mode);
 		//Try to connect again
 		if (user)
 			strlcpy(work_user, user, USERNAMEMAXLEN);
+		(*_mysql_options) (*internal_db, MYSQL_OPT_RECONNECT, &reconnect);
 		if (!(*_mysql_real_connect)(*internal_db, host, user, password,
 				db_name, 0, unix_socket_address, 0)) {
 			//Error again, stop to try
@@ -170,7 +182,25 @@ int db_connect_common(MYSQL ** internal_db, const char *host,
 					db_getlasterror (*internal_db),
 					data_cfg.log_mode);
 
-			return -1;
+	  WRITE_LOG (NULL, 0, buf, _DBGOVERNOR_BUFFER_512,
+                 "Try to connect with no password, no host, no user under root",
+                 data_cfg.log_mode);
+          (*_mysql_options) (*internal_db, MYSQL_OPT_RECONNECT, &reconnect);
+          if (!_load_defaults){
+            if ((*_mysql_options)(*internal_db, MYSQL_READ_DEFAULT_GROUP, "client")){
+               if ((*_mysql_options)(*internal_db, MYSQL_READ_DEFAULT_GROUP, "mysqld")){
+                 (*_mysql_options)(*internal_db, MYSQL_READ_DEFAULT_GROUP, "dbgovernor");
+               }
+            }
+          }
+          if (!(*_mysql_real_connect) (*internal_db, NULL, NULL, NULL,
+                                   NULL, 0, unix_socket_address, 0)){
+              	  //Error again, stop to try
+	      WRITE_LOG (NULL, 0, buf, _DBGOVERNOR_BUFFER_512,
+		     db_getlasterror (*internal_db), data_cfg.log_mode);
+              return -1;
+          }
+
 		} else {
 			//Сохраним праматеры с которыми успешно соединились
 			if (save_global) {
