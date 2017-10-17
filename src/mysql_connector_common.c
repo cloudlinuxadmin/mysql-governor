@@ -275,7 +275,21 @@ local_reconnect (MYSQL ** mysql_internal, MODE_TYPE debug_mode)
   if (!(*_mysql_real_connect) (*mysql_internal, global_host, unm, upwd,
 			       global_db_name, 0, unix_socket_address, 0))
     {
-      return -1;
+          (*_mysql_options) (*mysql_internal, MYSQL_OPT_RECONNECT, &reconnect);
+          if (!_load_defaults){
+            if ((*_mysql_options)(*internal_db, MYSQL_READ_DEFAULT_GROUP, "client")){
+               if ((*_mysql_options)(*internal_db, MYSQL_READ_DEFAULT_GROUP, "mysqld")){
+                 (*_mysql_options)(*internal_db, MYSQL_READ_DEFAULT_GROUP, "dbgovernor");
+               }
+            }
+          }
+          if (!(*_mysql_real_connect) (*internal_db, NULL, NULL, NULL,
+                                   NULL, 0, unix_socket_address, 0)){
+              	  //Error again, stop to try
+	      WRITE_LOG (NULL, 0, buf, _DBGOVERNOR_BUFFER_512,
+		     db_getlasterror (*internal_db), data_cfg.log_mode);
+              return -1;
+          }
     }
   return 0;
 }
