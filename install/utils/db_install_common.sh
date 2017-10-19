@@ -134,6 +134,14 @@ function installDb(){
 	  enableMariaDB
 	fi
 
+	if [ "$SQL_VERSION" == "mariadb102" ]; then
+	  rm -rf /usr/include/mysql
+	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqlmeta/cl-mariadb-10.2-common.repo
+	  yum install libaio --nogpgcheck -y
+	  yum install cl-MariaDB-meta cl-MariaDB-meta-client cl-MariaDB-meta-devel libaio --nogpgcheck -y
+	  enableMariaDB
+	fi
+
 	if [ "$SQL_VERSION" == "percona56" ]; then
 	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqlmeta/cl-percona-5.6-common.repo
 	  if [ -e /usr/libexec/mysqld ]; then
@@ -251,6 +259,13 @@ function installDbTest(){
 	if [ "$SQL_VERSION" == "mariadb101" ]; then
 	  rm -rf /usr/include/mysql
 	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqlmeta/cl-mariadb-10.1-common.repo
+	  yum install libaio --nogpgcheck -y
+	  yum install cl-MariaDB-meta cl-MariaDB-meta-client cl-MariaDB-meta-devel libaio --nogpgcheck -y --enablerepo=cloudlinux-updates-testing
+	fi
+
+	if [ "$SQL_VERSION" == "mariadb102" ]; then
+	  rm -rf /usr/include/mysql
+	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqlmeta/cl-mariadb-10.2-common.repo
 	  yum install libaio --nogpgcheck -y
 	  yum install cl-MariaDB-meta cl-MariaDB-meta-client cl-MariaDB-meta-devel libaio --nogpgcheck -y --enablerepo=cloudlinux-updates-testing
 	fi
