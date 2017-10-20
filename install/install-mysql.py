@@ -678,7 +678,7 @@ def enable_mysql_monitor(enable=True):
 		print "No need to inspect MySQL monitoring"
 	elif cp.name == "cPanel":
 		exec_command_out(
-			"whmapi1 configureservice service=mysql enabled=1 monitored={}".format(int(enable)))
+			"whmapi1 configureservice service=mysql enabled=1 monitored={0}".format(int(enable)))
 	elif cp.name == "InterWorx":
 		print "No need to inspect MySQL monitoring"
 	elif cp.name == "ISPManager":
