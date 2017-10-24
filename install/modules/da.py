@@ -4,7 +4,7 @@ This module contains class for managing governor on DirectAdmin server
 """
 import os
 import sys
-from utilities import grep, exec_command
+from utilities import grep, exec_command, bcolors
 from .base import InstallManager
 
 
@@ -39,13 +39,12 @@ class DirectAdminManager(InstallManager):
         :param version: version to install
         :return: packages list
         """
-        print version
         if version.startswith('mysql'):
             m_type = 'mysql'
         elif version.startswith('mariadb'):
             m_type = 'mariadb'
         else:
-            print 'Unknown database requested!\nOnly official MySQL/MariDB supported'
+            print bcolors.fail('Unknown database requested!\nOnly official MySQL/MariDB supported')
             sys.exit(2)
         num = version.split(m_type)[-1]
         m_version = '{base}.{suffix}'.format(base=num[:-1],
@@ -59,12 +58,12 @@ class DirectAdminManager(InstallManager):
         Use custombuild script to install required version of MySQL/MariaDB
         If custombuild script fails, try parent 'yum install' downloaded packages
         """
-        print 'Use custombuild'
+        print bcolors.info('Use custombuild script')
         res = exec_command('{custombuild} mysql'.format(custombuild=self.CUSTOMBUILD),
                            return_code=True)
         if res != 'yes':
-            print 'custombuild script FAILED to install required MySQL/MariaDB version!'
-            print 'Try to install previously downloaded official packages'
+            print bcolors.fail('custombuild script FAILED to install required MySQL/MariaDB version!')
+            print bcolors.info('Try to install previously downloaded official packages')
             InstallManager.install_packages(self)
 
     def uninstall_mysql(self):
@@ -75,7 +74,7 @@ class DirectAdminManager(InstallManager):
         :return:
         """
         if self.mysql_version['patched']:
-            print 'cl-* packages detected, uninstalling...'
+            print bcolors.warning('cl-* packages detected, uninstalling...')
             InstallManager.uninstall_mysql(self)
         # delete created repo files
         try:
@@ -105,6 +104,4 @@ class DirectAdminManager(InstallManager):
         # enable mysql monitoring
         print 'Activating mysql service'
         exec_command('{custombuild} set_service mysql ON'.format(custombuild=self.CUSTOMBUILD))
-        # recompile php
-        print 'Recompiling PHP'
-        exec_command('{custombuild} php n'.format(custombuild=self.CUSTOMBUILD))
+        print bcolors.warning("Don't forget to recompile PHP, please")

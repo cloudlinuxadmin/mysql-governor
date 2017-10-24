@@ -410,7 +410,13 @@ def exec_command(command, as_string=False, silent=False, return_code=False,
     p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE, cwd=cwd)
     out, err = p.communicate()
-    debug_log("Executed command %s with retcode %d\n" % (command, p.returncode))
+
+    # logging
+    print "Executed command %s with retcode %d" % (command, p.returncode)
+    if out:
+        print '\tSTDOUT\n\t' + '\n\t'.join([x.strip() for x in out.strip().split("\n") if x.strip()])
+    if err:
+        print '\tSTDERR\n\t' + '\n\t'.join([x.strip() for x in err.strip().split("\n") if x.strip()])
 
     if return_code:
         if p.returncode == 0:
@@ -593,6 +599,30 @@ class bcolors(object):
         self.WARNING = ''
         self.FAIL = ''
         self.ENDC = ''
+
+    @classmethod
+    def terminate(cls, msg):
+        return msg + cls.ENDC
+
+    @classmethod
+    def fail(cls, msg):
+        return cls.FAIL + cls.terminate(msg)
+
+    @classmethod
+    def warning(cls, msg):
+        return cls.WARNING + cls.terminate(msg)
+
+    @classmethod
+    def ok(cls, msg):
+        return cls.OKGREEN + cls.terminate(msg)
+
+    @classmethod
+    def info(cls, msg):
+        return cls.OKBLUE + cls.terminate(msg)
+
+    @classmethod
+    def header(cls, msg):
+        return cls.HEADER + cls.terminate(msg)
 
 
 def query_yes_no(question, default=None):

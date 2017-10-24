@@ -8,6 +8,7 @@ import sys
 import time
 import datetime
 import os
+import re
 
 from clcommon import cpapi
 
@@ -26,6 +27,7 @@ class Logger(object):
         self.terminal = sys.stdout
         self.log = open(filename, "a")
         os.chmod(filename, 0o600)
+        self.escape_pattern = re.compile(r"\033(\[[0-9;]*m|\(B)")
 
     def write(self, message):
         """
@@ -33,14 +35,14 @@ class Logger(object):
         :param message:
         """
         self.terminal.write(message)
-        self.log.write(message)
+        self.log.write(self.escape_pattern.sub('', message))
 
     def write_extended(self, message):
         """
         Write message to logfile only
         :param message:
         """
-        self.log.write(message)
+        self.log.write(self.escape_pattern.sub('', message))
 
 
 def build_parser():
@@ -239,9 +241,9 @@ def warn_message():
     """
     Print warning message and sleep 10 sec (for user to make a decision)
     """
-    print bcolors.WARNING + "!!!Before making any changing with database make sure that you have reserve copy of users data!!!" + bcolors.ENDC
-    print bcolors.FAIL + "!!!!!!!!!!!!!!!!!!!!!!!!!!Ctrl+C for cancellation of installation!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" + bcolors.ENDC
-    print bcolors.OKGREEN + "Instruction: how to create whole database backup - " + bcolors.OKBLUE + "http://docs.cloudlinux.com/index.html?backing_up_mysql.html" + bcolors.ENDC
+    print bcolors.warning("!!!Before making any changing with database make sure that you have reserve copy of users data!!!")
+    print bcolors.fail("!!!!!!!!!!!!!!!!!!!!!!!!!!Ctrl+C for cancellation of installation!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+    print bcolors.ok("Instruction: how to create whole database backup - ") + bcolors.info("http://docs.cloudlinux.com/index.html?backing_up_mysql.html")
     time.sleep(10)
 
 
