@@ -4,7 +4,7 @@
 #
 # chkconfig: - 99 01
 # description: db_governor - utility for db usage controlling
-# processname: db_governor
+# processname: db_governor2
 # config: /etc/conatiner/db-governor.xml
 
 # Source function library.
@@ -16,10 +16,10 @@ export G_SLICE
 #G_DEBUG=gc-friendly
 #export G_DEBUG
 
-prog=/usr/sbin/db_governor
-prog_connector=/usr/sbin/mysql_connector
-unf_prog=/usr/sbin/mysql_unfreeze
-pidfile=/var/run/db-governor.pid
+prog=/usr/sbin/db_governor2
+prog_connector=/usr/sbin/mysql_connector2
+unf_prog=/usr/sbin/mysql_unfreeze2
+pidfile=/var/run/db-governor2.pid
 RETVAL=0
 export HOME=/root
 

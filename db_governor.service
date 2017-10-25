@@ -6,13 +6,13 @@ After=syslog.target network.target mysql.service mysqld.service mariadb.service
 Environment="G_SLICE=always-malloc" "HOME=/root"
 Type=notify
 WatchdogSec=240s
-PIDFile=/var/run/db-governor.pid
+PIDFile=/var/run/db-governor2.pid
 Restart=on-failure
 RestartSec=3
 TimeoutSec=10s
 
-ExecStart=/usr/sbin/db_governor
-ExecStopPost=/bin/sh -c "if pgrep db_governor 1>/dev/null; then pkill -SIGTERM db_governor 2>/dev/null; fi"
+ExecStart=/usr/sbin/db_governor2
+ExecStopPost=/bin/sh -c "if pgrep db_governor2 1>/dev/null; then pkill -SIGTERM db_governor2 2>/dev/null; fi"
 
 [Install]
 WantedBy=multi-user.target

@@ -16,7 +16,7 @@ from modules import InstallManager
 from utilities import bcolors, set_debug, shadow_tracing, set_path_environ, \
     fix_broken_governor_xml_config, patch_init_d_scripts
 
-LOG_FILE_NAME = "/usr/share/lve/dbgovernor/governor_install.log"
+LOG_FILE_NAME = "/usr/share/lve/dbgovernor2/governor_install.log"
 
 
 class Logger(object):
@@ -49,7 +49,7 @@ def build_parser():
     """
     Build CLI parser
     """
-    parser = argparse.ArgumentParser(prog="install-mysql", add_help=True,
+    parser = argparse.ArgumentParser(prog="mysqlgovernor", add_help=True,
                                      description="Use following syntax to "
                                                  "manage DBGOVERNOR install "
                                                  "utility:")
@@ -108,7 +108,7 @@ def build_parser():
                         dest="store_restore", required=False)
     parser.add_argument("--save-files-from-list",
                         help="Save file to storage according to files list "
-                             "/usr/share/lve/dbgovernor/list_problem_files.txt",
+                             "/usr/share/lve/dbgovernor2/list_problem_files.txt",
                         dest="store_list_files", action="store_true",
                         default=False)
     parser.add_argument("--restore-all-files",

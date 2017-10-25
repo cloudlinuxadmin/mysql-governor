@@ -8,9 +8,10 @@
 
 %define __python /opt/alt/python27/bin/python2.7
 %global __os_install_post %(echo '%{__os_install_post}' | sed -e 's!/usr/lib[^[:space:]]*/brp-python-bytecompile[[:space:]].*$!!g')
+%global governor_path /usr/share/lve/dbgovernor2
 
 
-Name: governor-mysql
+Name: governor-mysql2
 Version: %{g_version}
 Release: %{g_release}%{?dist}.cloudlinux
 Summary: DB control utilities
@@ -85,7 +86,7 @@ cd -
 
 
 %install
-%{__rm} -rf $RPM_BUILD_ROOT
+%{__rm} -rf %{buildroot}
 
 if [ -e autoconf ]; then
 # Yuck. We're using autoconf 2.1x.
@@ -93,81 +94,73 @@ if [ -e autoconf ]; then
 fi
 
 cd install
-make DESTDIR=$RPM_BUILD_ROOT install
+make DESTDIR=%{buildroot} install
 cd -
-mkdir -p $RPM_BUILD_ROOT/var/lve/dbgovernor/
-mkdir -p $RPM_BUILD_ROOT/var/lve/dbgovernor-store/
+mkdir -p %{buildroot}/var/lve/dbgovernor2/
+mkdir -p %{buildroot}/var/lve/dbgovernor2-store/
 
-mkdir -p $RPM_BUILD_ROOT%{_sbindir}/
-mkdir -p $RPM_BUILD_ROOT%{_libdir}/
-mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/container/
-mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/
-mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/modules
-mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts
-mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils
-mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/tmp
-mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/storage
-mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/history
-mkdir -p $RPM_BUILD_ROOT%{_libdir}/mysql
-mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/conf.d
-mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig
+mkdir -p %{buildroot}%{_sbindir}/
+mkdir -p %{buildroot}%{_libdir}/
+mkdir -p %{buildroot}%{_sysconfdir}/container/
+mkdir -p %{buildroot}%{governor_path}/
+mkdir -p %{buildroot}%{governor_path}/modules
+mkdir -p %{buildroot}%{governor_path}/scripts
+mkdir -p %{buildroot}%{governor_path}/utils
+mkdir -p %{buildroot}%{governor_path}/tmp
+mkdir -p %{buildroot}%{_sysconfdir}/conf.d
+mkdir -p %{buildroot}%{_sysconfdir}/sysconfig
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
 # install systemd unit files and scripts for handling server startup
 mkdir -p ${RPM_BUILD_ROOT}%{_unitdir}
-install -m 644 db_governor.service ${RPM_BUILD_ROOT}%{_unitdir}/
-mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/systemd/system/mysql.service.d
-mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/systemd/system/mysqld.service.d
-mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/systemd/system/mariadb.service.d
-install -D -m 644 script/governor.conf $RPM_BUILD_ROOT%{_sysconfdir}/systemd/system/mariadb.service.d/
-install -D -m 644 script/governor.conf $RPM_BUILD_ROOT%{_sysconfdir}/systemd/system/mysqld.service.d/
-install -D -m 644 script/governor.conf $RPM_BUILD_ROOT%{_sysconfdir}/systemd/system/mysql.service.d/
+install -m 644 db_governor.service ${RPM_BUILD_ROOT}%{_unitdir}/db_governor2.service
+mkdir -p %{buildroot}%{_sysconfdir}/systemd/system/mysql.service.d
+mkdir -p %{buildroot}%{_sysconfdir}/systemd/system/mysqld.service.d
+mkdir -p %{buildroot}%{_sysconfdir}/systemd/system/mariadb.service.d
+install -D -m 644 script/governor.conf %{buildroot}%{_sysconfdir}/systemd/system/mariadb.service.d/
+install -D -m 644 script/governor.conf %{buildroot}%{_sysconfdir}/systemd/system/mysqld.service.d/
+install -D -m 644 script/governor.conf %{buildroot}%{_sysconfdir}/systemd/system/mysql.service.d/
 %else
-mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/
-install -D -m 755 script/db_governor $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/
+mkdir -p %{buildroot}%{_sysconfdir}/rc.d/init.d/
+install -D -m 755 script/db_governor %{buildroot}%{_sysconfdir}/rc.d/init.d/db_governor2
 %endif
 
-install -D -m 755 bin/db_governor $RPM_BUILD_ROOT%{_sbindir}/
-install -D -m 755 bin/dbtop $RPM_BUILD_ROOT%{_sbindir}/
-install -D -m 755 bin/mysql_unfreeze $RPM_BUILD_ROOT%{_sbindir}/
-install -D -m 755 bin/dbctl $RPM_BUILD_ROOT%{_sbindir}/
-install -D -m 600 db-governor.xml $RPM_BUILD_ROOT%{_sysconfdir}/container/mysql-governor.xml
-install -D -m 755 lib/libgovernor.so $RPM_BUILD_ROOT%{_libdir}/libgovernor.so.%{version} 
-ln -fs libgovernor.so.%{version} $RPM_BUILD_ROOT%{_libdir}/libgovernor.so
-install -D -m 755 lib/libgovernorld.so $RPM_BUILD_ROOT%{_libdir}/libgovernorld.so.%{version} 
-ln -fs libgovernorld.so.%{version} $RPM_BUILD_ROOT%{_libdir}/libgovernorld.so
+install -D -m 755 bin/db_governor %{buildroot}%{_sbindir}/db_governor2
+install -D -m 755 bin/dbtop %{buildroot}%{_sbindir}/dbtop2
+install -D -m 755 bin/mysql_unfreeze %{buildroot}%{_sbindir}/mysql_unfreeze2
+install -D -m 755 bin/dbctl %{buildroot}%{_sbindir}/dbctl2
+#install -D -m 600 db-governor.xml %{buildroot}%{_sysconfdir}/container/mysql-governor.xml
+install -D -m 755 lib/libgovernor.so %{buildroot}%{_libdir}/libgovernor2.so.%{version}
+ln -fs libgovernor2.so.%{version} %{buildroot}%{_libdir}/libgovernor2.so
+install -D -m 755 lib/libgovernorld.so %{buildroot}%{_libdir}/libgovernorld.so.%{version} 
+ln -fs libgovernorld.so.%{version} %{buildroot}%{_libdir}/libgovernorld.so
 
+install -D -m 755 install/scripts/dbgovernor_map %{buildroot}%{governor_path}/scripts/dbgovernor_map
+install -D -m 755 install/scripts/dbgovernor_map.py %{buildroot}%{governor_path}/scripts/dbgovernor_map.py
 
+install -D -m 600 install/list_problem_files.txt %{buildroot}%{governor_path}/
 
-#install utility
+ln -s ../scripts/dbgovernor_map %{buildroot}%{governor_path}/utils/dbgovernor_map
 
-install -D -m 755 install/scripts/dbgovernor_map $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/dbgovernor_map
-install -D -m 755 install/scripts/dbgovernor_map.py $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/dbgovernor_map.py
-
-install -D -m 600 install/list_problem_files.txt $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/
-
-ln -s ../scripts/dbgovernor_map $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/dbgovernor_map
-
-install -D -m 644 script/mysql $RPM_BUILD_ROOT%{_sysconfdir}/conf.d/mysql
-install -D -m 644 script/mysql $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/mysqld
-install -D -m 644 script/mysql $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/mysql
-install -D -m 644 script/mysql $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/mariadb
+install -D -m 644 script/mysql %{buildroot}%{_sysconfdir}/conf.d/mysql
+install -D -m 644 script/mysql %{buildroot}%{_sysconfdir}/sysconfig/mysqld
+install -D -m 644 script/mysql %{buildroot}%{_sysconfdir}/sysconfig/mysql
+install -D -m 644 script/mysql %{buildroot}%{_sysconfdir}/sysconfig/mariadb
 
 #install cron utility
-mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/cron.d/
-install -D -m 644 cron/lvedbgovernor-utils-cron $RPM_BUILD_ROOT%{_sysconfdir}/cron.d/
+mkdir -p %{buildroot}%{_sysconfdir}/cron.d/
+install -D -m 644 cron/lvedbgovernor-utils-cron %{buildroot}%{_sysconfdir}/cron.d/lvedbgovernor2-utils-cron
 
-touch $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/tmp/INFO
-echo "CloudLinux" > $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/tmp/INFO
-mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/plugins
-install -D -m 755 lib/libgovernorplugin3.so $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/plugins/libgovernorplugin3.so
-install -D -m 755 lib/libgovernorplugin4.so $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/plugins/libgovernorplugin4.so
+#install plugins
+mkdir -p %{buildroot}%{governor_path}/plugins
+install -D -m 755 lib/libgovernorplugin3.so %{buildroot}%{governor_path}/plugins/libgovernorplugin3.so
+install -D -m 755 lib/libgovernorplugin4.so %{buildroot}%{governor_path}/plugins/libgovernorplugin4.so
 
 
 %clean
-[ "$RPM_BUILD_ROOT" != "/" ] && rm -rf "$RPM_BUILD_ROOT"
+[ "%{buildroot}" != "/" ] && rm -rf "%{buildroot}"
 
 %pre
-/sbin/service db_governor stop > /dev/null 2>&1
+/sbin/service db_governor2 stop > /dev/null 2>&1
 rs=$(pgrep governor)
 if [ ! -z "$rs" ];then
     kill $(pgrep governor)
@@ -178,16 +171,16 @@ fi
 #if this KEY will change - need to stop mysql before governor installation
 gKEY=`echo -n "%{g_key_library}"`
 if [ $1 -eq 1 ] ; then
-    touch /etc/container/dbgovernor-libcheck
-    echo "$gKEY" > /etc/container/dbgovernor-libcheck
+    touch /etc/container/dbgovernor2-libcheck
+    echo "$gKEY" > /etc/container/dbgovernor2-libcheck
 fi
 #if update check KEY
 if [ $1 -eq 2 ] ; then
-   if [ -e "/etc/container/dbgovernor-libcheck" ]; then
-        rKEY=`cat /etc/container/dbgovernor-libcheck | tr -d '\n'`
+   if [ -e "/etc/container/dbgovernor2-libcheck" ]; then
+        rKEY=`cat /etc/container/dbgovernor2-libcheck | tr -d '\n'`
         if [ "$rKEY" != "$gKEY" ]; then
-            touch /etc/container/dbgovernor-libcheck
-            echo "U" > /etc/container/dbgovernor-libcheck
+            touch /etc/container/dbgovernor2-libcheck
+            echo "U" > /etc/container/dbgovernor2-libcheck
             echo "Stop MySQL for safe installation"
             if [ -e /usr/lib/systemd/system/mysql.service -a -e /usr/bin/systemctl ]; then
                 systemctl stop mysql.service
@@ -202,8 +195,8 @@ if [ $1 -eq 2 ] ; then
             fi
         fi
    else
-        touch /etc/container/dbgovernor-libcheck
-        echo "U" > /etc/container/dbgovernor-libcheck
+        touch /etc/container/dbgovernor2-libcheck
+        echo "U" > /etc/container/dbgovernor2-libcheck
         echo "Stop MySQL for safe installation"
         if [ -e /usr/lib/systemd/system/mysql.service -a -e /usr/bin/systemctl ]; then
             systemctl stop mysql.service
@@ -221,8 +214,8 @@ fi
 
 %post
 if [ $1 -gt 0 ] ; then
-    if [ -e "/usr/share/lve/dbgovernor/mysqlgovernor.py" ]; then
-        /usr/share/lve/dbgovernor/mysqlgovernor.py --fs-suid
+    if [ -e "/usr/share/lve/dbgovernor2/mysqlgovernor.py" ]; then
+        /usr/share/lve/dbgovernor2/mysqlgovernor.py --fs-suid
     fi
 fi
 
@@ -233,8 +226,8 @@ if [ $1 -gt 0 ]; then
 fi
 %else
 if [ $1 = 1 ]; then
-    /sbin/chkconfig --add db_governor
-    /sbin/chkconfig --level 35 db_governor on
+    /sbin/chkconfig --add db_governor2
+    /sbin/chkconfig --level 35 db_governor2 on
 fi
 %endif
 
@@ -242,13 +235,13 @@ fi
 %if 0%{?rhel} >= 7
 if [ $1 -eq 0 ]; then
     # Package removal, not upgrade
-    systemctl --no-reload disable db_governor.service >/dev/null 2>&1 || :
-    systemctl stop db_governor.service >/dev/null 2>&1 || :
+    systemctl --no-reload disable db_governor2.service >/dev/null 2>&1 || :
+    systemctl stop db_governor2.service >/dev/null 2>&1 || :
 fi
 %else
 if [ $1 -eq 0 ]; then
-    /sbin/service db_governor stop > /dev/null 2>&1
-    /sbin/chkconfig --del db_governor
+    /sbin/service db_governor2 stop > /dev/null 2>&1
+    /sbin/chkconfig --del db_governor2
 fi
 %endif
 if [ $1 -eq 1 -o $1 -eq 0 ] ; then
@@ -263,14 +256,14 @@ rm -rf /%{_libdir}/liblve.so.1
 ln -s /%{_libdir}/liblve.so.0.9.0 /%{_libdir}/liblve.so.1
 /sbin/ldconfig
 
-if [ -e /usr/share/lve/dbgovernor/mysqlgovernor.py ]; then
-    /usr/share/lve/dbgovernor/mysqlgovernor.py --correct-cloud-version
+if [ -e /usr/share/lve/dbgovernor2/mysqlgovernor.py ]; then
+    /usr/share/lve/dbgovernor2/mysqlgovernor.py --correct-cloud-version
 fi
 
 #check if in signal file saved U, than need to start mysql
 gKEY=`echo -n "%{g_key_library}"`
-if [ -e "/etc/container/dbgovernor-libcheck" ]; then
-    rKEY=`cat /etc/container/dbgovernor-libcheck | tr -d '\n'`
+if [ -e "/etc/container/dbgovernor2-libcheck" ]; then
+    rKEY=`cat /etc/container/dbgovernor2-libcheck | tr -d '\n'`
         if [ "$rKEY" == "U" ]; then
             echo "Start MySQL for safe installation"
             if [ -e /usr/lib/systemd/system/mysql.service -a -e /usr/bin/systemctl ]; then
@@ -309,7 +302,7 @@ if [ -e "/etc/container/dbgovernor-libcheck" ]; then
                     echo "MySQL already started"
                 fi
             fi
-            echo "$gKEY" > /etc/container/dbgovernor-libcheck
+            echo "$gKEY" > /etc/container/dbgovernor2-libcheck
         fi
 fi
 
@@ -318,25 +311,20 @@ ldconfig
 
 if [ $1 -eq 0 ]; then
 
-if [ -e /usr/share/lve/dbgovernor/mysqlgovernor.py ]; then
-    if [ ! -e /usr/share/lve/dbgovernor/MYSQLG-178 ]; then
-        /usr/share/lve/dbgovernor/mysqlgovernor.py --fix-config
-        touch /usr/share/lve/dbgovernor/MYSQLG-178
+if [ -e /usr/share/lve/dbgovernor2/mysqlgovernor.py ]; then
+    if [ ! -e /usr/share/lve/dbgovernor2/MYSQLG-178 ]; then
+        /usr/share/lve/dbgovernor2/mysqlgovernor.py --fix-config
+        touch /usr/share/lve/dbgovernor2/MYSQLG-178
     fi
 fi
 
-#Here should be: /usr/share/lve/dbgovernor/mysqlgovernor.py --check-mysql-plugin
-
 %if 0%{?rhel} >= 7
 /bin/systemctl daemon-reload >/dev/null 2>&1 || :
-/bin/systemctl restart db_governor.service >/dev/null 2>&1 || :
+/bin/systemctl restart db_governor2.service >/dev/null 2>&1 || :
 %else
-/etc/init.d/db_governor restart
+/etc/init.d/db_governor2 restart
 %endif
 fi
-echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
-echo "!!!Before making any changing with database make sure that you have reserve copy of users data!!!"
-echo "Instruction: how to create whole database backup - http://docs.cloudlinux.com/index.html?backing_up_mysql.html"
 
 %triggerin -- MariaDB-server, mysql-community-server, MySQL55-server, MySQL56-server
 %if 0%{?rhel} == 6
@@ -345,42 +333,41 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 [ -e /etc/init.d/mysqld.bak ] && rm -rf /etc/init.d/mysqld.bak && echo 'Clean old /etc/init.d/mysqld.bak backup'
 [ -e /etc/init.d/mariadb.bak ] && rm -rf /etc/init.d/mariadb.bak && echo 'Clean old /etc/init.d/mariadb.bak backup'
 # patch init.d scripts
-/usr/share/lve/dbgovernor/mysqlgovernor.py --initd-patch
-/usr/share/lve/dbgovernor/mysqlgovernor.py --update-mysql-plugin
+/usr/share/lve/dbgovernor2/mysqlgovernor.py --initd-patch
+/usr/share/lve/dbgovernor2/mysqlgovernor.py --update-mysql-plugin
 %endif
 
 %files
 %defattr(-,root,root)
 %doc LICENSE.TXT
 
-%{_sbindir}/db_governor
-%{_sbindir}/dbtop
-%{_sbindir}/mysql_unfreeze
-%{_sbindir}/dbctl
-%{_libdir}/libgovernor.so
-%{_libdir}/libgovernor.so.%{version}
+%{_sbindir}/db_governor2
+%{_sbindir}/dbtop2
+%{_sbindir}/dbctl2
+%{_sbindir}/mysql_unfreeze2
+%{_libdir}/libgovernor2.so
+%{_libdir}/libgovernor2.so.%{version}
 %{_libdir}/libgovernorld.so
 %{_libdir}/libgovernorld.so.%{version}
 %config(noreplace) %{_sysconfdir}/container/mysql-governor.xml
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
-%{_unitdir}/db_governor.service
+%{_unitdir}/db_governor2.service
 %{_sysconfdir}/systemd/system/mariadb.service.d/governor.conf
 %{_sysconfdir}/systemd/system/mysqld.service.d/governor.conf
 %{_sysconfdir}/systemd/system/mysql.service.d/governor.conf
 %else
 %{_sysconfdir}/rc.d/init.d/*
 %endif
-/usr/share/lve/dbgovernor/*
-%{_sysconfdir}/cron.d/lvedbgovernor-utils-cron
-/var/lve/dbgovernor
-/var/lve/dbgovernor-store
-%dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
-#%{_libdir}/mysql/governor.so
+%{governor_path}/*
+%dir %{governor_path}/tmp
+%{_sysconfdir}/cron.d/lvedbgovernor2-utils-cron
+/var/lve/dbgovernor2
+/var/lve/dbgovernor2-store
 %config(noreplace) %{_sysconfdir}/conf.d/mysql
 %config(noreplace) %{_sysconfdir}/sysconfig/mysqld
 %config(noreplace) %{_sysconfdir}/sysconfig/mysql
 %config(noreplace) %{_sysconfdir}/sysconfig/mariadb
-/usr/share/lve/dbgovernor/plugins/*
+%{governor_path}/plugins/*
 
 %changelog
 * Sat Aug 26 2017 Daria Kavchuk <dkavchuk@cloudlinux.com>, Alexey Berezhok <aberezhok@cloudlinux.com> 2.0-1

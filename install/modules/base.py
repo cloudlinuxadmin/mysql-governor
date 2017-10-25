@@ -23,12 +23,12 @@ class InstallManager(object):
     Base class with standard methods for any CP
     """
     # installation path
-    SOURCE = "/usr/share/lve/dbgovernor/"
-    PLUGIN_3 = '/usr/share/lve/dbgovernor/plugins/libgovernorplugin3.so'
-    PLUGIN_4 = '/usr/share/lve/dbgovernor/plugins/libgovernorplugin4.so'
+    SOURCE = "/usr/share/lve/dbgovernor2/"
+    PLUGIN_3 = '/usr/share/lve/dbgovernor2/plugins/libgovernorplugin3.so'
+    PLUGIN_4 = '/usr/share/lve/dbgovernor2/plugins/libgovernorplugin4.so'
     PLUGIN_DEST = '%(plugin_path)sgovernor.so'
-    PLUGIN_MD5 = '/usr/share/lve/dbgovernor/plugin.md5'
-    PLUGIN_PATH = '/usr/share/lve/dbgovernor/plugin.dir'
+    PLUGIN_MD5 = '/usr/share/lve/dbgovernor2/plugin.md5'
+    PLUGIN_PATH = '/usr/share/lve/dbgovernor2/plugin.dir'
     MYSQLUSER = ''
     MYSQLPASSWORD = ''
 
@@ -38,7 +38,7 @@ class InstallManager(object):
     }
 
     ALL_NEW_PKGS_LOADED = False
-    RPM_PATH = '/usr/share/lve/dbgovernor/rpms'
+    RPM_PATH = '/usr/share/lve/dbgovernor2/rpms'
 
     @staticmethod
     def factory(cp_name):
@@ -97,8 +97,8 @@ class InstallManager(object):
             print bcolors.warning('No installed MySQL/MariaDB found')
             print bcolors.fail('Cannot install plugin')
             print bcolors.ok('You may use mysqlgovernor.py to install officially supported MySQL/MariaDB: for example')
-            print bcolors.info('\t/usr/share/lve/dbgovernor/mysqlgovernor.py --mysql-version mysql56')
-            print bcolors.info('\t/usr/share/lve/dbgovernor/mysqlgovernor.py --mysql-version mariadb100')
+            print bcolors.info('\t/usr/share/lve/dbgovernor2/mysqlgovernor.py --mysql-version mysql56')
+            print bcolors.info('\t/usr/share/lve/dbgovernor2/mysqlgovernor.py --mysql-version mariadb100')
         else:
             print bcolors.ok('{} {} is installed here'.format(self.mysql_version['mysql_type'],
                                                               self.mysql_version['extended']))
@@ -113,7 +113,7 @@ class InstallManager(object):
                 print bcolors.warning('This is PATCHED {}!'.format(self.mysql_version['mysql_type']))
                 print bcolors.fail('Abort plugin installation')
                 print bcolors.ok('Please, install officially supported MySQL/MariaDB.\nYou may use mysqlgovernor.py for this: for example')
-                print bcolors.info('\t/usr/share/lve/dbgovernor/mysqlgovernor.py --mysql-version {}'.format(self.mysql_version['full']))
+                print bcolors.info('\t/usr/share/lve/dbgovernor2/mysqlgovernor.py --mysql-version {}'.format(self.mysql_version['full']))
             else:
                 print bcolors.ok('Installing plugin...')
                 # copy corresponding plugin to mysql plugins' location
@@ -292,7 +292,7 @@ class InstallManager(object):
             patch_governor_config(self.MYSQLUSER, self.MYSQLPASSWORD)
 
             if exec_command("rpm -qa governor-mysql", True):
-                service("restart", "db_governor")
+                self._governorservice('restart')
                 print "DB-Governor restarted..."
 
     def migrate(self, new_version):
@@ -645,5 +645,5 @@ gpgcheck=1
         :param action:
         :return:
         """
-        service(action, 'db_governor')
+        service(action, 'db_governor2')
         time.sleep(5)

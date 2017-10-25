@@ -33,9 +33,9 @@ __all__ = [
     "get_mysql_log_file", "get_mysql_cnf_value", "makedir_recursive"
 ]
 
-RPM_TEMP_PATH = "/usr/share/lve/dbgovernor/tmp/governor-tmp"
+RPM_TEMP_PATH = "/usr/share/lve/dbgovernor2/tmp/governor-tmp"
 WHITESPACES_REGEX = re.compile(r"\s+")
-TRACE_LOG_FILE = "/usr/share/lve/dbgovernor/install_trace.log"
+TRACE_LOG_FILE = "/usr/share/lve/dbgovernor2/install_trace.log"
 fDEBUG_FLAG = False
 
 
