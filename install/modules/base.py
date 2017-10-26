@@ -73,9 +73,10 @@ class InstallManager(object):
         except Exception:
             print bcolors.warning('Cannot resolve plugin directory. MySQL/MariaDB is not running?')
 
-    def install(self):
+    def install(self, force=False):
         """
         Governor plugin installation
+        :param force: automatically perform migration in case of patched mysql
         """
         if not self.cl_version:
             print bcolors.fail("Unknown system type. Installation aborted")
@@ -111,9 +112,18 @@ class InstallManager(object):
 
             if self.mysql_version['patched']:
                 print bcolors.warning('This is PATCHED {}!'.format(self.mysql_version['mysql_type']))
-                print bcolors.fail('Abort plugin installation')
-                print bcolors.ok('Please, install officially supported MySQL/MariaDB.\nYou may use mysqlgovernor.py for this: for example')
-                print bcolors.info('\t/usr/share/lve/dbgovernor2/mysqlgovernor.py --mysql-version {}'.format(self.mysql_version['full']))
+                if force:
+                    print bcolors.warning('Initiating migration to official {}!'.format(self.mysql_version['full']))
+                    print bcolors.info('Similarly to /usr/share/lve/dbgovernor2/mysqlgovernor.py --mysql-version {}'.format(self.mysql_version['full']))
+                    self.migrate(self.mysql_version['full'])
+                    self.mysql_version = self._check_mysql_version()
+                    self.install()
+                else:
+                    print bcolors.fail('Abort plugin installation')
+                    print bcolors.ok('Please, install officially supported MySQL/MariaDB.\nYou may use mysqlgovernor.py for this: for example')
+                    print bcolors.info('\t/usr/share/lve/dbgovernor2/mysqlgovernor.py --mysql-version {}'.format(self.mysql_version['full']))
+                    print bcolors.ok('Alternatively you may try force installation mode for automatic migration and further plugin installation:'.format(self.mysql_version['full']))
+                    print bcolors.info('\t/usr/share/lve/dbgovernor2/mysqlgovernor.py --install --force'.format(self.mysql_version['full']))
             else:
                 print bcolors.ok('Installing plugin...')
                 # copy corresponding plugin to mysql plugins' location

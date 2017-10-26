@@ -85,7 +85,8 @@ def build_parser():
                         dest="fix_cpanel_hooks", action="store_true",
                         default=False)
     parser.add_argument("--force",
-                        help="Don`t exit if percona installation found",
+                        help="Automatically perform migration to official "
+                             "MySQL/MariaDB versions if CloudLinux packages found",
                         dest="force", action="store_true", default=False)
     parser.add_argument("-u", "--upgrade",
                         help="Option is deprecated. Use `yum update` instead",
@@ -95,8 +96,6 @@ def build_parser():
                         dest="update_mysql_beta", action="store_true",
                         default=False)
     parser.add_argument("--fs-suid", help="Helper utility", dest="fs_suid",
-                        action="store_true", default=False)
-    parser.add_argument("--yes", help="Install without confirm", dest="yes",
                         action="store_true", default=False)
     parser.add_argument("--list-saved-files",
                         help="Show list of saved MySQL old files in storage",
@@ -182,7 +181,7 @@ def main(argv):
         set_debug(True)
 
     if opts.install:
-        manager.install()
+        manager.install(opts.force)
     elif opts.update_plugin:
         manager.update_plugin()
     elif opts.install_beta:
