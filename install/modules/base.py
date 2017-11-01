@@ -662,6 +662,8 @@ class InstallManager(object):
                 packages += ["numactl-devel%s" % arch, "numactl%s" % arch, "mysqlclient18"]
         elif sql_version.startswith("mariadb"):
             packages += ["mysqlclient16", "mysqlclient15"]
+            if sql_version == 'mariadb102':
+                packages += ["mysqlclient18"]
         elif sql_version.startswith("percona"):
             packages += ["mysqlclient16", "mysqlclient15"]
 
