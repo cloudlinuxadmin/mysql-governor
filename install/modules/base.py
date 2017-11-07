@@ -3,12 +3,12 @@
 This module contains base class for managing governor on all supported
 control panels
 """
+import hashlib
 import os
-import sys
 import re
 import shutil
+import sys
 import time
-import hashlib
 import urllib2
 from distutils.version import LooseVersion
 
@@ -104,10 +104,9 @@ class InstallManager(object):
             print bcolors.ok('{} {} is installed here'.format(self.mysql_version['mysql_type'],
                                                               self.mysql_version['extended']))
             if LooseVersion(self.mysql_version['extended']) < LooseVersion(self.supported[self.mysql_version['mysql_type']]):
-                print bcolors.fail("{t} {v} is unsupported by governor plugin.")
-                print bcolors.info("Support starts from {s}".format(t=self.mysql_version['mysql_type'],
-                                                                    v=self.mysql_version['extended'],
-                                                                    s=self.supported[self.mysql_version['mysql_type']]))
+                print bcolors.fail("{t} {v} is unsupported by governor plugin.".format(t=self.mysql_version['mysql_type'],
+                                                                                       v=self.mysql_version['extended']))
+                print bcolors.info("Support starts from {s}".format(s=self.supported[self.mysql_version['mysql_type']]))
                 sys.exit(2)
 
             if self.mysql_version['patched']:
@@ -122,8 +121,8 @@ class InstallManager(object):
                     print bcolors.fail('Abort plugin installation')
                     print bcolors.ok('Please, install officially supported MySQL/MariaDB.\nYou may use mysqlgovernor.py for this: for example')
                     print bcolors.info('\t/usr/share/lve/dbgovernor2/mysqlgovernor.py --mysql-version {}'.format(self.mysql_version['full']))
-                    print bcolors.ok('Alternatively you may try force installation mode for automatic migration and further plugin installation:'.format(self.mysql_version['full']))
-                    print bcolors.info('\t/usr/share/lve/dbgovernor2/mysqlgovernor.py --install --force'.format(self.mysql_version['full']))
+                    print bcolors.ok('Alternatively you may try force installation mode for automatic migration and further plugin installation:')
+                    print bcolors.info('\t/usr/share/lve/dbgovernor2/mysqlgovernor.py --install --force')
             else:
                 print bcolors.ok('Installing plugin...')
                 # copy corresponding plugin to mysql plugins' location
@@ -320,6 +319,13 @@ class InstallManager(object):
         :param new_version: version to migrate to
         :return:
         """
+        if not self.mysql_version:
+            print bcolors.fail('Cannot analyze migration possibilities because of undetected installed MySQL/MariaDB version')
+            print bcolors.ok('If you surely have NO MySQL/MariaDB installed, you may try fresh migration mode with desired MySQL/MariaDB version, for example:')
+            print bcolors.info('\t/usr/share/lve/dbgovernor2/mysqlgovernor.py --mysql-version mysql56 --fresh')
+            print bcolors.info('\t/usr/share/lve/dbgovernor2/mysqlgovernor.py --mysql-version mariadb100 --fresh')
+            return False
+
         migration_table = {
             'mysql55': ('mysql56', 'mariadb55'),
             'mysql56': ('mysql57', 'mariadb100'),
@@ -329,17 +335,23 @@ class InstallManager(object):
             'mariadb101': ('mysql57', 'mariadb102'),
             'mariadb102': ()
         }
-        if not self.mysql_version or self.mysql_version['patched']:
+        allowed = migration_table.get(self.mysql_version['full'])
+        if allowed is None:
+            print bcolors.fail('Installed version {} is not defined in migration table'.format(self.mysql_version['full']))
+            return False
+        elif self.mysql_version['patched']:
+            print bcolors.ok('Starting migration from patched {old} to official {new}'.format(old=self.mysql_version['full'],
+                                                                                              new=new_version))
             return True
         elif new_version == self.mysql_version['full']:
             print bcolors.ok('No need to migrate, you have {} already installed'.format(new_version))
             return False
         else:
-            if new_version in migration_table[self.mysql_version['full']]:
+            if new_version in allowed:
                 print bcolors.ok('Starting migration to {}'.format(new_version))
             else:
-                print bcolors.fail('You selected either downgrade, or upgrade over a generation, which are not allowed both.')
-            return new_version in migration_table[self.mysql_version['full']]
+                print bcolors.fail('Requested either downgrade, or upgrade over a generation, which are not allowed both.')
+            return new_version in allowed
 
     def install_official(self, version):
         """

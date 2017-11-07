@@ -56,7 +56,8 @@ class DirectAdminManager(InstallManager):
     def install_packages(self):
         """
         Use custombuild script to install required version of MySQL/MariaDB
-        If custombuild script fails, try parent 'yum install' downloaded packages
+        If custombuild script fails, try once more to remove existing packages
+        and then parent 'yum install' downloaded packages
         """
         print bcolors.info('Use custombuild script')
         res = exec_command('{custombuild} mysql'.format(custombuild=self.CUSTOMBUILD),
@@ -64,6 +65,7 @@ class DirectAdminManager(InstallManager):
         if res != 'yes':
             print bcolors.fail('custombuild script FAILED to install required MySQL/MariaDB version!')
             print bcolors.info('Try to install previously downloaded official packages')
+            InstallManager.uninstall_mysql(self)
             InstallManager.install_packages(self)
 
     def uninstall_mysql(self):
