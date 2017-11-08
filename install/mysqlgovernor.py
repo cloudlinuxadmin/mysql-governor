@@ -88,6 +88,10 @@ def build_parser():
                         help="Automatically perform migration to official "
                              "MySQL/MariaDB versions if CloudLinux packages found",
                         dest="force", action="store_true", default=False)
+    parser.add_argument("--fresh",
+                        help="Automatic installation of requested official "
+                             "MySQL/MariaDB for fresh systems with no DB",
+                        dest="fresh", action="store_true", default=False)
     parser.add_argument("-u", "--upgrade",
                         help="Option is deprecated. Use `yum update` instead",
                         dest="upgrade", action="store_true", default=False)
@@ -190,7 +194,7 @@ def main(argv):
         manager.delete()
     elif opts.mysql_version:
         # print "Option is deprecated."
-        manager.migrate(opts.mysql_version)
+        manager.migrate(opts.mysql_version, opts.fresh)
     elif opts.dbupdate:
         manager.update_user_map_file()
     elif opts.fix_cpanel_hooks:

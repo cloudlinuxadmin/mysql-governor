@@ -304,11 +304,15 @@ class InstallManager(object):
                 self._governorservice('restart')
                 print "DB-Governor restarted..."
 
-    def migrate(self, new_version):
+    def migrate(self, new_version, fresh_installation=False):
         """
         Perform migration to given new_version
+        :param fresh_installation: flag to skip checking migration possibilities
+                                   in case if no mysql is installed
         """
-        if self.is_migration_possible(new_version):
+        if not self.mysql_version and fresh_installation:
+            self.install_official(new_version)
+        elif self.is_migration_possible(new_version):
             self.install_official(new_version)
         else:
             print bcolors.fail('Unable to perform migration.')
