@@ -139,7 +139,7 @@ function installDb(){
 	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqlmeta/cl-mariadb-10.2-common.repo
 	  yum install libaio --nogpgcheck -y
 	  yum install cl-MariaDB-meta cl-MariaDB-meta-client cl-MariaDB-meta-devel libaio --nogpgcheck -y
-	  yum install -y mysqlclient15 mysqlclient16 mysqlclient18 --enablerepo=mysqclient --disableexcludes=all
+	  yum install -y mysqlclient15 mysqlclient16 mysqlclient18-compat --enablerepo=mysqclient --disableexcludes=all
 	  enableMariaDB
 	fi
 
@@ -269,7 +269,7 @@ function installDbTest(){
 	  wget -O /etc/yum.repos.d/cl-mysql.repo  http://repo.cloudlinux.com/other/$CL/mysqlmeta/cl-mariadb-10.2-common.repo
 	  yum install libaio --nogpgcheck -y
 	  yum install cl-MariaDB-meta cl-MariaDB-meta-client cl-MariaDB-meta-devel libaio --nogpgcheck -y --enablerepo=cloudlinux-updates-testing
-	  yum install -y mysqlclient15 mysqlclient16 mysqlclient18 --enablerepo=mysqclient --disableexcludes=all
+	  yum install -y mysqlclient15 mysqlclient16 mysqlclient18-compat --enablerepo=mysqclient --disableexcludes=all
 	fi
 
 	if [ "$SQL_VERSION" == "percona56" ]; then
