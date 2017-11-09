@@ -15,7 +15,7 @@ from distutils.version import LooseVersion
 sys.path.append("../")
 
 from utilities import get_cl_num, exec_command, exec_command_out, service, \
-    check_file, patch_governor_config, remove_packages, bcolors
+    check_file, patch_governor_config, remove_packages, bcolors, query_yes_no
 
 
 class InstallManager(object):
@@ -67,13 +67,15 @@ class InstallManager(object):
         self.cl_version = get_cl_num()
         self.cp_name = cp_name
         self.get_mysql_user()
+        self.installed_pkgs = None
         self.mysql_version = self._check_mysql_version()
+        self.auto_confirm = False
         try:
             self.installed_plugin = self.find_plugin()
         except Exception:
             print bcolors.warning('Cannot resolve plugin directory. MySQL/MariaDB is not running?')
 
-    def install(self, force=False):
+    def install(self, force=False, pkgs_yes=False):
         """
         Governor plugin installation
         :param force: automatically perform migration in case of patched mysql
@@ -114,7 +116,7 @@ class InstallManager(object):
                 if force:
                     print bcolors.warning('Initiating migration to official {}!'.format(self.mysql_version['full']))
                     print bcolors.info('Similarly to /usr/share/lve/dbgovernor2/mysqlgovernor.py --mysql-version {}'.format(self.mysql_version['full']))
-                    self.migrate(self.mysql_version['full'])
+                    self.migrate(self.mysql_version['full'], auto_confirm=pkgs_yes)
                     self.mysql_version = self._check_mysql_version()
                     self.install()
                 else:
@@ -252,22 +254,46 @@ class InstallManager(object):
                 patched: cll-lve or not (e.g. True/False)
             }
         """
-        try:
-            version_string = exec_command('mysql --version')
-            version_info = re.findall(r'(?<=Distrib\s)[^,]+', version_string[0])
-            parts = version_info[0].split('-')
-            version = {
-                'short': '.'.join(parts[0].split('.')[:-1]),
-                'extended': parts[0],
-                'mysql_type': parts[1].lower() if len(parts) > 1 else 'mysql'
-            }
-            version.update({'full': '{m_type}{m_version}'.format(m_type=version['mysql_type'],
-                                                                 m_version=version['short'].replace('.', ''))})
-            result = exec_command('/usr/bin/strings /usr/sbin/mysqld | grep my_pthread_lvemutex_unlock | wc -l')
-            version.update({'patched': result[0] == '1'})
-        except Exception:
+        self.installed_pkgs = self._get_installed_packages()
+        # no installed packages found ==> no need in version retrieving,
+        # return empty version data
+        if not self.installed_pkgs:
+            print bcolors.warning('No installed MySQL/MariaDB packages found')
             return {}
-        return version
+
+        # retrieve type data
+        server_pkg = filter(lambda x: 'server' in x, self.installed_pkgs)
+        try:
+            mysql_type = re.findall(r'(?<=^cl-)[A-Za-z]+(?=\d+)|^[A-Za-z]{3,}(?=-)', server_pkg[0])[0]
+        except IndexError:
+            print bcolors.fail('Failed to retrieve mysql type data')
+            return {}
+
+        print bcolors.ok('Type retrieved: {}'.format(mysql_type))
+
+        # retrieve version data
+        version_string = exec_command('mysql --version')
+        try:
+            version = re.findall(r'(?<=Distrib\s)[0-9\.]+', version_string[0])[0]
+        except IndexError:
+            print bcolors.fail('Failed to retrieve mysql version data')
+            return {}
+
+        short_version = '.'.join(version.split('.')[:-1])
+        print bcolors.ok('Version retrieved: {}'.format(version))
+
+        # retrieve patch info
+        patch_result = exec_command('/usr/bin/strings /usr/sbin/mysqld | grep my_pthread_lvemutex_unlock | wc -l')
+        print bcolors.ok('Patch retrieved: {}'.format(patch_result[0] == '1'))
+
+        return {
+            'mysql_type': mysql_type.lower(),
+            'short': short_version,
+            'extended': version,
+            'full': '{m_type}{m_version}'.format(m_type=mysql_type.lower(),
+                                                 m_version=short_version.replace('.', '')),
+            'patched': patch_result[0] == '1'
+        }
 
     def plugin4(self):
         """
@@ -304,12 +330,15 @@ class InstallManager(object):
                 self._governorservice('restart')
                 print "DB-Governor restarted..."
 
-    def migrate(self, new_version, fresh_installation=False):
+    def migrate(self, new_version, fresh_installation=False, auto_confirm=False):
         """
         Perform migration to given new_version
         :param fresh_installation: flag to skip checking migration possibilities
                                    in case if no mysql is installed
+        :param auto_confirm: flag to automatically agree to packages
+                             manipulations and skip confirmation step
         """
+        self.auto_confirm = auto_confirm
         if not self.mysql_version and fresh_installation:
             self.install_official(new_version)
         elif self.is_migration_possible(new_version):
@@ -344,18 +373,19 @@ class InstallManager(object):
             print bcolors.fail('Installed version {} is not defined in migration table'.format(self.mysql_version['full']))
             return False
         elif self.mysql_version['patched']:
-            print bcolors.ok('Starting migration from patched {old} to official {new}'.format(old=self.mysql_version['full'],
-                                                                                              new=new_version))
-            return True
+            if new_version in allowed or new_version == self.mysql_version['full']:
+                print bcolors.ok('Starting migration from patched {old} to official {new}'.format(old=self.mysql_version['full'],
+                                                                                                  new=new_version))
+                return True
         elif new_version == self.mysql_version['full']:
             print bcolors.ok('No need to migrate, you have {} already installed'.format(new_version))
             return False
+
+        if new_version in allowed:
+            print bcolors.ok('Starting migration to {}'.format(new_version))
         else:
-            if new_version in allowed:
-                print bcolors.ok('Starting migration to {}'.format(new_version))
-            else:
-                print bcolors.fail('Requested either downgrade, or upgrade over a generation, which are not allowed both.')
-            return new_version in allowed
+            print bcolors.fail('Requested either downgrade, or upgrade over a generation, which are not allowed both.')
+        return new_version in allowed
 
     def install_official(self, version):
         """
@@ -364,12 +394,13 @@ class InstallManager(object):
         :param version: version to install
         """
         # preparation
-        self._before_install_mysql()
         pkgs = self.prepare(version)
         # download packages
         self.ALL_NEW_PKGS_LOADED = self.download_packages(pkgs)
         # uninstall old and install new
         if self.ALL_NEW_PKGS_LOADED:
+            self.user_confirmation()
+            self._before_install_mysql(version)
             if self.mysql_version:
                 self.uninstall_mysql()
             self.install_packages()
@@ -384,7 +415,7 @@ class InstallManager(object):
         Install downloaded packages
         :return:
         """
-        print 'Installing new packages:\n\t--> {pkgs}'.format(pkgs='\n\t--> '.join(os.listdir(self.RPM_PATH)))
+        print bcolors.ok('Installing new packages:\n\t--> {pkgs}'.format(pkgs='\n\t--> '.join(os.listdir(self.RPM_PATH))))
         exec_command('yum install -y *', cwd=self.RPM_PATH)
 
     def download_packages(self, names):
@@ -568,10 +599,26 @@ gpgcheck=1
         """
         Remove existing MySQL/MariaDB (for migration purposes)
         """
-        print bcolors.warning('Going to uninstall existing MySQL/MariaDB --%s--' % self.mysql_version['full'])
-        installed_pkgs = self._get_installed_packages()
-        print 'These packages are going to be removed:\n\t--> {}'.format('\n\t--> '.join(installed_pkgs))
-        remove_packages(installed_pkgs)
+        print bcolors.fail('Removing packages:\n\t--> {}'.format('\n\t--> '.join(self.installed_pkgs)))
+        remove_packages(self.installed_pkgs)
+
+    def user_confirmation(self):
+        """
+        Ask user to confirm mysql reinstall|install and wait for response
+        Exit immediately in case of refuse
+        """
+        if self.installed_pkgs:
+            print bcolors.info('These packages are going to be removed:\n\t--> {}'.format('\n\t--> '.join(self.installed_pkgs)))
+        self.give_new_pkg_info()
+        if not self.auto_confirm:
+            if not query_yes_no("Continue?"):
+                sys.exit('Exiting by user request')
+
+    def give_new_pkg_info(self):
+        """
+        Print information about packages to install
+        """
+        print bcolors.info('These packages are going to be installed:\n\t--> {pkgs}'.format(pkgs='\n\t--> '.join(os.listdir(self.RPM_PATH))))
 
     @staticmethod
     def _get_installed_packages():
@@ -625,7 +672,7 @@ gpgcheck=1
         if os.path.exists('/usr/bin/mysql_fix_privilege_tables'):
             exec_command_out(cmd_fix)
 
-    def _before_install_mysql(self):
+    def _before_install_mysql(self, version=None):
         """
         Actions, performed prior to MySQL/MariaDB installation process
         """

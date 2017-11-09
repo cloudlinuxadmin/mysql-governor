@@ -57,9 +57,8 @@ def build_parser():
                         dest="verbose", action="store_true", default=False)
     parser.add_argument("--mysql-version",
                         help="select MySQL version for db-governor. "
-                             "Available mysql types: auto, mysql50, mysql51, "
-                             "mysql55, mysql56, mysql57, mariadb55, "
-                             "mariadb100, mariadb101, mariadb102, percona56",
+                             "Available mysql types: mysql55, mysql56, mysql57,"
+                             " mariadb55, mariadb100, mariadb101, mariadb102",
                         dest="mysql_version", required=False)
     parser.add_argument("-i", "--install", help="install governor MySQL plugin",
                         dest="install", action="store_true", default=False)
@@ -80,6 +79,9 @@ def build_parser():
                         default=False)
     parser.add_argument("-t", "--dbupdate", help="update UserMap file",
                         dest="dbupdate", action="store_true", default=False)
+    parser.add_argument("-y", "--yes",
+                        help="Perform migration without confirm",
+                        dest="assume_yes", action="store_true", default=False)
     parser.add_argument("--fix-cpanel-hooks",
                         help="fix adduser and deluser hooks for cPanel",
                         dest="fix_cpanel_hooks", action="store_true",
@@ -185,7 +187,7 @@ def main(argv):
         set_debug(True)
 
     if opts.install:
-        manager.install(opts.force)
+        manager.install(opts.force, opts.assume_yes)
     elif opts.update_plugin:
         manager.update_plugin()
     elif opts.install_beta:
@@ -194,7 +196,7 @@ def main(argv):
         manager.delete()
     elif opts.mysql_version:
         # print "Option is deprecated."
-        manager.migrate(opts.mysql_version, opts.fresh)
+        manager.migrate(opts.mysql_version, opts.fresh, opts.assume_yes)
     elif opts.dbupdate:
         manager.update_user_map_file()
     elif opts.fix_cpanel_hooks:

@@ -33,11 +33,10 @@ class DirectAdminManager(InstallManager):
         except IndexError:
             pass
 
-    def prepare(self, version):
+    def prepare_custombuild(self, version):
         """
-        Update config file data and prepare official repository
+        Update config file data for custombuild
         :param version: version to install
-        :return: packages list
         """
         if version.startswith('mysql'):
             m_type = 'mysql'
@@ -51,7 +50,6 @@ class DirectAdminManager(InstallManager):
                                              suffix=num[-1])
         exec_command('{custombuild} set {type} {ver}'.format(custombuild=self.CUSTOMBUILD, type=m_type, ver=m_version))
         exec_command('{custombuild} set mysql_inst {type}'.format(custombuild=self.CUSTOMBUILD, type=m_type))
-        return InstallManager.prepare(self, version)
 
     def install_packages(self):
         """
@@ -85,7 +83,14 @@ class DirectAdminManager(InstallManager):
         except Exception:
             pass
 
-    def _before_install_mysql(self):
+    def give_new_pkg_info(self):
+        """
+        Tell user, that custombuild script will be used
+        """
+        print bcolors.info('CUSTOMBUILD SCRIPT WILL BE USED FOR NEW PACKAGES INSTALLATION')
+        print bcolors.info('If custombuild script fails, these packages are going to be installed:\n\t--> {pkgs}'.format(pkgs='\n\t--> '.join(os.listdir(self.RPM_PATH))))
+
+    def _before_install_mysql(self, version=None):
         """
         Actions, prior to MySQL/MariaDB installation process
         :return:
@@ -95,6 +100,7 @@ class DirectAdminManager(InstallManager):
         # disable mysql monitoring
         print 'Deactivating mysql service'
         exec_command('{custombuild} set_service mysql OFF'.format(custombuild=self.CUSTOMBUILD))
+        self.prepare_custombuild(version)
 
     def _after_install_mysql(self):
         """
