@@ -14,7 +14,7 @@ from clcommon import cpapi
 
 from modules import InstallManager
 from utilities import bcolors, set_debug, shadow_tracing, set_path_environ, \
-    fix_broken_governor_xml_config, patch_init_d_scripts
+    fix_broken_governor_xml_config, patch_init_d_scripts, set_fs_suid_dumpable
 
 LOG_FILE_NAME = "/usr/share/lve/dbgovernor2/governor_install.log"
 
@@ -180,11 +180,66 @@ def main(argv):
 
     opts = parser.parse_args(argv)
 
-    # create install manager instance for current cp
-    manager = InstallManager.factory(cpapi.CP_NAME)
-
     if opts.debug_flag:
         set_debug(True)
+
+    if opts.fs_suid:
+        set_fs_suid_dumpable()
+        sys.exit(0)
+    elif opts.fix_cpanel_hooks:
+        print "Option is deprecated."
+        sys.exit(0)
+    elif opts.install_from_history:
+        print "Option is deprecated."
+        sys.exit(0)
+    elif opts.show_previous_packages:
+        print "Option is deprecated."
+        sys.exit(0)
+    elif opts.clear_history:
+        print "Option is deprecated."
+        sys.exit(0)
+    elif opts.clean_mysql:
+        print "Option is deprecated."
+        sys.exit(0)
+    elif opts.clean_mysql_delete:
+        print "Option is deprecated."
+        sys.exit(0)
+    elif opts.upgrade:
+        print "Option is deprecated. Use `yum update` instead."
+        sys.exit(0)
+    elif opts.update_mysql_beta:
+        print "Option is deprecated. Use --install-beta instead."
+        sys.exit(0)
+    elif opts.store_list:
+        print "Option is deprecated."
+        sys.exit(0)
+    elif opts.clver_correct:
+        print "Option is deprecated."
+        sys.exit(0)
+    elif opts.store_save:
+        print "Option is deprecated."
+        sys.exit(0)
+    elif opts.store_restore:
+        print "Option is deprecated."
+        sys.exit(0)
+    elif opts.store_list_files:
+        print "Option is deprecated."
+        sys.exit(0)
+    elif opts.restore_list_all:
+        print "Option is deprecated."
+        sys.exit(0)
+    elif opts.store_clean:
+        print "Option is deprecated."
+        sys.exit(0)
+    elif opts.cl7_correct:
+        print "Option is deprecated."
+        sys.exit(0)
+    elif opts.fix_govervor_config:
+        fix_broken_governor_xml_config()
+        sys.exit(0)
+
+    # create install manager instance for current cp
+    manager = InstallManager.factory(cpapi.CP_NAME)
 
     if opts.install:
         manager.install(opts.force, opts.assume_yes)
@@ -199,42 +254,6 @@ def main(argv):
         manager.migrate(opts.mysql_version, opts.fresh, opts.assume_yes)
     elif opts.dbupdate:
         manager.update_user_map_file()
-    elif opts.fix_cpanel_hooks:
-        print "Option is deprecated."
-    elif opts.install_from_history:
-        print "Option is deprecated."
-    elif opts.show_previous_packages:
-        print "Option is deprecated."
-    elif opts.clear_history:
-        print "Option is deprecated."
-    elif opts.clean_mysql:
-        print "Option is deprecated."
-    elif opts.clean_mysql_delete:
-        print "Option is deprecated."
-    elif opts.upgrade:
-        print "Option is deprecated. Use `yum update` instead."
-    elif opts.update_mysql_beta:
-        print "Option is deprecated. Use --install-beta instead."
-    elif opts.fs_suid:
-        print "Option is deprecated."
-    elif opts.store_list:
-        print "Option is deprecated."
-    elif opts.clver_correct:
-        print "Option is deprecated."
-    elif opts.store_save:
-        print "Option is deprecated."
-    elif opts.store_restore:
-        print "Option is deprecated."
-    elif opts.store_list_files:
-        print "Option is deprecated."
-    elif opts.restore_list_all:
-        print "Option is deprecated."
-    elif opts.store_clean:
-        print "Option is deprecated."
-    elif opts.cl7_correct:
-        print "Option is deprecated."
-    elif opts.fix_govervor_config:
-        fix_broken_governor_xml_config()
     elif opts.initd_patch:
         patch_init_d_scripts()
     else:

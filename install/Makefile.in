@@ -33,51 +33,51 @@ plugin: ${PY_BINS} ${PY_LIBS}
 all: plugin
 
 install: all
-	${INSTALL} -d -m 755 ${DESTDIR}/usr/share/lve/dbgovernor/
-	${INSTALL} -d -m 755 ${DESTDIR}/usr/share/lve/dbgovernor/modules/
+	${INSTALL} -d -m 755 ${DESTDIR}/usr/share/lve/dbgovernor2/
+	${INSTALL} -d -m 755 ${DESTDIR}/usr/share/lve/dbgovernor2/modules/
 
 	for file in ${PY_BINS}; do \
-		${INSTALL} -m 0755 $${file} ${DESTDIR}/usr/share/lve/dbgovernor/$${file} ; \
+		${INSTALL} -m 0755 $${file} ${DESTDIR}/usr/share/lve/dbgovernor2/$${file} ; \
 	done
 #	${INSTALL} -d -m 755 ${DESTDIR}${PYLIBDIR}
-	${INSTALL} -m 0644 utilities.py ${DESTDIR}/usr/share/lve/dbgovernor/
-	${INSTALL} -m 0644 utilities.pyc ${DESTDIR}/usr/share/lve/dbgovernor/
-	${INSTALL} -m 0644 utilities.pyo ${DESTDIR}/usr/share/lve/dbgovernor/
-	${INSTALL} -m 0644 modules/__init__.py ${DESTDIR}/usr/share/lve/dbgovernor/modules/
-	${INSTALL} -m 0644 modules/__init__.pyc ${DESTDIR}/usr/share/lve/dbgovernor/modules/
-	${INSTALL} -m 0644 modules/__init__.pyo ${DESTDIR}/usr/share/lve/dbgovernor/modules/
-	${INSTALL} -m 0644 modules/base.py ${DESTDIR}/usr/share/lve/dbgovernor/modules/
-	${INSTALL} -m 0644 modules/base.pyc ${DESTDIR}/usr/share/lve/dbgovernor/modules/
-	${INSTALL} -m 0644 modules/base.pyo ${DESTDIR}/usr/share/lve/dbgovernor/modules/
-	${INSTALL} -m 0644 modules/cpanel.py ${DESTDIR}/usr/share/lve/dbgovernor/modules/
-	${INSTALL} -m 0644 modules/cpanel.pyc ${DESTDIR}/usr/share/lve/dbgovernor/modules/
-	${INSTALL} -m 0644 modules/cpanel.pyo ${DESTDIR}/usr/share/lve/dbgovernor/modules/
-	${INSTALL} -m 0644 modules/da.py ${DESTDIR}/usr/share/lve/dbgovernor/modules/
-	${INSTALL} -m 0644 modules/da.pyc ${DESTDIR}/usr/share/lve/dbgovernor/modules/
-	${INSTALL} -m 0644 modules/da.pyo ${DESTDIR}/usr/share/lve/dbgovernor/modules/
-	${INSTALL} -m 0644 modules/plesk.py ${DESTDIR}/usr/share/lve/dbgovernor/modules/
-	${INSTALL} -m 0644 modules/plesk.pyc ${DESTDIR}/usr/share/lve/dbgovernor/modules/
-	${INSTALL} -m 0644 modules/plesk.pyo ${DESTDIR}/usr/share/lve/dbgovernor/modules/
-	${INSTALL} -m 0644 modules/iworx.py ${DESTDIR}/usr/share/lve/dbgovernor/modules/
-	${INSTALL} -m 0644 modules/iworx.pyc ${DESTDIR}/usr/share/lve/dbgovernor/modules/
-	${INSTALL} -m 0644 modules/iworx.pyo ${DESTDIR}/usr/share/lve/dbgovernor/modules/
-	${INSTALL} -m 0644 modules/ispmanager.py ${DESTDIR}/usr/share/lve/dbgovernor/modules/
-	${INSTALL} -m 0644 modules/ispmanager.pyc ${DESTDIR}/usr/share/lve/dbgovernor/modules/
-	${INSTALL} -m 0644 modules/ispmanager.pyo ${DESTDIR}/usr/share/lve/dbgovernor/modules/
+	${INSTALL} -m 0644 utilities.py ${DESTDIR}/usr/share/lve/dbgovernor2/
+	${INSTALL} -m 0644 utilities.pyc ${DESTDIR}/usr/share/lve/dbgovernor2/
+	${INSTALL} -m 0644 utilities.pyo ${DESTDIR}/usr/share/lve/dbgovernor2/
+	${INSTALL} -m 0644 modules/__init__.py ${DESTDIR}/usr/share/lve/dbgovernor2/modules/
+	${INSTALL} -m 0644 modules/__init__.pyc ${DESTDIR}/usr/share/lve/dbgovernor2/modules/
+	${INSTALL} -m 0644 modules/__init__.pyo ${DESTDIR}/usr/share/lve/dbgovernor2/modules/
+	${INSTALL} -m 0644 modules/base.py ${DESTDIR}/usr/share/lve/dbgovernor2/modules/
+	${INSTALL} -m 0644 modules/base.pyc ${DESTDIR}/usr/share/lve/dbgovernor2/modules/
+	${INSTALL} -m 0644 modules/base.pyo ${DESTDIR}/usr/share/lve/dbgovernor2/modules/
+	${INSTALL} -m 0644 modules/cpanel.py ${DESTDIR}/usr/share/lve/dbgovernor2/modules/
+	${INSTALL} -m 0644 modules/cpanel.pyc ${DESTDIR}/usr/share/lve/dbgovernor2/modules/
+	${INSTALL} -m 0644 modules/cpanel.pyo ${DESTDIR}/usr/share/lve/dbgovernor2/modules/
+	${INSTALL} -m 0644 modules/da.py ${DESTDIR}/usr/share/lve/dbgovernor2/modules/
+	${INSTALL} -m 0644 modules/da.pyc ${DESTDIR}/usr/share/lve/dbgovernor2/modules/
+	${INSTALL} -m 0644 modules/da.pyo ${DESTDIR}/usr/share/lve/dbgovernor2/modules/
+	${INSTALL} -m 0644 modules/plesk.py ${DESTDIR}/usr/share/lve/dbgovernor2/modules/
+	${INSTALL} -m 0644 modules/plesk.pyc ${DESTDIR}/usr/share/lve/dbgovernor2/modules/
+	${INSTALL} -m 0644 modules/plesk.pyo ${DESTDIR}/usr/share/lve/dbgovernor2/modules/
+	${INSTALL} -m 0644 modules/iworx.py ${DESTDIR}/usr/share/lve/dbgovernor2/modules/
+	${INSTALL} -m 0644 modules/iworx.pyc ${DESTDIR}/usr/share/lve/dbgovernor2/modules/
+	${INSTALL} -m 0644 modules/iworx.pyo ${DESTDIR}/usr/share/lve/dbgovernor2/modules/
+	${INSTALL} -m 0644 modules/ispmanager.py ${DESTDIR}/usr/share/lve/dbgovernor2/modules/
+	${INSTALL} -m 0644 modules/ispmanager.pyc ${DESTDIR}/usr/share/lve/dbgovernor2/modules/
+	${INSTALL} -m 0644 modules/ispmanager.pyo ${DESTDIR}/usr/share/lve/dbgovernor2/modules/
 
 uninstall:
 	for file in ${PY_BINS}; do \
-		rm -f ${DESTDIR}/usr/share/lve/dbgovernor/$${file} ; \
+		rm -f ${DESTDIR}/usr/share/lve/dbgovernor2/$${file} ; \
 	done
-	rm -f ${DESTDIR}/usr/share/lve/dbgovernor/utilities.*
-	rm -f ${DESTDIR}/usr/share/lve/dbgovernor/modules/base.*
-	rm -f ${DESTDIR}/usr/share/lve/dbgovernor/modules/cpanel.*
-	rm -f ${DESTDIR}/usr/share/lve/dbgovernor/modules/da.*
-	rm -f ${DESTDIR}/usr/share/lve/dbgovernor/modules/plesk.*
-	rm -f ${DESTDIR}/usr/share/lve/dbgovernor/modules/iworx.*
-	rm -f ${DESTDIR}/usr/share/lve/dbgovernor/modules/ispmanager.*
-	rm -rf ${DESTDIR}/usr/share/lve/dbgovernor/modules/
-	-rmdir --ignore-fail-on-non-empty ${DESTDIR}/usr/share/lve/dbgovernor/
+	rm -f ${DESTDIR}/usr/share/lve/dbgovernor2/utilities.*
+	rm -f ${DESTDIR}/usr/share/lve/dbgovernor2/modules/base.*
+	rm -f ${DESTDIR}/usr/share/lve/dbgovernor2/modules/cpanel.*
+	rm -f ${DESTDIR}/usr/share/lve/dbgovernor2/modules/da.*
+	rm -f ${DESTDIR}/usr/share/lve/dbgovernor2/modules/plesk.*
+	rm -f ${DESTDIR}/usr/share/lve/dbgovernor2/modules/iworx.*
+	rm -f ${DESTDIR}/usr/share/lve/dbgovernor2/modules/ispmanager.*
+	rm -rf ${DESTDIR}/usr/share/lve/dbgovernor2/modules/
+	-rmdir --ignore-fail-on-non-empty ${DESTDIR}/usr/share/lve/dbgovernor2/
 
 clean:
 	rm -f *~

@@ -30,7 +30,8 @@ __all__ = [
     "correct_remove_notowned_mysql_service_names_not_symlynks_cl7",
     "disable_and_remove_service",
     "disable_and_remove_service_if_notsymlynk", "check_mysqld_is_alive",
-    "get_mysql_log_file", "get_mysql_cnf_value", "makedir_recursive"
+    "get_mysql_log_file", "get_mysql_cnf_value", "makedir_recursive",
+    "set_fs_suid_dumpable"
 ]
 
 RPM_TEMP_PATH = "/usr/share/lve/dbgovernor2/tmp/governor-tmp"
@@ -1001,3 +1002,22 @@ def patch_init_d_scripts():
             with open(script, 'wb') as f:
                 f.writelines(lines)
             print 'sysconfig patch applied for {}'.format(script)
+
+def set_fs_suid_dumpable():
+    """
+    Run this code in spec file
+    """
+    print "Set FS suid_dumpable for governor to work correctly"
+    exec_command_out("sysctl -w fs.suid_dumpable=1")
+    if os.path.exists("/etc/sysctl.conf"):
+        if not grep("/etc/sysctl.conf", "fs.suid_dumpable=1"):
+            print "Add to /etc/sysctl.conf suid_dumpable instruction " \
+                  "for governor to work correctly"
+            shutil.copy("/etc/sysctl.conf", "/etc/sysctl.conf.bak")
+            add_line("/etc/sysctl.conf", "fs.suid_dumpable=1")
+        else:
+            print "Everything is present in /etc/sysctl.conf " \
+                  "for governor to work correctly"
+    else:
+        print "Create /etc/sysctl.conf for governor to work correctly"
+        add_line("/etc/sysctl.conf", "fs.suid_dumpable=1")
