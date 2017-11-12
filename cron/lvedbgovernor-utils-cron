@@ -1,3 +1,3 @@
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
-10 01 * * * root /usr/sbin/tmpwatch -umc 10 /var/lve/dbgovernor2-store
+10 01 * * * root /usr/sbin/tmpwatch -umc 10 /var/lve/dbgovernor-store
 15 01 * * * root /usr/share/lve/dbgovernor2/mysqlgovernor.py --dbupdate

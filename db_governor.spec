@@ -361,8 +361,8 @@ fi
 %{governor_path}/*
 %dir %{governor_path}/tmp
 %{_sysconfdir}/cron.d/lvedbgovernor2-utils-cron
-/var/lve/dbgovernor2
-/var/lve/dbgovernor2-store
+/var/lve/dbgovernor
+/var/lve/dbgovernor-store
 %config(noreplace) %{_sysconfdir}/conf.d/mysql
 %config(noreplace) %{_sysconfdir}/sysconfig/mysqld
 %config(noreplace) %{_sysconfdir}/sysconfig/mysql

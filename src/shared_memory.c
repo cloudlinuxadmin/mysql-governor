@@ -23,8 +23,8 @@
 #include "dbuser_map.h"
 
 #define MAX_ITEMS_IN_TABLE 100000
-#define SHARED_MEMORY_NAME "governor_bad_users_list"
-#define SHARED_MEMORY_SEM "governor_bad_users_list_sem"
+#define SHARED_MEMORY_NAME "governor_bad_users_list2"
+#define SHARED_MEMORY_SEM "governor_bad_users_list_sem2"
 
 // this variable set in mysql_connector_common.c file. users only by governor binaries
 // don`t use in mysql shared library

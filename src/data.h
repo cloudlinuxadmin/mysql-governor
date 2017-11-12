@@ -30,15 +30,15 @@ typedef char parameter_t[USERNAMEMAXLEN];
 #define _DBGOVERNOR_BUFFER_HUGE 16384
 
 #ifndef TEST_EMUL
-#define SOCK_ADDRESS "/var/run/db-governor"
+#define SOCK_ADDRESS "/var/run/db-governor2"
 #define MYSQL_SOCK_ADDRESS "/var/run/db-governor-mysql"
 #define CONFIG_PATH "/etc/container/mysql-governor.xml"
-#define PID_PATH "/var/run/db-governor.pid"
+#define PID_PATH "/var/run/db-governor2.pid"
 #else
-#define SOCK_ADDRESS "db-governor"
+#define SOCK_ADDRESS "db-governor2"
 #define MYSQL_SOCK_ADDRESS "db-governor-mysql"
 #define CONFIG_PATH "db-governor.xml"
-#define PID_PATH "db-governor.pid"
+#define PID_PATH "db-governor2.pid"
 #endif
 
 #define PATH_TO_GOVERNOR_STATS "/var/lve/dbgovernor/"

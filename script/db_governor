@@ -17,7 +17,7 @@ export G_SLICE
 #export G_DEBUG
 
 prog=/usr/sbin/db_governor2
-prog_connector=/usr/sbin/mysql_connector2
+prog_connector=/usr/sbin/mysql_connector
 unf_prog=/usr/sbin/mysql_unfreeze2
 pidfile=/var/run/db-governor2.pid
 RETVAL=0
