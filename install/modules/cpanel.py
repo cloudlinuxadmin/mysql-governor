@@ -3,7 +3,7 @@
 This module contains class for managing governor on cPanel server
 """
 from .base import InstallManager
-from utilities import exec_command_out
+from utilities import exec_command_out, bcolors
 
 
 class cPanelManager(InstallManager):
@@ -26,3 +26,6 @@ class cPanelManager(InstallManager):
         """
         exec_command_out(
             "whmapi1 configureservice service=mysql enabled=1 monitored={}".format(int(enable)))
+
+    def migrate(self, new_version, fresh_installation=False, auto_confirm=False):
+        print bcolors.warning('Sorry, migration for cPanel has not been implemented yet')

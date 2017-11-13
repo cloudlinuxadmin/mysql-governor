@@ -179,15 +179,15 @@ class InstallManager(object):
         if plugin_md5_sum:
             new_plugin_md5 = hashlib.md5(open(new_plugin, 'rb').read()).hexdigest()
             if new_plugin_md5 != plugin_md5_sum:
-                print 'Updating governor plugin...'
+                print bcolors.info('Updating governor plugin...')
                 shutil.copy(new_plugin, self.installed_plugin)
                 self.plugin_md5('write')
                 self._mysqlservice('restart')
-                print 'Governor plugin updated successfully'
+                print bcolors.ok('Governor plugin updated successfully')
             else:
-                print 'No need in updating governor plugin'
+                print bcolors.ok('No need in updating governor plugin')
         else:
-            print 'Nothing to update. Governor plugin is not installed?'
+            print bcolors.warning('Nothing to update. Governor plugin is not installed?')
 
     def plugin_md5(self, action):
         """
@@ -433,9 +433,7 @@ class InstallManager(object):
         else:
             shutil.rmtree(self.RPM_PATH)
 
-        download_proc = self.download_updates if self.is_update(names) else self.common_download
-
-        if not download_proc(names):
+        if not self.common_download(names):
             print bcolors.warning('Failed to download packages with yum. Trying yumdownloader instead...')
             return self.download_broken(names)
         else:
@@ -482,34 +480,6 @@ class InstallManager(object):
         os.putenv('LC_ALL', old_var if old_var else '')
         return r == 'yes'
 
-    def download_updates(self, names):
-        """
-        Download packages in update mode
-        :param names: packages names (iterable) -- for compatibility purposes
-        :return: True of False based on command success
-        """
-        repo = names[0].split('-')[0].lower()
-        print 'Download updates from repo {}'.format(repo)
-        res = exec_command(
-            "yum update -y --downloadonly --disableexcludes=all --downloaddir={dst} --disablerepo='*' --enablerepo='{name}'".format(
-                dst=self.RPM_PATH, name=repo), return_code=True)
-        return res == 'yes'
-
-    def is_update(self, pkgs_names):
-        """
-        Check if requested packages are an update for installed ones
-        This is specific for MariaDB packages
-        :param pkgs_names: packages names (iterable)
-        :return: True or False
-        """
-        name = pkgs_names[0].split('-')[0].lower()
-        if not self.mysql_version or self.mysql_version['patched']:
-            return False
-        elif name == 'mysql':
-            return False
-        else:
-            return self.mysql_version['mysql_type'] == name
-
     def prepare(self, version):
         """
         Prepare required official repository and resolve packages list
@@ -546,7 +516,8 @@ class InstallManager(object):
         Prepare official MariaDB repository and packages
         :param version: mariadb version
         """
-        pkgs = ('MariaDB-server', 'MariaDB-client', 'MariaDB-shared')
+        pkgs = ('MariaDB-server', 'MariaDB-client', 'MariaDB-shared',
+                'MariaDB-devel', 'MariaDB-compat',)
         self.install_mariadb_repo(version)
         return pkgs
 

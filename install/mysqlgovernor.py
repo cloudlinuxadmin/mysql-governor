@@ -59,7 +59,9 @@ def build_parser():
                         help="select MySQL version for db-governor. "
                              "Available mysql types: mysql55, mysql56, mysql57,"
                              " mariadb55, mariadb100, mariadb101, mariadb102",
-                        dest="mysql_version", required=False)
+                        dest="mysql_version", required=False,
+                        choices=['mysql55', 'mysql56', 'mysql57', 'mariadb55',
+                                 'mariadb100', 'mariadb101', 'mariadb102'])
     parser.add_argument("-i", "--install", help="install governor MySQL plugin",
                         dest="install", action="store_true", default=False)
     parser.add_argument("-d", "--delete", help="delete governor MySQL plugin",
@@ -185,80 +187,63 @@ def main(argv):
 
     if opts.fs_suid:
         set_fs_suid_dumpable()
-        sys.exit(0)
-    elif opts.fix_cpanel_hooks:
-        print "Option is deprecated."
-        sys.exit(0)
-    elif opts.install_from_history:
-        print "Option is deprecated."
-        sys.exit(0)
-    elif opts.show_previous_packages:
-        print "Option is deprecated."
-        sys.exit(0)
-    elif opts.clear_history:
-        print "Option is deprecated."
-        sys.exit(0)
-    elif opts.clean_mysql:
-        print "Option is deprecated."
-        sys.exit(0)
-    elif opts.clean_mysql_delete:
-        print "Option is deprecated."
-        sys.exit(0)
-    elif opts.upgrade:
-        print "Option is deprecated. Use `yum update` instead."
-        sys.exit(0)
-    elif opts.update_mysql_beta:
-        print "Option is deprecated. Use --install-beta instead."
-        sys.exit(0)
-    elif opts.store_list:
-        print "Option is deprecated."
-        sys.exit(0)
-    elif opts.clver_correct:
-        print "Option is deprecated."
-        sys.exit(0)
-    elif opts.store_save:
-        print "Option is deprecated."
-        sys.exit(0)
-    elif opts.store_restore:
-        print "Option is deprecated."
-        sys.exit(0)
-    elif opts.store_list_files:
-        print "Option is deprecated."
-        sys.exit(0)
-    elif opts.restore_list_all:
-        print "Option is deprecated."
-        sys.exit(0)
-    elif opts.store_clean:
-        print "Option is deprecated."
-        sys.exit(0)
-    elif opts.cl7_correct:
-        print "Option is deprecated."
-        sys.exit(0)
     elif opts.fix_govervor_config:
         fix_broken_governor_xml_config()
-        sys.exit(0)
-
-    # create install manager instance for current cp
-    manager = InstallManager.factory(cpapi.CP_NAME)
-
-    if opts.install:
-        manager.install(opts.force, opts.assume_yes)
-    elif opts.update_plugin:
-        manager.update_plugin()
-    elif opts.install_beta:
-        print "Option is deprecated."
-    elif opts.delete:
-        manager.delete()
-    elif opts.mysql_version:
-        # print "Option is deprecated."
-        manager.migrate(opts.mysql_version, opts.fresh, opts.assume_yes)
-    elif opts.dbupdate:
-        manager.update_user_map_file()
     elif opts.initd_patch:
         patch_init_d_scripts()
+    elif opts.fix_cpanel_hooks:
+        print "Option is deprecated."
+    elif opts.install_from_history:
+        print "Option is deprecated."
+    elif opts.show_previous_packages:
+        print "Option is deprecated."
+    elif opts.clear_history:
+        print "Option is deprecated."
+    elif opts.clean_mysql:
+        print "Option is deprecated."
+    elif opts.clean_mysql_delete:
+        print "Option is deprecated."
+    elif opts.upgrade:
+        print "Option is deprecated. Use `yum update` instead."
+    elif opts.update_mysql_beta:
+        print "Option is deprecated. Use --install-beta instead."
+    elif opts.store_list:
+        print "Option is deprecated."
+    elif opts.clver_correct:
+        print "Option is deprecated."
+    elif opts.store_save:
+        print "Option is deprecated."
+    elif opts.store_restore:
+        print "Option is deprecated."
+    elif opts.store_list_files:
+        print "Option is deprecated."
+    elif opts.restore_list_all:
+        print "Option is deprecated."
+    elif opts.store_clean:
+        print "Option is deprecated."
+    elif opts.cl7_correct:
+        print "Option is deprecated."
+    elif opts.install_beta:
+        print "Option is deprecated."
     else:
-        parser.print_help()
-        sys.exit(2)
+        # create install manager instance for current cp
+        manager = InstallManager.factory(cpapi.CP_NAME)
+
+        if opts.install:
+            manager.install(opts.force, opts.assume_yes)
+        elif opts.update_plugin:
+            manager.update_plugin()
+        elif opts.delete:
+            manager.delete()
+        elif opts.mysql_version:
+            manager.migrate(opts.mysql_version, opts.fresh, opts.assume_yes)
+        elif opts.dbupdate:
+            manager.update_user_map_file()
+        else:
+            parser.print_help()
+            sys.exit(2)
+
+    sys.exit(0)
 
 
 def warn_message():
