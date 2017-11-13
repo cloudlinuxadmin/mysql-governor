@@ -121,6 +121,8 @@ sub get_map_list_ {
     	my $uid= -1;
     	my $dummy;
     	($name, $dummy, $uid, $dummy, $dummy, $dummy, $dummy, $dummy, $dummy) = getpwnam($user);
+    	# in case of uninitialized uid
+    	$uid = $uid // -1;
         if ($uid>=0){
             push @arr, [ $user, $user, "$uid" ];
         }
@@ -142,6 +144,8 @@ sub get_map_list_user_ {
     my $uid = -1;
     my $dummy;
     ($name, $dummy, $uid, $dummy, $dummy, $dummy, $dummy, $dummy, $dummy) = getpwnam($user);
+    # in case of uninitialized uid
+    $uid = $uid // -1;
     if ($uid>=0){
         push @arr, [ $user, $user, "$uid" ];
     }
