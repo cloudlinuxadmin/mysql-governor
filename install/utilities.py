@@ -373,12 +373,17 @@ def service(action, *names):
                 end_name = "mysqld"
             elif os.path.exists("/usr/lib/systemd/system/mysql.service"):
                 end_name = "mysql"
+            elif os.path.exists("/usr/lib/systemd/system/mariadb.service"):
+                end_name = "mariadb"
             elif os.path.exists("/etc/systemd/system/mysql.service"):
                 end_name = "mysql"
                 found_path = "/etc/systemd/system/mysql.service"
             elif os.path.exists("/etc/systemd/system/mysqld.service"):
                 end_name = "mysqld"
                 found_path = "/etc/systemd/system/mysqld.service"
+            elif os.path.exists("/etc/systemd/system/mariadb.service"):
+                end_name = "mariadb"
+                found_path = "/etc/systemd/system/mariadb.service"
         if os.path.exists("/usr/lib/systemd/system/%s.service" % end_name) or (
                     found_path != ""):
             exec_command_out(
@@ -389,6 +394,8 @@ def service(action, *names):
                     end_name = "mysql"
                 elif os.path.exists("/etc/init.d/mysqld"):
                     end_name = "mysqld"
+                elif os.path.exists("/etc/init.d/mariadb"):
+                    end_name = "mariadb"
             exec_command_out("/sbin/service %s %s" % (end_name, action))
 
 
@@ -1021,3 +1028,44 @@ def set_fs_suid_dumpable():
     else:
         print "Create /etc/sysctl.conf for governor to work correctly"
         add_line("/etc/sysctl.conf", "fs.suid_dumpable=1")
+
+
+def get_data_for_sysconfig(fname):
+    """
+    Read data from given (sysconfig) file along with data from our sysconfig
+    :param fname: filename to read data
+    :return: set with lines from given file, set with lines from our file
+    """
+    try:
+        with open(fname, 'rb') as our:
+            lines = set([l.strip() for l in our.readlines()])
+    except IOError:
+        lines = set()
+
+    with open('/usr/share/lve/dbgovernor2/scripts/mysql', 'rb') as our:
+        new_lines = set([l.strip() for l in our.readlines()])
+
+    # print lines, new_lines
+    return lines, new_lines
+
+
+def sysconfig_patch(action):
+    """
+    Patch or clean sysconfigs by given action
+    :param action: 'update' (to patch files) or 'clean' (to clean files)
+    """
+    for name in ('/etc/sysconfig/mysqld', '/etc/sysconfig/mysql',
+                 '/etc/sysconfig/mariadb'):
+        lines, new_lines = get_data_for_sysconfig(name)
+        if action == 'update':
+            if not lines.intersection(new_lines):
+                print 'Patch {}'.format(name)
+                with open(name, 'wb') as out:
+                    out.writelines([l + '\n' for l in lines.union(new_lines)])
+        elif action == 'clean':
+            if lines.intersection(new_lines):
+                print 'Clean {}'.format(name)
+                with open(name, 'wb') as out:
+                    out.writelines([l + '\n' for l in lines.difference(new_lines)])
+        else:
+            print 'Action not valid'

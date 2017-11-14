@@ -14,7 +14,8 @@ from clcommon import cpapi
 
 from modules import InstallManager
 from utilities import bcolors, set_debug, shadow_tracing, set_path_environ, \
-    fix_broken_governor_xml_config, patch_init_d_scripts, set_fs_suid_dumpable
+    fix_broken_governor_xml_config, patch_init_d_scripts, set_fs_suid_dumpable, \
+    sysconfig_patch
 
 LOG_FILE_NAME = "/usr/share/lve/dbgovernor2/governor_install.log"
 
@@ -159,6 +160,9 @@ def build_parser():
                         help="Patch init.d mysql scripts",
                         dest="initd_patch", action="store_true",
                         default=False)
+    parser.add_argument("--sysconfig",
+                        help="Patch or clean sysconfig",
+                        dest="sysconfig_action", choices=['update', 'clean'])
     return parser
 
 
@@ -191,6 +195,8 @@ def main(argv):
         fix_broken_governor_xml_config()
     elif opts.initd_patch:
         patch_init_d_scripts()
+    elif opts.sysconfig_action:
+        sysconfig_patch(opts.sysconfig_action)
     elif opts.fix_cpanel_hooks:
         print "Option is deprecated."
     elif opts.install_from_history:

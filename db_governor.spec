@@ -143,9 +143,9 @@ install -D -m 600 install/list_problem_files.txt %{buildroot}%{governor_path}/
 ln -s ../scripts/dbgovernor_map %{buildroot}%{governor_path}/utils/dbgovernor_map
 
 install -D -m 644 script/mysql %{buildroot}%{_sysconfdir}/conf.d/mysql
-install -D -m 644 script/mysql %{buildroot}%{_sysconfdir}/sysconfig/mysqld
-install -D -m 644 script/mysql %{buildroot}%{_sysconfdir}/sysconfig/mysql
-install -D -m 644 script/mysql %{buildroot}%{_sysconfdir}/sysconfig/mariadb
+#install -D -m 644 script/mysql %{buildroot}%{_sysconfdir}/sysconfig/mysqld
+#install -D -m 644 script/mysql %{buildroot}%{_sysconfdir}/sysconfig/mysql
+#install -D -m 644 script/mysql %{buildroot}%{_sysconfdir}/sysconfig/mariadb
 
 #install cron utility
 mkdir -p %{buildroot}%{_sysconfdir}/cron.d/
@@ -242,6 +242,10 @@ if [ ! -e /var/lve/dbgovernor-store/ ]; then
     mkdir -p /var/lve/dbgovernor-store/
 fi
 
+if [ -e /usr/share/lve/dbgovernor2/mysqlgovernor.py ]; then
+    /usr/share/lve/dbgovernor2/mysqlgovernor.py --sysconfig update
+fi
+
 %preun
 %if 0%{?rhel} >= 7
 if [ $1 -eq 0 ]; then
@@ -259,6 +263,10 @@ if [ $1 -eq 1 -o $1 -eq 0 ] ; then
  if [ -e /var/run/mysql-governor-config.xml ]; then
     rm -f /var/run/mysql-governor-config.xml
  fi
+fi
+
+if [ -e /usr/share/lve/dbgovernor2/mysqlgovernor.py ]; then
+    /usr/share/lve/dbgovernor2/mysqlgovernor.py --sysconfig clean
 fi
 
 %posttrans
@@ -375,9 +383,9 @@ fi
 #/var/lve/dbgovernor
 #/var/lve/dbgovernor-store
 %config(noreplace) %{_sysconfdir}/conf.d/mysql
-%config(noreplace) %{_sysconfdir}/sysconfig/mysqld
-%config(noreplace) %{_sysconfdir}/sysconfig/mysql
-%config(noreplace) %{_sysconfdir}/sysconfig/mariadb
+#%config(noreplace) %{_sysconfdir}/sysconfig/mysqld
+#%config(noreplace) %{_sysconfdir}/sysconfig/mysql
+#%config(noreplace) %{_sysconfdir}/sysconfig/mariadb
 %{governor_path}/plugins/*
 
 %changelog
