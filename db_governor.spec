@@ -137,6 +137,7 @@ ln -fs libgovernorld.so.%{version} %{buildroot}%{_libdir}/libgovernorld.so
 
 install -D -m 755 install/scripts/dbgovernor_map %{buildroot}%{governor_path}/scripts/dbgovernor_map
 install -D -m 755 install/scripts/dbgovernor_map.py %{buildroot}%{governor_path}/scripts/dbgovernor_map.py
+install -D -m 755 script/mysql %{buildroot}%{governor_path}/scripts/mysql
 
 install -D -m 600 install/list_problem_files.txt %{buildroot}%{governor_path}/
 
