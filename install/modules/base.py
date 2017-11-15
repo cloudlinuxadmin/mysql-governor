@@ -467,7 +467,11 @@ class InstallManager(object):
                 pkgs=' '.join(names)), silent=True)
         try:
             start = res.index('Packages skipped because of dependency problems:') + 1
-            conflicting_pkgs = [l.split('from')[0].strip() for l in res[start:]]
+            if 'Dependencies Resolved' in res:
+                stop = res.index('Dependencies Resolved')
+                conflicting_pkgs = [l.split('from')[0].strip() for l in res[start:stop]]
+            else:
+                conflicting_pkgs = [l.split('from')[0].strip() for l in res[start:]]
         except Exception:
             return False
 
