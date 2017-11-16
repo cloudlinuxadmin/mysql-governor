@@ -350,6 +350,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Thu Nov 16 2017 Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-28
+- Fixed unlimit reading from config file
+
 * Wed Nov 01 2017 Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-27
 - MYSQLG-221: Add installation of mysqlclient18 for MariaDB 10.2
 
