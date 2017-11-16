@@ -475,7 +475,7 @@ config_init(const char *path) {
 			}
 		}
 		releaseElemValue(ptr);
-		ptr = getElemAttr(tmp_xml, "ulinit");
+		ptr = getElemAttr(tmp_xml, "unlimit");
 		if (ptr != NULL) {
 			cfg->l_unlimit = parse_period(ptr);
 		}
