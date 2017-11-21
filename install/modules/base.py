@@ -36,6 +36,15 @@ class InstallManager(object):
         'mysql': '5.5.14',
         'mariadb': '5.5.37'
     }
+    migration_table = {
+        'mysql55': ('mysql56', 'mariadb55'),
+        'mysql56': ('mysql57', 'mariadb100'),
+        'mysql57': (),
+        'mariadb55': ('mysql56', 'mariadb100'),
+        'mariadb100': ('mysql56', 'mariadb101'),
+        'mariadb101': ('mysql57', 'mariadb102'),
+        'mariadb102': ()
+    }
 
     ALL_NEW_PKGS_LOADED = False
     RPM_PATH = '/usr/share/lve/dbgovernor2/rpms'
@@ -264,7 +273,7 @@ class InstallManager(object):
         # retrieve type data
         server_pkg = filter(lambda x: 'server' in x, self.installed_pkgs)
         try:
-            mysql_type = re.findall(r'(?<=^cl-)[A-Za-z]+(?=\d+)|^[A-Za-z]{3,}(?=-)', server_pkg[0])[0]
+            mysql_type = re.findall(r'(?<=^cl-)[A-Za-z]+(?=\d+)|^[A-Za-z]{3,}(?=\d*-)', server_pkg[0])[0]
         except IndexError:
             print bcolors.fail('Failed to retrieve mysql type data')
             return {}
@@ -359,16 +368,7 @@ class InstallManager(object):
             print bcolors.info('\t/usr/share/lve/dbgovernor2/mysqlgovernor.py --mysql-version mariadb100 --fresh')
             return False
 
-        migration_table = {
-            'mysql55': ('mysql56', 'mariadb55'),
-            'mysql56': ('mysql57', 'mariadb100'),
-            'mysql57': (),
-            'mariadb55': ('mysql56', 'mariadb100'),
-            'mariadb100': ('mysql56', 'mariadb101'),
-            'mariadb101': ('mysql57', 'mariadb102'),
-            'mariadb102': ()
-        }
-        allowed = migration_table.get(self.mysql_version['full'])
+        allowed = self.migration_table.get(self.mysql_version['full'])
         if allowed is None:
             print bcolors.fail('Installed version {} is not defined in migration table'.format(self.mysql_version['full']))
             return False
@@ -549,7 +549,7 @@ class InstallManager(object):
             sys.exit(2)
 
         # install repo
-        exec_command_out('yum localinstall -y {}'.format(repo_file))
+        exec_command_out('rpm -Uvh {}'.format(repo_file))
 
     def install_mariadb_repo(self, version):
         """
@@ -576,6 +576,16 @@ gpgcheck=1
         """
         print bcolors.fail('Removing packages:\n\t--> {}'.format('\n\t--> '.join(self.installed_pkgs)))
         remove_packages(self.installed_pkgs)
+
+    def delete_repos(self):
+        """
+        Remove created repository files
+        """
+        try:
+            os.unlink('/etc/yum.repos.d/MariaDB.repo')
+        except Exception:
+            pass
+        exec_command('yum erase -y mysql57-community-release')
 
     def user_confirmation(self):
         """

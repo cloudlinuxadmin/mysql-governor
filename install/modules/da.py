@@ -54,6 +54,8 @@ class DirectAdminManager(InstallManager):
     def install_packages(self):
         """
         Use custombuild script to install required version of MySQL/MariaDB
+        If custombuild script succeeded, remove official repository,
+        installed for packages download
         If custombuild script fails, try once more to remove existing packages
         and then parent 'yum install' downloaded packages
         """
@@ -62,26 +64,22 @@ class DirectAdminManager(InstallManager):
                            return_code=True)
         if res != 'yes':
             print bcolors.fail('custombuild script FAILED to install required MySQL/MariaDB version!')
-            print bcolors.info('Try to install previously downloaded official packages')
+            print bcolors.warning('Try to install previously downloaded official packages')
             InstallManager.uninstall_mysql(self)
             InstallManager.install_packages(self)
+        else:
+            print bcolors.ok('Packages installed with custombuild!')
+            # delete created repo files
+            self.delete_repos()
 
     def uninstall_mysql(self):
         """
         Uninstall only our cl-* packages
         Other packages will be managed by custombuild script
-        Remove official repository, installed for packages download
-        :return:
         """
         if self.mysql_version['patched']:
             print bcolors.warning('cl-* packages detected, uninstalling...')
             InstallManager.uninstall_mysql(self)
-        # delete created repo files
-        try:
-            os.unlink('/etc/yum.repos.d/MariaDB.repo')
-            os.unlink('/etc/yum.repos.d/mysql-community.repo')
-        except Exception:
-            pass
 
     def give_new_pkg_info(self):
         """
