@@ -15,7 +15,7 @@ from clcommon import cpapi
 from modules import InstallManager
 from utilities import bcolors, set_debug, shadow_tracing, set_path_environ, \
     fix_broken_governor_xml_config, patch_init_d_scripts, set_fs_suid_dumpable, \
-    sysconfig_patch
+    sysconfig_patch, restore_governor_xml_config
 
 LOG_FILE_NAME = "/usr/share/lve/dbgovernor2/governor_install.log"
 
@@ -152,6 +152,10 @@ def build_parser():
                         help="Fix unescaped xml and wrong limits in config file",
                         dest="fix_govervor_config", action="store_true",
                         default=False)
+    parser.add_argument("--restore-config",
+                        help="Restore mysql-governor.xml if necessary",
+                        dest="restore_governor_config",  action="store_true",
+                        default=False)
     parser.add_argument("--update-mysql-plugin",
                         help="Update governor-mysql plugin",
                         dest="update_plugin", action="store_true",
@@ -193,6 +197,8 @@ def main(argv):
         set_fs_suid_dumpable()
     elif opts.fix_govervor_config:
         fix_broken_governor_xml_config()
+    elif opts.restore_governor_config:
+        restore_governor_xml_config()
     elif opts.initd_patch:
         patch_init_d_scripts()
     elif opts.sysconfig_action:

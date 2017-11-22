@@ -55,6 +55,7 @@ start() {
 #			failure
 #			return 1
 #		fi
+        /usr/share/lve/dbgovernor2/mysqlgovernor.py --restore-config
         echo -n $"Starting $prog: "
         daemon --pidfile=${pidfile} $prog
         RETVAL=$?

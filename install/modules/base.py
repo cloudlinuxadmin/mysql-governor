@@ -446,7 +446,7 @@ class InstallManager(object):
         :return: True of False based on command success
         """
         res = exec_command(
-            "yum install -y --downloadonly --disableexcludes=all --downloaddir={dst} {pkgs}".format(
+            "yum install -y --downloadonly --disableexcludes=all --disablerepo=cl-mysql* --disablerepo=mysqlclient --downloaddir={dst} {pkgs}".format(
                 dst=self.RPM_PATH,
                 pkgs=' '.join(names)), return_code=True)
         return res == 'yes'
@@ -462,7 +462,7 @@ class InstallManager(object):
         os.putenv('LC_ALL', 'en_US.UTF-8')
         # find out problem packages names
         res = exec_command(
-            "yum install -y --skip-broken --downloadonly --disableexcludes=all --downloaddir={dst} {pkgs}".format(
+            "yum install -y --skip-broken --downloadonly --disableexcludes=all --disablerepo=cl-mysql* --disablerepo=mysqlclient --downloaddir={dst} {pkgs}".format(
                 dst=self.RPM_PATH,
                 pkgs=' '.join(names)), silent=True)
         try:
@@ -635,6 +635,8 @@ gpgcheck=1
                 # try to resolve out meta packages
                 if pkg_name.startswith('cl-'):
                     packages.extend(exec_command("""rpm -qa|grep -iE "^cl-"|grep "meta" """,
+                                                 silent=True))
+                    packages.extend(exec_command("""rpm -qa|grep -iE "mysqlclient(15|16|18|18-compat)" """,
                                                  silent=True))
         else:
             # check known packages patterns if no mysqld found

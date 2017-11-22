@@ -1069,3 +1069,16 @@ def sysconfig_patch(action):
                     out.writelines([l + '\n' for l in lines.difference(new_lines)])
         else:
             print 'Action not valid'
+
+
+def restore_governor_xml_config():
+    """
+    Try to find mysql-governor.xml and attempt to restore it if not found
+    """
+    governor_config_file = '/etc/container/mysql-governor.xml'
+    if not os.path.exists(governor_config_file):
+        if os.path.exists(governor_config_file + '.rpmsave'):
+            shutil.move(governor_config_file + '.rpmsave', governor_config_file)
+        else:
+            shutil.copy('/usr/share/lve/dbgovernor2/mysql-governor.xml',
+                        governor_config_file)
