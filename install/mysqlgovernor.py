@@ -60,6 +60,11 @@ def build_parser():
                         help="select MySQL version for db-governor. "
                              "Available mysql types: mysql55, mysql56, mysql57,"
                              " mariadb55, mariadb100, mariadb101, mariadb102",
+                        dest="old_mysql_version", required=False)
+    parser.add_argument("--install-mysql-version",
+                        help="install MySQL. "
+                             "Available mysql types: mysql55, mysql56, mysql57,"
+                             " mariadb55, mariadb100, mariadb101, mariadb102",
                         dest="mysql_version", required=False,
                         choices=['mysql55', 'mysql56', 'mysql57', 'mariadb55',
                                  'mariadb100', 'mariadb101', 'mariadb102'])
@@ -203,6 +208,8 @@ def main(argv):
         patch_init_d_scripts()
     elif opts.sysconfig_action:
         sysconfig_patch(opts.sysconfig_action)
+    elif opts.old_mysql_version:
+        print "Option is deprecated."
     elif opts.fix_cpanel_hooks:
         print "Option is deprecated."
     elif opts.install_from_history:

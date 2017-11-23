@@ -446,7 +446,7 @@ class InstallManager(object):
         :return: True of False based on command success
         """
         res = exec_command(
-            "yum install -y --downloadonly --disableexcludes=all --disablerepo=cl-mysql* --disablerepo=mysqlclient --downloaddir={dst} {pkgs}".format(
+            "yum install -y --downloadonly --disableexcludes=all --disablerepo=cl-mysql* --disablerepo=mysqclient* --downloaddir={dst} {pkgs}".format(
                 dst=self.RPM_PATH,
                 pkgs=' '.join(names)), return_code=True)
         return res == 'yes'
@@ -462,7 +462,7 @@ class InstallManager(object):
         os.putenv('LC_ALL', 'en_US.UTF-8')
         # find out problem packages names
         res = exec_command(
-            "yum install -y --skip-broken --downloadonly --disableexcludes=all --disablerepo=cl-mysql* --disablerepo=mysqlclient --downloaddir={dst} {pkgs}".format(
+            "yum install -y --skip-broken --downloadonly --disableexcludes=all --disablerepo=cl-mysql* --disablerepo=mysqclient* --downloaddir={dst} {pkgs}".format(
                 dst=self.RPM_PATH,
                 pkgs=' '.join(names)), silent=True)
         try:
