@@ -265,8 +265,13 @@ def remove_packages(packages_list):
         return
     # make server package become first in list, because it should be removed first
     new_pkg = sorted(packages_list, key=lambda x: '-server' in x, reverse=True)
-    # now should only call rpm with sorted packages list
-    packages = " ".join(new_pkg)
+
+    # remove server package first and separately from others
+    print exec_command("rpm -e --nodeps %s" % new_pkg[0], True,
+                       cmd_on_error="rpm -e --nodeps --noscripts %s" % new_pkg[0])
+
+    # remove remained packages
+    packages = " ".join(new_pkg[1:])
     print exec_command("rpm -e --nodeps %s" % packages, True,
                        cmd_on_error="rpm -e --nodeps --noscripts %s" % packages)
 

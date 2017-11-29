@@ -42,7 +42,7 @@ class InstallManager(object):
         'mysql57': (),
         'mariadb55': ('mysql56', 'mariadb100'),
         'mariadb100': ('mysql56', 'mariadb101'),
-        'mariadb101': ('mysql57', 'mariadb102'),
+        'mariadb101': ('mariadb102', ),
         'mariadb102': ()
     }
 
@@ -109,8 +109,8 @@ class InstallManager(object):
             print bcolors.warning('No installed MySQL/MariaDB found')
             print bcolors.fail('Cannot install plugin')
             print bcolors.ok('You may use mysqlgovernor.py to install officially supported MySQL/MariaDB: for example')
-            print bcolors.info('\t/usr/share/lve/dbgovernor2/mysqlgovernor.py --mysql-version mysql56')
-            print bcolors.info('\t/usr/share/lve/dbgovernor2/mysqlgovernor.py --mysql-version mariadb100')
+            print bcolors.info('\t/usr/share/lve/dbgovernor2/mysqlgovernor.py --install-mysql-version mysql56')
+            print bcolors.info('\t/usr/share/lve/dbgovernor2/mysqlgovernor.py --install-mysql-version mariadb100')
         else:
             print bcolors.ok('{} {} is installed here'.format(self.mysql_version['mysql_type'],
                                                               self.mysql_version['extended']))
@@ -124,14 +124,14 @@ class InstallManager(object):
                 print bcolors.warning('This is PATCHED {}!'.format(self.mysql_version['mysql_type']))
                 if force:
                     print bcolors.warning('Initiating migration to official {}!'.format(self.mysql_version['full']))
-                    print bcolors.info('Similarly to /usr/share/lve/dbgovernor2/mysqlgovernor.py --mysql-version {}'.format(self.mysql_version['full']))
+                    print bcolors.info('Similarly to /usr/share/lve/dbgovernor2/mysqlgovernor.py --install-mysql-version {}'.format(self.mysql_version['full']))
                     self.migrate(self.mysql_version['full'], auto_confirm=pkgs_yes)
                     self.mysql_version = self._check_mysql_version()
                     self.install()
                 else:
                     print bcolors.fail('Abort plugin installation')
                     print bcolors.ok('Please, install officially supported MySQL/MariaDB.\nYou may use mysqlgovernor.py for this: for example')
-                    print bcolors.info('\t/usr/share/lve/dbgovernor2/mysqlgovernor.py --mysql-version {}'.format(self.mysql_version['full']))
+                    print bcolors.info('\t/usr/share/lve/dbgovernor2/mysqlgovernor.py --install-mysql-version {}'.format(self.mysql_version['full']))
                     print bcolors.ok('Alternatively you may try force installation mode for automatic migration and further plugin installation:')
                     print bcolors.info('\t/usr/share/lve/dbgovernor2/mysqlgovernor.py --install --force')
             else:
@@ -293,7 +293,7 @@ class InstallManager(object):
 
         # retrieve patch info
         patch_result = exec_command('/usr/bin/strings /usr/sbin/mysqld | grep my_pthread_lvemutex_unlock | wc -l')
-        print bcolors.ok('Patch retrieved: {}'.format(patch_result[0] == '1'))
+        print bcolors.ok('Patch retrieved: {}'.format(int(patch_result[0]) > 0))
 
         return {
             'mysql_type': mysql_type.lower(),
@@ -301,7 +301,7 @@ class InstallManager(object):
             'extended': version,
             'full': '{m_type}{m_version}'.format(m_type=mysql_type.lower(),
                                                  m_version=short_version.replace('.', '')),
-            'patched': patch_result[0] == '1'
+            'patched': int(patch_result[0]) > 0
         }
 
     def plugin4(self):
@@ -364,8 +364,8 @@ class InstallManager(object):
         if not self.mysql_version:
             print bcolors.fail('Cannot analyze migration possibilities because of undetected installed MySQL/MariaDB version')
             print bcolors.ok('If you surely have NO MySQL/MariaDB installed, you may try fresh migration mode with desired MySQL/MariaDB version, for example:')
-            print bcolors.info('\t/usr/share/lve/dbgovernor2/mysqlgovernor.py --mysql-version mysql56 --fresh')
-            print bcolors.info('\t/usr/share/lve/dbgovernor2/mysqlgovernor.py --mysql-version mariadb100 --fresh')
+            print bcolors.info('\t/usr/share/lve/dbgovernor2/mysqlgovernor.py --install-mysql-version mysql56 --fresh')
+            print bcolors.info('\t/usr/share/lve/dbgovernor2/mysqlgovernor.py --install-mysql-version mariadb100 --fresh')
             return False
 
         allowed = self.migration_table.get(self.mysql_version['full'])
@@ -416,7 +416,7 @@ class InstallManager(object):
         :return:
         """
         print bcolors.ok('Installing new packages:\n\t--> {pkgs}'.format(pkgs='\n\t--> '.join(os.listdir(self.RPM_PATH))))
-        exec_command('yum install -y *', cwd=self.RPM_PATH)
+        exec_command('yum install -y --disableexcludes=all *', cwd=self.RPM_PATH)
 
     def download_packages(self, names):
         """
@@ -505,7 +505,8 @@ class InstallManager(object):
         Prepare official MySQL repository and packages
         :param version: mysql version
         """
-        pkg = ('mysql-community-server', )
+        pkg = ('mysql-community-server', 'mysql-community-client',
+               'mysql-community-common', 'mysql-community-libs')
         if not exec_command('rpm -qa | grep mysql57-community', silent=True):
             self.download_and_install_mysql_repo()
 
@@ -549,7 +550,7 @@ class InstallManager(object):
             sys.exit(2)
 
         # install repo
-        exec_command_out('rpm -Uvh {}'.format(repo_file))
+        exec_command_out('yum localinstall -y --disableexcludes=all {}'.format(repo_file))
 
     def install_mariadb_repo(self, version):
         """
@@ -597,6 +598,8 @@ gpgcheck=1
         self.give_new_pkg_info()
         if not self.auto_confirm:
             if not query_yes_no("Continue?"):
+                print bcolors.warning('Erasing prepared repositories...')
+                self.delete_repos()
                 sys.exit('Exiting by user request')
 
     def give_new_pkg_info(self):

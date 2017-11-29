@@ -15,6 +15,10 @@ class DirectAdminManager(InstallManager):
     CONF_FILE_MYSQL = "/usr/local/directadmin/conf/mysql.conf"
     CUSTOMBUILD = "/usr/local/directadmin/custombuild/build"
 
+    def __init__(self, cp_name):
+        InstallManager.__init__(self, cp_name)
+        self.mysql57 = False
+
     def update_user_map_file(self):
         """
         Update user mapping file for cPanel
@@ -36,20 +40,25 @@ class DirectAdminManager(InstallManager):
     def prepare_custombuild(self, version):
         """
         Update config file data for custombuild
+        or do nothing if version is mysql57
         :param version: version to install
         """
-        if version.startswith('mysql'):
-            m_type = 'mysql'
-        elif version.startswith('mariadb'):
-            m_type = 'mariadb'
+        if version == 'mysql57':
+            self.mysql57 = True
+            exec_command('{custombuild} set mysql_inst no'.format(custombuild=self.CUSTOMBUILD))
         else:
-            print bcolors.fail('Unknown database requested!\nOnly official MySQL/MariDB supported')
-            sys.exit(2)
-        num = version.split(m_type)[-1]
-        m_version = '{base}.{suffix}'.format(base=num[:-1],
-                                             suffix=num[-1])
-        exec_command('{custombuild} set {type} {ver}'.format(custombuild=self.CUSTOMBUILD, type=m_type, ver=m_version))
-        exec_command('{custombuild} set mysql_inst {type}'.format(custombuild=self.CUSTOMBUILD, type=m_type))
+            if version.startswith('mysql'):
+                m_type = 'mysql'
+            elif version.startswith('mariadb'):
+                m_type = 'mariadb'
+            else:
+                print bcolors.fail('Unknown database requested!\nOnly official MySQL/MariDB supported')
+                sys.exit(2)
+            num = version.split(m_type)[-1]
+            m_version = '{base}.{suffix}'.format(base=num[:-1],
+                                                 suffix=num[-1])
+            exec_command('{custombuild} set {type} {ver}'.format(custombuild=self.CUSTOMBUILD, type=m_type, ver=m_version))
+            exec_command('{custombuild} set mysql_inst {type}'.format(custombuild=self.CUSTOMBUILD, type=m_type))
 
     def install_packages(self):
         """
@@ -59,26 +68,33 @@ class DirectAdminManager(InstallManager):
         If custombuild script fails, try once more to remove existing packages
         and then parent 'yum install' downloaded packages
         """
-        print bcolors.info('Use custombuild script')
-        res = exec_command('{custombuild} mysql'.format(custombuild=self.CUSTOMBUILD),
-                           return_code=True)
-        if res != 'yes':
-            print bcolors.fail('custombuild script FAILED to install required MySQL/MariaDB version!')
-            print bcolors.warning('Try to install previously downloaded official packages')
-            InstallManager.uninstall_mysql(self)
+        if self.mysql57:
+            print bcolors.warning('Custombuild script will not be used, mysql57 is unsupported by it')
             InstallManager.install_packages(self)
         else:
-            print bcolors.ok('Packages installed with custombuild!')
-            # delete created repo files
-            self.delete_repos()
+            print bcolors.info('Use custombuild script')
+            res = exec_command('{custombuild} mysql'.format(custombuild=self.CUSTOMBUILD),
+                               return_code=True)
+            if res != 'yes':
+                print bcolors.fail('custombuild script FAILED to install required MySQL/MariaDB version!')
+                print bcolors.warning('Try to install previously downloaded official packages')
+                InstallManager.uninstall_mysql(self)
+                InstallManager.install_packages(self)
+            else:
+                print bcolors.ok('Packages installed with custombuild!')
+                # delete created repo files
+                self.delete_repos()
 
     def uninstall_mysql(self):
         """
         Uninstall only our cl-* packages
-        Other packages will be managed by custombuild script
+        Other packages will be managed by custombuild script,
+            except migration to mysql57!!!
         """
         if self.mysql_version['patched']:
             print bcolors.warning('cl-* packages detected, uninstalling...')
+            InstallManager.uninstall_mysql(self)
+        elif self.mysql57:
             InstallManager.uninstall_mysql(self)
 
     def give_new_pkg_info(self):
@@ -86,6 +102,7 @@ class DirectAdminManager(InstallManager):
         Tell user, that custombuild script will be used
         """
         print bcolors.info('CUSTOMBUILD SCRIPT WILL BE USED FOR NEW PACKAGES INSTALLATION')
+        print bcolors.warning('CUSTOMBUILD SCRIPT DOES NOT SUPPORT MYSQL 5.7! Official packages will be installed for mysql57')
         print bcolors.info('If custombuild script fails, these packages are going to be installed:\n\t--> {pkgs}'.format(pkgs='\n\t--> '.join(os.listdir(self.RPM_PATH))))
 
     def _before_install_mysql(self, version=None):

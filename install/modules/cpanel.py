@@ -25,7 +25,7 @@ class cPanelManager(InstallManager):
         'mysql57': (),
         'mariadb55': ('mysql56', 'mariadb100'),
         'mariadb100': ('mysql56', 'mariadb101'),
-        'mariadb101': ('mysql57', 'mariadb102'),
+        'mariadb101': ('mariadb102', ),
         'mariadb102': ()
     }
 
