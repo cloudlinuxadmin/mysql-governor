@@ -107,6 +107,15 @@ int db_connect_common(MYSQL ** internal_db, const char *host,
 	}
 
 	if (_my_init) (*_my_init)();
+
+	*internal_db = (*_mysql_init)(NULL);
+	if (*internal_db == NULL) {
+		WRITE_LOG(NULL, 0, buf, _DBGOVERNOR_BUFFER_512,
+				"Can't init mysql structure",
+				data_cfg.log_mode);
+		return -1;
+	}
+
 	/*
 	 * Здесь мы читаем my.cnf и .my.cnf
 	 * Это читает сам mysql, это его родное API
@@ -145,14 +154,6 @@ int db_connect_common(MYSQL ** internal_db, const char *host,
            }
         }
   }
-
-	*internal_db = (*_mysql_init)(NULL);
-	if (*internal_db == NULL) {
-		WRITE_LOG(NULL, 0, buf, _DBGOVERNOR_BUFFER_512,
-				"Can't init mysql structure",
-				data_cfg.log_mode);
-		return -1;
-	}
 
 	WRITE_LOG(NULL, 0, buf, _DBGOVERNOR_BUFFER_512,
 			"Try to connect with options from dbgovernor config file",
