@@ -364,8 +364,7 @@ class InstallManager(object):
         if not self.mysql_version:
             print bcolors.fail('Cannot analyze migration possibilities because of undetected installed MySQL/MariaDB version')
             print bcolors.ok('If you surely have NO MySQL/MariaDB installed, you may try fresh migration mode with desired MySQL/MariaDB version, for example:')
-            print bcolors.info('\t/usr/share/lve/dbgovernor2/mysqlgovernor.py --install-mysql-version mysql56 --fresh')
-            print bcolors.info('\t/usr/share/lve/dbgovernor2/mysqlgovernor.py --install-mysql-version mariadb100 --fresh')
+            print bcolors.info('\t/usr/share/lve/dbgovernor2/mysqlgovernor.py --install-mysql-version {} --fresh'.format(new_version))
             return False
 
         allowed = self.migration_table.get(self.mysql_version['full'])
