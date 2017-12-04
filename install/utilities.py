@@ -944,3 +944,27 @@ def fix_broken_governor_xml_config():
     # rewrite governor config
     with open(governor_config_file, 'wb') as governor_config:
         governor_config.write(res)
+
+
+def service_symlink(original_service, alias_link):
+    """
+    Create symlink for original_service to given alias_link
+    :param original_service: name of original service to symlink to
+    :param alias_link: name of alias to create a symlink
+    """
+    cl_ver = get_cl_num()
+    # make full paths for both initd and systemd
+    if cl_ver < 7:
+        orig_service = '/etc/init.d/{}'.format(original_service)
+        link_name = '/etc/init.d/{}'.format(alias_link)
+    else:
+        orig_service = '/usr/lib/systemd/system/{}.service'.format(original_service)
+        link_name = '/etc/systemd/system/{}.service'.format(alias_link)
+
+    # create symlink
+    if not os.path.exists(link_name):
+        if not os.path.islink(link_name):
+            os.symlink(orig_service, link_name)
+            # reload units for systemd
+            if cl_ver >= 7:
+                exec_command('/bin/systemctl daemon-reload')
