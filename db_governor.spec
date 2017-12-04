@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   28
+%define g_release   29
 %define g_key_library 9
 
 %if %{undefined _unitdir}
@@ -350,6 +350,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Mon Dec 04 2017 Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-29
+- MYSQLG-220: Fix restore of MariaDB and MySQL 5.7 official packages after governor deletion on cPanel
+
 * Thu Nov 16 2017 Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-28
 - Fixed unlimit reading from config file
 
