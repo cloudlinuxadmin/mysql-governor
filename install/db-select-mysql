@@ -41,7 +41,7 @@ while( $#ARGV != -1 )
             mariadb102 => undef,
             percona56 => undef,
         );
-      if exists($valid{$opt[ 1 ]}) {
+      if ( exists($valid{$opt[ 1 ]}) ) {
             $type_db = $opt[ 1 ];
             $set_mysql_type = 1;
       } else {
