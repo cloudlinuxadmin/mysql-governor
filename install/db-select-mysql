@@ -29,8 +29,22 @@ while( $#ARGV != -1 )
     my @opt = split( /=/, $arg );
     if( $opt[ 0 ] == "--mysql-version" )
     {
-      $type_db = $opt[ 1 ];
-      $set_mysql_type = 1;
+      my %valid = (
+            auto => undef,
+            mysql51 => undef,
+            mysql55 => undef,
+            mysql56 => undef,
+            mysql57 => undef,
+            mariadb55 => undef,
+            mariadb100 => undef,
+            mariadb101 => undef,
+            mariadb102 => undef,
+            percona56 => undef,
+        );
+      if exists($valid{$opt[ 1 ]}) {
+        $type_db = $opt[ 1 ];
+        $set_mysql_type = 1;
+      }
     }
   }
   if( $arg eq "--install-now" )
@@ -54,7 +68,7 @@ while( $#ARGV != -1 )
     print "Usage: db-select-mysql [options]\n";
     print "  options:\n";
     print "  --mysql-version=<mysql type> or -m <mysql type>     set version of mysql\n";
-    print "      mysql type: auto, mysql50, mysql51, mysql55, mysql56, mysql57, mariadb55, mariadb100, mariadb101, percona56\n";
+    print "      mysql type: auto, mysql51, mysql55, mysql56, mysql57, mariadb55, mariadb100, mariadb101, percona56\n";
     print "  --install-now                                       deprecated moved option to mysqlgovernor\n";
     print "  --install-now-beta                                  deprecated moved option to mysqlgovernor\n";
     print "\n";

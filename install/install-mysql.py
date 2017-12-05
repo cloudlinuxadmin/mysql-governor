@@ -521,7 +521,7 @@ def check_sepcific_mysql(pname, yb):
 	if yb.rpmdb.searchNevra(name=pname):
 	    print "Percona package deteced:" + pname 
 	    print "You are running Percona, which is not supported by MySQL Governor. If you want to run MySQL governor, we would have to uninstall Percona,and substitute it for MariaDB or MySQL. Run installator next commands for install:"
-	    print "/usr/share/lve/dbgovernor/db-select-mysql --mysql-version=mysql56 (or mysql50, mysql51, mysql55, mysql57, mariadb55, mariadb100, mariadb101)"
+	    print "/usr/share/lve/dbgovernor/db-select-mysql --mysql-version=mysql56 (or mysql51, mysql55, mysql57, mariadb55, mariadb100, mariadb101)"
 	    print "/usr/share/lve/dbgovernor/mysqlgovernor.py --install --force"
 	    sys.exit(2)
 	else:
@@ -632,10 +632,10 @@ def safe_mysql_op():
 		print "MariaDB 10.1"
 	else:
 		print "Unknown"
-		print "Type please: /usr/share/lve/dbgovernor/db-select-mysql --mysql-version=<mysql50, mysql51, mysql55, mysql56, mysql57, maridb55, maridb100, mariadb101>"
+		print "Type please: /usr/share/lve/dbgovernor/db-select-mysql --mysql-version=<mysql51, mysql55, mysql56, mysql57, maridb55, maridb100, mariadb101>"
 		sys.exit(2)
 	print "auto means will be installed mysql-server package from CloudLinux repo"
-	print "If you don't agree - press n and type: /usr/share/lve/dbgovernor/db-select-mysql --mysql-version=<mysql50, mysql51, mysql55, mysql56, mysql57, maridb55, maridb100, mariadb101>"
+	print "If you don't agree - press n and type: /usr/share/lve/dbgovernor/db-select-mysql --mysql-version=<mysql51, mysql55, mysql56, mysql57, maridb55, maridb100, mariadb101>"
 	if query_yes_no("Should we continue installation?", "yes")==False:
 	    sys.exit(2)
 
