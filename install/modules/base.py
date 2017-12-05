@@ -25,6 +25,7 @@ from utilities import get_cl_num, exec_command, exec_command_out, new_lve_ctl, \
     correct_remove_notowned_mysql_service_names_cl7, \
     correct_remove_notowned_mysql_service_names_not_symlynks_cl7, get_mysql_log_file, \
     check_mysqld_is_alive, makedir_recursive, patch_governor_config
+from ConfigParser import SafeConfigParser
 
 
 class InstallManager(object):
@@ -126,6 +127,37 @@ class InstallManager(object):
             else:
                 actions.get(action)(working_path)
 
+    def my_cnf_inspect(self):
+        """
+        Fix nonexistent paths to log-error and pid-file
+        """
+        self.my_cnf_manager('backup')
+        track = {
+            'files': ('log-error', ),
+            'paths': ('pid-file', )
+        }
+        default_log = '/var/lib/mysql/mysqld.error.log'
+        default_pid = '/var/lib/mysql/mysqld.pid'
+
+        conf = SafeConfigParser()
+        conf.read('/etc/my.cnf.prev')
+        # try to find non-existent paths, defined in /etc/my.cnf
+        for s in conf.sections():
+            for opt, val in conf.items(s):
+                if opt in track['files']:
+                    # inspect whole path
+                    if not os.path.exists(val):
+                        print 'NO LOG for {opt} --> {v}'.format(opt=opt, v=val)
+                        conf.set(s, opt, default_log)
+                elif opt in track['paths']:
+                    # inspect dir path
+                    if not os.path.exists(os.path.dirname(val)):
+                        print 'NO PATH for {opt} --> {v}'.format(opt=opt, v=val)
+                        conf.set(s, opt, default_pid)
+
+        with open('/etc/my.cnf', 'wb') as configfile:
+            conf.write(configfile)
+
     def remove_current_packages(self):
         """
         Delete current installed packages
@@ -186,6 +218,7 @@ class InstallManager(object):
         # if os.path.exists("/etc/my.cnf.prev"):
         #     shutil.copy2("/etc/my.cnf.prev", "/etc/my.cnf")
         self.my_cnf_manager('restore_rpmsave')
+        self.my_cnf_inspect()
 
         self.set_fs_suid_dumpable()
         self._check_leave_pid()
