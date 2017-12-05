@@ -42,8 +42,10 @@ while( $#ARGV != -1 )
             percona56 => undef,
         );
       if exists($valid{$opt[ 1 ]}) {
-        $type_db = $opt[ 1 ];
-        $set_mysql_type = 1;
+            $type_db = $opt[ 1 ];
+            $set_mysql_type = 1;
+      } else {
+	        print "Unsupported version\n";
       }
     }
   }
