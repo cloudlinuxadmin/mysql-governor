@@ -56,10 +56,13 @@ def build_parser():
                         dest="verbose", action="store_true", default=False)
     parser.add_argument("--mysql-version",
                         help="select MySQL version for db-governor. "
-                             "Available mysql types: auto, mysql50, mysql51, "
+                             "Available mysql types: auto, mysql51, "
                              "mysql55, mysql56, mysql57, mariadb55, "
                              "mariadb100, mariadb101, mariadb102, percona56",
-                        dest="mysql_version", required=False)
+                        dest="mysql_version", required=False,
+                        choices=['auto', 'mysql51', 'mysql55', 'mysql56',
+                                 'mysql57', 'mariadb55', 'mariadb100',
+                                 'mariadb101', 'mariadb102', 'percona56'])
     parser.add_argument("-i", "--install", help="install MySQL for db-governor",
                         dest="install", action="store_true", default=False)
     parser.add_argument("-d", "--delete", help="delete MySQL for db-governor",
