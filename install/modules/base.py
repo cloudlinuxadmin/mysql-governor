@@ -218,7 +218,6 @@ class InstallManager(object):
         # if os.path.exists("/etc/my.cnf.prev"):
         #     shutil.copy2("/etc/my.cnf.prev", "/etc/my.cnf")
         self.my_cnf_manager('restore_rpmsave')
-        self.my_cnf_inspect()
 
         self.set_fs_suid_dumpable()
         self._check_leave_pid()
@@ -256,6 +255,8 @@ class InstallManager(object):
             target_uid = pwd.getpwnam("mysql").pw_uid
             target_gid = grp.getgrnam("mysql").gr_gid
             os.chown(log_file, target_uid, target_gid)
+
+        self.my_cnf_inspect()
 
         version = self._get_new_version()
         if version.startswith("mariadb") or version == "auto" \
