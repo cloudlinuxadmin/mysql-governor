@@ -139,7 +139,7 @@ class InstallManager(object):
         default_log = '/var/lib/mysql/mysqld.error.log'
         default_pid = '/var/lib/mysql/mysqld.pid'
 
-        conf = SafeConfigParser()
+        conf = SafeConfigParser(allow_no_value=True)
         conf.read('/etc/my.cnf.prev')
         # try to find non-existent paths, defined in /etc/my.cnf
         for s in conf.sections():
