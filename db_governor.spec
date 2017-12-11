@@ -139,6 +139,7 @@ install -D -m 755 install/scripts/dbgovernor_map %{buildroot}%{governor_path}/sc
 install -D -m 755 install/scripts/dbgovernor_map.py %{buildroot}%{governor_path}/scripts/dbgovernor_map.py
 install -D -m 755 install/scripts/cpanel-install-hooks %{buildroot}%{governor_path}/scripts/cpanel-install-hooks
 install -D -m 755 install/scripts/cpanel-delete-hooks %{buildroot}%{governor_path}/scripts/cpanel-delete-hooks
+install -D -m 755 install/scripts/mysql_hook %{buildroot}%{governor_path}/scripts/mysql_hook
 install -D -m 755 script/mysql %{buildroot}%{governor_path}/scripts/mysql
 
 install -D -m 600 install/list_problem_files.txt %{buildroot}%{governor_path}/
