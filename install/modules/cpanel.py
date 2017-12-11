@@ -159,3 +159,17 @@ class cPanelManager(InstallManager):
         # enable mysql monitoring
         print 'Activating mysql monitoring'
         self.enable_mysql_monitor()
+
+    def _after_install_plugin(self):
+        """
+        Actions, performed after plugin installation process
+        """
+        self._script("cpanel-install-hooks")
+        InstallManager._after_install_plugin(self)
+
+    def _after_delete_plugin(self):
+        """
+        Actions, performed after plugin deletion process
+        """
+        self._script("cpanel-delete-hooks")
+        InstallManager._after_delete_plugin(self)

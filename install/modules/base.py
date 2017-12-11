@@ -93,17 +93,7 @@ class InstallManager(object):
             print bcolors.fail("Unknown system type. Installation aborted")
             sys.exit(2)
 
-        # patch governor config
-        self._set_mysql_access()
-
-        self._governorservice('stop')
-        # try uninstalling old governor plugin
-        try:
-            print 'Try to uninstall old governor plugin...'
-            self.mysql_command('uninstall plugin governor')
-        except RuntimeError as e:
-            print e
-        self._mysqlservice('restart')
+        self._before_install_plugin()
 
         if not self.mysql_version:
             print bcolors.warning('No installed MySQL/MariaDB found')
@@ -145,7 +135,7 @@ class InstallManager(object):
                     self.mysql_command('install plugin governor soname "governor.so"')
                     self.plugin_md5('write')
                     print bcolors.ok('Governor plugin installed successfully.')
-        self._governorservice('start')
+        self._after_install_plugin()
         return True
 
     def delete(self):
@@ -153,12 +143,8 @@ class InstallManager(object):
         Delete governor
         """
         self._governorservice('stop')
-        # try uninstalling old governor plugin
-        try:
-            print 'Try to uninstall old governor plugin...'
-            self.mysql_command('uninstall plugin governor')
-        except RuntimeError as e:
-            print e
+        print bcolors.info('Uninstalling governor plugin...')
+        self.delete_plugin()
 
         self._mysqlservice('stop')
         try:
@@ -170,13 +156,16 @@ class InstallManager(object):
             print 'Plugin.dir deleted'
         except (IOError, OSError) as e:
             print e
-        for script in ('/etc/init.d/mysql', '/etc/init.d/mysqld', '/etc/init.d/mariadb'):
-            try:
-                shutil.move(script + '.bak', script)
-                print '{} restored'.format(script)
-            except (IOError, OSError):
-                continue
-        self._mysqlservice('start')
+        self._after_delete_plugin()
+
+    def delete_plugin(self):
+        """
+        Uninstall governor plugin
+        """
+        try:
+            self.mysql_command('uninstall plugin governor')
+        except RuntimeError as e:
+            print e
 
     def update_plugin(self):
         """
@@ -675,6 +664,35 @@ gpgcheck=1
         self._mysqlservice('start')
         if self.cp_name == 'Unknown':
             self.run_mysql_upgrade()
+
+    def _before_install_plugin(self):
+        """
+        Actions, performed prior to plugin installation process
+        """
+        # patch governor config
+        self._set_mysql_access()
+        self._governorservice('stop')
+        print bcolors.warning('Try to uninstall old governor plugin...')
+        self.delete_plugin()
+        self._mysqlservice('restart')
+
+    def _after_install_plugin(self):
+        """
+        Actions, performed after plugin installation process
+        """
+        self._governorservice('start')
+
+    def _after_delete_plugin(self):
+        """
+        Actions, performed after plugin deletion process
+        """
+        for script in ('/etc/init.d/mysql', '/etc/init.d/mysqld', '/etc/init.d/mariadb'):
+            try:
+                shutil.move(script + '.bak', script)
+                print '{} restored'.format(script)
+            except (IOError, OSError):
+                continue
+        self._mysqlservice('start')
 
     def _rel(self, path):
         """
