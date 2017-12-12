@@ -240,8 +240,8 @@ renew_map_on_request (void *data)
  	 		 	{
  	 		 	  if (!renew_pid)
  	 		 	    {
- 	 		 	      execl ("/usr/share/lve/dbgovernor/mysqlgovernor.py",
- 	 		 	    		  "/usr/share/lve/dbgovernor/mysqlgovernor.py", "--dbupdate", NULL);
+ 	 		 	      execl ("/usr/share/lve/dbgovernor2/mysqlgovernor.py",
+ 	 		 	    		  "/usr/share/lve/dbgovernor2/mysqlgovernor.py", "--dbupdate", NULL);
  	 		 	      WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
  	 		 			 "(%d)Exec error (renew dbmap). Path %s",
  	 		 			 data_cfg.log_mode, errno, "dbupdate");
