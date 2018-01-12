@@ -356,6 +356,9 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Fri Jan 12 2018 Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-30
+- MYSQLG-240: try to fix cPanel hooks after update from 1.1 governor version
+
 * Mon Dec 04 2017 Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-29
 - MYSQLG-220: Fix restore of MariaDB and MySQL 5.7 official packages after governor deletion on cPanel
 
