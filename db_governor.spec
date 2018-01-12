@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   29
+%define g_release   30
 %define g_key_library 9
 
 %if %{undefined _unitdir}
@@ -326,6 +326,12 @@ fi
 echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
 echo "!!!Before making any changing with database make sure that you have reserve copy of users data!!!"
 echo "Instruction: how to create whole database backup - http://docs.cloudlinux.com/index.html?backing_up_mysql.html"
+
+%triggerpostun -- governor-mysql < 1.2
+echo "Attempt to fix cPanel hooks..."
+if [ -e /usr/share/lve/dbgovernor/mysqlgovernor.py ]; then
+    /usr/share/lve/dbgovernor/mysqlgovernor.py --fix-cpanel-hooks
+fi
 
 %files
 %defattr(-,root,root)
