@@ -145,7 +145,7 @@ FILE *out;
 int _socket;
 
 int sort_type = 0, screen_view = 1, is_colorize = 1;
-volatile int refresh_time = 500;
+volatile int refresh_time = 1;
 
 GList *accounts = NULL;
 GList *recv_accounts = NULL;
@@ -819,8 +819,11 @@ printOneScreenNoCurses ()
 void *
 read_keys ()
 {
+  time_t start_time = time(NULL);
+  time_t current_time = 0;
   int ch = '\0';
   printHeader ();
+  screen_regenerate ();
   while (1)
     {
 
@@ -882,12 +885,18 @@ read_keys ()
 	  break;
 
 	}
-      screen_regenerate ();
-
+	current_time = time(NULL);
+	if ((current_time - start_time) >= refresh_time) {
+	  screen_regenerate ();
+	  start_time = current_time;
+	}
       ch = getch ();
       if (ch == ERR)
 	{
-	  screen_regenerate ();
+	  if ((current_time - start_time) >= refresh_time) {
+	    screen_regenerate ();
+	    start_time = current_time;
+	  }
 	  continue;
 	}
 
@@ -945,9 +954,9 @@ main (int argc, char *argv[])
 	{
 	case 'r':
 	  refresh_tmp_time = (int) strtol (optarg, &endptr, 10);
-	  if ((refresh_tmp_time) && (refresh_tmp_time < 30))
+	  if ((refresh_tmp_time) && (refresh_tmp_time <= 60))
 	    {
-	      refresh_time = refresh_tmp_time * 1000;
+	      refresh_time = refresh_tmp_time;
 	    }
 	  break;
 	case 'c':

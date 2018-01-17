@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   30
+%define g_release   31
 %define g_key_library 9
 
 %if %{undefined _unitdir}
@@ -356,6 +356,9 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Wed Jan 17 2018 Serhii Kokhan <skokhan@cloudlinux.com> 1.2-31
+- MYSQLG-237: dbtop update interval fixed
+
 * Fri Jan 12 2018 Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-30
 - MYSQLG-240: try to fix cPanel hooks after update from 1.1 governor version
 
