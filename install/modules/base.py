@@ -25,7 +25,7 @@ from utilities import get_cl_num, exec_command, exec_command_out, new_lve_ctl, \
     correct_remove_notowned_mysql_service_names_cl7, \
     correct_remove_notowned_mysql_service_names_not_symlynks_cl7, get_mysql_log_file, \
     check_mysqld_is_alive, makedir_recursive, patch_governor_config
-from ConfigParser import SafeConfigParser
+from ConfigParser import RawConfigParser
 
 
 class InstallManager(object):
@@ -139,7 +139,7 @@ class InstallManager(object):
         default_log = '/var/lib/mysql/mysqld.error.log'
         default_pid = '/var/lib/mysql/mysqld.pid'
 
-        conf = SafeConfigParser(allow_no_value=True)
+        conf = RawConfigParser(allow_no_value=True)
         conf.read('/etc/my.cnf.prev')
         # try to find non-existent paths, defined in /etc/my.cnf
         for s in conf.sections():
