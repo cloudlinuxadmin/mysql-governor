@@ -182,6 +182,10 @@ def main(argv):
     if opts.debug_flag:
         set_debug(True)
 
+    if opts.mysql_version:
+        manager.set_mysql_version(opts.mysql_version)
+        print "Now set MySQL to type '%s'" % opts.mysql_version
+
     if opts.install or opts.install_beta:
         warn_message()
         manager.cleanup()
@@ -213,10 +217,6 @@ def main(argv):
         print "Deletion is complete"
 
         manager.cleanup()
-
-    elif opts.mysql_version:
-        manager.set_mysql_version(opts.mysql_version)
-        print "Now set MySQL to type '%s'" % opts.mysql_version
     elif opts.dbupdate:
         manager.update_user_map_file()
     elif opts.fix_cpanel_hooks:
