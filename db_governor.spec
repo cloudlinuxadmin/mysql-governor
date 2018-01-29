@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   31.1
+%define g_release   32
 %define g_key_library 9
 
 %if %{undefined _unitdir}
@@ -376,6 +376,9 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Mon Jan 29 2018 Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-32
+- MYSQLG-243: mysqlgovernor.py able to set version and install in one turn
+
 * Tue Jan 23 2018 Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-31.1
 - Added test version of governor's library
 
