@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   32
+%define g_release   33
 %define g_key_library 9
 
 %if %{undefined _unitdir}
@@ -152,6 +152,7 @@ install -D -m 755 install/scripts/cpanel-install-hooks $RPM_BUILD_ROOT/usr/share
 install -D -m 755 install/scripts/cpanel-common-lve $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/cpanel-common-lve
 install -D -m 755 install/scripts/dbgovernor_map $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/dbgovernor_map
 install -D -m 755 install/scripts/dbgovernor_map.py $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/dbgovernor_map.py
+install -D -m 755 install/scripts/dbgovernor_map_plesk.py $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/dbgovernor_map_plesk.py
 install -D -m 755 install/scripts/detect-cpanel-mysql-version.pm $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/detect-cpanel-mysql-version.pm
 install -D -m 755 install/scripts/cpanel-mysql-url-detect.pm $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/cpanel-mysql-url-detect.pm
 install -D -m 755 install/scripts/mysql_hook $RPM_BUILD_ROOT//usr/share/lve/dbgovernor/scripts/mysql_hook
@@ -376,6 +377,9 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Fri Feb 02 2018 Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-33
+- MYSQLG-239: dbuser-map for Plesk implemented
+
 * Mon Jan 29 2018 Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-32
 - MYSQLG-243: mysqlgovernor.py able to set version and install in one turn
 

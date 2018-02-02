@@ -21,3 +21,9 @@ class PleskManager(InstallManager):
         if os.path.exists(self.DBPASS_PATH):
             self.MYSQLUSER = "admin"
             self.MYSQLPASSWORD = read_file(self.DBPASS_PATH)
+
+    def update_user_map_file(self):
+        """
+        Update user mapping file for Plesk
+        """
+        self._script("dbgovernor_map_plesk.py")
