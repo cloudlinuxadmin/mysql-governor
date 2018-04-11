@@ -164,6 +164,9 @@ class InstallManager(object):
         """
         # stop mysql service
         self._mysqlservice("stop")
+        # disable service for CL7 to eliminate broken symlinks after removing
+        if self.cl_version == 7:
+            self._mysqlservice("disable")
 
         # remove current mysql packages
         remove_packages(self._old_packages)
