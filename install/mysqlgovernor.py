@@ -186,7 +186,7 @@ def main(argv):
         manager.set_mysql_version(opts.mysql_version)
         print "Now set MySQL to type '%s'" % opts.mysql_version
 
-    if opts.install or opts.install_beta:
+    elif opts.install or opts.install_beta:
         warn_message()
         manager.cleanup()
         # detect_percona(opts.force, manager)
