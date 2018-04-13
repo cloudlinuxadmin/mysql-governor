@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   33
+%define g_release   34
 %define g_key_library 9
 
 %if %{undefined _unitdir}
@@ -377,6 +377,10 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Fri Apr 13 2018 Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-34
+- MYSQLG-251: fix error on choosing MySQL
+- MYSQLG-250: fix broken symlinks
+
 * Fri Feb 02 2018 Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-33
 - MYSQLG-239: dbuser-map for Plesk implemented
 
