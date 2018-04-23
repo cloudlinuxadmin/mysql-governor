@@ -1,5 +1,5 @@
 %define g_version   2.0
-%define g_release   1
+%define g_release   2
 %define g_key_library 9
 
 %if %{undefined _unitdir}
@@ -393,6 +393,9 @@ fi
 %{governor_path}/plugins/*
 
 %changelog
+* Tue Apr 24 2018 Alexey Berezhok <aberezhok@cloudlinux.com> 2.0-2
+- Fixed dbgovernor crash when username length is long
+
 * Sun Nov 12 2017 Alexey Berezhok <alexey.berezhok@cloudlinux.com> - 2.0-1.2
 - Rebuild governor as MySQL plugin
 
