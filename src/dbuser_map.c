@@ -35,7 +35,7 @@ pthread_rwlock_t map_rw_lock = PTHREAD_RWLOCK_INITIALIZER;
 void
 trim (char *s)
 {
-  char d[50];
+  char d[strlen(s)+1];
   int i, j;
   for (i = j = 0; s[i] != '\0'; i++)
     if (s[i] != ' ' && s[i] != '\n')
@@ -64,6 +64,7 @@ get_map_file (struct governor_config *data_cfg)
   char buffer[_DBGOVERNOR_BUFFER_2048];
   username_t username, account_name;
   parameter_t uid;
+  int len = 0;
 
   int l = 0;
   if (userMap != NULL)
@@ -76,6 +77,7 @@ get_map_file (struct governor_config *data_cfg)
     {
       if (fgets (buf, sizeof (buf), map))
 	{
+	  len = 0;
 	  int i = 0, split = 0, split2 = 0;
 	  for (l = 0; l < USERNAMEMAXLEN; l++)
 	    {
@@ -88,36 +90,49 @@ get_map_file (struct governor_config *data_cfg)
 	    {
 	      if (split == 0)
 		{
-		  if (buf[i] != ' ')
-		    username[i] = buf[i];
-		  else
+		  if (buf[i] != ' ') {
+                    if(i<(sizeof(username_t)-1)) {
+			username[len] = buf[i];
+			len++;
+		    }
+		  } else
 		    {
-		      username[i + 1] = '\0';
+		      username[len] = '\0';
 		      split = i;
+		      len = 0;
 		    }
 		}
 	      else
 		{
 		  if (split2 == 0)
 		    {
-		      if (buf[i] != ' ')
-			account_name[i - split - 1] = buf[i];
-		      else
+		      if (buf[i] != ' ') {
+                        if((i-split-1)<(sizeof(username_t)-1)) {
+			    account_name[len] = buf[i];
+                            len++;
+                        }
+		      } else
 			{
-			  account_name[i - split - 1] = '\0';
+			  account_name[len] = '\0';
 			  split2 = i;
+                          len = 0;
 			}
 		    }
 		  else
 		    {
 		      if (i > split2)
 			{
-			  if (buf[i] != '\n')
-			    uid[i - split2 - 1] = buf[i];
+			  if (buf[i] != '\n') {
+                            if((i-split2-1)<(sizeof(parameter_t)-1)) {
+			        uid[len] = buf[i];
+			        len++;
+			    }
+			  }
 			}
 		    }
 		}
 	    }
+	  if (len) uid[len]='\0';
 	  uid[USERNAMEMAXLEN - 1] = '\0';
 	  trim (username);
 	  trim (uid);
