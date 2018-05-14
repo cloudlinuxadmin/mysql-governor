@@ -194,11 +194,11 @@ def download_packages(names, dest, beta, custom_download=None):
     else:
         repo = "" if not beta else "--enablerepo=cloudlinux-updates-testing"
         if exec_command(
-                "yum repolist --enablerepo=* --setopt=cl-mysql.skip_if_unavailable=true --setopt=cl-mysql-debuginfo.skip_if_unavailable=true --setopt=cl-mysql-testing.skip_if_unavailable=true |grep mysql -c",
+                "yum repolist -y --enablerepo=* --setopt=cl-mysql.skip_if_unavailable=true --setopt=cl-mysql-debuginfo.skip_if_unavailable=true --setopt=cl-mysql-testing.skip_if_unavailable=true |grep mysql -c",
                 True, True) != "0":
             repo = "%s --enablerepo=mysqclient" % repo
 
-        exec_command("yumdownloader --destdir=%s --disableexcludes=all %s %s"
+        exec_command("yumdownloader -y --destdir=%s --disableexcludes=all %s %s"
                      % (path, repo, " ".join(names)), True, silent=True)
 
     pkg_not_found = False
