@@ -20,10 +20,11 @@ typedef struct rest_levels
   char level2;
   char level3;
   char level4;
-}DbCtlRestLevels;
+} DbCtlRestLevels;
 
-int restrict_user( char *user, char *level );
-int unrestrict( char *user );
-int unrestrict_all( void );
+int restrict_user (char *user, char *level);
+int unrestrict (char *user);
+int unrestrict_all (void);
+int dbupdatecmd(void);
 
 #endif /* __DBCTL_REST__ */

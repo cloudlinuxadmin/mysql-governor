@@ -12,12 +12,12 @@
 #include "governor_config.h"
 #include "stats.h"
 
-void reinit_command_list();
-void free_commands_list();
-void account_unrestrict(Account * ac);
-void account_restrict(Account * ac, stats_limit_cfg * limit);
-void send_commands_cycle();
-void send_commands(Command * cmd, void *data);
-void *send_governor(void *data);
+void reinit_command_list ();
+void free_commands_list ();
+void account_unrestrict (Account * ac);
+void account_restrict (Account * ac, stats_limit_cfg * limit);
+void send_commands_cycle ();
+void send_commands (Command * cmd, void *data);
+void *send_governor (void *data);
 
 #endif /* COMMANDS_H_ */

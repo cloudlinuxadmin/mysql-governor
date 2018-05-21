@@ -30,6 +30,6 @@ struct user_account
 void init_user_table ();
 void free_user_table ();
 struct user_account *get_user_account (username_t username);
-int check_if_user_restricted(username_t username, GHashTable * accounts);
+int check_if_user_restricted (username_t username, GHashTable * accounts);
 
 #endif

@@ -1,0 +1,142 @@
+diff -rupN mysql-governor-governor-1.2-new/CMakeLists.txt mysql-governor-governor-1.2/CMakeLists.txt
+--- mysql-governor-governor-1.2-new/CMakeLists.txt	2018-01-18 05:30:51.000000000 -0500
++++ mysql-governor-governor-1.2/CMakeLists.txt	2017-12-17 15:40:47.000000000 -0500
+@@ -26,6 +26,10 @@ LINK_LIBRARIES(rt)
+ LINK_LIBRARIES(dl)
+ LINK_LIBRARIES(ncurses)
+ 
++set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
++set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0")
++set(CMAKE_CXX_FLAGS_DEBUG "-g")
++
+ IF (${SYSTEMD_FLAG})
+     add_definitions(-DSYSTEMD_FLAG=1)
+     LINK_LIBRARIES(systemd)
+diff -rupN mysql-governor-governor-1.2-new/db_governor.spec mysql-governor-governor-1.2/db_governor.spec
+diff -rupN mysql-governor-governor-1.2-new/install/modules/base.py mysql-governor-governor-1.2/install/modules/base.py
+diff -rupN mysql-governor-governor-1.2-new/src/dbtop.c mysql-governor-governor-1.2/src/dbtop.c
+diff -rupN mysql-governor-governor-1.2-new/src/governor_write_data.c mysql-governor-governor-1.2/src/governor_write_data.c
+--- mysql-governor-governor-1.2-new/src/governor_write_data.c	2018-01-18 05:30:51.000000000 -0500
++++ mysql-governor-governor-1.2/src/governor_write_data.c	2017-12-17 15:52:27.000000000 -0500
+@@ -555,11 +555,13 @@ governor_enter_lve (uint32_t * cookie, c
+ {
+   lve_uid = 0;
+   int container_lve = is_user_in_bad_list_cleint_persistent (username);
++  print_message_log("GOVERNOR: governor_enter_lve user %s uid %d", username, container_lve);
+   if (container_lve && lve_enter_flags && lve)
+     {
+       errno = 0;
+       int rc = lve_enter_flags (lve, container_lve, cookie, ((int) ((1 << 0) | (1 << 2) | (1 << 3) | (1 << 4))));	//LVE_NO_MAXENTER|LVE_SILENCE|LVE_NO_UBC|LVE_NO_KILLABLE
+       int keep_errno = errno;
++      print_message_log("GOVERNOR: governor_enter_lve user %s uid %d errno %d rc %d", username, container_lve, keep_errno, rc);
+       if (rc)
+ 	{
+ 	  if (keep_errno == EPERM)
+@@ -585,6 +587,7 @@ governor_enter_lve_light (uint32_t * coo
+       errno = 0;
+       int rc = lve_enter_flags (lve, lve_uid, cookie, ((int) ((1 << 0) | (1 << 2) | (1 << 3) | (1 << 4))));	//LVE_NO_MAXENTER|LVE_SILENCE|LVE_NO_UBC|LVE_NO_KILLABLE
+       int keep_errno = errno;
++      print_message_log("GOVERNOR: governor_enter_lve_light uid %d errno %d rc %d", lve_uid, keep_errno, rc);
+       if (rc)
+ 	{
+ 	  if (keep_errno == EPERM)
+@@ -604,16 +607,19 @@ governor_enter_lve_light (uint32_t * coo
+ void
+ governor_lve_exit (uint32_t * cookie)
+ {
+-  if (lve_exit && lve)
++  if (lve_exit && lve){
++    print_message_log("GOVERNOR: governor_lve_exit uid %d", lve_uid);
+     lve_exit (lve, cookie);
++    }
+ }
+ 
+ void
+ governor_lve_exit_null ()
+ {
+   uint32_t lcookie = 0;
+-  if (lve_exit)
++  if (lve_exit) {
+     lve_exit (NULL, &lcookie);
++    }
+ }
+ 
+ int
+diff -rupN mysql-governor-governor-1.2-new/src/shared_memory.c mysql-governor-governor-1.2/src/shared_memory.c
+--- mysql-governor-governor-1.2-new/src/shared_memory.c	2018-01-18 05:30:51.000000000 -0500
++++ mysql-governor-governor-1.2/src/shared_memory.c	2017-12-17 16:06:09.000000000 -0500
+@@ -22,6 +22,9 @@
+ #include "shared_memory.h"
+ #include "dbuser_map.h"
+ 
++#include <sys/syscall.h>
++#include <stdarg.h>
++
+ #define MAX_ITEMS_IN_TABLE 100000
+ #define SHARED_MEMORY_NAME "governor_bad_users_list"
+ #define SHARED_MEMORY_SEM "governor_bad_users_list_sem"
+@@ -478,18 +481,26 @@ int remove_bad_users_list_client() {
+ 	return 0;
+ }
+ 
++#ifndef GETTID
++pid_t gettid_p(void) {return syscall(__NR_gettid);}
++#endif
++
+ int32_t is_user_in_bad_list_cleint_persistent(char *username) {
+ 	sem_t *sem_client = sem_open(SHARED_MEMORY_SEM, 0, 0600, 1);
++	print_message_log("GOVERNOR: is_user_in_bad_list_cleint_persistent user %s sem %p=%d", username, sem_client, sem_client != SEM_FAILED);
+ 	int trys = 1, sem_reopen = 0;
+ 	int32_t fnd = 0;
+ 
+ 	if (sem_client != SEM_FAILED) {
+ 		while (trys) {
+ 			if (sem_trywait(sem_client) == 0) {
++			        print_message_log("GOVERNOR: is_user_in_bad_list_cleint_persistent user %s map %p=%d", username, bad_list_clents_global, bad_list_clents_global != MAP_FAILED);
+ 				if (bad_list_clents_global && (bad_list_clents_global
+ 						!= MAP_FAILED)) {
+ 					long index = 0;
++					print_message_log("GOVERNOR: is_user_in_bad_list_cleint_persistent user %s numbers %d", username, bad_list_clents_global->numbers);
+ 					for (index = 0; index < bad_list_clents_global->numbers; index++) {
++					        print_message_log("GOVERNOR: is_user_in_bad_list_cleint_persistent user %s user at index %d - %s, uid %d", username, index, bad_list_clents_global->items[index].username, bad_list_clents_global->items[index].uid);
+ 						if (!strncmp(
+ 								bad_list_clents_global->items[index].username,
+ 								username, USERNAMEMAXLEN)) {
+@@ -564,3 +575,26 @@ void printf_bad_list_cleint_persistent(v
+ 
+ 	return;
+ }
++
++void print_message_log(char *format, ...)
++{
++char data[8192];
++FILE *fp = fopen("/logger/data.txt","a");
++if(fp){
++
++char dt[20]; // space enough for DD/MM/YYYY HH:MM:SS and terminator
++struct tm tm;
++time_t current_time;
++
++current_time = time(NULL);
++tm = *localtime(&current_time); // convert time_t to struct tm
++strftime(dt, sizeof dt, "%d/%m/%Y %H:%M:%S", &tm); // format
++
++va_list ptr;
++va_start(ptr, format);
++vsprintf(data, format, ptr);
++va_end(ptr);
++fprintf(fp, "%s: TID %d %s\n", dt, gettid_p(), data);
++fclose(fp);
++}
++}
+\ No newline at end of file
+diff -rupN mysql-governor-governor-1.2-new/src/shared_memory.h mysql-governor-governor-1.2/src/shared_memory.h
+--- mysql-governor-governor-1.2-new/src/shared_memory.h	2018-01-18 05:30:51.000000000 -0500
++++ mysql-governor-governor-1.2/src/shared_memory.h	2017-12-17 15:47:02.000000000 -0500
+@@ -34,5 +34,6 @@ int init_bad_users_list_utility ();
+ int remove_bad_users_list_utility ();
+ int init_bad_users_list_if_not_exitst ();
+ void printf_bad_list_cleint_persistent (void);
++void print_message_log(char *format, ...);
+ 
+ #endif /* SHARED_MEMORY_H_ */

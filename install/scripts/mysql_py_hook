@@ -1,0 +1,19 @@
+#!/usr/local/cpanel/3rdparty/bin/python
+
+import sys
+import json
+
+
+def get_passed_data():
+    """
+    Reads STDIN passed to hook
+    :return:
+    """
+    return json.loads(sys.stdin.readline())
+
+
+print 'I am python hook'
+
+data = get_passed_data()
+print 'My Event ', data['context']['event']
+print 'My JSON decoded data ', data['data']

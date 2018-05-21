@@ -132,30 +132,33 @@ long db_mysql_get_integer (char *result, unsigned long length);
 //Из формата БД в float
 double db_mysql_get_float (char *result, unsigned long length);
 //Из формата БД в строку фиксированного размера
-void db_mysql_get_string (char *buffer, char *result, unsigned long length, unsigned long max_bufer_len);
+void db_mysql_get_string (char *buffer, char *result, unsigned long length,
+			  unsigned long max_bufer_len);
 //Получить строку с последней ошибкой передаваемому соединению
 char *db_getlasterror (MYSQL * mysql_internal);
 void
 update_user_limit (char *user_name, unsigned int limit, MODE_TYPE debug_mode);
 void
-update_user_limit_no_flush (char *user_name, unsigned int limit, MODE_TYPE debug_mode);
+update_user_limit_no_flush (char *user_name, unsigned int limit,
+			    MODE_TYPE debug_mode);
 void flush_user_stat (MODE_TYPE debug_mode);
 void flush_user_priv (MODE_TYPE debug_mode);
 void kill_query (char *user_name, MODE_TYPE debug_mode);
 void kill_connection (char *user_name, MODE_TYPE debug_mode);
-void kill_query_by_id (long id, MODE_TYPE debug_mode, MYSQL ** mysql_internal);
+void kill_query_by_id (long id, MODE_TYPE debug_mode,
+		       MYSQL ** mysql_internal);
 void governor_enable (MODE_TYPE debug_mode);
 void governor_enable_reconn (MODE_TYPE debug_mode);
 void governor_enable_lve (MODE_TYPE debug_mode);
 void governor_enable_reconn_lve (MODE_TYPE debug_mode);
-char *get_work_user();
-void lve_connection(char *user_name, MODE_TYPE debug_mode);
-void log_user_queries( char *user_name, MODE_TYPE debug_mode );
-MYSQL **get_mysql_connect();
-int activate_plugin( MODE_TYPE debug_mode );
+char *get_work_user ();
+void lve_connection (char *user_name, MODE_TYPE debug_mode);
+void log_user_queries (char *user_name, MODE_TYPE debug_mode);
+MYSQL **get_mysql_connect ();
+int activate_plugin (MODE_TYPE debug_mode);
 
-void db_close_kill();
-void db_close_command();
-void db_close_send();
+void db_close_kill ();
+void db_close_command ();
+void db_close_send ();
 
 #endif /* MYSQL_CONNECTOR_COMMON_H_ */

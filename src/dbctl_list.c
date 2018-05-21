@@ -151,13 +151,17 @@ addMemoryUser (FILE * in, GPtrArray * tags)
 }
 
 void
-print_list (FILE * in, int flag)
+print_list (FILE * in, int flag, int non_priv)
 {
   DbCtlLimitAttr cpu_def, read_def, write_def;
   char val = 'M';
   if (flag == 1) val = 'K';
   else if ( flag == 2 ) val = ' ';
-  ReadCfg (CONFIG_PATH, "default");
+  non_priv = 1;
+  if (access(CONFIG_PATH, R_OK) == 0){
+	  non_priv = 0;
+  }
+  ReadCfg ((non_priv?DUPLICATE_CONFIG_PATH:CONFIG_PATH), "default");
   if (flag)
 	 printf (" user\tcpu(%%)\tread(%cB/s)\twrite(%cB/s)\n", val, val);
   else
@@ -206,7 +210,7 @@ print_list (FILE * in, int flag)
   FreeCfg ();
 
   DbCtlLimitAttr limit_attr_def;
-  ReadCfg (CONFIG_PATH, "user");
+  ReadCfg ((non_priv?DUPLICATE_CONFIG_PATH:CONFIG_PATH), "user");
   GPtrArray *tags = addMemoryUser (in, GetCfg ());
   GetDefaultForUsers (tags, &cpu_def, &read_def, &write_def, flag);
   FreeCfg ();
@@ -326,7 +330,7 @@ print_list_rest (FILE * in)
 }
 
 void
-list (int flag)
+list (int flag, int non_priv)
 {
   FILE *in = NULL;
   FILE *out = NULL;
@@ -351,7 +355,7 @@ list (int flag)
       fwrite_wrapper (&command, sizeof (DbCtlCommand), 1, out);
       fflush (out);
 
-      print_list (in, flag);
+      print_list (in, flag, non_priv);
       closesock (socket, in, out);
     }
   else

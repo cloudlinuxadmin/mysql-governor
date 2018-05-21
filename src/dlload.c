@@ -56,15 +56,15 @@ init_mysql_function ()
 		  lib_handle = dlopen ("libmysqlclient_r.so", RTLD_LAZY);
 		  if (!lib_handle)
 		    {
-			  lib_handle = dlopen ("libmysqlclient.so", RTLD_LAZY);
+		      lib_handle = dlopen ("libmysqlclient.so", RTLD_LAZY);
+		      if (!lib_handle)
+			{
+			  lib_handle = dlopen ("libperconaserverclient.so.18", RTLD_LAZY);
 			  if (!lib_handle)
 			  {
-			      lib_handle = dlopen ("libperconaserverclient.so.18", RTLD_LAZY);
-			      if (!lib_handle)
-			      {
 				return -1;
-			      }
 			  }
+			}
 		    }
 		}
 	    }
