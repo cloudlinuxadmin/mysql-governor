@@ -3,21 +3,17 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.4)
 PROJECT(MYSQL_GOVERNOR C)
 
 INCLUDE(CheckFunctionExists)
+INCLUDE(CheckIncludeFile)
 
 CHECK_FUNCTION_EXISTS (mmap64 HAVE_MMAP64)
 
 SET(CMAKE_BUILD_TYPE Debug)
 SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
-#SET(MYSQL_INCLUDE_DIRS "/usr/include/mysql")
 FIND_PACKAGE(GLIB2 REQUIRED)
 FIND_PACKAGE(LibXml2 REQUIRED)
-#FIND_PACKAGE(MySQL REQUIRED)
 
-#INCLUDE_DIRECTORIES(${GLIB2_INCLUDE_DIRS} ${MYSQL_INCLUDE_DIRS})
 INCLUDE_DIRECTORIES(${GLIB2_INCLUDE_DIRS})
 INCLUDE_DIRECTORIES(${LIBXML2_INCLUDE_DIR})
-#LINK_LIBRARIES(${GLIB2_LIBRARIES} ${MYSQL_CLIENT_LIBS})
-#INCLUDE_DIRECTORIES(${GLIB2_INCLUDE_DIRS})
 LINK_LIBRARIES(${GLIB2_LIBRARIES})
 LINK_LIBRARIES(${LIBXML2_LIBRARIES})
 LINK_LIBRARIES(pthread)
@@ -31,8 +27,8 @@ IF (${SYSTEMD_FLAG})
     LINK_LIBRARIES(systemd)
 ENDIF(${SYSTEMD_FLAG})
 
-SET(EXECUTABLE_OUTPUT_PATH "bin")
-SET(LIBRARY_OUTPUT_PATH "lib")
+SET(EXECUTABLE_OUTPUT_PATH "${CMAKE_SOURCE_DIR}/bin/")
+SET(LIBRARY_OUTPUT_PATH "${CMAKE_SOURCE_DIR}/lib/")
 
 SET(SRC "${CMAKE_SOURCE_DIR}/src/")
 SET(config_SRC ${SRC}/governor_config.c ${SRC}/xml.c)
@@ -110,12 +106,32 @@ SET(dbctl_SRC ${SRC}/dbctl.c
                     ${SRC}/mysql_connector_common.c
 					${config_SRC}
                     )
-SET(governor_lib_src ${SRC}/dbgovernor_string_functions.c 
-                    ${SRC}/governor_write_data.c
-                    ${SRC}/parce_proc_fs.c
-                    ${SRC}/shared_memory.c             
+
+SET(governor_plugin_src ${SRC}/plugin.c
+                    ${SRC}/dbgovernor_string_functions.c 
+                     ${SRC}/governor_write_data.c
+                     ${SRC}/parce_proc_fs.c
+                     ${SRC}/shared_memory.c
+                     ${SRC}/dbuser_map.c
+                     ${SRC}/calc_stats.c
+                     ${SRC}/stats.c
+                     ${SRC}/fifo_stats.c
+                     ${SRC}/tick_generator.c
+                     ${SRC}/governor_config.c
+                     ${SRC}/xml.c
+                     ${SRC}/log.c
+                     ${SRC}/user_account.c
+                     ${SRC}/commands.c
+                     ${SRC}/log-decoder.c
+                     ${SRC}/tid_table.c
+                     ${SRC}/mysql_connector_common.c
+                     ${SRC}/dlload.c
+                     ${SRC}/getsysinfo.c
 )
-SET_SOURCE_FILES_PROPERTIES(${db_governor_SRC} ${dbtop_SRC} ${governor_lib_src} ${mysql_unfreeze_SRC} ${dbctl_SRC} PROPERTIES COMPILE_FLAGS "-DOK -ggdb -fstack-protector-all")
+
+SET(governor_ld_src ${SRC}/ld.c)
+
+SET_SOURCE_FILES_PROPERTIES(${db_governor_SRC} ${dbtop_SRC} ${mysql_unfreeze_SRC} ${dbctl_SRC} ${governor_plugin_src} $(governor_lib_src) ${governor_ld_src} PROPERTIES COMPILE_FLAGS "-DOK -ggdb -fstack-protector-all -DMYSQL_DYNAMIC_PLUGIN")
 
 ADD_EXECUTABLE(db_governor ${db_governor_SRC})
 ADD_EXECUTABLE(dbtop ${dbtop_SRC})
@@ -123,11 +139,17 @@ ADD_EXECUTABLE(mysql_unfreeze ${mysql_unfreeze_SRC})
 ADD_LIBRARY(governor SHARED ${governor_lib_src})
 ADD_EXECUTABLE(dbctl ${dbctl_SRC})
 
+ADD_LIBRARY(governorplugin3 SHARED ${governor_plugin_src})
+ADD_LIBRARY(governorplugin4 SHARED ${governor_plugin_src})
+target_compile_definitions(governorplugin4 PRIVATE MYSQL_PLUGIN_AUDIT4=1)
+ADD_LIBRARY(governor SHARED ${governor_lib_src})
+ADD_LIBRARY(governorld SHARED ${governor_ld_src})
+
 INSTALL(TARGETS db_governor dbtop mysql_unfreeze dbctl
   DESTINATION bin
   COMPONENT Runtime)
   
-INSTALL(TARGETS governor
+INSTALL(TARGETS governor governorld governorplugin3 governorplugin4
         DESTINATION lib
         PERMISSIONS OWNER_READ GROUP_READ WORLD_READ)
 

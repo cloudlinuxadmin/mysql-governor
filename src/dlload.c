@@ -42,33 +42,26 @@ init_mysql_function ()
 {
   char *error;
 
-  if (lib_handle == NULL)
-    {
-      lib_handle = dlopen ("libmysqlclient_r.so.18", RTLD_LAZY);
-      if (!lib_handle)
-	{
-	  lib_handle = dlopen ("libmysqlclient_r.so.16", RTLD_LAZY);
-	  if (!lib_handle)
-	    {
-	      lib_handle = dlopen ("libmysqlclient_r.so.15", RTLD_LAZY);
-	      if (!lib_handle)
-		{
-		  lib_handle = dlopen ("libmysqlclient_r.so", RTLD_LAZY);
-		  if (!lib_handle)
-		    {
-		      lib_handle = dlopen ("libmysqlclient.so", RTLD_LAZY);
-		      if (!lib_handle)
-			{
-			  lib_handle = dlopen ("libperconaserverclient.so.18", RTLD_LAZY);
-			  if (!lib_handle)
-			  {
-				return -1;
-			  }
-			}
-		    }
-		}
-	    }
-	}
+    if (lib_handle == NULL)
+        lib_handle = dlopen("libmysqlclient_r.so.18", RTLD_LAZY);
+    if (!lib_handle)
+        lib_handle = dlopen("libmysqlclient_r.so.16", RTLD_LAZY);
+    if (!lib_handle)
+        lib_handle = dlopen("libmysqlclient_r.so.15", RTLD_LAZY);
+    if (!lib_handle)
+        lib_handle = dlopen("libmysqlclient_r.so", RTLD_LAZY);
+    if (!lib_handle)
+        lib_handle = dlopen("libmysqlclient.so.18", RTLD_LAZY);
+    if (!lib_handle)
+        lib_handle = dlopen("libmysqlclient.so.16", RTLD_LAZY);
+    if (!lib_handle)
+        lib_handle = dlopen("libmysqlclient.so.15", RTLD_LAZY);
+    if (!lib_handle)
+        lib_handle = dlopen("libmysqlclient.so", RTLD_LAZY);
+    if (!lib_handle)
+        lib_handle = dlopen("libperconaserverclient.so.18", RTLD_LAZY);
+    if (!lib_handle)
+        return -1;
 
       LOAD_FUNCTION (mysql_store_result);
       LOAD_FUNCTION (mysql_num_rows);
@@ -86,7 +79,6 @@ init_mysql_function ()
       LOAD_FUNCTION (mysql_real_escape_string);
       LOAD_FUNCTION (mysql_ping);
 
-    }
   return 0;
 }
 
