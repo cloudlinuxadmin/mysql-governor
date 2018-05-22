@@ -8,7 +8,7 @@
  *  Created on: Jul 19, 2013
  *      Author: Shkatula Pavel
  *      E-mail: shpp@cloudlinux.com
-*/
+ */
 
 #include <ctype.h>
 #include <stdio.h>
@@ -45,156 +45,128 @@ extern M_mysql_real_escape_string;
 extern M_mysql_ping;
 
 char *state_to_kill[] = {
-  "Copying to tmp table",
-  "Copying to group table",
-  "Copying to tmp table on disk",
-  "removing tmp table",
-  "Sending data",
-  "Sorting for group",
-  "Sorting for order",
-  NULL
+    "Copying to tmp table",
+    "Copying to group table",
+    "Copying to tmp table on disk",
+    "removing tmp table",
+    "Sending data",
+    "Sorting for group",
+    "Sorting for order",
+    NULL
 };
 
-void
-upper (char *s)
-{
-  int i = 0;
-  for (i = 0; s[i] != '\0'; i++)
-    s[i] = toupper (s[i]);
+void upper(char *s) {
+    int i = 0;
+    for (i = 0; s[i] != '\0'; i++)
+        s[i] = toupper(s[i]);
 }
 
-int
-is_request_in_state (char *s)
-{
-  int i = 0;
-  while (state_to_kill[i])
-    {
-      if (!strncmp (s, state_to_kill[i], _DBGOVERNOR_BUFFER_256))
-	{
-	  return 1;
-	}
-      i++;
+int is_request_in_state(char *s) {
+    int i = 0;
+
+    while (state_to_kill[i]) {
+        if (!strncmp(s, state_to_kill[i], _DBGOVERNOR_BUFFER_256))
+            return 1;
+
+        i++;
     }
-  return 0;
+
+    return 0;
 }
 
-void *
-parse_slow_query (void *data)
-{
-  char buffer[_DBGOVERNOR_BUFFER_8192];
-  char sql_buffer[_DBGOVERNOR_BUFFER_8192];
-  char log_buffer[_DBGOVERNOR_BUFFER_8192];
-  struct governor_config data_cfg;
+void *parse_slow_query(void *data) {
+    char buffer[_DBGOVERNOR_BUFFER_8192];
+    char sql_buffer[_DBGOVERNOR_BUFFER_8192];
+    char log_buffer[_DBGOVERNOR_BUFFER_8192];
+    struct governor_config data_cfg;
 
-  MYSQL **mysql_do_kill_internal = get_mysql_connect ();
-  MYSQL_RES *res;
-  MYSQL_ROW row;
-  unsigned long *lengths;
-  unsigned long counts;
+    MYSQL **mysql_do_kill_internal = get_mysql_connect();
+    MYSQL_RES *res;
+    MYSQL_ROW row;
+    unsigned long *lengths;
+    unsigned long counts;
 
-  char f_str[] = "SELECT\0";
-  char Id[_DBGOVERNOR_BUFFER_2048];
-  char Time[_DBGOVERNOR_BUFFER_2048];
-  char Info[_DBGOVERNOR_BUFFER_2048];
-  char User[USERNAMEMAXLEN];
-  char State[_DBGOVERNOR_BUFFER_256];
+    char f_str[] = "SELECT\0";
+    char Id[_DBGOVERNOR_BUFFER_2048];
+    char Time[_DBGOVERNOR_BUFFER_2048];
+    char Info[_DBGOVERNOR_BUFFER_2048];
+    char User[USERNAMEMAXLEN];
+    char State[_DBGOVERNOR_BUFFER_256];
 
-  get_config_data (&data_cfg);
+    get_config_data(&data_cfg);
 
-  while (1)
-    {
+    while (1) {
 #ifdef TEST
-      //printf( "slow_time=%d\n", slow_time );
+        //printf( "slow_time=%d\n", slow_time );
 #endif
-      if (*mysql_do_kill_internal == NULL)
-	{
-	  sleep (DELTA_TIME);
-	  continue;
-	}
-      snprintf (sql_buffer, _DBGOVERNOR_BUFFER_8192,
-		QUERY_GET_PROCESSLIST_INFO);
-      if (db_mysql_exec_query
-	  (sql_buffer, mysql_do_kill_internal, data_cfg.log_mode))
-	{
-#ifdef TEST
-	  //printf( "db_mysql_exec_query ERROR\n" );
-#endif
-	  WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		     "Get show processlist failed", data_cfg.log_mode);
-	}
-      else
-	{
-#ifdef TEST
-	  //printf( "db_mysql_exec_query OK\n" );
-#endif
-	  res = (*_mysql_store_result) (*mysql_do_kill_internal);
-	  counts = (*_mysql_num_rows) (res);
+        if (*mysql_do_kill_internal == NULL) {
+            sleep(DELTA_TIME);
+            continue;
+        }
 
-	  if (counts > 0)
-	    {
+        snprintf(sql_buffer, _DBGOVERNOR_BUFFER_8192, QUERY_GET_PROCESSLIST_INFO);
+        if (db_mysql_exec_query(sql_buffer, mysql_do_kill_internal, data_cfg.log_mode)) {
 #ifdef TEST
-	      //printf( "counts > 0\n" );
+            //printf( "db_mysql_exec_query ERROR\n" );
 #endif
-	      while ((row = (*_mysql_fetch_row) (res)))
-		{
+            WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048, "Get show processlist failed", data_cfg.log_mode);
+        } else {
+#ifdef TEST
+            //printf( "db_mysql_exec_query OK\n" );
+#endif
+            res = (*_mysql_store_result) (*mysql_do_kill_internal);
+            counts = (*_mysql_num_rows) (res);
 
-		  lengths = (*_mysql_fetch_lengths) (res);
+            if (counts > 0) {
 #ifdef TEST
-/*
-            printf( "is ROW\n" );
-            printf( "row[ 0 ]=%s\n", row[ 0 ] );
-            printf( "row[ 5 ]=%s\n", row[ 5 ] );
-            printf( "row[ 7 ]=%s\n", buffer );
-*/
+                //printf( "counts > 0\n" );
 #endif
-		  db_mysql_get_string (buffer, row[0], lengths[0],
-				       _DBGOVERNOR_BUFFER_8192);
-		  strncpy (Id, buffer, _DBGOVERNOR_BUFFER_2048 - 1);
-		  db_mysql_get_string (buffer, row[1], lengths[1],
-				       _DBGOVERNOR_BUFFER_8192);
-		  strncpy (User, buffer, USERNAMEMAXLEN - 1);
-		  db_mysql_get_string (buffer, row[5], lengths[5],
-				       _DBGOVERNOR_BUFFER_8192);
-		  strncpy (Time, buffer, _DBGOVERNOR_BUFFER_2048 - 1);
-		  db_mysql_get_string (buffer, row[6], lengths[6],
-				       _DBGOVERNOR_BUFFER_8192);
-		  strncpy (State, buffer, _DBGOVERNOR_BUFFER_256 - 1);
-		  db_mysql_get_string (buffer, row[7], lengths[7],
-				       _DBGOVERNOR_BUFFER_8192);
-		  strncpy (Info, buffer, _DBGOVERNOR_BUFFER_2048 - 1);
-		  upper (Info);
-		  long slow_time = is_user_ignored (User);
-		  if (slow_time > 0 &&
-		      strncmp (f_str, Info, strlen (f_str)) == 0
-		      /*&& is_request_in_state(State) */ )
-		    {
+                while ((row = (*_mysql_fetch_row) (res))) {
+                    lengths = (*_mysql_fetch_lengths) (res);
 #ifdef TEST
-/*
-              printf( "is SELECT\n" );
-              printf( "Id=%d, Time=%d,  slow_time=%d\n", atoi( Id ), atoi( Time ), slow_time );
-*/
+                    /*
+                                printf( "is ROW\n" );
+                                printf( "row[ 0 ]=%s\n", row[ 0 ] );
+                                printf( "row[ 5 ]=%s\n", row[ 5 ] );
+                                printf( "row[ 7 ]=%s\n", buffer );
+                     */
 #endif
-		      if (atoi (Time) > slow_time)
-			{
+                    db_mysql_get_string(buffer, row[0], lengths[0], _DBGOVERNOR_BUFFER_8192);
+                    strncpy(Id, buffer, _DBGOVERNOR_BUFFER_2048 - 1);
+                    db_mysql_get_string(buffer, row[1], lengths[1], _DBGOVERNOR_BUFFER_8192);
+                    strncpy(User, buffer, USERNAMEMAXLEN - 1);
+                    db_mysql_get_string(buffer, row[5], lengths[5], _DBGOVERNOR_BUFFER_8192);
+                    strncpy(Time, buffer, _DBGOVERNOR_BUFFER_2048 - 1);
+                    db_mysql_get_string(buffer, row[6], lengths[6], _DBGOVERNOR_BUFFER_8192);
+                    strncpy(State, buffer, _DBGOVERNOR_BUFFER_256 - 1);
+                    db_mysql_get_string(buffer, row[7], lengths[7], _DBGOVERNOR_BUFFER_8192);
+                    strncpy(Info, buffer, _DBGOVERNOR_BUFFER_2048 - 1);
+                    upper(Info);
+                    long slow_time = is_user_ignored(User);
+                    if (slow_time > 0 && strncmp(f_str, Info, strlen(f_str)) == 0 /*&& is_request_in_state(State) */) {
 #ifdef TEST
-			  //printf( "Time > slow_time\n" );
+                        /*
+                                      printf( "is SELECT\n" );
+                                      printf( "Id=%d, Time=%d,  slow_time=%d\n", atoi( Id ), atoi( Time ), slow_time );
+                         */
 #endif
-			  kill_query_by_id (atoi (Id), data_cfg.log_mode,
-					    mysql_do_kill_internal);
+                        if (atoi(Time) > slow_time) {
+#ifdef TEST
+                            //printf( "Time > slow_time\n" );
+#endif
+                            kill_query_by_id(atoi(Id), data_cfg.log_mode, mysql_do_kill_internal);
 
-			  char Info_[_DBGOVERNOR_BUFFER_2048];
-			  strncpy (Info_, Info, 600);
-			  sprintf (log_buffer, "Query killed - %s : %s",
-				   User, Info_);
-			  WRITE_LOG (NULL, 2, buffer, _DBGOVERNOR_BUFFER_2048,
-				     log_buffer, data_cfg.log_mode);
-			}
-		    }
+                            char Info_[_DBGOVERNOR_BUFFER_2048];
+                            strncpy(Info_, Info, 600);
+                            sprintf(log_buffer, "Query killed - %s : %s", User, Info_);
+                            WRITE_LOG(NULL, 2, buffer, _DBGOVERNOR_BUFFER_2048, log_buffer, data_cfg.log_mode);
+                        }
+                    }
+                }
+            }
+            (*_mysql_free_result) (res);
+        }
 
-		}
-	    }
-	  (*_mysql_free_result) (res);
-	}
-      sleep (DELTA_TIME);
+        sleep(DELTA_TIME);
     }
 }

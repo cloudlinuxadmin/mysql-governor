@@ -19,141 +19,124 @@
 #include "dbctl_rest.h"
 
 int restrict_user(char *user, char *level) {
-	FILE *in = NULL;
-	FILE *out = NULL;
-	int _socket = -1;
+    FILE *in = NULL;
+    FILE *out = NULL;
+    int _socket = -1;
 
-	if (!strncmp(user, "default", sizeof(username_t) - 1)) {
-		return 1;
-	}
+    if (!strncmp(user, "default", sizeof (username_t) - 1))
+        return 1;
 
-	if (opensock(&_socket, &in, &out)) {
-		client_type_t ctt = DBCTL;
-		fwrite(&ctt, sizeof(client_type_t), 1, out);
-		fflush(out);
+    if (opensock(&_socket, &in, &out)) {
+        client_type_t ctt = DBCTL;
 
-		DbCtlCommand command;
-		command.command = RESTRICT;
-		strcpy(command.parameter, "");
-		strncpy(command.options.username, user,
-				sizeof(command.options.username) - 1);
-		command.options.cpu = 0;
-		command.options.level = atoi((level ? level : "-1"));
-		command.options.read = 0;
-		command.options.write = 0;
-		command.options.timeout = 0;
-		command.options.user_max_connections = 0;
+        fwrite(&ctt, sizeof (client_type_t), 1, out);
+        fflush(out);
 
-		fwrite_wrapper(&command, sizeof(DbCtlCommand), 1, out);
-		fflush(out);
+        DbCtlCommand command;
+        command.command = RESTRICT;
+        strcpy(command.parameter, "");
+        strncpy(command.options.username, user, sizeof (command.options.username) - 1);
+        command.options.cpu = 0;
+        command.options.level = atoi((level ? level : "-1"));
+        command.options.read = 0;
+        command.options.write = 0;
+        command.options.timeout = 0;
+        command.options.user_max_connections = 0;
 
-		closesock(_socket, in, out);
-	} else {
+        fwrite_wrapper(&command, sizeof (DbCtlCommand), 1, out);
+        fflush(out);
+    }
 
-		closesock(_socket, in, out);
-
-	}
-
-	return 1;
+    closesock(_socket, in, out);
+    return 1;
 }
 
 int unrestrict(char *user) {
-	FILE *in = NULL;
-	FILE *out = NULL;
-	int _socket = -1;
+    FILE *in = NULL;
+    FILE *out = NULL;
+    int _socket = -1;
 
-	if (!strncmp(user, "default", sizeof(username_t) - 1)) {
-		return 1;
-	}
+    if (!strncmp(user, "default", sizeof (username_t) - 1))
+        return 1;
 
-	if (opensock(&_socket, &in, &out)) {
-		client_type_t ctt = DBCTL;
-		fwrite(&ctt, sizeof(client_type_t), 1, out);
-		fflush(out);
+    if (opensock(&_socket, &in, &out)) {
+        client_type_t ctt = DBCTL;
+        fwrite(&ctt, sizeof (client_type_t), 1, out);
+        fflush(out);
 
-		DbCtlCommand command;
-		command.command = UNRESTRICT;
-		strcpy(command.parameter, "");
-		strncpy(command.options.username, user,
-				sizeof(command.options.username) - 1);
-		command.options.cpu = 0;
-		command.options.level = 0;
-		command.options.read = 0;
-		command.options.write = 0;
-		command.options.timeout = 0;
-		command.options.user_max_connections = 0;
+        DbCtlCommand command;
+        command.command = UNRESTRICT;
+        strcpy(command.parameter, "");
+        strncpy(command.options.username, user, sizeof (command.options.username) - 1);
+        command.options.cpu = 0;
+        command.options.level = 0;
+        command.options.read = 0;
+        command.options.write = 0;
+        command.options.timeout = 0;
+        command.options.user_max_connections = 0;
 
-		fwrite_wrapper(&command, sizeof(DbCtlCommand), 1, out);
-		fflush(out);
+        fwrite_wrapper(&command, sizeof (DbCtlCommand), 1, out);
+        fflush(out);
+    }
 
-		closesock(_socket, in, out);
-	} else {
-		closesock(_socket, in, out);
-	}
-
-	return 1;
+    closesock(_socket, in, out);
+    return 1;
 }
 
 int dbupdatecmd(void) {
-	FILE *in = NULL;
-	FILE *out = NULL;
-	int _socket = -1;
+    FILE *in = NULL;
+    FILE *out = NULL;
+    int _socket = -1;
 
-	if (opensock(&_socket, &in, &out)) {
-		client_type_t ctt = DBCTL;
-		fwrite(&ctt, sizeof(client_type_t), 1, out);
-		fflush(out);
+    if (opensock(&_socket, &in, &out)) {
+        client_type_t ctt = DBCTL;
+        fwrite(&ctt, sizeof (client_type_t), 1, out);
+        fflush(out);
 
-		DbCtlCommand command;
-		command.command = DBUSER_MAP_CMD;
-		strcpy(command.parameter, "");
-		strcpy(command.options.username, "");
-		command.options.cpu = 0;
-		command.options.level = 0;
-		command.options.read = 0;
-		command.options.write = 0;
-		command.options.timeout = 0;
-		command.options.user_max_connections = 0;
+        DbCtlCommand command;
+        command.command = DBUSER_MAP_CMD;
+        strcpy(command.parameter, "");
+        strcpy(command.options.username, "");
+        command.options.cpu = 0;
+        command.options.level = 0;
+        command.options.read = 0;
+        command.options.write = 0;
+        command.options.timeout = 0;
+        command.options.user_max_connections = 0;
 
-		fwrite_wrapper(&command, sizeof(DbCtlCommand), 1, out);
-		fflush(out);
+        fwrite_wrapper(&command, sizeof (DbCtlCommand), 1, out);
+        fflush(out);
+    }
 
-		closesock(_socket, in, out);
-	} else {
-		closesock(_socket, in, out);
-	}
-
-	return 1;
+    closesock(_socket, in, out);
+    return 1;
 }
 
 int unrestrict_all(void) {
-	FILE *in = NULL;
-	FILE *out = NULL;
-	int _socket = -1;
+    FILE *in = NULL;
+    FILE *out = NULL;
+    int _socket = -1;
 
-	if (opensock(&_socket, &in, &out)) {
-		client_type_t ctt = DBCTL;
-		fwrite(&ctt, sizeof(client_type_t), 1, out);
-		fflush(out);
+    if (opensock(&_socket, &in, &out)) {
+        client_type_t ctt = DBCTL;
+        fwrite(&ctt, sizeof (client_type_t), 1, out);
+        fflush(out);
 
-		DbCtlCommand command;
-		command.command = UNRESTRICT_A;
-		strcpy(command.parameter, "");
-		strcpy(command.options.username, "");
-		command.options.cpu = 0;
-		command.options.level = 0;
-		command.options.read = 0;
-		command.options.write = 0;
-		command.options.timeout = 0;
-		command.options.user_max_connections = 0;
+        DbCtlCommand command;
+        command.command = UNRESTRICT_A;
+        strcpy(command.parameter, "");
+        strcpy(command.options.username, "");
+        command.options.cpu = 0;
+        command.options.level = 0;
+        command.options.read = 0;
+        command.options.write = 0;
+        command.options.timeout = 0;
+        command.options.user_max_connections = 0;
 
-		fwrite_wrapper(&command, sizeof(DbCtlCommand), 1, out);
-		fflush(out);
+        fwrite_wrapper(&command, sizeof (DbCtlCommand), 1, out);
+        fflush(out);
+    }
 
-		closesock(_socket, in, out);
-	} else {
-		closesock(_socket, in, out);
-	}
-
-	return 1;
+    closesock(_socket, in, out);
+    return 1;
 }

@@ -59,7 +59,7 @@ gr_general_t *gr_init_hooks(gr_lve_t *h) {
 void gr_lve_begin(const char *username) {
     if (hooks && !in_lve) {
         in_hook = 1;
-        if (!hooks->enter(&lve_cookie, (char *)username)) {
+        if (!hooks->enter(&lve_cookie, (char *) username)) {
             in_lve = 1;
             in_mutex_refcnt = 0;
         }
@@ -73,7 +73,7 @@ void gr_lve_end() {
         hooks->exit(&lve_cookie);
         in_hook = 0;
     }
-    
+
     in_lve = 0;
     in_mutex_refcnt = 0;
 }
@@ -113,7 +113,7 @@ static void __mutex_leave() {
 
 int pthread_mutex_lock(pthread_mutex_t *mutex) {
     int ret = 0;
-    
+
     if (!DL_RESOLVE_CHECK(pthread_mutex_lock))
         return EINVAL;
 
@@ -121,10 +121,10 @@ int pthread_mutex_lock(pthread_mutex_t *mutex) {
         __mutex_enter();
 
     ret = real.pthread_mutex_lock(mutex);
-    
+
     if (ret && hooks && in_lve && !in_hook)
         __mutex_leave();
-    
+
     return ret;
 }
 
@@ -138,7 +138,7 @@ int pthread_mutex_trylock(pthread_mutex_t *mutex) {
         __mutex_enter();
 
     ret = real.pthread_mutex_trylock(mutex);
-    
+
     if (ret && hooks && in_lve && !in_hook)
         __mutex_leave();
 
@@ -146,7 +146,7 @@ int pthread_mutex_trylock(pthread_mutex_t *mutex) {
 }
 
 int pthread_mutex_unlock(pthread_mutex_t *mutex) {
-        int ret;
+    int ret;
 
     if (!DL_RESOLVE_CHECK(pthread_mutex_unlock))
         return EINVAL;

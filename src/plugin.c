@@ -59,12 +59,11 @@
 static pid_t gettid() {
     return syscall(SYS_gettid);
 }
-*/
+ */
 
 volatile int governor_get_command = 0;
 static sock_data *sock = NULL;
 static __thread int is_begined = 0;
-
 
 typedef struct {
     int (*enter)(uint32_t *, char *);
@@ -140,7 +139,7 @@ static int governor_plugin_init(void *arg __attribute__ ((unused))) {
     }
 
     fprintf(stderr, "Governor: gr_lve_begin %p, enter %p, command %d\n",
-                    gr_lve_begin, lve_hooks.enter, governor_get_command);
+            gr_lve_begin, lve_hooks.enter, governor_get_command);
 
     fprintf(stderr, "Governor: Plugin Inited\n");
 
@@ -161,32 +160,32 @@ static size_t getunlen(const char *uname) {
 
     while (*un_end != '[' && *un_end != '\0')
         un_end++;
-    
+
     return un_end - uname;
 }
 
 static NOTIFYRTYPE governor_notify(MYSQL_THD thd __attribute__ ((unused)), unsigned int event_class, const void *event) {
-    const struct mysql_event_general *event_general = (const struct mysql_event_general *)event;
+    const struct mysql_event_general *event_general = (const struct mysql_event_general *) event;
     if (event_class == MYSQL_AUDIT_GENERAL_CLASS) {
         size_t uname_size = getunlen(event_general->general_user);
 
         switch (event_general->event_subclass) {
             case MYSQL_AUDIT_GENERAL_LOG:
                 is_begined = 0;
-                
+
                 if (event_general->general_query && uname_size) {
-                    char uname[uname_size+1];
+                    char uname[uname_size + 1];
                     memcpy(uname, event_general->general_user, uname_size);
                     uname[uname_size] = 0;
-                    
+
                     if (sock->status && governor_get_command) {
                         if (!send_info_begin(uname))
                             is_begined = 1;
-                        
-		    fprintf(stderr, "is_begined %d, gr_lve_begin %p, enter %p, command %d\n",
-                    is_begined, gr_lve_begin, lve_hooks.enter, governor_get_command);
 
-                        if(is_begined && gr_lve_begin && lve_hooks.enter && (governor_get_command==2))
+                        fprintf(stderr, "is_begined %d, gr_lve_begin %p, enter %p, command %d\n",
+                                is_begined, gr_lve_begin, lve_hooks.enter, governor_get_command);
+
+                        if (is_begined && gr_lve_begin && lve_hooks.enter && (governor_get_command == 2))
                             gr_lve_begin(uname);
                     }
                 }
@@ -198,7 +197,7 @@ static NOTIFYRTYPE governor_notify(MYSQL_THD thd __attribute__ ((unused)), unsig
                 break;
             case MYSQL_AUDIT_GENERAL_STATUS:
                 if (event_general->general_query && uname_size && is_begined) {
-                    char uname[uname_size+1];
+                    char uname[uname_size + 1];
                     memcpy(uname, event_general->general_user, uname_size);
                     uname[uname_size] = 0;
 
@@ -212,7 +211,7 @@ static NOTIFYRTYPE governor_notify(MYSQL_THD thd __attribute__ ((unused)), unsig
                 break;
         }
     }
-    
+
     NOTIFYR(0);
 }
 
@@ -258,7 +257,7 @@ static MYSQL_SYSVAR_BOOL(enable_lve, opt_governor_enable_lve, PLUGIN_VAR_NOCMDOP
 static MYSQL_SYSVAR_BOOL(enable_reconnect_lve, opt_governor_enable_reconnect_lve, PLUGIN_VAR_NOCMDOPT,
         NULL, NULL, query_governor_enable_reconnect_lve, 0);
 
-static struct st_mysql_sys_var *governor_vars[] ={
+static struct st_mysql_sys_var *governor_vars[] = {
     MYSQL_SYSVAR(enable),
     MYSQL_SYSVAR(enable_reconnect),
     MYSQL_SYSVAR(enable_lve),
@@ -272,10 +271,10 @@ static struct st_mysql_sys_var *governor_vars[] ={
 
 static struct st_mysql_audit governor_descriptor = {
     MYSQL_AUDIT_INTERFACE_VERSION, NULL, governor_notify,
-    { 
+    {
         MYSQL_AUDIT_GENERAL_CLASSMASK
 #ifdef MYSQL_PLUGIN_AUDIT4
-        ,0,0,0,0,0,0,0,0,0,0
+        , 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 #endif
     }
 };
@@ -284,17 +283,17 @@ static struct st_mysql_audit governor_descriptor = {
   Plugin library descriptor
  */
 mysql_declare_plugin(governor) {
-    MYSQL_AUDIT_PLUGIN, /* type                            */
-            &governor_descriptor, /* descriptor                      */
-            "GOVERNOR", /* name                            */
-            "Oracle Corp", /* author                          */
-            "Simple NULL Audit", /* description                     */
+    MYSQL_AUDIT_PLUGIN, /* type */
+            &governor_descriptor, /* descriptor */
+            "GOVERNOR", /* name */
+            "Oracle Corp", /* author */
+            "Simple NULL Audit", /* description */
             PLUGIN_LICENSE_GPL,
-            governor_plugin_init, /* init function (when loaded)     */
+            governor_plugin_init, /* init function (when loaded) */
             governor_plugin_deinit, /* deinit function (when unloaded) */
-            0x0002, /* version                         */
-            NULL, /* status variables                */
-            governor_vars, /* system variables                */
+            0x0002, /* version */
+            NULL, /* status variables */
+            governor_vars, /* system variables */
             NULL,
             0,
 }

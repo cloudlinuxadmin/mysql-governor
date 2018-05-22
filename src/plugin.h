@@ -21,20 +21,20 @@
   Also, plugin needs to be declared as extern "C" because MSVC 
   unlike other compilers, uses C++ mangling for variables not only
   for functions.
-*/
+ */
 #if defined(_MSC_VER)
 #if defined(MYSQL_DYNAMIC_PLUGIN)
-  #ifdef __cplusplus
-    #define MYSQL_PLUGIN_EXPORT extern "C" __declspec(dllexport)
-  #else
-    #define MYSQL_PLUGIN_EXPORT __declspec(dllexport)
-  #endif
+#ifdef __cplusplus
+#define MYSQL_PLUGIN_EXPORT extern "C" __declspec(dllexport)
+#else
+#define MYSQL_PLUGIN_EXPORT __declspec(dllexport)
+#endif
 #else /* MYSQL_DYNAMIC_PLUGIN */
-  #ifdef __cplusplus
-    #define  MYSQL_PLUGIN_EXPORT extern "C"
-  #else
-    #define MYSQL_PLUGIN_EXPORT 
-  #endif
+#ifdef __cplusplus
+#define  MYSQL_PLUGIN_EXPORT extern "C"
+#else
+#define MYSQL_PLUGIN_EXPORT 
+#endif
 #endif /*MYSQL_DYNAMIC_PLUGIN */
 #else /*_MSC_VER */
 #define MYSQL_PLUGIN_EXPORT
@@ -55,6 +55,7 @@ typedef char my_bool;
 #endif
 
 #define MYSQL_XIDDATASIZE 128
+
 /**
   struct st_mysql_xid is binary compatible with the XID structure as
   in the X/Open CAE Specification, Distributed Transaction Processing:
@@ -62,31 +63,31 @@ typedef char my_bool;
   http://www.opengroup.org/bookstore/catalog/c193.htm
 
   @see XID in sql/handler.h
-*/
+ */
 struct st_mysql_xid {
-  long formatID;
-  long gtrid_length;
-  long bqual_length;
-  char data[MYSQL_XIDDATASIZE];  /* Not \0-terminated */
+    long formatID;
+    long gtrid_length;
+    long bqual_length;
+    char data[MYSQL_XIDDATASIZE]; /* Not \0-terminated */
 };
 typedef struct st_mysql_xid MYSQL_XID;
 
 /*************************************************************************
   Plugin API. Common for all plugin types.
-*/
+ */
 
 #define MYSQL_PLUGIN_INTERFACE_VERSION 0x0107
 
 /*
   The allowable types of plugins
-*/
+ */
 #define MYSQL_UDF_PLUGIN             0  /* User-defined function        */
 #define MYSQL_STORAGE_ENGINE_PLUGIN  1  /* Storage Engine               */
 #define MYSQL_FTPARSER_PLUGIN        2  /* Full-text parser plugin      */
 #define MYSQL_DAEMON_PLUGIN          3  /* The daemon/raw plugin type */
 #define MYSQL_INFORMATION_SCHEMA_PLUGIN  4  /* The I_S plugin type */
 #define MYSQL_AUDIT_PLUGIN           5  /* The Audit plugin type        */
-#define MYSQL_REPLICATION_PLUGIN     6	/* The replication plugin type */
+#define MYSQL_REPLICATION_PLUGIN     6 /* The replication plugin type */
 #define MYSQL_AUTHENTICATION_PLUGIN  7  /* The authentication plugin type */
 #define MYSQL_VALIDATE_PASSWORD_PLUGIN  8   /* validate password plugin type */
 #define MYSQL_GROUP_REPLICATION_PLUGIN  9  /* The Group Replication plugin */
@@ -106,7 +107,7 @@ typedef struct st_mysql_xid MYSQL_XID;
   Macros for beginning and ending plugin declarations.  Between
   mysql_declare_plugin and mysql_declare_plugin_end there should
   be a st_mysql_plugin struct for each plugin to be declared.
-*/
+ */
 
 
 #ifndef MYSQL_DYNAMIC_PLUGIN
@@ -131,37 +132,33 @@ __MYSQL_DECLARE_PLUGIN(NAME, \
 
 /*
   declarations for SHOW STATUS support in plugins
-*/
-enum enum_mysql_show_type
-{
-  SHOW_UNDEF, SHOW_BOOL, 
-  SHOW_INT, 
-  SHOW_LONG,
-  SHOW_LONGLONG, 
-  SHOW_CHAR, SHOW_CHAR_PTR,
-  SHOW_ARRAY, SHOW_FUNC, SHOW_DOUBLE,
+ */
+enum enum_mysql_show_type {
+    SHOW_UNDEF, SHOW_BOOL,
+    SHOW_INT,
+    SHOW_LONG,
+    SHOW_LONGLONG,
+    SHOW_CHAR, SHOW_CHAR_PTR,
+    SHOW_ARRAY, SHOW_FUNC, SHOW_DOUBLE,
 };
-
 
 /**
   Status variable scope.
   Only GLOBAL status variable scope is available in plugins.
-*/
-enum enum_mysql_show_scope
-{
-  SHOW_SCOPE_UNDEF,
-  SHOW_SCOPE_GLOBAL
+ */
+enum enum_mysql_show_scope {
+    SHOW_SCOPE_UNDEF,
+    SHOW_SCOPE_GLOBAL
 };
 
 /**
   SHOW STATUS Server status variable
-*/
-struct st_mysql_show_var 
-{
-  const char *name;
-  char *value;
-  enum enum_mysql_show_type type;
-  enum enum_mysql_show_scope scope;
+ */
+struct st_mysql_show_var {
+    const char *name;
+    char *value;
+    enum enum_mysql_show_type type;
+    enum enum_mysql_show_scope scope;
 };
 
 #define SHOW_VAR_MAX_NAME_LEN 64
@@ -178,7 +175,7 @@ typedef int (*mysql_show_var_func)(MYSQL_THD, struct st_mysql_show_var*, char *)
 
 /*
   declarations for server variables and command line options
-*/
+ */
 
 
 #define PLUGIN_VAR_BOOL         0x0001
@@ -220,11 +217,9 @@ struct st_mysql_value;
   Note that the update func may not be called if any other error occurs
   so any memory allocated should be thread-local so that it may be freed
   automatically at the end of the statement.
-*/
+ */
 
-typedef int (*mysql_var_check_func)(MYSQL_THD thd,
-                                    struct st_mysql_sys_var *var,
-                                    void *save, struct st_mysql_value *value);
+typedef int (*mysql_var_check_func)(MYSQL_THD thd, struct st_mysql_sys_var *var, void *save, struct st_mysql_value *value);
 
 /*
   SYNOPSIS
@@ -239,10 +234,8 @@ typedef int (*mysql_var_check_func)(MYSQL_THD thd,
    This function should use the validated value stored in the temporary store
    and persist it in the provided pointer to the dynamic variable.
    For example, strings may require memory to be allocated.
-*/
-typedef void (*mysql_var_update_func)(MYSQL_THD thd,
-                                      struct st_mysql_sys_var *var,
-                                      void *var_ptr, const void *save);
+ */
+typedef void (*mysql_var_update_func)(MYSQL_THD thd, struct st_mysql_sys_var *var, void *var_ptr, const void *save);
 
 
 /* the following declarations are for internal use only */
@@ -269,8 +262,8 @@ typedef void (*mysql_var_update_func)(MYSQL_THD thd,
   element after the header, the default value is the second.
   for thread variables, the value offset is the first
   element after the header, the default value is the second.
-*/
-   
+ */
+
 
 #define DECLARE_MYSQL_SYSVAR_BASIC(name, type) struct { \
   MYSQL_PLUGIN_VAR_HEADER;      \
@@ -320,7 +313,7 @@ typedef void (*mysql_var_update_func)(MYSQL_THD thd,
 
 /*
   the following declarations are for use by plugin implementors
-*/
+ */
 
 #define MYSQL_SYSVAR_BOOL(name, varname, opt, comment, check, update, def) \
 DECLARE_MYSQL_SYSVAR_BASIC(name, char) = { \
@@ -431,26 +424,24 @@ DECLARE_MYSQL_THDVAR_TYPELIB(name, unsigned long long) = { \
 #define THDVAR(thd, name) \
   (*(MYSQL_SYSVAR_NAME(name).resolve(thd, MYSQL_SYSVAR_NAME(name).offset)))
 
-
 /*
   Plugin description structure.
-*/
+ */
 
-struct st_mysql_plugin
-{
-  int type;             /* the plugin type (a MYSQL_XXX_PLUGIN value)   */
-  void *info;           /* pointer to type-specific plugin descriptor   */
-  const char *name;     /* plugin name                                  */
-  const char *author;   /* plugin author (for I_S.PLUGINS)              */
-  const char *descr;    /* general descriptive text (for I_S.PLUGINS)   */
-  int license;          /* the plugin license (PLUGIN_LICENSE_XXX)      */
-  int (*init)(void *);  /* the function to invoke when plugin is loaded */
-  int (*deinit)(void *);/* the function to invoke when plugin is unloaded */
-  unsigned int version; /* plugin version (for I_S.PLUGINS)             */
-  struct st_mysql_show_var *status_vars;
-  struct st_mysql_sys_var **system_vars;
-  void * __reserved1;   /* reserved for dependency checking             */
-  unsigned long flags;  /* flags for plugin */
+struct st_mysql_plugin {
+    int type; /* the plugin type (a MYSQL_XXX_PLUGIN value)   */
+    void *info; /* pointer to type-specific plugin descriptor   */
+    const char *name; /* plugin name                                  */
+    const char *author; /* plugin author (for I_S.PLUGINS)              */
+    const char *descr; /* general descriptive text (for I_S.PLUGINS)   */
+    int license; /* the plugin license (PLUGIN_LICENSE_XXX)      */
+    int (*init)(void *); /* the function to invoke when plugin is loaded */
+    int (*deinit)(void *); /* the function to invoke when plugin is unloaded */
+    unsigned int version; /* plugin version (for I_S.PLUGINS)             */
+    struct st_mysql_show_var *status_vars;
+    struct st_mysql_sys_var **system_vars;
+    void * __reserved1; /* reserved for dependency checking             */
+    unsigned long flags; /* flags for plugin */
 };
 
 
@@ -462,131 +453,126 @@ struct st_mysql_plugin
   Note that val_str() returns a string in temporary memory
   that will be freed at the end of statement. Copy the string
   if you need it to persist.
-*/
+ */
 
 #define MYSQL_VALUE_TYPE_STRING 0
 #define MYSQL_VALUE_TYPE_REAL   1
 #define MYSQL_VALUE_TYPE_INT    2
 
-struct st_mysql_value
-{
-  int (*value_type)(struct st_mysql_value *);
-  const char *(*val_str)(struct st_mysql_value *, char *buffer, int *length);
-  int (*val_real)(struct st_mysql_value *, double *realbuf);
-  int (*val_int)(struct st_mysql_value *, long long *intbuf);
-  int (*is_unsigned)(struct st_mysql_value *);
+struct st_mysql_value {
+    int (*value_type)(struct st_mysql_value *);
+    const char *(*val_str)(struct st_mysql_value *, char *buffer, int *length);
+    int (*val_real)(struct st_mysql_value *, double *realbuf);
+    int (*val_int)(struct st_mysql_value *, long long *intbuf);
+    int (*is_unsigned)(struct st_mysql_value *);
 };
 
 
 /*************************************************************************
   Miscellaneous functions for plugin implementors
-*/
+ */
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int thd_in_lock_tables(const MYSQL_THD thd);
-int thd_tablespace_op(const MYSQL_THD thd);
-long long thd_test_options(const MYSQL_THD thd, long long test_options);
-int thd_sql_command(const MYSQL_THD thd);
-void **thd_ha_data(const MYSQL_THD thd, const struct handlerton *hton);
-void thd_storage_lock_wait(MYSQL_THD thd, long long value);
-int thd_tx_isolation(const MYSQL_THD thd);
-char *thd_security_context(MYSQL_THD thd, char *buffer, unsigned int length,
-                           unsigned int max_query_len);
-/* Increments the row counter, see THD::row_count */
-void thd_inc_row_count(MYSQL_THD thd);
+    int thd_in_lock_tables(const MYSQL_THD thd);
+    int thd_tablespace_op(const MYSQL_THD thd);
+    long long thd_test_options(const MYSQL_THD thd, long long test_options);
+    int thd_sql_command(const MYSQL_THD thd);
+    void **thd_ha_data(const MYSQL_THD thd, const struct handlerton *hton);
+    void thd_storage_lock_wait(MYSQL_THD thd, long long value);
+    int thd_tx_isolation(const MYSQL_THD thd);
+    char *thd_security_context(MYSQL_THD thd, char *buffer, unsigned int length, unsigned int max_query_len);
+    /* Increments the row counter, see THD::row_count */
+    void thd_inc_row_count(MYSQL_THD thd);
 
-/**
-  Create a temporary file.
+    /**
+      Create a temporary file.
 
-  @details
-  The temporary file is created in a location specified by the mysql
-  server configuration (--tmpdir option).  The caller does not need to
-  delete the file, it will be deleted automatically.
+      @details
+      The temporary file is created in a location specified by the mysql
+      server configuration (--tmpdir option).  The caller does not need to
+      delete the file, it will be deleted automatically.
 
-  @param prefix  prefix for temporary file name
-  @retval -1    error
-  @retval >= 0  a file handle that can be passed to dup or my_close
-*/
-int mysql_tmpfile(const char *prefix);
+      @param prefix  prefix for temporary file name
+      @retval -1    error
+      @retval >= 0  a file handle that can be passed to dup or my_close
+     */
+    int mysql_tmpfile(const char *prefix);
 
-/**
-  Check the killed state of a connection
+    /**
+      Check the killed state of a connection
 
-  @details
-  In MySQL support for the KILL statement is cooperative. The KILL
-  statement only sets a "killed" flag. This function returns the value
-  of that flag.  A thread should check it often, especially inside
-  time-consuming loops, and gracefully abort the operation if it is
-  non-zero.
+      @details
+      In MySQL support for the KILL statement is cooperative. The KILL
+      statement only sets a "killed" flag. This function returns the value
+      of that flag.  A thread should check it often, especially inside
+      time-consuming loops, and gracefully abort the operation if it is
+      non-zero.
 
-  @param thd  user thread connection handle
-  @retval 0  the connection is active
-  @retval 1  the connection has been killed
-*/
-int thd_killed(const MYSQL_THD thd);
-
-
-/**
-  Return the thread id of a user thread
-
-  @param thd  user thread connection handle
-  @return  thread id
-*/
-unsigned long thd_get_thread_id(const MYSQL_THD thd);
-
-/**
-  Get the XID for this connection's transaction
-
-  @param thd  user thread connection handle
-  @param xid  location where identifier is stored
-*/
-void thd_get_xid(const MYSQL_THD thd, MYSQL_XID *xid);
-
-/**
-  Invalidate the query cache for a given table.
-
-  @param thd         user thread connection handle
-  @param key         databasename\\0tablename\\0
-  @param key_length  length of key in bytes, including the NUL bytes
-  @param using_trx   flag: TRUE if using transactions, FALSE otherwise
-*/
-void mysql_query_cache_invalidate4(MYSQL_THD thd,
-                                   const char *key, unsigned int key_length,
-                                   int using_trx);
+      @param thd  user thread connection handle
+      @retval 0  the connection is active
+      @retval 1  the connection has been killed
+     */
+    int thd_killed(const MYSQL_THD thd);
 
 
-/**
-  Provide a handler data getter to simplify coding
-*/
-void *thd_get_ha_data(const MYSQL_THD thd, const struct handlerton *hton);
+    /**
+      Return the thread id of a user thread
+
+      @param thd  user thread connection handle
+      @return  thread id
+     */
+    unsigned long thd_get_thread_id(const MYSQL_THD thd);
+
+    /**
+      Get the XID for this connection's transaction
+
+      @param thd  user thread connection handle
+      @param xid  location where identifier is stored
+     */
+    void thd_get_xid(const MYSQL_THD thd, MYSQL_XID *xid);
+
+    /**
+      Invalidate the query cache for a given table.
+
+      @param thd         user thread connection handle
+      @param key         databasename\\0tablename\\0
+      @param key_length  length of key in bytes, including the NUL bytes
+      @param using_trx   flag: TRUE if using transactions, FALSE otherwise
+     */
+    void mysql_query_cache_invalidate4(MYSQL_THD thd, const char *key, unsigned int key_length, int using_trx);
 
 
-/**
-  Provide a handler data setter to simplify coding
+    /**
+      Provide a handler data getter to simplify coding
+     */
+    void *thd_get_ha_data(const MYSQL_THD thd, const struct handlerton *hton);
 
-  @details
-  Set ha_data pointer (storage engine per-connection information).
 
-  To avoid unclean deactivation (uninstall) of storage engine plugin
-  in the middle of transaction, additional storage engine plugin
-  lock is acquired.
+    /**
+      Provide a handler data setter to simplify coding
 
-  If ha_data is not null and storage engine plugin was not locked
-  by thd_set_ha_data() in this connection before, storage engine
-  plugin gets locked.
+      @details
+      Set ha_data pointer (storage engine per-connection information).
 
-  If ha_data is null and storage engine plugin was locked by
-  thd_set_ha_data() in this connection before, storage engine
-  plugin lock gets released.
+      To avoid unclean deactivation (uninstall) of storage engine plugin
+      in the middle of transaction, additional storage engine plugin
+      lock is acquired.
 
-  If handlerton::close_connection() didn't reset ha_data, server does
-  it immediately after calling handlerton::close_connection().
-*/
-void thd_set_ha_data(MYSQL_THD thd, const struct handlerton *hton,
-                     const void *ha_data);
+      If ha_data is not null and storage engine plugin was not locked
+      by thd_set_ha_data() in this connection before, storage engine
+      plugin gets locked.
+
+      If ha_data is null and storage engine plugin was locked by
+      thd_set_ha_data() in this connection before, storage engine
+      plugin lock gets released.
+
+      If handlerton::close_connection() didn't reset ha_data, server does
+      it immediately after calling handlerton::close_connection().
+     */
+    void thd_set_ha_data(MYSQL_THD thd, const struct handlerton *hton, const void *ha_data);
 #ifdef __cplusplus
 }
 #endif

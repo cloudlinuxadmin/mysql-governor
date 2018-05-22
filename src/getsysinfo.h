@@ -17,7 +17,7 @@
 
 #define GETSYSINFO_MAXFILECONTENT 4096
 
-void getloadavggov (char *buffer);
-void getvmstat (char *buffer);
+void getloadavggov(char *buffer);
+void getvmstat(char *buffer);
 
 #endif /* GETSYSINFO_H_ */

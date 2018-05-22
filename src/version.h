@@ -4,7 +4,7 @@
  *  Created on: Sep 23, 2013
  *
  *
-*/
+ */
 
 #ifndef VERSION_H_
 #define VERSION_H_

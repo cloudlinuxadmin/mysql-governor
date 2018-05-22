@@ -22,49 +22,45 @@
 #define LOADAVG_DATA "/proc/loadavg"
 #define VMSTAT_DATA "/usr/bin/vmstat"
 
-static void
-chomp (char *s)
-{
-  while (*s && *s != '\n' && *s != '\r')
-    s++;
-  *s = 0;
+static void chomp(char *s) {
+    while (*s && *s != '\n' && *s != '\r')
+        s++;
+    *s = 0;
 }
 
-void
-getloadavggov (char *buffer)
-{
-  FILE *stat = NULL;
-  strcpy (buffer, "");
-  stat = fopen (LOADAVG_DATA, "r");
-  if (stat)
-    {
-      fgets (buffer, GETSYSINFO_MAXFILECONTENT, stat);
-      fclose (stat);
+void getloadavggov(char *buffer) {
+    FILE *stat = NULL;
+    
+    strcpy(buffer, "");
+    
+    stat = fopen(LOADAVG_DATA, "r");
+    if (stat) {
+        fgets(buffer, GETSYSINFO_MAXFILECONTENT, stat);
+        fclose(stat);
     }
-  chomp (buffer);
+    
+    chomp(buffer);
 }
 
-void
-getvmstat (char *buffer)
-{
-  FILE *stat = NULL;
-  strcpy (buffer, "");
-  stat = popen (VMSTAT_DATA, "r");
-  if (stat)
-    {
-      int vmstat_counter = 0;
-      while (!feof (stat))
-	{
-	  if (!fgets (buffer, GETSYSINFO_MAXFILECONTENT, stat))
-	    {
-	      strcpy (buffer, "");
-	      break;
-	    }
-	  vmstat_counter++;
-	  if (vmstat_counter == 3)
-	    break;
-	}
-      pclose (stat);
+void getvmstat(char *buffer) {
+    FILE *stat = NULL;
+    
+    strcpy(buffer, "");
+    
+    stat = popen(VMSTAT_DATA, "r");
+    if (stat) {
+        int vmstat_counter = 0;
+        while (!feof(stat)) {
+            if (!fgets(buffer, GETSYSINFO_MAXFILECONTENT, stat)) {
+                strcpy(buffer, "");
+                break;
+            }
+            vmstat_counter++;
+            if (vmstat_counter == 3)
+                break;
+        }
+        pclose(stat);
     }
-  chomp (buffer);
+    
+    chomp(buffer);
 }
