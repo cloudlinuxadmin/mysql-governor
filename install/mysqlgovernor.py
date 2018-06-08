@@ -184,7 +184,7 @@ def main(argv):
 
     if opts.mysql_version:
         manager.set_mysql_version(opts.mysql_version)
-        print "Now set MySQL to type '%s'" % opts.mysql_version
+        print bcolors.ok("Now set MySQL to type '%s'" % opts.mysql_version)
 
     elif opts.install or opts.install_beta:
         warn_message()
@@ -201,13 +201,14 @@ def main(argv):
         if manager.ALL_PACKAGES_NEW_NOT_DOWNLOADED == False and manager.DISABLED == False:
             if check_mysqld_is_alive():
                 manager.save_installed_version()
-                print "Installation mysql for db_governor completed"
+                print bcolors.ok("Installation mysql for db_governor completed")
 
             # if sql server failed to start ask user to restore old packages
             elif query_yes_no(
                     "Installation is failed. Restore previous version?"):
-                print "Installation mysql for db_governor was failed. " \
-                      "Restore previous mysql version"
+                print bcolors.fail(
+                    "Installation mysql for db_governor was failed. " \
+                    "Restore previous mysql version")
                 manager.install_rollback(opts.install_beta)
 
         manager.cleanup()
@@ -292,9 +293,9 @@ def warn_message():
     """
     Print warning message and sleep 10 sec (for user to make a decision)
     """
-    print bcolors.WARNING + "!!!Before making any changing with database make sure that you have reserve copy of users data!!!" + bcolors.ENDC
-    print bcolors.FAIL + "!!!!!!!!!!!!!!!!!!!!!!!!!!Ctrl+C for cancellation of installation!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" + bcolors.ENDC
-    print bcolors.OKGREEN + "Instruction: how to create whole database backup - " + bcolors.OKBLUE + "http://docs.cloudlinux.com/index.html?backing_up_mysql.html" + bcolors.ENDC
+    print bcolors.warning("!!!Before making any changing with database make sure that you have reserve copy of users data!!!")
+    print bcolors.fail("!!!!!!!!!!!!!!!!!!!!!!!!!!Ctrl+C for cancellation of installation!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+    print bcolors.ok("Instruction: how to create whole database backup - " + bcolors.OKBLUE + "http://docs.cloudlinux.com/index.html?backing_up_mysql.html")
     time.sleep(10)
 
 

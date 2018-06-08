@@ -24,7 +24,7 @@ from utilities import get_cl_num, exec_command, exec_command_out, new_lve_ctl, \
     correct_mysqld_service_for_cl7, \
     correct_remove_notowned_mysql_service_names_cl7, \
     correct_remove_notowned_mysql_service_names_not_symlynks_cl7, get_mysql_log_file, \
-    check_mysqld_is_alive, makedir_recursive, patch_governor_config
+    check_mysqld_is_alive, makedir_recursive, patch_governor_config, bcolors
 from ConfigParser import RawConfigParser
 
 
@@ -199,7 +199,9 @@ class InstallManager(object):
         if self.ALL_PACKAGES_OLD_NOT_DOWNLOADED:
             self.print_warning_about_not_complete_of_pkg_saving()
 
-        if not confirm_packages_installation("new", no_confirm):
+        if not confirm_packages_installation("new",
+                                             self.prev_version,
+                                             no_confirm):
             self.DISABLED = True
             return False
 
@@ -281,7 +283,7 @@ class InstallManager(object):
 
         if is_package_installed("governor-mysql"):
             service("restart", "db_governor")
-            print "DB-Governor installed/updated..."
+            print bcolors.ok("DB-Governor installed/updated...")
 
         self._after_install_new_packages()
 
@@ -534,19 +536,20 @@ class InstallManager(object):
         """
         Display warning in case of failed download of old packages
         """
-        print """Restore of MySQL packages will not be completed because
-        not all old packages was downloaded. If something went wrong during
-        or after installation process,
-        execute /usr/share/lve/dbgovernor/mysqlgovernor --delete
-        for native procedure restoring of MySQL packages"""
+        print bcolors.fail(
+            """Restore of MySQL packages will not be completed because not \
+all old packages were downloaded.\nIf something went wrong during \
+or after installation process, execute \
+/usr/share/lve/dbgovernor/mysqlgovernor --delete \
+for native procedure restoring of MySQL packages""")
 
     @staticmethod
     def print_warning_about_not_complete_of_newpkg_saving():
         """
         Display warning in case of failed download of new packages
         """
-        print "Install of MySQL packages will not be completed because " \
-              "not all new packages have been downloaded"
+        print bcolors.fail("Install of MySQL packages will not be completed " \
+                           "because not all new packages have been downloaded")
 
     def _load_current_packages(self, download=True, folder="old"):
         """
@@ -554,7 +557,7 @@ class InstallManager(object):
         @param `download` bool: download rpm files or
                                 only return list of installed packages
         """
-        print "Start download current installed packages"
+        print bcolors.info("Start download current installed packages")
         PATTERNS = ["cl-mysql", "cl-mariadb", "cl-percona", "mysql", "mariadb",
                     "compat-mysql5", "Percona"]
         mysqld_path = exec_command("which mysqld", True, silent=True)
@@ -642,7 +645,7 @@ class InstallManager(object):
         """
         detect and download packages for new installation
         """
-        print "Start download packages for new installation"
+        print bcolors.info("Start download packages for new installation")
         # based on sql_version get packages names list and repo name
         packages, requires = [], []
         arch = ".x86_64" if os.uname()[-1] == "x86_64" else ""
@@ -839,7 +842,7 @@ class InstallManager(object):
         """
         Remove installed packages and install new
         """
-        print "Removing mysql for db_governor start"
+        print bcolors.info("Removing mysql for db_governor start")
 
         # download standard packages
         self._load_new_packages(False, "auto")
@@ -859,7 +862,7 @@ class InstallManager(object):
         # install auto packages
         install_packages("new", False)
 
-        print "Removing mysql for db_governor completed"
+        print bcolors.ok("Removing mysql for db_governor completed")
 
     def _after_delete(self):
         """

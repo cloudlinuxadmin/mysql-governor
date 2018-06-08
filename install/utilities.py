@@ -276,7 +276,7 @@ def remove_packages(packages_list):
                            cmd_on_error="rpm -e --nodeps --noscripts %s" % packages)
 
 
-def confirm_packages_installation(rpm_dir, no_confirm=None):
+def confirm_packages_installation(rpm_dir, prev_struct, no_confirm=None):
     """
     Confirm install new packages from rpm files in directory
     @param `no_confirm` bool|None: bool - show info about packages for install
@@ -287,13 +287,44 @@ def confirm_packages_installation(rpm_dir, no_confirm=None):
         pkg_path = "%s/" % os.path.join(RPM_TEMP_PATH, rpm_dir.strip("/"))
         packages_list = sorted(
             [x.replace(pkg_path, "") for x in glob("%s*.rpm" % pkg_path)])
-        print "New packages will be installed: \n    %s" % "\n    ".join(
-            packages_list)
+
+        # retrieve server full version and type
+        server = [p for p in packages_list if 'server' in p][0]
+        pkg_ver, pkg_type = retrieve_server_version(server)
+
+        print bcolors.ok("New packages will be installed:\n\t%s" % "\n\t".join(
+            packages_list))
+        # notify user if operation is dangerous
+        if pkg_type != prev_struct['mysql_type']:
+            print bcolors.fail(
+                "Changing MySQL version is a quite complicated procedure, "
+                "it causes system table structural changes which can lead to unexpected results."
+                "\nPlease make full database backup (including system tables) before you will do upgrade of MySQL or switch to MariaDB. "
+                "\nThis action will prevent data losing in case if something goes wrong.")
+        elif StrictVersion(pkg_ver) < StrictVersion(prev_struct['extended']):
+            print bcolors.fail(
+                "You are attempting to install a LOWER {t} version ({new}) than currently installed one ({old})."
+                "\nThis could lead to unpredictable consequences, like fully non working service."
+                "\nThink twice before proceeding.".format(
+                    old=prev_struct['extended'], new=pkg_ver, t=pkg_type))
         if not no_confirm:
             if not query_yes_no("Continue?"):
                 return False
 
     return True
+
+
+def retrieve_server_version(server_pkg):
+    """
+    Retrieves server version and type (mysql|mariadb) from server package name
+    :param server_pkg: name of server package
+    :return: tuple -- version, type
+    """
+    parts = server_pkg.split('-')
+    m_type = re.findall(r'[A-Za-z]+',
+                        parts[parts.index('server') - 1])[0].lower()
+    ver = parts[parts.index('server') + 1]
+    return ver, 'mysql' if m_type == 'percona' else m_type
 
 
 def install_packages(rpm_dir, is_beta, installer=None, abs_path=False):
@@ -600,6 +631,30 @@ class bcolors(object):
         self.FAIL = ''
         self.ENDC = ''
 
+    @classmethod
+    def terminate(cls, msg):
+        return msg + cls.ENDC
+
+    @classmethod
+    def fail(cls, msg):
+        return cls.FAIL + cls.terminate(msg)
+
+    @classmethod
+    def warning(cls, msg):
+        return cls.WARNING + cls.terminate(msg)
+
+    @classmethod
+    def ok(cls, msg):
+        return cls.OKGREEN + cls.terminate(msg)
+
+    @classmethod
+    def info(cls, msg):
+        return cls.OKBLUE + cls.terminate(msg)
+
+    @classmethod
+    def header(cls, msg):
+        return cls.HEADER + cls.terminate(msg)
+
 
 def query_yes_no(question, default=None):
     """Ask a yes/no question via raw_input() and return their answer.
@@ -622,15 +677,16 @@ def query_yes_no(question, default=None):
         raise ValueError("invalid default answer: '%s'" % default)
 
     while True:
-        sys.stdout.write("%s%s" % (question, prompt))
+        sys.stdout.write(bcolors.warning("%s%s" % (question, prompt)))
         choice = raw_input().lower()
         if default is not None and choice == '':
             return valid[default]
         elif choice in valid:
             return valid[choice]
         else:
-            sys.stdout.write("Please respond with 'yes' or 'no' "
-                             "(or 'y' or 'n').\n")
+            sys.stdout.write(
+                bcolors.warning("Please respond with 'yes' or 'no' "
+                                "(or 'y' or 'n').\n"))
 
 
 def create_mysqld_link(link, to_file):
