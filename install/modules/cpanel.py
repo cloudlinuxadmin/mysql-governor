@@ -75,7 +75,9 @@ class cPanelManager(InstallManager):
             'mariadb100': 'MariaDB100',
             'mariadb101': 'MariaDB101',
             'mariadb102': 'MariaDB102',
+            'mariadb103': 'MariaDB103',
         }
+        old = 'MySQL50,MySQL51,'  # old unsupported targets
         # clear rpm management for all known targets
         for t in targets.values():
             exec_command('/usr/local/cpanel/scripts/update_local_rpm_versions --del target_settings.%(target)s' % {'target': t})
@@ -99,9 +101,9 @@ class cPanelManager(InstallManager):
             exec_command('/usr/local/cpanel/scripts/update_local_rpm_versions --edit target_settings.%(target)s installed' % {'target': t})
             # fix legacy RPMs (works for mysql55 and mysql56 only)
             if os.path.exists("/scripts/check_cpanel_rpms"):
-                exec_command_out("/scripts/check_cpanel_rpms --fix --targets="
-                                 "MySQL50,MySQL51,MySQL55,MySQL56,MariaDB,"
-                                 "MariaDB100,MariaDB101")
+                exec_command_out(
+                    "/scripts/check_cpanel_rpms --fix --targets={}".format(
+                        old + ','.join(targets.values())))
 
     def install_mariadb(self, version):
         """

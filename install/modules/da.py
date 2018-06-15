@@ -134,6 +134,8 @@ class DirectAdminManager(InstallManager):
             "10.1.1": "mariadb101"
         }
         mariadb_version_map = {
+            "10.3": "mariadb103",
+            "10.2": "mariadb102",
             "10.1": "mariadb101",
             "10.0": "mariadb100",
             "5.6": "mariadb100",

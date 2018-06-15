@@ -40,7 +40,6 @@ class InstallManager(object):
     CACHE_VERSION_FILE = "/usr/share/lve/dbgovernor/mysql.type.installed"
     HISTORY_FOLDER = "/usr/share/lve/dbgovernor/history"
     REPO_NAMES = {
-        "mysql50": "mysql-5.0",
         "mysql51": "mysql-5.1",
         "mysql55": "mysql-5.5",
         "mysql56": "mysql-5.6",
@@ -49,6 +48,7 @@ class InstallManager(object):
         "mariadb100": "mariadb-10.0",
         "mariadb101": "mariadb-10.1",
         "mariadb102": "mariadb-10.2",
+        "mariadb103": "mariadb-10.3",
         "percona56": "percona-5.6"
     }
     ALL_PACKAGES_NEW_NOT_DOWNLOADED = False
@@ -670,8 +670,7 @@ for native procedure restoring of MySQL packages""")
         else:
             repo = "cl-%s-common.repo" % self.REPO_NAMES.get(sql_version, None)
 
-            if sql_version in ["mysql50", "mysql51", "mysql55", "mysql56",
-                               "mysql57"]:
+            if sql_version.startswith("mysql"):
                 packages = ["cl-MySQL-meta", "cl-MySQL-meta-client",
                             "cl-MySQL-meta-devel"]
                 requires = list(packages)
@@ -679,12 +678,11 @@ for native procedure restoring of MySQL packages""")
                 # if sql_version in ["mysql56", "mysql57"]:
                 # packages.append("libaio%s" % arch)
 
-            elif sql_version in ["mariadb55", "mariadb100", "mariadb101",
-                                 "mariadb102"]:
+            elif sql_version.startswith("mariadb"):
                 packages = ["cl-MariaDB-meta", "cl-MariaDB-meta-client",
                             "cl-MariaDB-meta-devel"]
                 requires = packages[:3]
-            elif sql_version in ["percona56"]:
+            elif sql_version.startswith("percona"):
                 packages = ["cl-Percona-meta", "cl-Percona-meta-client",
                             "cl-Percona-meta-devel"]
                 requires = packages[:3]
@@ -698,14 +696,14 @@ for native procedure restoring of MySQL packages""")
             packages += ["mysqlclient18", "mysqlclient15"]
         elif sql_version in ["mysql55", "mysql56", "mysql57"]:
             packages += ["mysqlclient16", "mysqlclient15"]
-            if sql_version in ["mysql57"]:
+            if sql_version in ["mysql57", "mysql80"]:
                 packages += ["numactl-devel%s" % arch, "numactl%s" % arch, "mysqlclient18"]
         elif sql_version.startswith("mariadb"):
             packages += ["mysqlclient16", "mysqlclient15"]
-            if sql_version == 'mariadb102':
+            if sql_version in ['mariadb102', 'mariadb103']:
                 packages += ["mysqlclient18-compat"]
         elif sql_version.startswith("percona"):
-            packages += ["mysqlclient16", "mysqlclient15"]
+            packages += ["mysqlclient18", "mysqlclient16", "mysqlclient15"]
 
         packages.append("libaio%s" % arch)
 
@@ -993,7 +991,8 @@ for native procedure restoring of MySQL packages""")
             else "mysqld"
         if 6 == self.cl_version:
             if version in ["mysql50", "mysql51", "mysql55", "mysql56",
-                           "mysql57", "mariadb101", "mariadb102"]:
+                           "mysql57", "mariadb101", "mariadb102",
+                           "mariadb103"]:
                 name = "mysql"
 
         service(action, name)
