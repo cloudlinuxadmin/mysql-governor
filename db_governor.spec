@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   35
+%define g_release   36
 %define g_key_library 9
 
 %if %{undefined _unitdir}
