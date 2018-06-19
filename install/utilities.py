@@ -295,18 +295,19 @@ def confirm_packages_installation(rpm_dir, prev_struct, no_confirm=None):
         print bcolors.ok("New packages will be installed:\n\t%s" % "\n\t".join(
             packages_list))
         # notify user if operation is dangerous
-        if pkg_type != prev_struct['mysql_type']:
-            print bcolors.fail(
-                "Changing MySQL version is a quite complicated procedure, "
-                "it causes system table structural changes which can lead to unexpected results."
-                "\nPlease make full database backup (including system tables) before you will do upgrade of MySQL or switch to MariaDB. "
-                "\nThis action will prevent data losing in case if something goes wrong.")
-        elif StrictVersion(pkg_ver) < StrictVersion(prev_struct['extended']):
-            print bcolors.fail(
-                "You are attempting to install a LOWER {t} version ({new}) than currently installed one ({old})."
-                "\nThis could lead to unpredictable consequences, like fully non working service."
-                "\nThink twice before proceeding.".format(
-                    old=prev_struct['extended'], new=pkg_ver, t=pkg_type))
+        if prev_struct:
+            if pkg_type != prev_struct['mysql_type']:
+                print bcolors.fail(
+                    "Changing MySQL version is a quite complicated procedure, "
+                    "it causes system table structural changes which can lead to unexpected results."
+                    "\nPlease make full database backup (including system tables) before you will do upgrade of MySQL or switch to MariaDB. "
+                    "\nThis action will prevent data losing in case if something goes wrong.")
+            elif StrictVersion(pkg_ver) < StrictVersion(prev_struct['extended']):
+                print bcolors.fail(
+                    "You are attempting to install a LOWER {t} version ({new}) than currently installed one ({old})."
+                    "\nThis could lead to unpredictable consequences, like fully non working service."
+                    "\nThink twice before proceeding.".format(
+                        old=prev_struct['extended'], new=pkg_ver, t=pkg_type))
         if not no_confirm:
             if not query_yes_no("Continue?"):
                 return False
