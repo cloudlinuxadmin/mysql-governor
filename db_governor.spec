@@ -377,6 +377,11 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Wed Jun 20 2018 Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-36
+- mariadb103 support
+- MYSQLG-269: warnings in case of downgrade or switching mysql|mariadb
+- MYSQLG-259: added 'assumeyes' for all yum commands
+
 * Tue Apr 24 2018 Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-35
 - Fixed dbgovernor crash when username length is long
 
