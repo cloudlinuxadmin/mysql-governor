@@ -78,6 +78,7 @@ class cPanelManager(InstallManager):
             'mariadb103': 'MariaDB103',
         }
         old = 'MySQL50,MySQL51,'  # old unsupported targets
+        not_managed = ('mysql57', 'mysql80')  # latest mysql not managed by cPanel
         # clear rpm management for all known targets
         for t in targets.values():
             exec_command('/usr/local/cpanel/scripts/update_local_rpm_versions --del target_settings.%(target)s' % {'target': t})
@@ -88,9 +89,9 @@ class cPanelManager(InstallManager):
         if current_version['mysql_type'] == 'mariadb':
             # add repo, yum install mariadb pkgs
             self.install_mariadb(current_version['full'])
-        elif current_version['full'] == 'mysql57':
-            # add repo, yum install mysql57
-            self.install_mysql57(current_version['full'])
+        elif current_version['full'] in not_managed:
+            # add repo, yum install mysql57 or mysql80
+            self.install_mysql_community(current_version['full'])
             # create mysql alias for mysqld service
             self.mysql_service_symlink()
         else:
@@ -134,14 +135,14 @@ gpgcheck=1
             "yum install -y --disableexcludes=all --disablerepo=cl-mysql* --disablerepo=mysqclient* {pkgs}".format(
                 pkgs=' '.join(pkgs)))
 
-    def install_mysql57(self, version):
+    def install_mysql_community(self, version):
         """
-        Install official MySQL 5.7, not managed by cPanel
+        Install official MySQL 5.7 or MySQL 8.0, not managed by cPanel
         """
         pkgs = ('mysql-community-server', 'mysql-community-client',
                'mysql-community-common', 'mysql-community-libs')
         # prepare mysql repo
-        if not exec_command('rpm -qa | grep mysql57-community', silent=True):
+        if not exec_command('rpm -qa | grep mysql80-community', silent=True):
             self.download_and_install_mysql_repo()
 
         # select MySQL version
@@ -157,14 +158,14 @@ gpgcheck=1
 
     def download_and_install_mysql_repo(self):
         """
-        Download mysql57-community-release repository and install it locally
+        Download mysql80-community-release repository and install it locally
         """
         # download repo file
-        url = 'https://dev.mysql.com/get/mysql57-community-release-el{v}-11.noarch.rpm'.format(v=self.cl_version)
+        url = 'https://dev.mysql.com/get/mysql80-community-release-el{v}-1.noarch.rpm'.format(v=self.cl_version)
         repo_file = os.path.join(self.SOURCE, 'mysql-community-release.rpm')
         repo_md5 = {
-            6: 'afe0706ac68155bf91ade1c55058fd78',
-            7: 'c070b754ce2de9f714ab4db4736c7e05'
+            6: 'f2befc44a4b8416864987b1686c4a72b',
+            7: '739dc44566d739c5d7b893de96ee6848'
         }
         opener = urllib2.build_opener()
         opener.addheaders = [('User-agent', 'Mozilla/5.0')]

@@ -130,6 +130,7 @@ class DirectAdminManager(InstallManager):
             "5.5": "mysql55",
             "5.6": "mysql56",
             "5.7": "mysql57",
+            "8.0": "mysql80",
             "10.0.0": "mariadb100",
             "10.1.1": "mariadb101"
         }

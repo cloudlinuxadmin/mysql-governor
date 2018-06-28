@@ -210,7 +210,8 @@ def download_packages(names, dest, beta, custom_download=None):
 
         if len(list_of_rpm) == 0:
             pkg_not_found = True
-            print "WARNING!!!! Package %s was not downloaded" % pkg_name
+            print bcolors.warning(
+                "WARNING!!!! Package %s was not downloaded" % pkg_name)
 
     return not pkg_not_found
 

@@ -44,6 +44,7 @@ class InstallManager(object):
         "mysql55": "mysql-5.5",
         "mysql56": "mysql-5.6",
         "mysql57": "mysql-5.7",
+        "mysql80": "mysql-8.0",
         "mariadb55": "mariadb-5.5",
         "mariadb100": "mariadb-10.0",
         "mariadb101": "mariadb-10.1",
@@ -690,11 +691,9 @@ for native procedure restoring of MySQL packages""")
                 print >> sys.stderr, "Unknown SQL VERSION"
                 sys.exit(2)
 
-        if sql_version == "mysql50":
-            packages += ["mysqlclient18", "mysqlclient16"]
-        elif sql_version == "mysql51":
+        if sql_version == "mysql51":
             packages += ["mysqlclient18", "mysqlclient15"]
-        elif sql_version in ["mysql55", "mysql56", "mysql57"]:
+        elif sql_version.startswith('mysql'):
             packages += ["mysqlclient16", "mysqlclient15"]
             if sql_version in ["mysql57", "mysql80"]:
                 packages += ["numactl-devel%s" % arch, "numactl%s" % arch, "mysqlclient18"]
@@ -754,7 +753,12 @@ for native procedure restoring of MySQL packages""")
         try:
             version_string = exec_command('mysql --version')
             version_info = re.findall(r'(?<=Distrib\s)[^,]+', version_string[0])
-            parts = version_info[0].split('-')
+            if not version_info:
+                # for mysql 8.0
+                version_info = re.findall(r'(?<=Ver\s)\S+', version_string[0])
+                parts = version_info[0].split(' ')
+            else:
+                parts = version_info[0].split('-')
             version = {
                 'short': '.'.join(parts[0].split('.')[:-1]),
                 'extended': parts[0],
@@ -990,8 +994,8 @@ for native procedure restoring of MySQL packages""")
         name = "mysql" if version in ["percona56", "mariadb55", "mariadb100"] \
             else "mysqld"
         if 6 == self.cl_version:
-            if version in ["mysql50", "mysql51", "mysql55", "mysql56",
-                           "mysql57", "mariadb101", "mariadb102",
+            if version in ["mysql51", "mysql55", "mysql56",
+                           "mysql57", "mysql80", "mariadb101", "mariadb102",
                            "mariadb103"]:
                 name = "mysql"
 
