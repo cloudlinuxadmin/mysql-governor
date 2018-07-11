@@ -44,29 +44,33 @@ init_mysql_function ()
 
   if (lib_handle == NULL)
     {
-      lib_handle = dlopen ("libmysqlclient_r.so.18", RTLD_LAZY);
+      lib_handle = dlopen ("libmysqlclient.so.21", RTLD_LAZY);
       if (!lib_handle)
 	{
-	  lib_handle = dlopen ("libmysqlclient_r.so.16", RTLD_LAZY);
-	  if (!lib_handle)
+          lib_handle = dlopen ("libmysqlclient_r.so.18", RTLD_LAZY);
+          if (!lib_handle)
 	    {
-	      lib_handle = dlopen ("libmysqlclient_r.so.15", RTLD_LAZY);
+	      lib_handle = dlopen ("libmysqlclient_r.so.16", RTLD_LAZY);
 	      if (!lib_handle)
-		{
-		  lib_handle = dlopen ("libmysqlclient_r.so", RTLD_LAZY);
-		  if (!lib_handle)
+	        {
+	          lib_handle = dlopen ("libmysqlclient_r.so.15", RTLD_LAZY);
+	          if (!lib_handle)
 		    {
-		      lib_handle = dlopen ("libmysqlclient.so", RTLD_LAZY);
+		      lib_handle = dlopen ("libmysqlclient_r.so", RTLD_LAZY);
 		      if (!lib_handle)
-			{
-			  lib_handle = dlopen ("libperconaserverclient.so.18", RTLD_LAZY);
-			  if (!lib_handle)
-			  {
-				return -1;
-			  }
-			}
+		        {
+		          lib_handle = dlopen ("libmysqlclient.so", RTLD_LAZY);
+		          if (!lib_handle)
+			    {
+			      lib_handle = dlopen ("libperconaserverclient.so.18", RTLD_LAZY);
+			      if (!lib_handle)
+			      {
+				    return -1;
+			      }
+			    }
+		        }
 		    }
-		}
+	        }
 	    }
 	}
 

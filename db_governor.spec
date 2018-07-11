@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   36
+%define g_release   37
 %define g_key_library 9
 
 %if %{undefined _unitdir}
@@ -377,6 +377,10 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Wed Jul 11 2018 Serhii Kokhan <skokhan@cloudlinux.com>, Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-37
+- mysql80 support
+- libmysqlclient.so.21 support
+
 * Wed Jun 20 2018 Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-36
 - mariadb103 support
 - MYSQLG-269: warnings in case of downgrade or switching mysql|mariadb
