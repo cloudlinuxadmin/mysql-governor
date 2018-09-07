@@ -156,6 +156,12 @@ class InstallManager(object):
                         print 'NO PATH for {opt} --> {v}'.format(opt=opt, v=val)
                         conf.set(s, opt, default_pid)
 
+        if self._get_new_version() == 'mysql80':
+            # for mysql80 set old authentication plugin as default one
+            # in order to prevent php connection errors
+            # MYSQLG-297, MySQLG-301
+            conf.set('mysqld', 'default-authentication-plugin', 'mysql_native_password')
+
         with open('/etc/my.cnf', 'wb') as configfile:
             conf.write(configfile)
 
