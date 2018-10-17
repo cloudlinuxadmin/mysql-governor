@@ -23,8 +23,8 @@ class Logger(object):
     """
     Logger class
     """
-    def __init__(self, filename="Default.log"):
-        self.terminal = sys.stdout
+    def __init__(self, stream, filename="Default.log"):
+        self.terminal = stream
         self.log = open(filename, "a")
         os.chmod(filename, 0o600)
 
@@ -160,8 +160,8 @@ def main(argv):
     Run main actions
     """
     set_path_environ()
-    sys.stdout = Logger(LOG_FILE_NAME)
-    sys.stderr = Logger(LOG_FILE_NAME)
+    sys.stdout = Logger(sys.stdout, LOG_FILE_NAME)
+    sys.stderr = Logger(sys.stderr, LOG_FILE_NAME)
     shadow_tracing(True)
     time_now = datetime.datetime.now()
     sys.stdout.write_extended(

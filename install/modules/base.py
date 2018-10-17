@@ -1025,6 +1025,12 @@ for native procedure restoring of MySQL packages""")
         """
         exec_command_out("%s %s" % (self._rel("scripts/%s" % path), args or ""))
 
+    def _script_subprocess(self, path, args=None):
+        """
+        Execute package script which locate in SOURCE directory
+        """
+        exec_command("%s %s" % (self._rel("scripts/%s" % path), args or ""))
+
     def _detect_version_if_auto(self):
         """
         What should we do if we get auto param in mysql.type

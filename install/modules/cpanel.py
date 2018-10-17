@@ -23,7 +23,7 @@ class cPanelManager(InstallManager):
         """
         Update user mapping file for cPanel
         """
-        self._script("dbgovernor_map")
+        self._script_subprocess("dbgovernor_map")
 
     def install_mysql_beta_testing_hooks(self):
         """
