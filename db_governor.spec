@@ -157,6 +157,7 @@ install -D -m 755 install/scripts/detect-cpanel-mysql-version.pm $RPM_BUILD_ROOT
 install -D -m 755 install/scripts/cpanel-mysql-url-detect.pm $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/cpanel-mysql-url-detect.pm
 install -D -m 755 install/scripts/mysql_hook $RPM_BUILD_ROOT//usr/share/lve/dbgovernor/scripts/mysql_hook
 
+install -D -m 644 logrotate/mysql-governor $RPM_BUILD_ROOT/etc/logrotate.d/mysql-governor
 install -D -m 644 install/utils/cloudlinux.versions $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/cloudlinux.versions
 install -D -m 644 install/utils/dbgovernor $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/db_governor
 install -D -m 600 install/list_problem_files.txt $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/
@@ -356,6 +357,7 @@ fi
 %defattr(-,root,root)
 %doc LICENSE.TXT
 
+%config /etc/logrotate.d/*
 %{_sbindir}/db_governor
 %{_sbindir}/db_governor_test
 %{_sbindir}/dbtop
