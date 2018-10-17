@@ -886,6 +886,8 @@ for native procedure restoring of MySQL packages""")
         """
         Specific actions after governor installation
         """
+        print 'Trying to update cagefs skeleton...'
+        exec_command('/usr/sbin/cagefsctl --force-update', silent=True, return_code=True)
 
     def _set_mysql_access(self):
         """
