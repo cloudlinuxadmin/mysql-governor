@@ -311,8 +311,6 @@ gpgcheck=1
         """
         Enable mysql service monitoring
         """
-        # call parent first
-        InstallManager._after_install(self)
         self.enable_mysql_monitor()
 
     @staticmethod

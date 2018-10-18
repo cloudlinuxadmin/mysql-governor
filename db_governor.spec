@@ -353,6 +353,11 @@ if [ -e /usr/share/lve/dbgovernor/mysqlgovernor.py ]; then
     /usr/share/lve/dbgovernor/mysqlgovernor.py --fix-cpanel-hooks
 fi
 
+%triggerin -- cl-MySQL55-client, cl-MySQL56-client, cl-MySQL57-client, cl-MySQL80-client, cl-MariaDB55, cl-MariaDB100, cl-MariaDB101, cl-MariaDB102, cl-MariaDB103, cl-Percona56-client, mysql-community-client, mariadb, Percona-Server-client-56
+if [ -e /usr/sbin/cagefsctl ]; then
+    /usr/sbin/cagefsctl --force-update
+fi
+
 %files
 %defattr(-,root,root)
 %doc LICENSE.TXT
