@@ -299,6 +299,8 @@ gpgcheck=1
         """
         Enable mysql service monitoring
         """
+        # call parent first
+        InstallManager._after_delete(self)
         self.enable_mysql_monitor()
 
     def _before_install(self):
@@ -311,6 +313,8 @@ gpgcheck=1
         """
         Enable mysql service monitoring
         """
+        # call parent first
+        InstallManager._after_install(self)
         self.enable_mysql_monitor()
 
     @staticmethod

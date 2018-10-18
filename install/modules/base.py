@@ -24,7 +24,7 @@ from utilities import get_cl_num, exec_command, exec_command_out, new_lve_ctl, \
     correct_mysqld_service_for_cl7, \
     correct_remove_notowned_mysql_service_names_cl7, \
     correct_remove_notowned_mysql_service_names_not_symlynks_cl7, get_mysql_log_file, \
-    check_mysqld_is_alive, makedir_recursive, patch_governor_config, bcolors
+    check_mysqld_is_alive, makedir_recursive, patch_governor_config, bcolors, force_update_cagefs
 from ConfigParser import RawConfigParser
 
 
@@ -876,6 +876,7 @@ for native procedure restoring of MySQL packages""")
         """
         Specific actions after delete
         """
+        force_update_cagefs()
 
     def _before_install(self):
         """
@@ -886,6 +887,7 @@ for native procedure restoring of MySQL packages""")
         """
         Specific actions after governor installation
         """
+        force_update_cagefs()
 
     def _set_mysql_access(self):
         """

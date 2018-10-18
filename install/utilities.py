@@ -1026,3 +1026,11 @@ def service_symlink(original_service, alias_link):
             # reload units for systemd
             if cl_ver >= 7:
                 exec_command('/bin/systemctl daemon-reload')
+
+
+def force_update_cagefs():
+    """
+    Call cagefs force-update
+    """
+    print 'Trying to update cagefs skeleton...'
+    exec_command('/usr/sbin/cagefsctl --force-update', silent=True, return_code=True)
