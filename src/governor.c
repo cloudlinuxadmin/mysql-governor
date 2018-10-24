@@ -230,28 +230,42 @@ void becameDaemon(int self_supporting) {
 		fflush(stderr);
 		exit(EXIT_FAILURE);
 	}
-	int fd, maxfd = sysconf(_SC_OPEN_MAX);
-	if (maxfd == -1)
-		maxfd = 8192;
-	/* Close all open descriptors except of logs */
-	for (fd = 0; fd < maxfd; fd++) {
-		if (get_log()) {
-			FILE *tmp_fd = get_log();
-			if (fd == fileno(tmp_fd))
-				continue;
-		}
-		if (get_restrict_log()) {
-			FILE *tmp_fd = get_restrict_log();
-			if (fd == fileno(tmp_fd))
-				continue;
-		}
-		if (get_slow_queries_log()) {
-			FILE *tmp_fd = get_slow_queries_log();
-			if (fd == fileno(tmp_fd))
-				continue;
-		}
-		close(fd);
-	}
+
+        int fd;
+        const char * fd_dname = "/proc/self/fd/";
+        struct dirent * fd_dp;
+        DIR * fd_dir = opendir(fd_dname);
+
+        /* Go through /proc/<cur-pid>/fd/ directory to find out
+        ** all open descriptors and close them (expect of logs)
+        */
+        if (fd_dir) {
+                while ((fd_dp = readdir(fd_dir)) != NULL) {
+                        fd = atoi(fd_dp->d_name);
+                        if (!fd) {
+                                continue;
+                        }
+
+                        if (get_log()) {
+                                FILE *tmp_fd = get_log();
+                                if (fd == fileno(tmp_fd))
+                                        continue;
+                        }
+                        if (get_restrict_log()) {
+                                FILE *tmp_fd = get_restrict_log();
+                                if (fd == fileno(tmp_fd))
+                                        continue;
+                        }
+                        if (get_slow_queries_log()) {
+                                FILE *tmp_fd = get_slow_queries_log();
+                                if (fd == fileno(tmp_fd))
+                                        continue;
+                        }
+                        close(fd);
+                }
+                closedir(fd_dir);
+        }
+
 	close(STDIN_FILENO);
 	close(STDOUT_FILENO);
 	close(STDERR_FILENO);
