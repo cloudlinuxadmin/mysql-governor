@@ -22,11 +22,15 @@ int write_log (const char *error_file, int error_line,
 	       const char *error_string, MODE_TYPE mode);
 char *prepare_output (char *buffer, size_t size, char *fmt, ...);
 
+FILE *get_log ();
+FILE *get_restrict_log ();
+FILE *get_slow_queries_log ();
+
 #define WRITE_LOG(stats, type, buffer, size, message, mode, ...) if (type==0) \
 	write_log(__FILE__, __LINE__, prepare_output(buffer, size, message, ##__VA_ARGS__), mode); \
 else if (type==1) \
 	write_restrict_log (prepare_output(buffer, size, message, ##__VA_ARGS__), stats); \
-else if (type==2)  \
+else if (type==2&&get_slow_queries_log())  \
 	write_slow_queries_log (prepare_output(buffer, size, message, ##__VA_ARGS__));
 
 //WRITE_LOG(NULL, 0, buffer, 2048, cfg->mode, "test %s", "Hello"); write to error_log
@@ -44,10 +48,6 @@ write_restrict_log_second_line (const char *error_string, int need_end_line);
 int open_slow_queries_log (const char *log_file);
 int close_slow_queries_log (void);
 int write_slow_queries_log (const char *error_string);
-
-FILE *get_log ();
-FILE *get_restrict_log ();
-FILE *get_slow_queries_log ();
 
 void print_config (void *icfg);
 

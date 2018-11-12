@@ -27,6 +27,7 @@
 #include "calc_stats.h"
 
 #define DELTA_TIME 15
+#define MAX_QUERY_OUTPUT_LEN 600
 
 extern M_mysql_store_result;
 extern M_mysql_num_rows;
@@ -183,11 +184,12 @@ parse_slow_query (void *data)
 					    mysql_do_kill_internal);
 
 			  char Info_[_DBGOVERNOR_BUFFER_2048];
-			  strncpy (Info_, Info, 600);
+			  strncpy (Info_, Info, MAX_QUERY_OUTPUT_LEN);
+                          Info_[MAX_QUERY_OUTPUT_LEN] = 0;
 			  sprintf (log_buffer, "Query killed - %s : %s",
 				   User, Info_);
 			  WRITE_LOG (NULL, 2, buffer, _DBGOVERNOR_BUFFER_2048,
-				     log_buffer, data_cfg.log_mode);
+				     "%s", data_cfg.log_mode, log_buffer);
 			}
 		    }
 

@@ -225,9 +225,6 @@ write_restrict_log (const char *error_string, Stats * limits)
 int
 write_slow_queries_log (const char *error_string)
 {
-  if (slow_queries_log == NULL)
-    return -1;
-
   char current_date[128];
   time_t rawtime;
   struct tm timeinfo;

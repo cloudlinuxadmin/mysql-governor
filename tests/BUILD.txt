@@ -10,4 +10,4 @@ gcc -o t1 put_in_lve_test.c ../src/*.c -lglib-2.0 -I/usr/include/glib-2.0/ -I/us
 gcc -o t1 put_in_lve_test_glib2.c `ls -1 ../src/*.c | grep -v dbctl | grep -v dbtop` -lglib-2.0 -I/usr/include/glib-2.0/ -I/usr/lib64/glib-2.0/include/ -DTEST -DNOGOVERNOR -ldl -lrt -lncurses -lm -DTEST_EMUL -g -DDBG
 gcc -o t1 put_in_lve_test_glib2.c `ls -1 ../src/*.c | grep -v dbctl | grep -v dbtop` -lglib-2.0 -I/usr/include/glib-2.0/ -I/usr/lib64/glib-2.0/include/ -DTEST -DNOGOVERNOR -ldl -lrt -lncurses -lm -DTEST_EMUL -g 
 gcc -o t1 put_in_lve_test.c ../src/shared_memory.c ../src/dbgovernor_string_functions.c -DTEST -DNOGOVERNOR -ldl -lrt -lncurses -lm -DTEST_EMUL -g -DDBG -lmysys -I/usr/include/mysql/ -L/usr/lib64/mysql/ -lmystrings
-
+gcc -o slow_query_test slow_query_test.c `ls -1 ../src/*.c | grep -v dbctl | grep -v dbtop` `xml2-config --cflags --libs` -lglib-2.0 -I/usr/include/glib-2.0/ -I/usr/lib64/glib-2.0/include/ -I/usr/include/libxml2/ -DTEST -DNOGOVERNOR -ldl -lrt -lncurses -lm -DTEST_EMUL -g -lpthread
