@@ -384,9 +384,14 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
-* Wed Jul 11 2018 Serhii Kokhan <skokhan@cloudlinux.com>, Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-37
-- mysql80 support
-- libmysqlclient.so.21 support
+* Tue Nov 20 2018 Aleksandr Povalyaev <apovalyaev@cloudlinux.com>, Serhii Kokhan <skokhan@cloudlinux.com>, Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-37
+- mysql80, libmysqlclient.so.21 support
+- MYSQLG-297, MySQLG-301: old auth procedure for mysql80
+- MYSQLG-293: Added logrotate config for governor-mysql
+- MYSQLG-306: fix error logging from --dbupdate
+- MYSQLG-300: cagefs force-update after governor installation and delete procedure
+- MYSQLG-302: Investigate why db_governor fails with error "Can't init BAD list"
+- MYSQLG-326: Wrong handling of SQL line while logging slow mysql query
 
 * Wed Jun 20 2018 Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-36
 - mariadb103 support
