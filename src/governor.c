@@ -11,6 +11,7 @@
 #include <glib.h>
 #include <string.h>
 #include <sys/types.h>
+#include <dirent.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <pthread.h>
