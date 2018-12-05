@@ -193,6 +193,10 @@ def main(argv):
         manager.cleanup()
         # detect_percona(opts.force, manager)
 
+        # ask user to confirm protectbase plugin disable while beta install
+        if not protectbase_warning(opts.install_beta, opts.yes):
+            sys.exit(0)
+
         # remove current packages and install new packages
         if manager.install(opts.install_beta, opts.yes) == True:
             print "Give mysql service time to start " \
@@ -299,6 +303,25 @@ def warn_message():
     print bcolors.fail("!!!!!!!!!!!!!!!!!!!!!!!!!!Ctrl+C for cancellation of installation!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
     print bcolors.ok("Instruction: how to create whole database backup - " + bcolors.OKBLUE + "http://docs.cloudlinux.com/index.html?backing_up_mysql.html")
     time.sleep(10)
+
+
+def protectbase_warning(beta, yes):
+    """
+    If protectbase config detected, warn user about protectbase plugin disable in case of --install-beta flag
+    and wait for confirmation
+    :param beta: --install-beta flag
+    :param yes: --yes flag
+    :return: True or False, regarding user choice
+    """
+    if beta and os.path.exists('/etc/yum/pluginconf.d/protectbase.conf'):
+        print bcolors.warning('''\nYou are trying to install database related packages from the BETA repo.
+But it appears that you have yum's protectbase plugin configured.
+In order to proceed with the installation, the plugin must be disabled.
+By confirming this action, the plugin will be disabled during packages installation process only.''')
+        if not yes:
+            if not query_yes_no("Do you confirm this action?"):
+                return False
+    return True
 
 
 if "__main__" == __name__:

@@ -192,7 +192,7 @@ def download_packages(names, dest, beta, custom_download=None):
             and custom_download("+") == "yes":
         names = _custom_download_packages(names, path, custom_download)
     else:
-        repo = "" if not beta else "--enablerepo=cloudlinux-updates-testing"
+        repo = "" if not beta else "--enablerepo=cloudlinux-updates-testing --disableplugin=protectbase"
         if exec_command(
                 "yum repolist -y --enablerepo=* --setopt=cl-mysql.skip_if_unavailable=true --setopt=cl-mysql-debuginfo.skip_if_unavailable=true --setopt=cl-mysql-testing.skip_if_unavailable=true |grep mysql -c",
                 True, True) != "0":
