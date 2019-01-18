@@ -10,8 +10,6 @@
 %global __os_install_post %(echo '%{__os_install_post}' | sed -e 's!/usr/lib[^[:space:]]*/brp-python-bytecompile[[:space:]].*$!!g')
 
 
-
-
 Name: governor-mysql
 Version: %{g_version}
 Release: %{g_release}%{?dist}.cloudlinux
