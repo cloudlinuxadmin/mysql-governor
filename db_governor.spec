@@ -1,6 +1,18 @@
+%define g_version   1.2
+%define g_release   37
+%define g_key_library 9
+
+%if %{undefined _unitdir}
+%define _unitdir /usr/lib/systemd/system
+%endif
+
+%define __python /opt/alt/python27/bin/python2.7
+%global __os_install_post %(echo '%{__os_install_post}' | sed -e 's!/usr/lib[^[:space:]]*/brp-python-bytecompile[[:space:]].*$!!g')
+
+
 Name: governor-mysql
-Version: 1.0
-Release: 22%{?dist}.cloudlinux
+Version: %{g_version}
+Release: %{g_release}%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -10,19 +22,44 @@ Requires: glib2
 Requires: ncurses
 Requires: lve-utils >= 1.1-3
 Requires: lve-stats >= 0.9-27
+Requires: alt-python27
+Requires: alt-python27-cllib
+Requires: yum-utils
 Requires: tmpwatch
 Requires: wget
+Requires: libxml2
 Requires(preun): /sbin/chkconfig
 BuildRequires: cmake
 BuildRequires: ncurses-devel
 BuildRequires: glib2-devel
 BuildRequires: autoconf
+BuildRequires: tar
+BuildRequires: alt-python27
+BuildRequires: libxml2-devel
+BuildRequires: pcre-devel
+BuildRequires: patch
+%if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
+BuildRequires: systemd
+BuildRequires: systemd-devel
+%endif
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 Conflicts: db-governor
 Conflicts: db-governor-mysql
 Conflicts: db_governor
 Conflicts: cpanel-db-governor
 AutoReq: 0
+
+%if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
+Requires: systemd-units
+Requires(post): systemd-units
+Requires(preun): systemd-units
+Requires(postun): systemd-units
+Requires(post): systemd-sysv
+%else
+Requires(preun): initscripts
+Requires(postun): initscripts
+%endif
+
 %description
 This package provides dbtop, db_governor utilities.
 
@@ -31,77 +68,110 @@ This package provides dbtop, db_governor utilities.
 %setup -q
 
 %build
-cmake .
+export PYTHONINTERPRETER=%{__python}
+
+echo -e "#ifndef VERSION_H_\n#define VERSION_H_\n#define GOVERNOR_CUR_VER \"%{g_version}-%{g_release}\"\n#endif\n" > src/version.h
+
+mkdir build_clean
+pushd build_clean
+%if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
+cmake .. -DSYSTEMD_FLAG:BOOL=1
+%else
+cmake ..
+%endif
 make
-cd install
+popd
+
+pushd install
 autoconf
 %configure
 make
-cd -
+popd
 
+patch -p1 < log.patch
+mkdir build_test
+pushd build_test
+%if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
+cmake .. -DSYSTEMD_FLAG:BOOL=1
+%else
+cmake ..
+%endif
+make
+popd
 
 %install
 %{__rm} -rf $RPM_BUILD_ROOT
 
-if [ -e autoconf ]; then                                                                                                                                                                                                                     
-# Yuck. We're using autoconf 2.1x.                                                                                                                                                                                                           
-  export PATH=.:$PATH                                                                                                                                                                                                                        
-fi                                                                                                                                                                                                                                           
+if [ -e autoconf ]; then
+# Yuck. We're using autoconf 2.1x.
+  export PATH=.:$PATH 
+fi
 
-cd install                                                                                                                                                                                                                                             
+cd install
 make DESTDIR=$RPM_BUILD_ROOT install
 cd -
 mkdir -p $RPM_BUILD_ROOT/var/lve/dbgovernor/
 mkdir -p $RPM_BUILD_ROOT/var/lve/dbgovernor-store/
-mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/
+
 mkdir -p $RPM_BUILD_ROOT%{_sbindir}/
 mkdir -p $RPM_BUILD_ROOT%{_libdir}/
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/container/
 mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/
-mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/da
-mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel
-mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/plesk
-mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/iworx
-mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/ispmanager
-mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/tmp
-mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/logs
-mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/tmp
+mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/modules
+mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts
 mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils
+mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/tmp
+mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/storage
+mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/history
+%if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
+# install systemd unit files and scripts for handling server startup
+mkdir -p ${RPM_BUILD_ROOT}%{_unitdir}
+install -m 644 db_governor.service ${RPM_BUILD_ROOT}%{_unitdir}/
+%else
+mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/
 install -D -m 755 script/db_governor $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/
-install -D -m 755 bin/db_governor $RPM_BUILD_ROOT%{_sbindir}/
-install -D -m 755 bin/dbtop $RPM_BUILD_ROOT%{_sbindir}/
-install -D -m 755 bin/mysql_unfreeze $RPM_BUILD_ROOT%{_sbindir}/
-install -D -m 755 bin/dbctl $RPM_BUILD_ROOT%{_sbindir}/
-install -D -m 600 db-governor.xml $RPM_BUILD_ROOT%{_sysconfdir}/container/mysql-governor.xml
-install -D -m 755 lib/libgovernor.so $RPM_BUILD_ROOT%{_libdir}/
-#install utility
-install -D -m 755 install/cpanel/check_mysql_leave_pid.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/check_mysql_leave_pid.sh
-install -D -m 755 install/cpanel/db_governor-clear-old-hook $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/db_governor-clear-old-hook
-install -D -m 755 install/cpanel/install-db-governor $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/install-db-governor
-install -D -m 755 install/cpanel/install-db-governor-beta $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/install-db-governor-beta
-install -D -m 755 install/cpanel/cpanel-common-lve $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/cpanel-common-lve
-install -D -m 755 install/cpanel/cpanel-delete-hooks $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/cpanel-delete-hooks
-install -D -m 755 install/cpanel/cpanel-install-hooks $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/cpanel-install-hooks
-install -D -m 755 install/cpanel/upgrade-mysql-disabler.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/upgrade-mysql-disabler.sh
-install -D -m 755 install/da/install-db-governor.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/da/install-db-governor.sh
-install -D -m 644 install/cpanel/cloudlinux.versions $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/cloudlinux.versions
-install -D -m 755 install/cpanel/install-mysql-disabler.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/install-mysql-disabler.sh
-install -D -m 755 install/plesk/install-db-governor.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/plesk/install-db-governor.sh
-install -D -m 755 install/iworx/install-db-governor.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/iworx/install-db-governor.sh
-install -D -m 755 install/ispmanager/install-db-governor.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/ispmanager/install-db-governor.sh
-install -D -m 755 install/other/install-db-governor.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/other/install-db-governor.sh
-install -D -m 755 install/other/set_fs_suid_dumpable.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/other/set_fs_suid_dumpable.sh
-install -D -m 755 install/utils/dbgovernor_map $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/dbgovernor_map
-install -D -m 755 install/utils/empty_action.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/empty_action.sh
+%endif
 
-install -D -m 755 install/chk-mysqlclient $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/chk-mysqlclient
+install -D -m 755 build_clean/bin/db_governor $RPM_BUILD_ROOT%{_sbindir}/
+install -D -m 755 build_clean/bin/dbtop $RPM_BUILD_ROOT%{_sbindir}/
+install -D -m 755 build_clean/bin/mysql_unfreeze $RPM_BUILD_ROOT%{_sbindir}/
+install -D -m 755 build_clean/bin/dbctl $RPM_BUILD_ROOT%{_sbindir}/
+install -D -m 600 db-governor.xml $RPM_BUILD_ROOT%{_sysconfdir}/container/mysql-governor.xml
+install -D -m 755 build_clean/lib/libgovernor.so $RPM_BUILD_ROOT%{_libdir}/libgovernor.so.%{version} 
+ln -fs libgovernor.so.%{version} $RPM_BUILD_ROOT%{_libdir}/libgovernor.so
+
+install -D -m 755 build_test/bin/db_governor $RPM_BUILD_ROOT%{_sbindir}/db_governor_test
+install -D -m 755 build_test/lib/libgovernor.so $RPM_BUILD_ROOT%{_libdir}/libgov_test.so.%{version}
+
+#install utility
 install -D -m 755 install/db-select-mysql $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/db-select-mysql
-install -D -m 755 install/remove-mysqlclient $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/remove-mysqlclient
+
+install -D -m 755 install/scripts/chek_mysql_rpms_local $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/chek_mysql_rpms_local
+install -D -m 755 install/scripts/cpanel-delete-hooks $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/cpanel-delete-hooks
+install -D -m 755 install/scripts/cpanel-install-hooks $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/cpanel-install-hooks
+install -D -m 755 install/scripts/cpanel-common-lve $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/cpanel-common-lve
+install -D -m 755 install/scripts/dbgovernor_map $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/dbgovernor_map
+install -D -m 755 install/scripts/dbgovernor_map.py $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/dbgovernor_map.py
+install -D -m 755 install/scripts/dbgovernor_map_plesk.py $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/dbgovernor_map_plesk.py
+install -D -m 755 install/scripts/detect-cpanel-mysql-version.pm $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/detect-cpanel-mysql-version.pm
+install -D -m 755 install/scripts/cpanel-mysql-url-detect.pm $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/cpanel-mysql-url-detect.pm
+install -D -m 755 install/scripts/mysql_hook $RPM_BUILD_ROOT//usr/share/lve/dbgovernor/scripts/mysql_hook
+
+install -D -m 644 logrotate/mysql-governor $RPM_BUILD_ROOT/etc/logrotate.d/mysql-governor
+install -D -m 644 install/utils/cloudlinux.versions $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/cloudlinux.versions
+install -D -m 644 install/utils/dbgovernor $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/db_governor
+install -D -m 600 install/list_problem_files.txt $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/
+
+install -D -m 755 install/utils/mysql_export $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/mysql_export
+
+install -D -m 755 install/cpanel/upgrade-mysql-disabler.sh $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cpanel/upgrade-mysql-disabler.sh
+ln -s ../scripts/dbgovernor_map $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/dbgovernor_map
+
 #install cron utility
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/cron.d/
 install -D -m 644 cron/lvedbgovernor-utils-cron $RPM_BUILD_ROOT%{_sysconfdir}/cron.d/
 
-touch $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/tmp/INFO                                                                                                                                                                                     
+touch $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/tmp/INFO
 echo "CloudLinux" > $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/tmp/INFO
 
 %clean
@@ -111,54 +181,696 @@ echo "CloudLinux" > $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/tmp/INFO
 /sbin/service db_governor stop > /dev/null 2>&1
 rs=$(pgrep governor)
 if [ ! -z "$rs" ];then
-kill $(pgrep governor)
+    kill $(pgrep governor)
+fi
+
+#Check if libgovernor.so will be changed on package action
+#if install just save KEY
+#if this KEY will change - need to stop mysql before governor installation
+gKEY=`echo -n "%{g_key_library}"`
+if [ $1 -eq 1 ] ; then
+    touch /etc/container/dbgovernor-libcheck
+    echo "$gKEY" > /etc/container/dbgovernor-libcheck
+fi
+#if update check KEY
+if [ $1 -eq 2 ] ; then
+   if [ -e "/etc/container/dbgovernor-libcheck" ]; then
+        rKEY=`cat /etc/container/dbgovernor-libcheck | tr -d '\n'`
+        if [ "$rKEY" != "$gKEY" ]; then
+            touch /etc/container/dbgovernor-libcheck
+            echo "U" > /etc/container/dbgovernor-libcheck
+            echo "Stop MySQL for safe installation"
+            if [ -e /usr/lib/systemd/system/mysql.service -a -e /usr/bin/systemctl ]; then
+                systemctl stop mysql.service
+            elif [ -e /usr/lib/systemd/system/mysqld.service -a -e /usr/bin/systemctl ]; then
+                systemctl stop mysqld.service
+            elif [ -e /usr/lib/systemd/system/mariadb.service -a -e /usr/bin/systemctl ]; then
+                systemctl stop mariadb.service
+            elif [ -e /etc/init.d/mysql ]; then
+                /etc/init.d/mysql stop
+            elif [ -e /etc/init.d/mysqld ]; then
+                /etc/init.d/mysqld stop
+            fi
+        fi
+   else
+        touch /etc/container/dbgovernor-libcheck
+        echo "U" > /etc/container/dbgovernor-libcheck
+        echo "Stop MySQL for safe installation"
+        if [ -e /usr/lib/systemd/system/mysql.service -a -e /usr/bin/systemctl ]; then
+            systemctl stop mysql.service
+        elif [ -e /usr/lib/systemd/system/mysqld.service -a -e /usr/bin/systemctl ]; then
+            systemctl stop mysqld.service
+        elif [ -e /usr/lib/systemd/system/mariadb.service -a -e /usr/bin/systemctl ]; then
+            systemctl stop mariadb.service
+        elif [ -e /etc/init.d/mysql ]; then
+            /etc/init.d/mysql stop
+        elif [ -e /etc/init.d/mysqld ]; then
+            /etc/init.d/mysqld stop
+        fi
+   fi
 fi
 
 %post
 if [ $1 -gt 0 ] ; then
- if [ -e "/usr/share/lve/dbgovernor/other/set_fs_suid_dumpable.sh" ]; then
-  /usr/share/lve/dbgovernor/other/set_fs_suid_dumpable.sh
- fi
+    if [ -e "/usr/share/lve/dbgovernor/mysqlgovernor.py" ]; then
+        /usr/share/lve/dbgovernor/mysqlgovernor.py --fs-suid
+    fi
 fi
-/sbin/chkconfig --add db_governor
-/sbin/chkconfig --level 35 db_governor on
+
+%if 0%{?rhel} >= 7
+if [ $1 -gt 0 ]; then
+    # Initial installation
+    systemctl daemon-reload >/dev/null 2>&1 || :
+fi
+%else
+if [ $1 = 1 ]; then
+    /sbin/chkconfig --add db_governor
+    /sbin/chkconfig --level 35 db_governor on
+fi
+%endif
 
 %preun
+%if 0%{?rhel} >= 7
+if [ $1 -eq 0 ]; then
+    # Package removal, not upgrade
+    systemctl --no-reload disable db_governor.service >/dev/null 2>&1 || :
+    systemctl stop db_governor.service >/dev/null 2>&1 || :
+fi
+%else
 if [ $1 -eq 0 ]; then
     /sbin/service db_governor stop > /dev/null 2>&1
     /sbin/chkconfig --del db_governor
+fi
+%endif
+if [ $1 -eq 1 -o $1 -eq 0 ] ; then
+ if [ -e /var/run/mysql-governor-config.xml ]; then
+    rm -f /var/run/mysql-governor-config.xml
+ fi
 fi
 
 %posttrans
 /sbin/ldconfig
 rm -rf /%{_libdir}/liblve.so.1
 ln -s /%{_libdir}/liblve.so.0.9.0 /%{_libdir}/liblve.so.1
+/sbin/ldconfig
+
+if [ -e /usr/share/lve/dbgovernor/mysqlgovernor.py ]; then
+    /usr/share/lve/dbgovernor/mysqlgovernor.py --correct-cloud-version
+fi
+
+#check if in signal file saved U, than need to start mysql
+gKEY=`echo -n "%{g_key_library}"`
+if [ -e "/etc/container/dbgovernor-libcheck" ]; then
+    rKEY=`cat /etc/container/dbgovernor-libcheck | tr -d '\n'`
+        if [ "$rKEY" == "U" ]; then
+            echo "Start MySQL for safe installation"
+            if [ -e /usr/lib/systemd/system/mysql.service -a -e /usr/bin/systemctl ]; then
+                systemctl status mysql.service
+                if [ "$?" != "0" ]; then
+                    systemctl start mysql.service
+                else
+                    echo "MySQL already started"
+                fi
+            elif [ -e /usr/lib/systemd/system/mysqld.service -a -e /usr/bin/systemctl ]; then
+                systemctl status mysqld.service
+                if [ "$?" != "0" ]; then
+                    systemctl start mysqld.service
+                else
+                    echo "MySQL already started"
+                fi
+            elif [ -e /usr/lib/systemd/system/mariadb.service -a -e /usr/bin/systemctl ]; then
+                systemctl status mariadb.service
+                if [ "$?" != "0" ]; then
+                    systemctl start mariadb.service
+                else
+                    echo "MySQL already started"
+                fi
+            elif [ -e /etc/init.d/mysql ]; then
+                /etc/init.d/mysql status
+                if [ "$?" != "0" ]; then
+                    /etc/init.d/mysql start
+                else
+                    echo "MySQL already started"
+                fi
+            elif [ -e /etc/init.d/mysqld ]; then
+                /etc/init.d/mysqld status
+                if [ "$?" != "0" ]; then
+                    /etc/init.d/mysqld start
+                else
+                    echo "MySQL already started"
+                fi
+            fi
+            echo "$gKEY" > /etc/container/dbgovernor-libcheck
+        fi
+fi
 
 
 ldconfig
+
+if [ $1 -eq 0 ]; then
+
+if [ -e /usr/share/lve/dbgovernor/mysqlgovernor.py ]; then
+    if [ ! -e /usr/share/lve/dbgovernor/MYSQLG-178 ]; then
+        /usr/share/lve/dbgovernor/mysqlgovernor.py --fix-config
+        touch /usr/share/lve/dbgovernor/MYSQLG-178
+    fi
+fi
+
+%if 0%{?rhel} >= 7
+/bin/systemctl daemon-reload >/dev/null 2>&1 || :
+/bin/systemctl restart db_governor.service >/dev/null 2>&1 || :
+%else
+/etc/init.d/db_governor restart
+%endif
+fi
 echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
 echo "!!!Before making any changing with database make sure that you have reserve copy of users data!!!"
 echo "Instruction: how to create whole database backup - http://docs.cloudlinux.com/index.html?backing_up_mysql.html"
+
+%triggerpostun -- governor-mysql < 1.2
+echo "Attempt to fix cPanel hooks..."
+if [ -e /usr/share/lve/dbgovernor/mysqlgovernor.py ]; then
+    /usr/share/lve/dbgovernor/mysqlgovernor.py --fix-cpanel-hooks
+fi
+
+%triggerin -- cl-MySQL55-client, cl-MySQL56-client, cl-MySQL57-client, cl-MySQL80-client, cl-MariaDB55, cl-MariaDB100, cl-MariaDB101, cl-MariaDB102, cl-MariaDB103, cl-Percona56-client, mysql-community-client, mariadb, Percona-Server-client-56
+if [ -e /usr/sbin/cagefsctl ]; then
+    /usr/sbin/cagefsctl --force-update
+fi
 
 %files
 %defattr(-,root,root)
 %doc LICENSE.TXT
 
+%config /etc/logrotate.d/*
 %{_sbindir}/db_governor
+%{_sbindir}/db_governor_test
 %{_sbindir}/dbtop
 %{_sbindir}/mysql_unfreeze
 %{_sbindir}/dbctl
 %{_libdir}/libgovernor.so
+%{_libdir}/libgovernor.so.%{version}
+%{_libdir}/libgov_test.so.%{version}
 %config(noreplace) %{_sysconfdir}/container/mysql-governor.xml
+%if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
+%{_unitdir}/db_governor.service
+%else
 %{_sysconfdir}/rc.d/init.d/*
+%endif
 /usr/share/lve/dbgovernor/*
 %{_sysconfdir}/cron.d/lvedbgovernor-utils-cron
 /var/lve/dbgovernor
 /var/lve/dbgovernor-store
-/usr/share/lve/dbgovernor/cpanel/logs
-/usr/share/lve/dbgovernor/cpanel/tmp
+%dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Tue Nov 20 2018 Aleksandr Povalyaev <apovalyaev@cloudlinux.com>, Serhii Kokhan <skokhan@cloudlinux.com>, Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-37
+- mysql80, libmysqlclient.so.21 support
+- MYSQLG-297, MySQLG-301: old auth procedure for mysql80
+- MYSQLG-293: Added logrotate config for governor-mysql
+- MYSQLG-306: fix error logging from --dbupdate
+- MYSQLG-300: cagefs force-update after governor installation and delete procedure
+- MYSQLG-302: Investigate why db_governor fails with error "Can't init BAD list"
+- MYSQLG-326: Wrong handling of SQL line while logging slow mysql query
+
+* Wed Jun 20 2018 Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-36
+- mariadb103 support
+- MYSQLG-269: warnings in case of downgrade or switching mysql|mariadb
+- MYSQLG-259: added 'assumeyes' for all yum commands
+
+* Tue Apr 24 2018 Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-35
+- Fixed dbgovernor crash when username length is long
+
+* Fri Apr 13 2018 Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-34
+- MYSQLG-251: fix error on choosing MySQL
+- MYSQLG-250: fix broken symlinks
+
+* Fri Feb 02 2018 Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-33
+- MYSQLG-239: dbuser-map for Plesk implemented
+
+* Mon Jan 29 2018 Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-32
+- MYSQLG-243: mysqlgovernor.py able to set version and install in one turn
+
+* Tue Jan 23 2018 Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-31.1
+- Added test version of governor's library
+
+* Wed Jan 17 2018 Serhii Kokhan <skokhan@cloudlinux.com> 1.2-31
+- MYSQLG-237: dbtop update interval fixed
+
+* Fri Jan 12 2018 Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-30
+- MYSQLG-240: try to fix cPanel hooks after update from 1.1 governor version
+
+* Tue Dec 05 2017 Daria Kavchuk <dkavchuk@cloudlinux.com> - 1.1-27
+- MYSQLG-231: db_governor fails to start
+
+* Mon Dec 04 2017 Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-29
+- MYSQLG-220: Fix restore of MariaDB and MySQL 5.7 official packages after governor deletion on cPanel
+
+* Thu Nov 16 2017 Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-28
+- Fixed unlimit reading from config file
+
+* Wed Nov 01 2017 Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-27
+- MYSQLG-221: Add installation of mysqlclient18 for MariaDB 10.2
+
+* Fri Oct 20 2017 Daria Kavchuk <dkavchuk@cloudlinux.com> - 1.1-26
+- MYSQLG-218: added MariaDB 10.2 support
+
+* Tue Oct 17 2017 Alexey Berezhok <alexey.berezhok@cloudlinux.com> - 1.1-25
+- MYSQLG-216: the cPanel's Service Manager stucks on the governor restart
+- MYSQLG-217: The Governor is not starting with " Can't load mysql functions" error
+
+* Mon Oct 16 2017 Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-26
+- MYSQLG-216: the cPanel's Service Manager stucks on the governor restart
+- MYSQLG-217: The Governor is not starting with " Can't load mysql functions" error
+
+* Mon Oct 02 2017 Alexey Berezhok <alexey.berezhok@cloudlinux.com> - 1.1-24
+- MYSQLG-209: Add percona56 to Usage output of db-select-mysql
+
+* Tue Sep 19 2017 Alexey Berezhok <alexey.berezhok@cloudlinux.com> - 1.1-23
+- MYSQLG-205: fix code flow for IWorks object init
+
+* Thu Sep 07 2017 Eugen Vodilov <evodilov@cloudlinux.com> 1.2-25
+- MYSQLG-204: Perfomance fix for statistic enabled servers
+- Fix build dependency on CL7 (broken glib-2.0 dependency to pcre-devel)
+
+* Tue Aug 22 2017 Daria Kavchuk <dkavchuk@cloudlinux.com>, Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-24
+- MYSQLG-197: Stop to delete mysqld.service for DirectAdmin in cl-MySQL packages
+
+* Tue Aug 08 2017 Daria Kavchuk <dkavchuk@cloudlinux.com>, Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-23
+- MYSQLG-199: disable mysql monitoring on cPanel while governor installing.
+- MYSQLG-198: CageFS MySQL Vulnerability
+
+* Mon Jun 19 2017 Daria Kavchuk <dkavchuk@cloudlinux.com>, Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-22
+- MYSQLG-183: Missed file /etc/container/dbuser-map after installation of Governor
+- MYSQLG-188: Add support MariaDB 10.2 with governor
+
+* Tue Jun 06 2017 Alexey Berezhok <alexey.berezhok@cloudlinux.com> - 1.1-22
+- Added Percona 5.6 support
+
+* Fri May 26 2017 Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-21
+- MYSQLG-182: Make MySQL-governor work with EIG Percona
+- MYSQLG-185: Add installation of mysqlclientXX when new_version=auto in _load_new_packages
+
+* Tue May 16 2017 Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-20
+- Added Percona56 for Endurance support
+
+* Mon May 08 2017 Alexey Berezhok <aberezhok@cloudlinux.com>, Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-19
+- Spell fixes
+- MYSQLG-178: store read write mysql limits as signed values
+
+* Fri Apr 28 2017 Alexey Berezhok <alexey.berezhok@cloudlinux.com> - 1.2-17
+- Added mysql_upgrade for MariaDB packages
+- Fixed error in DirectAdmin installation
+
+* Thu Mar 30 2017 Daria Kavchuk <dkavchuk@cloudlinux.com>, Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-18
+- Added mysql_upgrade for MariaDB packages
+- Fixed error in DirectAdmin installation
+- Added xml escaping and prettyfying
+- Added read duplicate of config for non user list
+
+* Mon Mar 06 2017 Alexey Berezhok <alexey.berezhok@cloudlinux.com> - 1.1-21
+- MYSQLG-154: Fix ""dbctl list"" show io limits equals to default when they are less then 1mb/s
+- MYSQLG-159: add ability to specify units for io limits
+- MYSQLG-157: Need to review the algoritm of set LVE=3 limits on MySQL install/update
+
+* Mon Feb 27 2017 Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-16
+- Check log-error existings on installation of MySQL packages
+
+* Fri Feb 10 2017 Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-15
+- Fixed restarting MariaDB services for CL7 on governor update
+
+* Thu Feb 02 2017 Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-14
+- MYSQLG-152: Use default values for "script" parameters in governor's config in case when script="". Now governor report about error and stop to work.
+- Fixed errors in source code.
+- Code prettifying and formatting
+
+* Thu Feb 02 2017 Alexey Berezhok <alexey.berezhok@cloudlinux.com> - 1.1-20
+- MYSQLG-152: Use default values for "script" parameters in governor's config in case when script="". Now governor report about error and stop to work.
+
+* Fri Jan 20 2017 Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-13
+- Fixed errors in source code.
+- Code prettifying and formatting
+
+* Wed Dec 28 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-12
+- Fixed Rpmdb checksum is invalid in mysql packages installation
+
+* Mon Dec 26 2016 Alexey Berezhok <alexey.berezhok@cloudlinux.com> - 1.1-19
+- MYSQLG-136: Add new behaviour for MySQL LVE enter for preventing crash MySQL on lve destroy
+- MYSQLG-149: investigate the possibility to avoid httpd checks during "mysqlgovernor.py --dbupdate"
+
+* Thu Dec 22 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-11
+- MYSQLG-146: Remove original mysql packages correctly
+- Fixed detection of MariaDB 10.1 after installing
+
+* Mon Oct 31 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-10
+- Fix DA MySQL connection parameters parsing
+
+* Thu Sep 29 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-9
+- Fix incorrect path to deprecated script in postupcp for cPanel
+- Fixed restarting of mysql service (non governor packages)
+
+* Mon Sep 26 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-8
+- MYSQLG-134: Check if mysql is not in yum exclude list
+- MYSQLG-140: Spelling error in mysqlgovernor.py script output
+
+* Mon Sep 26 2016 Alexey Berezhok <alexey.berezhok@cloudlinux.com> - 1.1-18
+- MYSQLG-134: Check if mysql is not in yum exclude list
+- MYSQLG-140: Spelling error in mysqlgovernor.py script output
+
+* Sat Sep 24 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-7
+- Fixed my.cnf restoring on MySQL update or version change
+
+* Thu Aug 25 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-6
+- MYSQLG-124: Use set_old_limit before mysql process killed
+
+* Thu Aug 25 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-5
+- Fixed detecting of MySQL active processes for MySQL 5.7
+
+* Fri Aug 19 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-4
+- MYSQLG-136: Add new behaviour for MySQL LVE enter for preventing crash MySQL on lve destroy
+
+* Mon Aug 15 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-3
+- Fixed error on previous MySQL package detected
+
+* Wed Jul 27 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.2-2
+- Added save of statistics even if no cpu&io activity but was only cause changing
+
+* Tue Jul 26 2016 Alexey Berezhok <alexey.berezhok@cloudlinux.com> - 1.1-17
+- Force reinstall cloudlinux.versions on update
+
+* Thu Jul 14 2016 Alexey Berezhok <alexey.berezhok@cloudlinux.com> - 1.1-16
+- Fixed error in cloudlinux.version file for cPanel
+
+* Mon Jul 11 2016 Alexey Berezhok <aberezhok@cloudlinux.com>, Mikhail Zhbankov <mzhbankov@cloudlinux.com> 1.2-1
+- MYSQLG-130: Add uid to statistic file(end of each string)
+- MYSQLG-126: Add automatic removal /var/run/mysql-governor-config.xml file with remove/downgrade
+- MYSQLG-131: After update cl-MySQL(cl-MariaDB) cleint can't start mysql process because old process didn't stop
+- MYSQLG-122: Reserch ability to remove unneeded files on governor's migration from one MySQL type to another
+- MYSQLG-129: Set default user status restricted produces duplicate in dbctl list
+- MYSQLG-132: after removin dbgovernor maria db is dead
+- MYSQLG-128: Check ability to add a way to monitor db_governor via cpanel Service Manager (Chkservd).
+
+* Fri Jun 03 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-15
+- Added reload-daemon for CL7 on update
+- Uncommented path to PID file in service for CL7
+
+* Wed May 25 2016 Alexey Berezhok <aberezhok@cloudlinux.com>, Mikhail Zhbankov <mzhbankov@cloudlinux.com> 1.1-14
+- Added creation of copy config file
+
+* Tue Apr 26 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-13
+- Remove ulimt from service file
+
+* Mon Jan 04 2016 Alexey Berezhok <aberezhok@cloudlinux.com>, Mikhail Zhbankov <mzhbankov@cloudlinux.com> 1.1-12
+- MYSQLG-105: cl-MySQL57-5.7.11-1 requirements are broken on CL6.i386
+- MYSQLG-97: Add support by governor MySQL 5.7
+- MYSQLG-103: fix dbctl list output for read and write limits
+- MYSQLG-98: Make /dev/shm/governor_bad_users_list unreadable for users
+- MYSQLG-104: fix governor restart on CL7 under systemd
+- MYSQLG-108: Fix dbctl set command bug
+
+* Mon Jan 04 2016 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-11
+- MYSQLG-95: mysqlgovernor.py --dbupdate does not work (with conf parameter without =)
+
+* Wed Nov 25 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-10
+- Fixed garbage on dbtop exit on CL7
+
+* Mon Nov 16 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-9
+- Added local.version content analizing(cPanel)
+- Added MariaDB for DA identification
+- Fixed ISPManager Bussines identification
+
+* Fri Nov 13 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-8
+- Added NO_UBC one more place
+
+* Mon Nov 09 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-7
+- MYSQLG-85: added installation mode with MySQL/MariaDB version confirmation
+
+* Tue Nov 03 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-6
+- MYSQLG-82: fixed bugs reported by coverity
+
+* Thu Oct 08 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-5
+- Adde LVE_NO_UBC on enter
+
+* Mon Sep 14 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-4
+- Added is_in_lve support
+- Fixed install-beta for CloudLinux 7 detection error
+- Added fixing of mysqld service for CloudLinux 7
+- rerun ldconfig for fixing endless loop
+
+* Thu Aug 27 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-3
+- Grammatical fixes
+
+* Wed Aug 05 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-2
+- Fixed installation script for auto mode CL7
+
+* Mon Aug 03 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.1-1
+- Fixed installation script (disabled cloudlinux-updates-testing)
+
+* Fri Jul 10 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-96
+- Restart governor service on package update
+
+* Thu Jul 02 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-95
+- Fixed MariaDB detect for cPanel
+- Fixed MariaDB package restoring on governor uninstall
+
+* Thu Jun 04 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-94
+- Optimized dbgovernor_map script for cPanel
+
+* Tue May 26 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-93
+- Fixed error on CloudLinux 7 + cPanel installation
+
+* Mon May 25 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-92
+- Use DirectAdmin without custombuild (Sander Hoentjen <shoentjen@antagonist.nl>)
+- Fixed stats hash table corruption on lve-mode switching (with dbctl)
+
+* Mon Mar 30 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-91
+- Fixed memory leak in dbtop
+- Added patch for MariaDB 5.5.41 for CL7
+
+* Mon Feb 16 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-90
+- Removing MariaDB-common in db-governor installation for preventing conflict
+
+* Wed Feb 11 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-89
+- Fixed MySQL installation for OTHER panel
+
+* Mon Feb 09 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-88
+- Fixed MySQL stopping on version update
+
+* Tue Jan 27 2015 Alexey Berezhok <alexey.berezhok@cloudlinux.com> - 1.0-87.cl7
+- CL7 build
+
+* Fri Jan 23 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-87
+- CloudLinux7 adaptation
+
+* Thu Jan 15 2015 Alexey Berezhok <alexey.berezhok@cloudlinux.com> - 1.0-86.cl7
+- Cl7 build
+
+* Tue Jan 13 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-86
+- Added fix of dbuser-map file reading
+
+* Mon Jan 12 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-85
+- Added logging of dbuser-map file reading
+
+* Fri Jan 09 2015 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-84
+- Added fix for MariaDB 10.1-devel package
+
+* Thu Dec 25 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-83
+- Fixed conflict with compat-MySQL51-shared
+
+* Thu Dec 25 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-82
+- Fixed conflict with compat-MySQL50-shared
+
+* Thu Dec 25 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-81
+- Preparing MySQL install script to release
+
+* Thu Dec 18 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-80
+- Added fix for MariaDB 10.0-devel package
+- Added detection mysql55w
+
+* Thu Dec 18 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-79
+- Added fix for MariaDB 10.0-devel package
+
+* Tue Nov 04 2014 Pavel Shkatula <shpp@cloudlinux.com> 1.0-78
+- Added support MariaDB 10.1
+- ##
+
+* Tue Aug 26 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-77
+- Fixed error with iolimit for CL5
+- Added reseting of statistics on restrict
+
+* Tue Aug 26 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-76
+- Fixed dbuser map file for DA error
+
+* Tue Aug 19 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-75
+- Added --force command for deleting Percona packages
+
+* Tue Aug 19 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-74
+- Ask before Percona packages delete
+
+* Tue Aug 19 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-73
+- read socket option from mysql.conf, if exists
+
+* Thu Aug 14 2014 Pavel Shkatula <shpp@cloudlinux.com> 1.0-72
+- Added MariaDB 10.0 support
+
+* Mon Aug 04 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-71
+- Added logging before restrict
+
+* Fri Jul 18 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-68
+- Percona removing
+
+* Tue Jul 15 2014 Pavel Shkatula <shpp@cloudlinux.com> 1.0-67
+- Clean Percona packages before governor installation
+
+* Fri Jul 04 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-66
+- Catch the case where a user has no uid in DA dbuser-map
+
+* Thu Jul 03 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-65
+- removed duplicate usernames from DA dbuser-map
+
+* Thu Jul 03 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-64
+- fix username to be username instead of dbname and make file write atomic
+
+* Thu Jul 03 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-63
+- Fixes in dbctl list header
+- Fixes in DA dbuser-map generator
+- AbUser mode as default
+
+* Wed Jul 02 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-62
+- Fixed DA dbuser-map creation
+- Switched MySQL installation from production repo
+
+* Fri Jun 20 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-61
+- Fixed MySQL5.6 installation for cPanel 11.44
+
+* Fri May 30 2014 Pavel Shkatula <shpp@cloudlinux.com> 1.0-60
+- Not created file statistic if no statistic on period
+
+* Mon May 26 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-59
+- Fixed dbuser-map builder script for cPanel 11.43
+
+* Thu May 08 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-58
+- Added default account dbuser for cPanel
+
+* Tue Apr 29 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-57
+- Fixed MySQL-python installation
+
+* Mon Apr 28 2014 Alexey Berezhok <aberezhok@cloudlinux.com> , Pavel Shkatula <shpp@cloudlinux.com> 1.0-56
+- MYSQLG-57: Add support new lvectl
+- MYSQLG-56: Need additional check on success open of configure file
+- MYSQLG-54: Add removing MariaDB-common package 
+- MYSQLG-55: On mysqlgovernor --install on DA appears message: ImportError: No module named MySQLdb
+- Added mysql_export fucntions
+
+* Wed Apr 16 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-55
+- Switch MySQL installation from cloudlinux-updates-testing
+- Added all mode in DirectAdmin
+
+* Fri Apr 04 2014 Alexey Berezhok <aberezhok@cloudlinux.com>, Pavel Shkatula <shpp@cloudlinux.com> 1.0-54
+- Moved governor to new MySQL repos
+
+* Fri Mar 21 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-53
+- Fixed: KNA-700-53569 - support of MySQL56 in cPanel
+
+* Fri Mar 14 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-52
+- Fixed: MYSQLG-52 - dbctl delete issue
+
+* Tue Mar 11 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-51
+- Updated MariaDB up to 5.5.34-22
+
+* Thu Jan 30 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-50
+- Fix path to perl (for cPanel 11.42.0 installation)
+
+* Wed Jan 15 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-49
+- Update MySQL up to 5.1.72, 5.5.34, 5.6.15 and MariaDB 5.5.34
+
+* Mon Jan 13 2014 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-48
+- Fixes in libgovernor.so changed select to poll wich can be cause of stack corruption in MySQL
+- Added autochek of libgovernor changing
+
+* Mon Dec 30 2013 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-47
+- Fixed MariaDB test repository name
+
+* Thu Dec 26 2013 Alexey Berezhok <aberezhok@cloudlinux.com>, Pavel Shkatula <shpp@cloudlinux.com> 1.0-46
+- Added memory management in bad user list like mysql
+- Optimized add user to bad list algorithm
+- Fixed lost user on delete from bad list
+
+* Wed Dec 11 2013 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-45
+- Added reconnect to database on execution errors
+
+* Tue Dec 10 2013 Alexey Berezhok <aberezhok@cloudlinux.com> 1.0-44
+- Fixed error bad users list creation (cause of mysql crash)
+- Added gcc -stack-protector for more detail crash info
+
+* Fri Nov 29 2013 Alexey Berezhok <aberezhok@cloudlinux.com>, Pavel Shkatula <shpp@cloudlinux.com> 1.0-43
+- Fixed duplicate user name in account on reread usermap file
+- Optimaze cooperation of dbuser-map and separator parameter
+- Added debug_user parameter to config for debugging some user statistic calculation
+
+* Tue Nov 26 2013 Alexey Berezhok <alexey_com@ukr.net> 1.0-42
+- Added PATH to governor's cron task
+
+* Fri Nov 22 2013 Alexey Berezhok <alexey_com@ukr.net> 1.0-41
+- Fixed governor crash on KILL QUERY sending
+- Optimize FLUSH PRIVILEGES sending
+
+* Tue Nov 12 2013 Alexey Berezhok <alexey_com@ukr.net> 1.0-40
+- Added installation of mysqlclient from new repo
+
+* Wed Nov 06 2013 Alexey Berezhok <alexey_com@ukr.net> 1.0-39
+- Fixed governor redelete BAD user
+
+* Wed Nov 06 2013 Alexey Berezhok <alexey_com@ukr.net> 1.0-38
+- Fixed bug dbctl restrict
+
+* Thu Oct 31 2013 Alexey Berezhok <alexey_com@ukr.net> 1.0-37
+- Added no connection limit mode(user_max_connections=0)
+
+* Thu Oct 24 2013 Alexey Berezhok <alexey_com@ukr.net> 1.0-36
+- Optimized commands system of mysql installation
+
+* Thu Oct 17 2013 Alexey Berezhok <alexey_com@ukr.net> 1.0-35
+- Fixed path to perl in dbuser-map utility
+
+* Fri Oct 04 2013 Alexey Berezhok <alexey_com@ukr.net>, Pavel Shkatula <shpp@cloudlinux.com> 1.0-34
+- Fixes in mysql other install script
+- Fixed interval unit for kill query
+
+* Fri Oct 04 2013 Alexey Berezhok <alexey_com@ukr.net>  1.0-33
+- Fixes in mysql cpanel install script
+
+* Tue Sep 24 2013 Alexey Berezhok <alexey_com@ukr.net>, Pavel Shkatula <shpp@cloudlinux.com>  1.0-31
+- Added db_governor --version
+- Decreased dbuser-map interval rescanning to 5 min
+
+* Wed Sep 18 2013 Alexey Berezhok <alexey_com@ukr.net>  1.0-30
+- Fixed dbctl list output
+
+* Fri Sep 13 2013 Alexey Berezhok <alexey_com@ukr.net>  1.0-29
+- Fix in db-select-mysql script for mysql56 support
+
+* Thu Sep 12 2013 Alexey Berezhok <alexey_com@ukr.net>, Pavel Shkatula <shpp@cloudlinux.com>  1.0-28
+- Added MySQL5.6 support
+- Added logging slow query killing
+- Fixed dbctl list segfault
+
+* Wed Sep 04 2013 Alexey Berezhok <alexey_com@ukr.net> 1.0-27
+- Fixed crash governor on killing queries more than 9K
+
+* Thu Aug 29 2013 Alexey Berezhok <alexey_com@ukr.net>, Pavel Shkatula <shpp@cloudlinux.com> 1.0-26
+- Added new restrict mode support
+
+* Wed Aug 28 2013 Alexey Berezhok <alexey_com@ukr.net> 1.0-25
+- Removed state checking on query killing
+
+* Tue Aug 27 2013 Alexey Berezhok <alexey_com@ukr.net>, Pavel Shkatula <shpp@cloudlinux.com> 1.0-24
+- Added support governor's plugin for MariaDB
+- Added governor's plugin for MariaDB
+
+* Thu Aug 08 2013 Alexey Berezhok <alexey_com@ukr.net>, Pavel Shkatula <shpp@cloudlinux.com> 1.0-23
+- Added make source command
+
 * Tue Aug 06 2013 Alexey Berezhok <alexey_com@ukr.net>, Pavel Shkatula <shpp@cloudlinux.com> 1.0-22
 - Added set slow query kill time per account
 
@@ -240,10 +952,10 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 - Added MariaDB instalation
 - Added select MySQL server script
 
-* Tue Apr 15 2013 Alexey Berezhok <alexey_com@ukr.net> 0.9-15
+* Mon Apr 15 2013 Alexey Berezhok <alexey_com@ukr.net> 0.9-15
 - Added set fs_suid_dumpable on package install or update
 
-* Tue Apr 15 2013 Alexey Berezhok <alexey_com@ukr.net> 0.9-14
+* Mon Apr 15 2013 Alexey Berezhok <alexey_com@ukr.net> 0.9-14
 - Removed empty statistics saving to history (fix)
 
 * Mon Apr 15 2013 Alexey Berezhok <alexey_com@ukr.net> 0.9-13
@@ -323,12 +1035,12 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 - Added statistics collection(lve-stats part)
 
 * Wed Nov 21 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-34
-- Fixed error on mysql 5.5 installtion on i386 
+- Fixed error on mysql 5.5 installtion on i386
 
 * Wed Nov 21 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-33
 - Change mysql-governor.xml access mask to 600
 
-* Tue Nov 19 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-32
+* Mon Nov 19 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-32
 - Rename "watch" command to "monitor"
 
 * Mon Nov 19 2012 Alexey Berezhok <alexey_com@ukr.net>, Pavel Shkatula <shpp@cloudlinux.com> 0.8-31
@@ -337,7 +1049,7 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 - Added coredump creation on governor crash
 - Added directory for future statistics storage
 
-* Mon Nov 14 2012 Alexey Berezhok <alexey_com@ukr.net>, Pavel Shkatula <shpp@cloudlinux.com> 0.8-30
+* Wed Nov 14 2012 Alexey Berezhok <alexey_com@ukr.net>, Pavel Shkatula <shpp@cloudlinux.com> 0.8-30
 - Added unresrict user on ignore
 - Added dbctl watch command for disable ignoring
 - Fixed level format error
@@ -346,7 +1058,7 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 - Added dbctl utility
 - Added dbtop -c mode
 - Added dbtop crash dump tracing
-- Added killuser config flag 
+- Added killuser config flag
 
 * Thu Nov 01 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-28
 - Fixed is_in_lve in mysql
@@ -381,13 +1093,13 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 * Mon Oct 08 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-19
 - Error on Inside LVE
 
-* Mon Oct 04 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-18
+* Thu Oct 04 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-18
 - Change liblve.so to liblve.so.0
 
-* Mon Oct 04 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-17
+* Thu Oct 04 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-17
 - Added new MySQL installation(5.1.63-11)
 
-* Mon Oct 03 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-16
+* Wed Oct 03 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-16
 - Decreased mutex lock on info send(to daemon)
 - Added new MySQL installation(5.1.63-10)
 
@@ -410,7 +1122,7 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 - Added userstat cleaning for MySQL 5.1
 - Added mysql stoping before installation for MySQL 5.5
 
-* Wed Sep 17 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-10
+* Mon Sep 17 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-10
 - Fixed error in install script
 
 * Mon Sep 17 2012 Alexey Berezhok <alexey_com@ukr.net> 0.8-9
@@ -466,7 +1178,7 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 - Fixed freeze connector on users refresh
 - Increased CHECKTICKS detalization
 
-* Tue Jul 25 2012 Alexey Berezhok <alexey_com@ukr.net> 0.7-10
+* Wed Jul 25 2012 Alexey Berezhok <alexey_com@ukr.net> 0.7-10
 - Fixed error with freeze governor
 - Fixed error with hang up threads of dbtop
 - Disable --install-beta
@@ -477,7 +1189,7 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 * Thu Jul 19 2012 Alexey Berezhok <alexey_com@ukr.net> 0.7-7
 - Added support MySQL 5.1.63-2
 
-* Thu Jun 27 2012 Alexey Berezhok <alexey_com@ukr.net> 0.7-6
+* Wed Jun 27 2012 Alexey Berezhok <alexey_com@ukr.net> 0.7-6
 - Fixed bug with mysql 5.5 detection. Added beta mysql installation
 
 * Thu Jun 21 2012 Alexey Berezhok <alexey_com@ukr.net> 0.7-5
@@ -583,20 +1295,20 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 - Fix cpu_time freezing
 - Removed timer from connector that freeze governor statistic
 
-* Thu Dec 06 2010 Alexey Berezhok <alexey_com@ukr.net> 0.3-7
+* Mon Dec 06 2010 Alexey Berezhok <alexey_com@ukr.net> 0.3-7
 - Add sorting by username
 - Fix bug with newline when terminal resized
 
-* Thu Dec 03 2010 Alexey Berezhok <alexey_com@ukr.net> 0.3-6
+* Fri Dec 03 2010 Alexey Berezhok <alexey_com@ukr.net> 0.3-6
 - Fixed bug with one info string under i386 system
 
 * Thu Dec 02 2010 Alexey Berezhok <alexey_com@ukr.net> 0.3-5
 - Change NaN to Ovf. Remove color scheme for usually item string
 
-* Tue Nov 19 2010 Alexey Berezhok <alexey_com@ukr.net> 0.3-4
+* Fri Nov 19 2010 Alexey Berezhok <alexey_com@ukr.net> 0.3-4
 - Add toggle color mode and two-color mode by one key. Remove command help and colorize
 
-* Tue Nov 17 2010 Alexey Berezhok <alexey_com@ukr.net> 0.3-3
+* Wed Nov 17 2010 Alexey Berezhok <alexey_com@ukr.net> 0.3-3
 - Add color mode for dbtop, add output all parameters(1,2,3,4 - screens), Ctrl+C - exit, merge CAUSE and TIMEOUT field
 
 * Tue Nov 16 2010 Alexey Berezhok <alexey_com@ukr.net> 0.3-2
@@ -611,7 +1323,7 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 * Mon Nov 01 2010 Alexey Berezhok <alexey_com@ukr.net> 0.2-0.1
 - Add dynamic loading mysql client's library
 
-* Thu Oct 27 2010 Alexey Berezhok <alexey_com@ukr.net> 0.1-0.4
+* Wed Oct 27 2010 Alexey Berezhok <alexey_com@ukr.net> 0.1-0.4
 - Add detail log info. Add analyzing testmode parameter (report interval). Output max values info into log file in test mode
 
 * Mon Sep 27 2010 Alexey Berezhok <alexey_com@ukr.net> 0.1-0.4
@@ -620,16 +1332,16 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 * Mon Sep 20 2010 Alexey Berezhok <alexey_com@ukr.net> 0.1-0.4
 - Add reading timeout from cfg. dbtop crashed when terminal resized, dbtop displayed number in format -0.000
 
-* Fri Sep 16 2010 Alexey Berezhok <alexey_com@ukr.net> 0.1-0.4
+* Thu Sep 16 2010 Alexey Berezhok <alexey_com@ukr.net> 0.1-0.4
 - Remove README from /var/log/db_governor
 
-* Fri Sep 15 2010 Alexey Berezhok <alexey_com@ukr.net> 0.1-0.4
+* Wed Sep 15 2010 Alexey Berezhok <alexey_com@ukr.net> 0.1-0.4
 - Add client section analizing in ~/.my.cnf
 
-* Fri Sep 14 2010 Alexey Berezhok <alexey_com@ukr.net> 0.1-0.4
+* Tue Sep 14 2010 Alexey Berezhok <alexey_com@ukr.net> 0.1-0.4
 - Add client section analizing in my.cnf
 
-* Fri Sep 13 2010 Alexey Berezhok <alexey_com@ukr.net> 0.1-0.4
+* Mon Sep 13 2010 Alexey Berezhok <alexey_com@ukr.net> 0.1-0.4
 - Killconnection was divided on killconnection and killquery
 
 * Fri Aug 27 2010 Alexey Berezhok <alexey_com@ukr.net> 0.1-0.4
@@ -638,8 +1350,9 @@ echo "Instruction: how to create whole database backup - http://docs.cloudlinux.
 * Thu Aug 26 2010 Alexey Berezhok <alexey_com@ukr.net> 0.1-0.3
 - Add c-parameter - kill connections type
 
-* Thu Jul 09 2010 Alexey Berezhok <alexey_com@ukr.net> 0.1-0.2
+* Fri Jul 09 2010 Alexey Berezhok <alexey_com@ukr.net> 0.1-0.2
 - New init.d script. Add test statistics.
 
-* Thu Jun 21 2010 Alexey Berezhok <alexey_com@ukr.net> 0.1-0.1
+* Mon Jun 21 2010 Alexey Berezhok <alexey_com@ukr.net> 0.1-0.1
 - Initial Package
+

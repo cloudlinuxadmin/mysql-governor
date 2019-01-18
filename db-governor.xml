@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<governor>
+<lve use="abusers"/>
+<connector prefix_separator="_"/>
+<intervals short="15" mid="60" long="300"/>
+<log file="/var/log/dbgovernor-error.log" mode="ERROR"/>
+<restrict level1="60s" level2="15m" level3="1h" level4="1d" timeout="1h" log="/var/log/dbgovernor-restrict.log" user_max_connections="30"/>
+<statistic mode="on"/>
+<default>
+  <limit name="cpu" current="400" short="380" mid="350" long="300"/>
+  <limit name="read" current="1000000000" short="830000000" mid="760000000" long="590000000"/>
+  <limit name="write" current="1000000000" short="830000000" mid="760000000" long="590000000"/>
+</default>
+
+<user mysql_name="root" mode="ignore"></user>
+<user mysql_name="mysql" mode="ignore"></user>
+<user mysql_name="#mysql" mode="ignore"></user>
+<user mysql_name="#mysql_system#" mode="ignore"></user>
+<user mysql_name="eximstats" mode="ignore"></user>
+<user mysql_name="dbgovernor" mode="ignore"></user>
+<user mysql_name="leechprotect" mode="ignore"></user>
+<user mysql_name="unauthenticated user" mode="ignore"></user>
+<user mysql_name="logaholic" mode="ignore"></user>
+<user mysql_name="cphulkd" mode="ignore"></user>
+<user mysql_name="pp" mode="ignore"></user>
+<user mysql_name="DELAYED" mode="ignore"></user>
+<user mysql_name="admin" mode="ignore"></user>
+
+</governor>

@@ -1,0 +1,20 @@
+# logrotate config for mysql-governor
+
+/var/log/dbgovernor-error.log {
+    missingok
+    dateext
+    rotate 10
+    size=150M
+    compress
+    copytruncate
+}
+
+/var/log/dbgovernor-restrict.log {
+    missingok
+    dateext
+    rotate 10
+    size=200M
+    compress
+    copytruncate
+}
+
