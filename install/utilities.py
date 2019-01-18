@@ -956,10 +956,11 @@ def patch_governor_config(username, password):
     root = tree.getroot()
 
     connector = root.find('connector')
-    if not connector.get('login'):
-        connector.set('login', username)
-        connector.set('password', password)
-        tree.write(governor_config_file)
+    # even if `login` and `password` are provided in config file,
+    # there are still situations when this information should be updated
+    connector.set('login', username)
+    connector.set('password', password)
+    tree.write(governor_config_file)
 
 
 def fix_broken_governor_xml_config():
