@@ -152,6 +152,10 @@ def build_parser():
                         help="Restore mysqld.service for DirectAdmin",
                         dest="fix_mysqld_service", action="store_true",
                         default=False)
+    parser.add_argument("--update-config-auth",
+                        help="Update user login and password in config file",
+                        dest="update_config", action="store_true",
+                        default=False)
     return parser
 
 
@@ -266,6 +270,8 @@ def main(argv):
         fix_broken_governor_xml_config()
     elif opts.fix_mysqld_service:
         manager.fix_mysqld_service()
+    elif opts.update_config:
+        manager._set_mysql_access()
     else:
         parser.print_help()
         sys.exit(2)
