@@ -284,6 +284,7 @@ send_commands (Command * cmd, void *data)
 				   data_cfg.log_mode, cmd->username);
 		      }
 		  }
+#if 0
 		if (data_cfg.max_user_connections)
 		  {
 		    update_user_limit_no_flush (cmd->username,
@@ -291,16 +292,19 @@ send_commands (Command * cmd, void *data)
 						data_cfg.log_mode);
 		    is_any_flush = 1;
 		  }
+#endif
 		//kill_connection(cmd->username, data_cfg.log_mode);
 	      }
 	    else
 	      {
+#if 0
 		if (data_cfg.max_user_connections)
 		  {
 		    update_user_limit_no_flush (cmd->username, 0,
 						data_cfg.log_mode);
 		    is_any_flush = 1;
 		  }
+#endif
 	      }
 	  }
 	  break;

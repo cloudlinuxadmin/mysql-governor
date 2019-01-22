@@ -499,7 +499,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	//unfreaze_all(data_cfg.log_mode);
-	unfreaze_lve(data_cfg.log_mode);
+	//unfreaze_lve(data_cfg.log_mode);
 	config_add_work_user(get_work_user());
 
 	WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048, "Started",
