@@ -516,7 +516,7 @@ governor_init_lve ()
     {
       if (lve == NULL)
 	{
-	  lve = init_lve (malloc, NULL);
+	  lve = init_lve (malloc, free);
 	}
     }
   if (lve == NULL)
