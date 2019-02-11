@@ -1,10 +1,10 @@
 /*
- * version.h
+ * Copyright © Cloud Linux GmbH & Cloud Linux Software, Inc 2010-2019 All Rights Reserved
  *
- *  Created on: Sep 23, 2013
+ * Licensed under CLOUD LINUX LICENSE AGREEMENT
+ * http://cloudlinux.com/docs/LICENSE.TXT
  *
- *
-*/
+ */
 
 #ifndef VERSION_H_
 #define VERSION_H_

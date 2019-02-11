@@ -1,4 +1,10 @@
 # coding:utf-8
+
+# Copyright © Cloud Linux GmbH & Cloud Linux Software, Inc 2010-2019 All Rights Reserved
+#
+# Licensed under CLOUD LINUX LICENSE AGREEMENT
+# http://cloudlinux.com/docs/LICENSE.TXT
+#
 """
 This module contains helpful utilities to perform common actions
 """
