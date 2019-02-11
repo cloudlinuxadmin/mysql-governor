@@ -272,6 +272,14 @@ if [ $1 -eq 1 -o $1 -eq 0 ] ; then
  fi
 fi
 
+%postun
+%if 0%{?rhel} >= 7
+if [ $1 -eq 0 ]; then
+    # Package removal, not upgrade
+    systemctl daemon-reload >/dev/null 2>&1 || :
+fi
+%endif
+
 %posttrans
 /sbin/ldconfig
 rm -rf /%{_libdir}/liblve.so.1
