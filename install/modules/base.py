@@ -313,7 +313,7 @@ class InstallManager(object):
         if self.ALL_PACKAGES_OLD_NOT_DOWNLOADED:
             self.print_warning_about_not_complete_of_pkg_saving()
             print "Rollback disabled"
-            return
+            return False
 
         # self._before_install_new_packages()
         self._mysqlservice("stop")
@@ -341,6 +341,8 @@ class InstallManager(object):
         self._mysqlservice("restart")
 
         self._after_install_rollback()
+
+        return True
 
     def install_from_history(self, timestamp):
         """
