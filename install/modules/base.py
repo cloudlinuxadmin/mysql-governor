@@ -599,6 +599,9 @@ for native procedure restoring of MySQL packages""")
         # %%{version}\n"|grep -iE "^(%s)" """ % "|".join(PATTERNS), silent=True)
         packages = exec_command("""rpm -qa|grep -iE "^(%s)" """ %
                                 "|".join(PATTERNS), silent=True)
+        # try to exclude mysql-community release package from the list of packages to download
+        packages = filter(lambda x: not re.match(r'mysql\d+-community-release[a-z0-9\-]+.noarch', x),
+                          packages)
 
         if not len(packages):
             print "No installed DB packages found"
@@ -631,7 +634,7 @@ for native procedure restoring of MySQL packages""")
             else:
                 if not download_packages(packages, folder, True,
                                          self._custom_download_of_rpm):
-                    print "Trying to load custom packages from yum"
+                    print bcolors.info("Trying to load custom packages from yum")
                     if not download_packages(packages, folder, True):
                         self.ALL_PACKAGES_OLD_NOT_DOWNLOADED = True
 

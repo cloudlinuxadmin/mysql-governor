@@ -211,6 +211,13 @@ def download_packages(names, dest, beta, custom_download=None):
     for pkg_name in names:
         pkg_name_split = pkg_name.split('.', 1)[0]
         list_of_rpm = glob("%s/%s*.rpm" % (path, pkg_name_split))
+        if not list_of_rpm:
+            # try to find MariaDB packages
+            # official MariaDB has different names of package and rpm file:
+            # MariaDB-common-10.2.22-1.el7.centos.x86_64 is a MariaDB-10.2.20-centos73-x86_64-common.rpm
+            pkg_name_split = pkg_name.split('-', 2)[1]
+            list_of_rpm = glob("%s/*%s.rpm" % (path, pkg_name_split))
+
         for i in list_of_rpm:
             print "Package %s was loaded" % i
 
@@ -229,10 +236,10 @@ def _custom_download_packages(names, path, downloader):
     result = []
     for pkg_name in names:
         pkg_url = downloader(pkg_name)
-        print "URL %s" % pkg_url
-        if pkg_url:
+        status = urllib.urlopen(pkg_url).getcode()
+        print "URL %s; status %s" % (pkg_url, status)
+        if pkg_url and status == 200:
             file_name = "%s/%s.rpm" % (path, pkg_name)
-            status = 200
             if len(pkg_url) > 5 and pkg_url[:5] == "file:":
                 result.append(os.path.basename(pkg_url[5:]))
                 pkg_url = pkg_url[5:]
