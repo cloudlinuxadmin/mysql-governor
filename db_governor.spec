@@ -239,8 +239,12 @@ fi
 
 %if 0%{?rhel} >= 7
 if [ $1 -gt 0 ]; then
-    # Initial installation
+    # Initial installation or upgrade
     systemctl daemon-reload >/dev/null 2>&1 || :
+fi
+if [ $1 = 1 ]; then
+    # Ensure autostart for db_governor service (on install, not upgrade)
+    systemctl enable db_governor >/dev/null 2>&1 || :
 fi
 %else
 if [ $1 = 1 ]; then
