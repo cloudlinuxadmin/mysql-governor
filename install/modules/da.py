@@ -161,22 +161,29 @@ class DirectAdminManager(InstallManager):
     def _custom_download_of_rpm(self, package_name):
         """
         How we should to download installed MySQL package
+        There could be a lot of packages in /usr/local/directadmin/custombuild/mysql,
+        not all of them relevant (installed) or fine ones (not corrupted)
         """
         if package_name == "+":
             return "yes"
 
-        pkg_name_real = ""
+        bad_pkg = False
         list_of_rpm = glob("/usr/local/directadmin/custombuild/mysql/*.rpm")
         for found_package in list_of_rpm:
-            result = exec_command("/bin/rpm -qp %s" % found_package, True)
-            if package_name in result:
-                pkg_name_real = found_package
-                break
+            try:
+                result = exec_command("/bin/rpm -qp %s" % found_package, True)
+                if package_name in result:
+                    pkg_name_real = found_package
+                    if pkg_name_real != "" and os.path.exists(pkg_name_real):
+                        return "file:%s" % pkg_name_real
+            except RuntimeError as e:
+                print "Failed to query package %s: %s\n" % (found_package, e)
+                bad_pkg = True
 
-        if pkg_name_real != "" and os.path.exists(pkg_name_real):
-            return "file:%s" % pkg_name_real
-
-        return ""
+        if bad_pkg:
+            return "bad_file:%s" % package_name
+        else:
+            return ""
 
     def _custom_rpm_installer(self, package_name, indicator=False):
         """
