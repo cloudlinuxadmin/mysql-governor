@@ -326,7 +326,7 @@ print_list_rest (FILE * in)
   g_list_free (list);
 }
 
-void
+int
 list (int flag, int non_priv)
 {
   FILE *in = NULL;
@@ -359,10 +359,12 @@ list (int flag, int non_priv)
     {
 
       closesock (socket, in, out);
+      return 0;
     }
+  return 1;
 }
 
-void
+int
 list_restricted (void)
 {
   FILE *in = NULL;
@@ -396,7 +398,9 @@ list_restricted (void)
     {
 
       closesock (_socket, in, out);
+      return 0;
     }
+  return 1;
 }
 
 void

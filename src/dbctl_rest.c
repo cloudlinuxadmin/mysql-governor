@@ -48,7 +48,7 @@ int restrict_user(char *user, char *level) {
 	} else {
 
 		closesock(_socket, in, out);
-
+		return 0;
 	}
 
 	return 1;
@@ -86,6 +86,7 @@ int unrestrict(char *user) {
 		closesock(_socket, in, out);
 	} else {
 		closesock(_socket, in, out);
+		return 0;
 	}
 
 	return 1;
@@ -118,6 +119,7 @@ int dbupdatecmd(void) {
 		closesock(_socket, in, out);
 	} else {
 		closesock(_socket, in, out);
+		return 0;
 	}
 
 	return 1;
@@ -150,6 +152,7 @@ int unrestrict_all(void) {
 		closesock(_socket, in, out);
 	} else {
 		closesock(_socket, in, out);
+		return 0;
 	}
 
 	return 1;

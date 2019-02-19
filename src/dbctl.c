@@ -410,14 +410,19 @@ GetCmd (int argc, char **argv)
 	  GList *list = (GList *) GetOptList (argc, argv, &ret);
 
 	  if (strcmp ("default", _argv) == 0)
-	    setDefault ((char *) GetVal ('c', list),
-			(char *) GetVal ('r', list), (char *) GetVal ('w',
-								      list),
-			(char *) GetVal ('s', list));
-	  else
-	    setUser (_argv, (char *) GetVal ('c', list),
+	    {
+	      if (!setDefault ((char *) GetVal ('c', list),
 		     (char *) GetVal ('r', list), (char *) GetVal ('w', list),
-		     (char *) GetVal ('s', list));
+		     (char *) GetVal ('s', list)))
+	        return 2;
+	    }
+	  else
+	    {
+	      if (!setUser (_argv, (char *) GetVal ('c', list),
+		     (char *) GetVal ('r', list), (char *) GetVal ('w', list),
+		     (char *) GetVal ('s', list)))
+	        return 2;
+	    }
 	}
       else
 	return 1;
@@ -426,7 +431,8 @@ GetCmd (int argc, char **argv)
     {
       if (argc > 2)
 	{
-	  ignoreUser (argv[2]);
+	  if (!ignoreUser (argv[2]))
+	    return 2;
 	}
       else
 	return 1;
@@ -435,7 +441,8 @@ GetCmd (int argc, char **argv)
     {
       if (argc > 2)
 	{
-	  watchUser (argv[2]);
+	  if (!watchUser (argv[2]))
+	    return 2;
 	}
       else
 	return 1;
@@ -444,23 +451,27 @@ GetCmd (int argc, char **argv)
     {
       if (argc > 2)
 	{
-	  deleteUser (argv[2]);
+	  if (!deleteUser (argv[2]))
+	    return 2;
 	}
       else
 	return 1;
     }
   else if (strcmp ("list", argv[1]) == 0)
     {
-	  if (argc == 3) {
-		  if (!strcmp(argv[2], "--bb")) kb_flag = 2;
-		  if (!strcmp(argv[2], "--kb")) kb_flag = 1;
-		  if (!strcmp(argv[2], "--mb")) kb_flag = 3;
-	  }
-      list (kb_flag, 0);
+      if (argc == 3)
+	{
+	  if (!strcmp(argv[2], "--bb")) kb_flag = 2;
+	  if (!strcmp(argv[2], "--kb")) kb_flag = 1;
+	  if (!strcmp(argv[2], "--mb")) kb_flag = 3;
+	}
+      if (!list(kb_flag, 0) != 0)
+	return 2;
     }
   else if (strcmp ("list-restricted", argv[1]) == 0)
     {
-      list_restricted ();
+      if (!list_restricted ())
+	return 2;
     }
   else if (strcmp ("list-restricted-shm", argv[1]) == 0)
     {
@@ -473,7 +484,8 @@ GetCmd (int argc, char **argv)
 	  char *_argv = argv[2];
 	  GList *list = (GList *) GetOptList (argc, argv, &ret);
 
-	  restrict_user (_argv, (char *) GetVal ('l', list));
+	  if (!restrict_user (_argv, (char *) GetVal ('l', list)))
+	    return 2;
 	}
       else
 	return 1;
@@ -482,25 +494,29 @@ GetCmd (int argc, char **argv)
     {
       if (argc > 2)
 	{
-	  unrestrict (argv[2]);
+	  if (!unrestrict (argv[2]))
+	    return 2;;
 	}
       else
 	return 1;
     }
   else if (strcmp ("unrestrict-all", argv[1]) == 0)
     {
-      unrestrict_all ();
+      if (!unrestrict_all ())
+	return 2;
     }
   else if (strcmp ("--lve-mode", _tmp_arg) == 0)
     {
       char *_argv = argv[2];
       GList *list = (GList *) GetOptList (argc, argv, &ret);
-      setLveMode ((char *) GetVal (100, list));
+      if (!setLveMode ((char *) GetVal (100, list)))
+	return 2;
     }
   else if (strcmp ("dbupdate", argv[1]) == 0)
-     {
-	    dbupdatecmd();
-     }
+    {
+      if (!dbupdatecmd())
+	return 2;
+    }
   else
     {
       GetOptList (argc, argv, &ret);
@@ -515,8 +531,10 @@ GetCmd (int argc, char **argv)
 int
 main (int argc, char **argv)
 {
-  if (argc < 2 || GetCmd (argc, argv) == 1)
+  int ret = 1;
+
+  if (argc < 2 || (ret = GetCmd(argc, argv)) == 1)
     usage ();
 
-  return 0;
+  return ret;
 }
