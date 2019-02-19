@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   37
+%define g_release   38
 %define g_key_library 9
 
 %if %{undefined _unitdir}
@@ -239,8 +239,12 @@ fi
 
 %if 0%{?rhel} >= 7
 if [ $1 -gt 0 ]; then
-    # Initial installation
+    # Initial installation or upgrade
     systemctl daemon-reload >/dev/null 2>&1 || :
+fi
+if [ $1 = 1 ]; then
+    # Ensure autostart for db_governor service (on install, not upgrade)
+    systemctl enable db_governor >/dev/null 2>&1 || :
 fi
 %else
 if [ $1 = 1 ]; then
@@ -267,6 +271,14 @@ if [ $1 -eq 1 -o $1 -eq 0 ] ; then
     rm -f /var/run/mysql-governor-config.xml
  fi
 fi
+
+%postun
+%if 0%{?rhel} >= 7
+if [ $1 -eq 0 ]; then
+    # Package removal, not upgrade
+    systemctl daemon-reload >/dev/null 2>&1 || :
+fi
+%endif
 
 %posttrans
 /sbin/ldconfig
@@ -384,6 +396,19 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Tue Feb 19 2019 Aleksandr Povalyaev <apovalyaev@cloudlinux.com>, Daria Kavchuk <dkavchuk@cloudlinux.com>, Rostyslav Tulchii <rtulchii@cloudlinux.com> 1.2-38
+- MYSQLG-364: added returning a non-zero value in case of error
+- MYSQLG-368: fix current packages download procedure for DirectAdmin
+- MYSQLG-366: download official mysql/mariadb packages on cPanel
+- MYSQLG-365: db_governor service enabled for CloudLinux 7
+- MYSQLG-363: added daemon-reload in postun scriptlet
+- MYSQLG-361: added return codes for errors during installation
+- MYSQLG-311: copyright updated
+- MYSQLG-338: fix memory leak with init_lve/exit_lve
+- MYSQLG-344: prevent reseting of max_user_connections when unfreezing
+- MYSQLG-346: option for update credentials added
+- MYSQLG-319: warn user about disable of protectbase plugin
+
 * Tue Nov 20 2018 Aleksandr Povalyaev <apovalyaev@cloudlinux.com>, Serhii Kokhan <skokhan@cloudlinux.com>, Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-37
 - mysql80, libmysqlclient.so.21 support
 - MYSQLG-297, MySQLG-301: old auth procedure for mysql80

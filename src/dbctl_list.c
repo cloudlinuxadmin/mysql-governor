@@ -1,14 +1,11 @@
-/* Copyright Cloud Linux Inc 2010-2012 All Rights Reserved
+/*
+ * Copyright © Cloud Linux GmbH & Cloud Linux Software, Inc 2010-2019 All Rights Reserved
  *
  * Licensed under CLOUD LINUX LICENSE AGREEMENT
  * http://cloudlinux.com/docs/LICENSE.TXT
  *
- * dbctl_list.c
- *
- *  Created on: Oct 23, 2012
- *      Author: Shkatula Pavel
- *      E-mail: shpp@cloudlinux.com
-*/
+ * Author: Shkatula Pavel <shpp@cloudlinux.com>
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -329,7 +326,7 @@ print_list_rest (FILE * in)
   g_list_free (list);
 }
 
-void
+int
 list (int flag, int non_priv)
 {
   FILE *in = NULL;
@@ -362,10 +359,12 @@ list (int flag, int non_priv)
     {
 
       closesock (socket, in, out);
+      return 0;
     }
+  return 1;
 }
 
-void
+int
 list_restricted (void)
 {
   FILE *in = NULL;
@@ -399,7 +398,9 @@ list_restricted (void)
     {
 
       closesock (_socket, in, out);
+      return 0;
     }
+  return 1;
 }
 
 void

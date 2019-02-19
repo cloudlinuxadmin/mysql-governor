@@ -1,13 +1,10 @@
-/* Copyright Cloud Linux Inc 2010-2012 All Rights Reserved
+/*
+ * Copyright © Cloud Linux GmbH & Cloud Linux Software, Inc 2010-2019 All Rights Reserved
  *
  * Licensed under CLOUD LINUX LICENSE AGREEMENT
  * http://cloudlinux.com/docs/LICENSE.TXT
  *
- * dbctl_rest.c
- *
- *  Created on: Oct 23, 2012
- *      Author: Shkatula Pavel
- *      E-mail: shpp@cloudlinux.com
+ * Author: Shkatula Pavel <shpp@cloudlinux.com>
  */
 
 #include <stdio.h>
@@ -51,7 +48,7 @@ int restrict_user(char *user, char *level) {
 	} else {
 
 		closesock(_socket, in, out);
-
+		return 0;
 	}
 
 	return 1;
@@ -89,6 +86,7 @@ int unrestrict(char *user) {
 		closesock(_socket, in, out);
 	} else {
 		closesock(_socket, in, out);
+		return 0;
 	}
 
 	return 1;
@@ -121,6 +119,7 @@ int dbupdatecmd(void) {
 		closesock(_socket, in, out);
 	} else {
 		closesock(_socket, in, out);
+		return 0;
 	}
 
 	return 1;
@@ -153,6 +152,7 @@ int unrestrict_all(void) {
 		closesock(_socket, in, out);
 	} else {
 		closesock(_socket, in, out);
+		return 0;
 	}
 
 	return 1;

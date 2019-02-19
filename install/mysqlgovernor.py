@@ -1,5 +1,11 @@
 #!/opt/alt/python27/bin/python2.7
 # coding:utf-8
+
+# Copyright © Cloud Linux GmbH & Cloud Linux Software, Inc 2010-2019 All Rights Reserved
+#
+# Licensed under CLOUD LINUX LICENSE AGREEMENT
+# http://cloudlinux.com/docs/LICENSE.TXT
+#
 """
 Main mysql-governor installation script
 """
@@ -206,6 +212,8 @@ def main(argv):
             print "Give mysql service time to start " \
                   "before service checking(15 sec)"
             time.sleep(15)
+        else:
+            sys.exit(0) if manager.DISABLED else sys.exit(2)
 
         # check mysqld service status
         if manager.ALL_PACKAGES_NEW_NOT_DOWNLOADED == False and manager.DISABLED == False:
@@ -219,7 +227,8 @@ def main(argv):
                 print bcolors.fail(
                     "Installation mysql for db_governor was failed. " \
                     "Restore previous mysql version")
-                manager.install_rollback(opts.install_beta)
+                if not manager.install_rollback(opts.install_beta):
+                    sys.exit(2)
 
         manager.cleanup()
 

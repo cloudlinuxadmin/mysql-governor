@@ -1,15 +1,10 @@
 /*
- * dbgovernor_string_functions.h
- *
- *  Created on: May 11, 2011
- * Copyright Cloud Linux Inc 2010-2011 All Rights Reserved
+ * Copyright © Cloud Linux GmbH & Cloud Linux Software, Inc 2010-2019 All Rights Reserved
  *
  * Licensed under CLOUD LINUX LICENSE AGREEMENT
  * http://cloudlinux.com/docs/LICENSE.TXT
  *
- * db_governor application
- * author Igor Seletskiy <iseletsk@cloudlinux.com>
- * author Alexey Berezhok <alexey.berezhok@cloudlinux.com>
+ * Author: Igor Seletskiy <iseletsk@cloudlinux.com>, Alexey Berezhok <alexey.berezhok@cloudlinux.com>
  */
 
 #ifndef DBGOVERNOR_STRING_FUNCTIONS_H_

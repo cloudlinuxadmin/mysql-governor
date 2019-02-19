@@ -1,12 +1,10 @@
-/* Copyright Cloud Linux Inc 2010-2011 All Rights Reserved
+/*
+ * Copyright © Cloud Linux GmbH & Cloud Linux Software, Inc 2010-2019 All Rights Reserved
  *
  * Licensed under CLOUD LINUX LICENSE AGREEMENT
  * http://cloudlinux.com/docs/LICENSE.TXT
  *
- * db_governor application
- * author Igor Seletskiy <iseletsk@cloudlinux.com>
- * author Alexey Berezhok <alexey.berezhok@cloudlinux.com>
- *
+ * Author: Igor Seletskiy <iseletsk@cloudlinux.com>, Alexey Berezhok <alexey.berezhok@cloudlinux.com>
  */
 
 #include <stdio.h>
@@ -89,7 +87,7 @@ main (int argc, char *argv[])
 			  data_cfg.db_password, "information_schema", argc,
 			  argv) < 0)
 	    exit (-1);
-	  unfreaze_lve (data_cfg.log_mode);
+	  //unfreaze_lve (data_cfg.log_mode);
 	  if (init_bad_users_list_utility () >= 0)
 	    {
 	      WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
@@ -117,7 +115,7 @@ main (int argc, char *argv[])
 			  argv) < 0)
 	    exit (-1);
 	  //unfreaze_all(data_cfg.log_mode);
-	  unfreaze_lve (data_cfg.log_mode);
+	  //unfreaze_lve (data_cfg.log_mode);
 	  WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
 		     "Unfreeze completed", data_cfg.log_mode);
 	  db_close ();

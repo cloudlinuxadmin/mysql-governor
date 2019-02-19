@@ -1,9 +1,10 @@
 /*
- * governor.c
+ * Copyright © Cloud Linux GmbH & Cloud Linux Software, Inc 2010-2019 All Rights Reserved
  *
- *  Created on: Aug 5, 2012
- *      Author: Alexey Berezhok
- *		E-mail: alexey_com@ukr.net
+ * Licensed under CLOUD LINUX LICENSE AGREEMENT
+ * http://cloudlinux.com/docs/LICENSE.TXT
+ *
+ * Author: Alexey Berezhok <alexey.berezhok@cloudlinux.com>
  */
 
 #include <stdio.h>
@@ -499,7 +500,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	//unfreaze_all(data_cfg.log_mode);
-	unfreaze_lve(data_cfg.log_mode);
+	//unfreaze_lve(data_cfg.log_mode);
 	config_add_work_user(get_work_user());
 
 	WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048, "Started",

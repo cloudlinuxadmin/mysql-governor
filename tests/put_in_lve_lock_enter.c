@@ -1,8 +1,10 @@
 /*
- * put_in_lve_lock_enter.c
+ * Copyright © Cloud Linux GmbH & Cloud Linux Software, Inc 2010-2019 All Rights Reserved
  *
- *  Created on: Oct 1, 2014
- *      Author: alexey
+ * Licensed under CLOUD LINUX LICENSE AGREEMENT
+ * http://cloudlinux.com/docs/LICENSE.TXT
+ *
+ * Author: Alexey Berezhok <alexey.berezhok@cloudlinux.com>
  */
 
 #include <stdio.h>

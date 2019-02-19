@@ -1,4 +1,10 @@
 # coding:utf-8
+
+# Copyright © Cloud Linux GmbH & Cloud Linux Software, Inc 2010-2019 All Rights Reserved
+#
+# Licensed under CLOUD LINUX LICENSE AGREEMENT
+# http://cloudlinux.com/docs/LICENSE.TXT
+#
 """
 This module contains base class for managing governor on all supported
 control panels
@@ -307,7 +313,7 @@ class InstallManager(object):
         if self.ALL_PACKAGES_OLD_NOT_DOWNLOADED:
             self.print_warning_about_not_complete_of_pkg_saving()
             print "Rollback disabled"
-            return
+            return False
 
         # self._before_install_new_packages()
         self._mysqlservice("stop")
@@ -335,6 +341,8 @@ class InstallManager(object):
         self._mysqlservice("restart")
 
         self._after_install_rollback()
+
+        return True
 
     def install_from_history(self, timestamp):
         """
@@ -593,6 +601,9 @@ for native procedure restoring of MySQL packages""")
         # %%{version}\n"|grep -iE "^(%s)" """ % "|".join(PATTERNS), silent=True)
         packages = exec_command("""rpm -qa|grep -iE "^(%s)" """ %
                                 "|".join(PATTERNS), silent=True)
+        # try to exclude mysql-community release package from the list of packages to download
+        packages = filter(lambda x: not re.match(r'mysql\d+-community-release[a-z0-9\-]+.noarch', x),
+                          packages)
 
         if not len(packages):
             print "No installed DB packages found"
@@ -625,7 +636,7 @@ for native procedure restoring of MySQL packages""")
             else:
                 if not download_packages(packages, folder, True,
                                          self._custom_download_of_rpm):
-                    print "Trying to load custom packages from yum"
+                    print bcolors.info("Trying to load custom packages from yum")
                     if not download_packages(packages, folder, True):
                         self.ALL_PACKAGES_OLD_NOT_DOWNLOADED = True
 

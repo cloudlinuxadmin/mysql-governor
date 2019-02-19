@@ -1,4 +1,10 @@
 # coding:utf-8
+
+# Copyright © Cloud Linux GmbH & Cloud Linux Software, Inc 2010-2019 All Rights Reserved
+#
+# Licensed under CLOUD LINUX LICENSE AGREEMENT
+# http://cloudlinux.com/docs/LICENSE.TXT
+#
 """
 This module contains helpful utilities to perform common actions
 """
@@ -203,15 +209,26 @@ def download_packages(names, dest, beta, custom_download=None):
 
     pkg_not_found = False
     for pkg_name in names:
-        pkg_name_split = pkg_name.split('.', 1)[0]
-        list_of_rpm = glob("%s/%s*.rpm" % (path, pkg_name_split))
-        for i in list_of_rpm:
-            print "Package %s was loaded" % i
-
-        if len(list_of_rpm) == 0:
+        try:
+            pkg_name_split = pkg_name.split('.', 1)[0]
+            list_of_rpm = glob("%s/%s*.rpm" % (path, pkg_name_split))
+            if not list_of_rpm:
+                # try to find MariaDB packages
+                # official MariaDB has different names of package and rpm file:
+                # MariaDB-common-10.2.22-1.el7.centos.x86_64 is a MariaDB-10.2.20-centos73-x86_64-common.rpm
+                pkg_name_split = pkg_name.split('-', 2)[1]
+                list_of_rpm = glob("%s/*%s.rpm" % (path, pkg_name_split))
+            for i in list_of_rpm:
+                print "Package %s was loaded" % i
+        except IndexError:
             pkg_not_found = True
             print bcolors.warning(
                 "WARNING!!!! Package %s was not downloaded" % pkg_name)
+        else:
+            if len(list_of_rpm) == 0:
+                pkg_not_found = True
+                print bcolors.warning(
+                    "WARNING!!!! Package %s was not downloaded" % pkg_name)
 
     return not pkg_not_found
 
@@ -219,23 +236,22 @@ def download_packages(names, dest, beta, custom_download=None):
 def _custom_download_packages(names, path, downloader):
     """
     Custom download packages logic
+    Packages could be downloaded either from http URL or from local file (file: URL)
+    If corrupted package was detected, it should not be downloaded
     """
     result = []
     for pkg_name in names:
         pkg_url = downloader(pkg_name)
-        print "URL %s" % pkg_url
         if pkg_url:
-            file_name = "%s/%s.rpm" % (path, pkg_name)
-            status = 200
-            if len(pkg_url) > 5 and pkg_url[:5] == "file:":
-                result.append(os.path.basename(pkg_url[5:]))
-                pkg_url = pkg_url[5:]
-                if os.path.exists(pkg_url):
-                    shutil.copy(pkg_url, path)
-                else:
-                    status = 404
+            if pkg_url.startswith('bad_file:'):
+                status = 404
+            elif pkg_url.startswith('file:'):
+                status = 200
             else:
-                result.append(pkg_name)
+                status = urllib.urlopen(pkg_url).getcode()
+            print "URL %s; status %s" % (pkg_url, status)
+            if status == 200:
+                file_name = "%s/%s.rpm" % (path, pkg_name)
                 try:
                     response = urllib.urlopen(pkg_url)
                     CHUNK = 16 * 1024
@@ -248,9 +264,8 @@ def _custom_download_packages(names, path, downloader):
                 except IOError:
                     status = 404
 
-            print "Downloaded file %s from %s with status %d" % \
-                  (file_name, pkg_url, status)
-        else:
+                print "Downloaded file %s from %s with status %d" % \
+                      (file_name, pkg_url, status)
             result.append(pkg_name)
 
     return list(set(result))

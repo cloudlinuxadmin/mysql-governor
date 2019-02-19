@@ -1,15 +1,11 @@
-/* Copyright Cloud Linux Inc 2010-2013 All Rights Reserved
+/*
+ * Copyright © Cloud Linux GmbH & Cloud Linux Software, Inc 2010-2019 All Rights Reserved
  *
  * Licensed under CLOUD LINUX LICENSE AGREEMENT
  * http://cloudlinux.com/docs/LICENSE.TXT
  *
- * slow_queries.h
- *
- *  Created on: Jul 19, 2013
- *      Author: Shkatula Pavel
- *      E-mail: shpp@cloudlinux.com
-*/
-
+ * Author: Shkatula Pavel <shpp@cloudlinux.com>
+ */
 
 #ifndef __SLOW_QUERY__
 #define __SLOW_QUERY__

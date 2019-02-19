@@ -1,3 +1,8 @@
+# Copyright © Cloud Linux GmbH & Cloud Linux Software, Inc 2010-2019 All Rights Reserved
+#
+# Licensed under CLOUD LINUX LICENSE AGREEMENT
+# http://cloudlinux.com/docs/LICENSE.TXT
+#
 mysql --silent --host=localhost --user=mysqldd -pnewpasswd --execute "use mybbdd; select count(*) from mybbddtab as t1, mybbddtab as t2, mybbddtab as t3, mybbddtab as t4, mybbddtab as t5, mybbddtab as t6, mybbddtab as t7, mybbddtab as t8, mybbddtab as t9 where t1.name like '%a%';" > /dev/null 2>&1
 
 sleep 5
