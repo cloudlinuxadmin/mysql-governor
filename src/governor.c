@@ -469,12 +469,14 @@ int main(int argc, char *argv[]) {
 			trying_to_connect++;
 			if (trying_to_connect > 3) {
 				WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-						"Can't connect to mysql", data_cfg.log_mode);
+				"Can't connect to mysql. Please check that mysql is running otherwise"
+				" check host, login and password in /etc/container/mysql-governor.xml file", data_cfg.log_mode);
 				delete_mysql_function();
 				close_log();
 				close_restrict_log();
 				close_slow_queries_log();
 				config_free();
+				remove("/usr/share/lve/dbgovernor/governor_connected");
 				exit(EXIT_FAILURE);
 			} else {
 				WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
@@ -482,6 +484,9 @@ int main(int argc, char *argv[]) {
 						data_cfg.log_mode);
 			}
 		} else {
+			WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
+					"Governor successfully connected to mysql", data_cfg.log_mode);
+			creat("/usr/share/lve/dbgovernor/governor_connected", 0600);
 			break;
 		}
 	}
@@ -496,7 +501,10 @@ int main(int argc, char *argv[]) {
 		close_restrict_log();
 		close_slow_queries_log();
 		config_free();
+		remove("/usr/share/lve/dbgovernor/cll_lve_installed");
 		exit(EXIT_FAILURE);
+	} else {
+		creat("/usr/share/lve/dbgovernor/cll_lve_installed", 0600);
 	}
 
 	//unfreaze_all(data_cfg.log_mode);
