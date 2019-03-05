@@ -20,7 +20,7 @@ from clcommon import cpapi
 from modules import InstallManager, Storage
 from utilities import exec_command, bcolors, query_yes_no, \
     correct_mysqld_service_for_cl7, set_debug, shadow_tracing, set_path_environ, \
-    check_mysqld_is_alive, fix_broken_governor_xml_config
+    check_mysqld_is_alive, fix_broken_governor_xml_config, get_status_info
 
 LOG_FILE_NAME = "/usr/share/lve/dbgovernor/governor_install.log"
 
@@ -162,6 +162,8 @@ def build_parser():
                         help="Update user login and password in config file",
                         dest="update_config", action="store_true",
                         default=False)
+    parser.add_argument("--wizard", help="Wizard mode on", dest="wizard", action="store_true", default=False)
+    parser.add_argument("--status", help="Check status info", dest="check_status", action="store_true", default=False)
     return parser
 
 
@@ -181,7 +183,7 @@ def main(argv):
     parser = build_parser()
     if not argv:
         parser.print_help()
-        sys.exit(2)
+        sys.exit(1)
 
     opts = parser.parse_args(argv)
 
@@ -208,29 +210,31 @@ def main(argv):
             sys.exit(0)
 
         # remove current packages and install new packages
-        if manager.install(opts.install_beta, opts.yes) == True:
+        if manager.install(opts.install_beta, opts.yes, opts.wizard):
             print "Give mysql service time to start " \
                   "before service checking(15 sec)"
             time.sleep(15)
         else:
-            sys.exit(0) if manager.DISABLED else sys.exit(2)
+            sys.exit(0) if manager.DISABLED else sys.exit(1)
 
         # check mysqld service status
-        if manager.ALL_PACKAGES_NEW_NOT_DOWNLOADED == False and manager.DISABLED == False:
+        if not manager.ALL_PACKAGES_NEW_NOT_DOWNLOADED and not manager.DISABLED:
             if check_mysqld_is_alive():
                 manager.save_installed_version()
-                print bcolors.ok("Installation mysql for db_governor completed")
+                print bcolors.ok("Installation of mysql for db_governor completed")
 
             # if sql server failed to start ask user to restore old packages
-            elif query_yes_no(
-                    "Installation is failed. Restore previous version?"):
+            elif opts.wizard or query_yes_no(
+                    "Installation failed. Restore previous version?"):
                 print bcolors.fail(
-                    "Installation mysql for db_governor was failed. " \
-                    "Restore previous mysql version")
+                    "Installation of mysql for db_governor failed. Restore previous mysql version...")
                 if not manager.install_rollback(opts.install_beta):
-                    sys.exit(2)
+                    sys.exit(1)
 
         manager.cleanup()
+        if manager.ROLLBACK:
+            print bcolors.ok("Rollback finished")
+            sys.exit(3)
 
     elif opts.delete:
         manager.delete()
@@ -281,9 +285,11 @@ def main(argv):
         manager.fix_mysqld_service()
     elif opts.update_config:
         manager._set_mysql_access()
+    elif opts.check_status:
+        sys.exit(0) if get_status_info() else sys.exit(1)
     else:
         parser.print_help()
-        sys.exit(2)
+        sys.exit(1)
 
 
 def detect_percona(force, install_manager_instance):
@@ -307,7 +313,7 @@ def detect_percona(force, install_manager_instance):
               "mysql57, mariadb55, mariadb100, mariadb101)"
         print install_manager_instance.rel("mysqlgovernor.py") + \
               " --install --force"
-        sys.exit(2)
+        sys.exit(1)
 
 
 def warn_message():
