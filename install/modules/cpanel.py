@@ -183,7 +183,7 @@ gpgcheck=1
 
         if hashlib.md5(open(repo_file, 'rb').read()).hexdigest() != repo_md5[self.cl_version]:
             print 'Failed to download MySQL repository file. File is corrupted!'
-            sys.exit(2)
+            sys.exit(1)
 
         # install repo
         exec_command_out('yum localinstall -y --disableexcludes=all {}'.format(repo_file))

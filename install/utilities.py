@@ -292,7 +292,26 @@ def remove_packages(packages_list):
                            cmd_on_error="rpm -e --nodeps --noscripts %s" % packages)
 
 
-def confirm_packages_installation(rpm_dir, prev_struct, no_confirm=None):
+def show_new_packages_info(rpm_dir):
+    """
+    Show list of new packages to install and retrieve server version
+    :param rpm_dir: path to directory with downloaded packages
+    :return: dict(new_server_version, new_server_type)
+    """
+    pkg_path = "%s/" % os.path.join(RPM_TEMP_PATH, rpm_dir.strip("/"))
+    packages_list = sorted(
+        [x.replace(pkg_path, "") for x in glob("%s*.rpm" % pkg_path)])
+
+    # retrieve server full version and type
+    server = [p for p in packages_list if 'server' in p][0]
+    pkg_ver, pkg_type = retrieve_server_version(server)
+
+    print bcolors.ok("New packages will be installed:\n\t%s" % "\n\t".join(
+        packages_list))
+    return {'new_ver': pkg_ver, 'new_type': pkg_type, 'new_short': '.'.join(pkg_ver.split('.')[:2])}
+
+
+def confirm_packages_installation(new_struct, prev_struct, no_confirm=None):
     """
     Confirm install new packages from rpm files in directory
     @param `no_confirm` bool|None: bool - show info about packages for install
@@ -300,30 +319,20 @@ def confirm_packages_installation(rpm_dir, prev_struct, no_confirm=None):
                                    None - no additional info
     """
     if no_confirm is not None:
-        pkg_path = "%s/" % os.path.join(RPM_TEMP_PATH, rpm_dir.strip("/"))
-        packages_list = sorted(
-            [x.replace(pkg_path, "") for x in glob("%s*.rpm" % pkg_path)])
-
-        # retrieve server full version and type
-        server = [p for p in packages_list if 'server' in p][0]
-        pkg_ver, pkg_type = retrieve_server_version(server)
-
-        print bcolors.ok("New packages will be installed:\n\t%s" % "\n\t".join(
-            packages_list))
         # notify user if operation is dangerous
         if prev_struct:
-            if pkg_type != prev_struct['mysql_type']:
+            if new_struct['new_type'] != prev_struct['mysql_type']:
                 print bcolors.fail(
                     "Changing MySQL version is a quite complicated procedure, "
                     "it causes system table structural changes which can lead to unexpected results."
                     "\nPlease make full database backup (including system tables) before you will do upgrade of MySQL or switch to MariaDB. "
                     "\nThis action will prevent data losing in case if something goes wrong.")
-            elif StrictVersion(pkg_ver) < StrictVersion(prev_struct['extended']):
+            elif StrictVersion(new_struct['new_ver']) < StrictVersion(prev_struct['extended']):
                 print bcolors.fail(
                     "You are attempting to install a LOWER {t} version ({new}) than currently installed one ({old})."
                     "\nThis could lead to unpredictable consequences, like fully non working service."
                     "\nThink twice before proceeding.".format(
-                        old=prev_struct['extended'], new=pkg_ver, t=pkg_type))
+                        old=prev_struct['extended'], new=new_struct['new_ver'], t=new_struct['new_type']))
         if not no_confirm:
             if not query_yes_no("Continue?"):
                 return False
@@ -1050,3 +1059,72 @@ def force_update_cagefs():
     """
     print 'Trying to update cagefs skeleton...'
     exec_command('/usr/sbin/cagefsctl --force-update', silent=True, return_code=True)
+
+
+def wizard_install_confirm(new_struct, prev_struct):
+    """
+    Confirm install of new packages in wizard mode
+    """
+    msg_template = 'Error: installation of governor-mysql through wizard cannot be continued.\n{msg}'
+    msg = None
+    if prev_struct:
+        if new_struct['new_type'] != prev_struct['mysql_type']:
+            # mysql type changes
+            msg = "You are attempting to change MySQL version from {old_type} to {new_type}. " \
+                  "\nThis is a quite complicated procedure, it causes system table structural changes which can lead to unexpected results. " \
+                  "\nOnly manual installation is allowed in such a case. Instruction: https://docs.cloudlinux.com/change_mysql_version.html " \
+                  "\nPlease make full database backup (including system tables) before you will do upgrade of MySQL or switch to MariaDB.".format(
+                old_type=prev_struct['mysql_type'], new_type=new_struct['new_type'])
+        elif new_struct['new_short'] != prev_struct['short']:
+            # mysql generation changes (for example, 10.1 -> 10.2 or revert)
+            msg = "You are attempting to change {t} version from {old} to {new}. " \
+                  "\nThis is a quite complicated procedure, it causes system table structural changes which can lead to unexpected results. " \
+                  "\nOnly manual installation is allowed in such a case. Instruction: https://docs.cloudlinux.com/change_mysql_version.html " \
+                  "\nPlease make full database backup (including system tables) before you will do upgrade.".format(
+                old=prev_struct['extended'], new=new_struct['new_ver'], t=prev_struct['mysql_type'])
+        elif StrictVersion(new_struct['new_ver']) < StrictVersion(prev_struct['extended']):
+            # new version is lower than current one
+            msg = "You are attempting to install a LOWER {t} version ({new}) than currently installed one ({old})." \
+                  "\nThis could lead to unpredictable consequences, like fully non working service." \
+                  "\nPlease, wait until newer version becomes available in CloudLinux repositories.".format(
+                old=prev_struct['extended'], new=new_struct['new_ver'], t=new_struct['new_type'])
+        elif get_release_num(new_struct['new_ver']) - get_release_num(prev_struct['extended']) > 1:
+            # new release version is much greater than current one
+            msg = "The transition between version to install ({new}) and currently installed one ({old}) is too huge. " \
+                  "\nPlease update your database packages to the latest version or install governor manually." \
+                  "\nInstruction: https://docs.cloudlinux.com/mysql_governor_installation.html".format(old=prev_struct['extended'], new=new_struct['new_ver'])
+    else:
+        # no current version retrieved
+        msg = "Failed to retrieve current mysql version. In such a case only manual installation is allowed. " \
+              "\nInstruction: https://docs.cloudlinux.com/mysql_governor_installation.html"
+    if msg:
+        print bcolors.fail(msg_template.format(msg=msg))
+        return False
+    return True
+
+
+def get_release_num(full_version):
+    return int(full_version.split('.')[-1])
+
+
+def get_status_info():
+    if os.system('service db_governor status > /dev/null 2>&1') != 0:
+        print bcolors.fail("Service db_governor is not running.")
+        print bcolors.warning("Please run: service db_governor start")
+        return False
+
+    if not os.path.exists('/usr/share/lve/dbgovernor/governor_connected'):
+        print bcolors.fail("Service db_governor can't connect to mysql.")
+        print bcolors.warning("Please check that mysql is running otherwise check that host, login and password are correct in /etc/container/mysql-governor.xml file.")
+        return False
+
+    if not os.path.exists('/usr/share/lve/dbgovernor/cll_lve_installed'):
+        print bcolors.fail("cll-lve mysql version not found.")
+        print bcolors.warning("Please run to update your mysql to cll-lve version: ")
+        print bcolors.warning("/usr/share/lve/dbgovernor/mysqlgovernor.py --mysql-version=DESIRED_MYSQL_VERSION")
+        print bcolors.warning("/usr/share/lve/dbgovernor/mysqlgovernor.py --install")
+        print bcolors.ok("Instruction: how to install cll-lve mysql/mariadb https://docs.cloudlinux.com/mysql_governor_installation.html")
+        return False
+
+    print bcolors.ok("The db_governor service is correctly configured")
+    return True

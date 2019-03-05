@@ -30,7 +30,8 @@ from utilities import get_cl_num, exec_command, exec_command_out, new_lve_ctl, \
     correct_mysqld_service_for_cl7, \
     correct_remove_notowned_mysql_service_names_cl7, \
     correct_remove_notowned_mysql_service_names_not_symlynks_cl7, get_mysql_log_file, \
-    check_mysqld_is_alive, makedir_recursive, patch_governor_config, bcolors, force_update_cagefs
+    check_mysqld_is_alive, makedir_recursive, patch_governor_config, bcolors, force_update_cagefs, \
+    show_new_packages_info, wizard_install_confirm
 from ConfigParser import RawConfigParser
 
 
@@ -61,6 +62,7 @@ class InstallManager(object):
     ALL_PACKAGES_NEW_NOT_DOWNLOADED = False
     ALL_PACKAGES_OLD_NOT_DOWNLOADED = False
     DISABLED = False
+    ROLLBACK = False
     MYSQLUSER = ''
     MYSQLPASSWORD = ''
 
@@ -184,7 +186,7 @@ class InstallManager(object):
         # remove current mysql packages
         remove_packages(self._old_packages)
 
-    def install(self, beta, no_confirm):
+    def install(self, beta, no_confirm, wizard_mode):
         """
         Install stable or beta packages
         @param `beta` bool: install beta or production
@@ -192,7 +194,7 @@ class InstallManager(object):
         """
         if not self.cl_version:
             print "Unknown system type. Installation aborted"
-            sys.exit(2)
+            sys.exit(1)
 
         self._before_install()
 
@@ -212,9 +214,13 @@ class InstallManager(object):
         if self.ALL_PACKAGES_OLD_NOT_DOWNLOADED:
             self.print_warning_about_not_complete_of_pkg_saving()
 
-        if not confirm_packages_installation("new",
-                                             self.prev_version,
-                                             no_confirm):
+        new_version = show_new_packages_info("new")
+
+        if wizard_mode and not wizard_install_confirm(new_version, self.prev_version):
+            sys.exit(3)
+        elif not confirm_packages_installation(new_version,
+                                               self.prev_version,
+                                               no_confirm):
             self.DISABLED = True
             return False
 
@@ -312,7 +318,7 @@ class InstallManager(object):
         """
         if self.ALL_PACKAGES_OLD_NOT_DOWNLOADED:
             self.print_warning_about_not_complete_of_pkg_saving()
-            print "Rollback disabled"
+            print bcolors.fail("Rollback disabled")
             return False
 
         # self._before_install_new_packages()
@@ -341,6 +347,8 @@ class InstallManager(object):
         self._mysqlservice("restart")
 
         self._after_install_rollback()
+
+        self.ROLLBACK = True
 
         return True
 
@@ -513,7 +521,7 @@ class InstallManager(object):
         if version not in versions:
             print >> sys.stderr, "Invalid mysql version."
             print >> sys.stderr, "Available versions: %s" % ", ".join(versions)
-            sys.exit(2)
+            sys.exit(1)
 
         write_file(self.NEW_VERSION_FILE, version)
 
@@ -654,7 +662,7 @@ for native procedure restoring of MySQL packages""")
             if detected_version_on_system != "+":
                 if detected_version_on_system == "":
                     print >> sys.stderr, "Unknown SQL VERSION"
-                    sys.exit(2)
+                    sys.exit(1)
                 else:
                     sql_version = detected_version_on_system
         return sql_version
@@ -706,7 +714,7 @@ for native procedure restoring of MySQL packages""")
                 requires = packages[:3]
             else:
                 print >> sys.stderr, "Unknown SQL VERSION"
-                sys.exit(2)
+                sys.exit(1)
 
         if sql_version == "mysql51":
             packages += ["mysqlclient18", "mysqlclient15"]
@@ -729,7 +737,7 @@ for native procedure restoring of MySQL packages""")
             content = urllib2.urlopen(repo_url).read()
         except Exception, e:
             print >> sys.stderr, "Can`t download repo file: %s" % e
-            sys.exit(2)
+            sys.exit(1)
         else:
             if os.path.exists("/etc/yum.repos.d/cl-mysql.repo"):
                 shutil.copy2("/etc/yum.repos.d/cl-mysql.repo",
