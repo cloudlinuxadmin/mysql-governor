@@ -216,8 +216,10 @@ class InstallManager(object):
 
         new_version = show_new_packages_info("new")
 
-        if wizard_mode and not wizard_install_confirm(new_version, self.prev_version):
-            sys.exit(3)
+        if wizard_mode:
+            # wizard mode has its own confirmation logic
+            if not wizard_install_confirm(new_version, self.prev_version):
+                sys.exit(3)
         elif not confirm_packages_installation(new_version,
                                                self.prev_version,
                                                no_confirm):
