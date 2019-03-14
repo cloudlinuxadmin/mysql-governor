@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   39
+%define g_release   40
 %define g_key_library 9
 
 %if %{undefined _unitdir}
@@ -396,6 +396,9 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Thu Mar 14 2019 Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-40
+- Fix encoding for *map files
+
 * Wed Mar 06 2019 Serhii Kokhan <skokhan@cloudlinux.com>, Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-39
 - MYSQLG-377: options --wizard and --status added
 

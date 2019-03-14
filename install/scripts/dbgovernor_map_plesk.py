@@ -1,5 +1,4 @@
 #!/opt/alt/python27/bin/python
-
 # -*- coding: utf-8 -*-
 
 # Copyright © Cloud Linux GmbH & Cloud Linux Software, Inc 2010-2019 All Rights Reserved
