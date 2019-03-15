@@ -1,0 +1,6 @@
+---
+
+- hosts: localhost
+  user: root
+  roles:
+    - opennebula_actions
