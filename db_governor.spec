@@ -41,6 +41,8 @@ BuildRequires: patch
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
 BuildRequires: systemd
 BuildRequires: systemd-devel
+# for python tests
+BuildRequires: pytest python-mock MySQL-python
 %endif
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 Conflicts: db-governor
@@ -174,6 +176,12 @@ install -D -m 644 cron/lvedbgovernor-utils-cron $RPM_BUILD_ROOT%{_sysconfdir}/cr
 
 touch $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/tmp/INFO
 echo "CloudLinux" > $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/tmp/INFO
+
+%check
+%if 0%{?rhel} > 6
+echo "****Start unittests for python code"
+PYTHONPATH=install:install/scripts:. /usr/bin/py.test tests/py/
+%endif
 
 %clean
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -rf "$RPM_BUILD_ROOT"

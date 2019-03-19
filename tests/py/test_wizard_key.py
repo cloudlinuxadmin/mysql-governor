@@ -1,6 +1,4 @@
 import pytest
-import sys
-sys.path.append('../../install')
 import utilities
 
 
