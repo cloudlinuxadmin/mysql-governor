@@ -52,11 +52,12 @@ def get_users_data():
         cur = con.cursor()
         cur.execute('select db.login from mysql.user as mysql, db_users as db where mysql.user = db.login')
         psa_db_users = [u[0] for u in cur.fetchall()]
-        cur.execute('select db.login, sys.login from mysql.user as mysql, sys_users as sys, db_users as db where mysql.user = db.login and db.dom_id = sys.id;')
+        # mapping db_users to sys_users on Plesk should be done using psa.hosting table!
+        cur.execute('select db_users.login, sys_users.login from mysql.user as mysql, db_users inner join hosting on db_users.dom_id=hosting.dom_id inner join sys_users on hosting.sys_user_id=sys_users.id where mysql.user=db_users.login')
         psa_mapped_users = {u[0]: u[1] for u in cur.fetchall()}
         con.close()
-    except MySQLdb.Error:
-        print con.error()
+    except MySQLdb.Error as e:
+        print e
         return [], {}
 
     return psa_db_users, psa_mapped_users
