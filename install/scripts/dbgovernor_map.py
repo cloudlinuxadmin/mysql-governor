@@ -96,8 +96,8 @@ def get_account_list():
                 # db_user has no real user
                 pass
         con.close()
-    except MySQLdb.Error:
-        print con.error()
+    except MySQLdb.Error as e:
+        print e
 
     return accountList
 

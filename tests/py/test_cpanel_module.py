@@ -1,7 +1,5 @@
 import pytest
 import mock
-import sys
-sys.path.append('../../install')
 from modules import cpanel
 
 
