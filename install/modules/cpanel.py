@@ -61,7 +61,7 @@ class cPanelManager(InstallManager):
                 os.remove("/etc/cpupdate.conf")
             os.rename("/etc/cpupdate.conf.governor", "/etc/cpupdate.conf")
 
-        service("stop", "mysql")
+        self._mysqlservice("stop")
         # remove governor package
         exec_command_out("rpm -e governor-mysql")
         # delete installed packages
