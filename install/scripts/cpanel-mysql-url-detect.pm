@@ -46,7 +46,7 @@ my $logger = Cpanel::Update::Logger->new( { 'stdout' => 0, 'log_level' => 'info'
 my %directory_options = ();
 
 my $v;
-my $targets = "MySQL50,MySQL51,MySQL55,MySQL56,MariaDB,MariaDB100,MariaDB101";
+my $targets = "MySQL50,MySQL51,MySQL55,MySQL56,MariaDB,MariaDB100,MariaDB101,MariaDB102,MariaDB103";
 if ($targets) {
     my @targets = split( /\s*,\s*/, $targets );
     $v = Cpanel::RPM::Versions::File->new( { 'only_targets' => \@targets, logger => $logger, %directory_options } );

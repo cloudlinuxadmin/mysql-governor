@@ -1028,7 +1028,13 @@ for native procedure restoring of MySQL packages""")
                            "mariadb103"]:
                 name = "mysql"
 
-        service(action, name)
+        try:
+            # service util now uses timeout
+            service(action, name)
+        except RuntimeError as e:
+            print "Failed to {act} mysql service: {exc}. Please, check mysql service status and logs.".format(
+                act=action, exc=e)
+            sys.exit(3)
 
     def _rel(self, path):
         """

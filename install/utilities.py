@@ -17,6 +17,8 @@ import sys
 import urllib
 import time
 import ConfigParser
+import shlex
+from threading import Timer
 from datetime import datetime
 from distutils.version import StrictVersion
 from glob import glob
@@ -443,15 +445,15 @@ def service(action, *names):
                 found_path = "/etc/systemd/system/mysqld.service"
         if os.path.exists("/usr/lib/systemd/system/%s.service" % end_name) or (
                     found_path != ""):
-            exec_command_out(
-                "/bin/systemctl %s %s.service" % (action, end_name))
+            exec_command_with_timeout(
+                "/bin/systemctl %s %s.service" % (action, end_name), timeout=300)
         else:
             if name == "mysql" or name == "mysqld":
                 if os.path.exists("/etc/init.d/mysql"):
                     end_name = "mysql"
                 elif os.path.exists("/etc/init.d/mysqld"):
                     end_name = "mysqld"
-            exec_command_out("/sbin/service %s %s" % (end_name, action))
+            exec_command_with_timeout("/sbin/service %s %s" % (end_name, action), timeout=300)
 
 
 def check_file(path):
@@ -500,6 +502,42 @@ def exec_command_out(command):
     """
     os.system(command)
     debug_log("Executed command %s with retcode NN\n" % command)
+
+
+def exec_command_with_timeout(command, timeout=30):
+    """
+    Execute external command with waiting timeout.
+    In case the timeout is hit, the command is terminated and RuntimeError is raised
+    Otherwise, the command exit code is returned
+    :param command: command to execute
+    :param timeout: time to wait for completion
+    :return: command exit code in case if timeout wasn't hit
+    """
+    fail_msg = 'The command `{cmd}` has hit a timeout of {t} seconds! Its execution was terminated'.format(
+        cmd=command, t=timeout)
+    args = shlex.split(command)
+    # no PIPEs for stdout/stderr used, they may cause deadlocks (seen on CL6 when calling `service restart mysql`)
+    p = subprocess.Popen(args)
+    # create a timer with given timeout and action of terminating our process
+    timer = Timer(timeout, lambda proc: proc.terminate(), args=[p])
+
+    try:
+        timer.start()
+        debug_log('Time %s' % datetime.now())
+        p.communicate()
+        debug_log('Time %s' % datetime.now())
+    finally:
+        debug_log('Timer state %s' % timer.is_alive())
+        if not timer.is_alive():
+            # this means that timer has been triggered
+            debug_log(fail_msg)
+            raise RuntimeError(fail_msg)
+        else:
+            # timer was not triggered, should cancel the execution of its action
+            timer.cancel()
+            debug_log("Executed command %s with retcode %d\n" % (command, p.returncode))
+
+    return p.returncode
 
 
 def get_cl_num():

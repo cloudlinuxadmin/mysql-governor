@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   40
+%define g_release   41
 %define g_key_library 9
 
 %if %{undefined _unitdir}
@@ -41,6 +41,8 @@ BuildRequires: patch
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
 BuildRequires: systemd
 BuildRequires: systemd-devel
+# for python tests
+BuildRequires: pytest python-mock MySQL-python
 %endif
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 Conflicts: db-governor
@@ -155,6 +157,7 @@ install -D -m 755 install/scripts/dbgovernor_map.py $RPM_BUILD_ROOT/usr/share/lv
 install -D -m 755 install/scripts/dbgovernor_map_plesk.py $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/dbgovernor_map_plesk.py
 install -D -m 755 install/scripts/detect-cpanel-mysql-version.pm $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/detect-cpanel-mysql-version.pm
 install -D -m 755 install/scripts/cpanel-mysql-url-detect.pm $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/cpanel-mysql-url-detect.pm
+install -D -m 755 install/scripts/set_cpanel_mysql_version.pm $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/set_cpanel_mysql_version.pm
 install -D -m 755 install/scripts/mysql_hook $RPM_BUILD_ROOT//usr/share/lve/dbgovernor/scripts/mysql_hook
 
 install -D -m 644 logrotate/mysql-governor $RPM_BUILD_ROOT/etc/logrotate.d/mysql-governor
@@ -173,6 +176,12 @@ install -D -m 644 cron/lvedbgovernor-utils-cron $RPM_BUILD_ROOT%{_sysconfdir}/cr
 
 touch $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/tmp/INFO
 echo "CloudLinux" > $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/tmp/INFO
+
+%check
+%if 0%{?rhel} > 6
+echo "****Start unittests for python code"
+PYTHONPATH=install:install/scripts:. /usr/bin/py.test tests/py/
+%endif
 
 %clean
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -rf "$RPM_BUILD_ROOT"
@@ -396,6 +405,13 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Mon Mar 25 2019 Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-41
+- MYSQLG-383: added command execution timeout
+- MYSQLG-329: full mariadb103 support for cPanel
+- MYSQLG-379: fixed exceptions flow in dbgovernor_map py files
+- MYSQLG-382: fixed dbgovernor_map for Plesk
+- MYSQLG-373: updated governor removal for cPanel
+
 * Thu Mar 14 2019 Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-40
 - Fix encoding for *map files
 

@@ -61,7 +61,7 @@ class cPanelManager(InstallManager):
                 os.remove("/etc/cpupdate.conf")
             os.rename("/etc/cpupdate.conf.governor", "/etc/cpupdate.conf")
 
-        service("stop", "mysql")
+        self._mysqlservice("stop")
         # remove governor package
         exec_command_out("rpm -e governor-mysql")
         # delete installed packages
@@ -92,6 +92,9 @@ class cPanelManager(InstallManager):
         for k in filter(lambda x: 'mariadb' not in x and x != current_version['full'], targets.keys()):
             exec_command('/usr/local/cpanel/scripts/update_local_rpm_versions --edit target_settings.%(target)s uninstalled' % {'target': targets[k]})
 
+        # update mysql version in cPanel's configuration file
+        exec_command(self._rel("scripts/set_cpanel_mysql_version.pm %s" % current_version['short']))
+
         if current_version['mysql_type'] == 'mariadb':
             # add repo, yum install mariadb pkgs
             self.install_mariadb(current_version['full'])
@@ -111,6 +114,10 @@ class cPanelManager(InstallManager):
                 exec_command_out(
                     "/scripts/check_cpanel_rpms --fix --targets={}".format(
                         old + ','.join(targets.values())))
+            # clear RPM management targets for cPanel higher than 72 version,
+            # because setting it to `installed` causes MySQL/MariaDB Upgrade interface errors
+            if self.get_panel_version() > 72:
+                exec_command('/usr/local/cpanel/scripts/update_local_rpm_versions --del target_settings.%(target)s' % {'target': t})
 
     def install_mariadb(self, version):
         """
@@ -394,3 +401,13 @@ gpgcheck=1
         """
         exec_command_out(
             "whmapi1 configureservice service=mysql enabled=1 monitored={}".format(int(enable)))
+
+    @staticmethod
+    def get_panel_version():
+        """
+        Retrieve cPanel current version from /usr/local/cpanel/version file
+        :return: major version value
+        """
+        with open('/usr/local/cpanel/version', 'rb') as content:
+            full_version = content.read().strip()
+        return int(full_version.split('.')[1])
