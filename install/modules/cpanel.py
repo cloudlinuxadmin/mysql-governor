@@ -9,6 +9,7 @@
 This module contains class for managing governor on cPanel server
 """
 import os
+import re
 import shutil
 import sys
 import urllib2
@@ -16,7 +17,7 @@ import hashlib
 
 from utilities import exec_command_out, grep, add_line, \
     service, remove_lines, write_file, replace_lines, touch, \
-    is_package_installed, remove_packages, exec_command, parse_rpm_name, service_symlink
+    is_package_installed, remove_packages, exec_command, parse_rpm_name, service_symlink, bcolors
 from .base import InstallManager
 
 
@@ -29,7 +30,41 @@ class cPanelManager(InstallManager):
         """
         Update user mapping file for cPanel
         """
-        self._script_subprocess("dbgovernor_map")
+        try:
+            self._script_subprocess("dbgovernor_map")
+        except RuntimeError as e:
+            self.warning(str(e))
+
+    def warning(self, orig_msg):
+        """
+        Warn user in case of errors during dbgovernor_map process and exit with exitcode 1.
+        If CpuserNotInMap Exception occurred, advice user to run rebuild_dbmap script
+        Otherwise, just show original exception
+        :param orig_msg: original exception text
+        """
+        if 'CpuserNotInMap' in orig_msg:
+            username = self.retrieve_username(orig_msg)
+            print bcolors.fail('cPanel user `{u}` does not exist in the database map.'.format(u=username))
+            print bcolors.info('Try to perform the following command: /scripts/rebuild_dbmap {u}\n'
+                               'and then run /usr/share/lve/dbgovernor/mysqlgovernor.py --dbupdate again.'.format(u=username))
+            print bcolors.warning('If this does not help, please, '
+                                  'contact cPanel support with the original error:\n{m}'.format(u=username,
+                                                                                                m=orig_msg.split('\n')[1]))
+        else:
+            print bcolors.fail(orig_msg)
+        sys.exit(1)
+
+    @staticmethod
+    def retrieve_username(msg):
+        """
+        Try to get corrupted user name from the exception text (e.g. CpuserNotInMap Exception)
+        :param msg: original exception text
+        :return: username if retrieved, None otherwise
+        """
+        try:
+            return re.findall('cPanel user \xE2\x80\x9C(.+)\xE2\x80\x9D does not exist in the database map.', msg)[0]
+        except IndexError:
+            return None
 
     def install_mysql_beta_testing_hooks(self):
         """
