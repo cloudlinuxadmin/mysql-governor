@@ -97,12 +97,11 @@ class cPanelManager(InstallManager):
             os.rename("/etc/cpupdate.conf.governor", "/etc/cpupdate.conf")
 
         self._mysqlservice("stop")
+        # delete installed packages and restore native
+        remove_packages(installed_packages)
+        self.restore_mysql_packages(current_version)
         # remove governor package
         exec_command_out("rpm -e governor-mysql")
-        # delete installed packages
-        remove_packages(installed_packages)
-
-        self.restore_mysql_packages(current_version)
         exec_command_out("/scripts/upcp --force")
 
     def restore_mysql_packages(self, current_version):
