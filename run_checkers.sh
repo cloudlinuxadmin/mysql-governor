@@ -4,7 +4,7 @@
 #runs analyzers for c code:
 
 #cppcheck
-cppcheck -v --enable=all --xml -Isrc src 2>report_cppcheck.xml
+cppcheck -v --enable=all --xml -D__x86_64__ -DLINUX=2 -I/usr/include -I/usr/include/linux -Isrc src 2>report_cppcheck.xml
 
 #rats
 rats -w 3 --xml src &>report_rats.xml
