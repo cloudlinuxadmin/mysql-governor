@@ -47,6 +47,7 @@ enum mysql_option
 
 //Request definitions
 
+#define QUERY_SELECT_MAX_USER_CONNECTIONS "select max_user_connections from mysql.user where user='%s'"
 //Блокировка-разблокировка пользователя. GRANT еще не использую, т.к wildcard предлагаемый грантом не работает как нужно мне
 #define QUERY_USER_CONN_LIMIT "update mysql.user set max_user_connections=%lu where User='%s'"
 //Разблокировка всех пользователей
@@ -136,6 +137,7 @@ update_user_limit (char *user_name, unsigned int limit, MODE_TYPE debug_mode);
 void
 update_user_limit_no_flush (char *user_name, unsigned int limit,
 			    MODE_TYPE debug_mode);
+unsigned select_max_user_connections (char *username, MODE_TYPE debug_mode);
 void flush_user_stat (MODE_TYPE debug_mode);
 void flush_user_priv (MODE_TYPE debug_mode);
 void kill_query (char *user_name, MODE_TYPE debug_mode);

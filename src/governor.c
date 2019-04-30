@@ -695,6 +695,7 @@ int main(int argc, char *argv[]) {
 		remove_bad_users_list();
 	}
 
+	restore_all_max_user_conn(data_cfg.log_mode);
 	free_accounts_and_users();
 	free_tid_table();
 

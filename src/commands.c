@@ -32,6 +32,7 @@
 #include "dlload.h"
 #include "mysql_connector_common.h"
 #include "shared_memory.h"
+#include "calc_stats.h"
 
 #include "commands.h"
 
@@ -228,16 +229,53 @@ account_restrict (Account * ac, stats_limit_cfg * limit)
     }
 }
 
+static void
+restore_all_max_user_conn_in (gpointer user, gpointer value, gpointer debug_mode)
+{
+  Account *user_info = (Account *) value;
+  MODE_TYPE log_mode = *(MODE_TYPE *) debug_mode;
+
+  if (user_info->timeout > 0)
+    {
+      update_user_limit_no_flush ((char *) user,
+				  user_info->max_user_connections,
+				  log_mode);
+      is_any_flush = 1;
+    }
+}
+
+void
+restore_all_max_user_conn (MODE_TYPE debug_mode)
+{
+  while (is_send_command_cycle)
+    {
+      sleep(1);
+    }
+  is_send_command_cycle = 1;
+  is_any_flush = 0;
+  g_hash_table_foreach ((GHashTable *) get_accounts (),
+			(GHFunc) restore_all_max_user_conn_in,
+			&debug_mode);
+  if (is_any_flush)
+    {
+      flush_user_priv (debug_mode);
+    }
+  is_any_flush = 0;
+  is_send_command_cycle = 0;
+}
+
 void
 send_commands (Command * cmd, void *data)
 {
   char buffer[_DBGOVERNOR_BUFFER_2048];
   struct governor_config data_cfg;
+  Account *user_info = NULL;
 
   get_config_data (&data_cfg);
 
   if (cmd)
     {
+      user_info = g_hash_table_lookup ((GHashTable *) get_accounts (), cmd->username);
       switch (cmd->command)
 	{
 	case FREEZE:
@@ -255,19 +293,31 @@ send_commands (Command * cmd, void *data)
 		  }
 		else
 		  {
-		    if (data_cfg.max_user_connections)
+		    user_info->max_user_connections = select_max_user_connections (cmd->username, data_cfg.log_mode);
+		    if (data_cfg.max_user_connections &&
+		       (data_cfg.max_user_connections < user_info->max_user_connections ||
+			user_info->max_user_connections == 0))
 		      {
 			update_user_limit_no_flush (cmd->username,
-						    (unsigned int) data_cfg.
-						    max_user_connections,
+						    (unsigned int) data_cfg.max_user_connections,
 						    data_cfg.log_mode);
 			is_any_flush = 1;
 		      }
 		  }
-	      }			/*else
-				   update_user_limit(cmd->username, (unsigned int) -1,
-				   data_cfg.log_mode);
-				   if(data_cfg.killuser==1) kill_connection(cmd->username, data_cfg.log_mode); */
+	      }
+	    else
+	      {
+		user_info->max_user_connections = select_max_user_connections (cmd->username, data_cfg.log_mode);
+		if (data_cfg.max_user_connections &&
+		   (data_cfg.max_user_connections < user_info->max_user_connections ||
+		    user_info->max_user_connections == 0))
+		  {
+		    update_user_limit_no_flush (cmd->username,
+					       (unsigned int) data_cfg.max_user_connections,
+					       data_cfg.log_mode);
+		    is_any_flush = 1;
+		  }
+	      }
 	    //lve_connection(cmd->username, data_cfg.log_mode);
 	    if (data_cfg.logqueries_use == 1)
 	      log_user_queries (cmd->username, data_cfg.log_mode);
@@ -286,27 +336,24 @@ send_commands (Command * cmd, void *data)
 				   data_cfg.log_mode, cmd->username);
 		      }
 		  }
-#if 0
 		if (data_cfg.max_user_connections)
 		  {
 		    update_user_limit_no_flush (cmd->username,
-						(unsigned int) 0,
+						user_info->max_user_connections,
 						data_cfg.log_mode);
 		    is_any_flush = 1;
 		  }
-#endif
 		//kill_connection(cmd->username, data_cfg.log_mode);
 	      }
 	    else
 	      {
-#if 0
 		if (data_cfg.max_user_connections)
 		  {
-		    update_user_limit_no_flush (cmd->username, 0,
+		    update_user_limit_no_flush (cmd->username,
+						user_info->max_user_connections,
 						data_cfg.log_mode);
 		    is_any_flush = 1;
 		  }
-#endif
 	      }
 	  }
 	  break;
