@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   42
+%define g_release   43
 %define g_key_library 9
 
 %if %{undefined _unitdir}
@@ -405,6 +405,9 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Tue Apr 30 2019 Rostyslav Tulchii <rtulchii@cloudlinux.com> 1.2-43
+- MYSQLG-380: improve restoring mechanism of max_user_connections directive
+
 * Tue Apr 09 2019 Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-42
 - MYSQLG-387: fix --delete procedure
 - MYSQLG-385: process CpuserNotInMap exception while dbgovernor_map
