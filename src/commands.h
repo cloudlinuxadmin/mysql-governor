@@ -21,5 +21,6 @@ void account_restrict (Account * ac, stats_limit_cfg * limit);
 void send_commands_cycle ();
 void send_commands (Command * cmd, void *data);
 void *send_governor (void *data);
+void restore_all_max_user_conn(MODE_TYPE debug_mode);
 
 #endif /* COMMANDS_H_ */

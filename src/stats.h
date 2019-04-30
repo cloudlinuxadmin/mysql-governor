@@ -42,6 +42,7 @@ typedef struct account_struct
   time_t start_count;
   restrict_info info;
   int need_dbg;
+  unsigned max_user_connections; // from mysql.user table
 
 } Account;
 
