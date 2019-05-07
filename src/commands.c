@@ -253,9 +253,11 @@ restore_all_max_user_conn (MODE_TYPE debug_mode)
     }
   is_send_command_cycle = 1;
   is_any_flush = 0;
+  lock_acc ();
   g_hash_table_foreach ((GHashTable *) get_accounts (),
 			(GHFunc) restore_all_max_user_conn_in,
 			&debug_mode);
+  unlock_acc ();
   if (is_any_flush)
     {
       flush_user_priv (debug_mode);
@@ -269,13 +271,33 @@ send_commands (Command * cmd, void *data)
 {
   char buffer[_DBGOVERNOR_BUFFER_2048];
   struct governor_config data_cfg;
-  Account *user_info = NULL;
 
   get_config_data (&data_cfg);
 
   if (cmd)
     {
+      Account *user_info = NULL;
+      unsigned max_user_conn = 0;
+
+      if (cmd->command == FREEZE)
+	{
+	  max_user_conn = select_max_user_connections (cmd->username, data_cfg.log_mode);
+	}
+      lock_acc ();
       user_info = g_hash_table_lookup ((GHashTable *) get_accounts (), cmd->username);
+      if (user_info)
+	{
+	  if (cmd->command == FREEZE)
+	    {
+	      user_info->max_user_connections = max_user_conn;
+	    }
+	  else if (cmd->command == UNFREEZE)
+	    {
+	      max_user_conn = user_info->max_user_connections;
+	    }
+	}
+      unlock_acc ();
+
       switch (cmd->command)
 	{
 	case FREEZE:
@@ -293,10 +315,8 @@ send_commands (Command * cmd, void *data)
 		  }
 		else
 		  {
-		    user_info->max_user_connections = select_max_user_connections (cmd->username, data_cfg.log_mode);
 		    if (data_cfg.max_user_connections &&
-		       (data_cfg.max_user_connections < user_info->max_user_connections ||
-			user_info->max_user_connections == 0))
+		       (data_cfg.max_user_connections < max_user_conn || max_user_conn == 0))
 		      {
 			update_user_limit_no_flush (cmd->username,
 						    (unsigned int) data_cfg.max_user_connections,
@@ -307,10 +327,8 @@ send_commands (Command * cmd, void *data)
 	      }
 	    else
 	      {
-		user_info->max_user_connections = select_max_user_connections (cmd->username, data_cfg.log_mode);
 		if (data_cfg.max_user_connections &&
-		   (data_cfg.max_user_connections < user_info->max_user_connections ||
-		    user_info->max_user_connections == 0))
+		   (data_cfg.max_user_connections < max_user_conn || max_user_conn == 0))
 		  {
 		    update_user_limit_no_flush (cmd->username,
 					       (unsigned int) data_cfg.max_user_connections,
@@ -338,8 +356,7 @@ send_commands (Command * cmd, void *data)
 		  }
 		if (data_cfg.max_user_connections)
 		  {
-		    update_user_limit_no_flush (cmd->username,
-						user_info->max_user_connections,
+		    update_user_limit_no_flush (cmd->username, max_user_conn,
 						data_cfg.log_mode);
 		    is_any_flush = 1;
 		  }
@@ -349,8 +366,7 @@ send_commands (Command * cmd, void *data)
 	      {
 		if (data_cfg.max_user_connections)
 		  {
-		    update_user_limit_no_flush (cmd->username,
-						user_info->max_user_connections,
+		    update_user_limit_no_flush (cmd->username, max_user_conn,
 						data_cfg.log_mode);
 		    is_any_flush = 1;
 		  }
