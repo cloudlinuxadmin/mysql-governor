@@ -43,6 +43,7 @@
 void free_commands_list_send ();
 
 static GList *command_list = NULL, *command_list_send = NULL;
+static GHashTable *max_user_conn_table = NULL;
 
 pthread_mutex_t mtx_commands = PTHREAD_MUTEX_INITIALIZER;
 volatile int is_send_command_cycle = 0;
@@ -232,16 +233,13 @@ account_restrict (Account * ac, stats_limit_cfg * limit)
 static void
 restore_all_max_user_conn_in (gpointer user, gpointer value, gpointer debug_mode)
 {
-  Account *user_info = (Account *) value;
+  unsigned max_user_conn = GPOINTER_TO_UINT (value);
   MODE_TYPE log_mode = *(MODE_TYPE *) debug_mode;
 
-  if (user_info->timeout > 0)
-    {
-      update_user_limit_no_flush ((char *) user,
-				  user_info->max_user_connections,
-				  log_mode);
-      is_any_flush = 1;
-    }
+  update_user_limit_no_flush ((char *) user,
+			      max_user_conn,
+			      log_mode);
+  is_any_flush = 1;
 }
 
 void
@@ -253,17 +251,22 @@ restore_all_max_user_conn (MODE_TYPE debug_mode)
     }
   is_send_command_cycle = 1;
   is_any_flush = 0;
-  lock_acc ();
-  g_hash_table_foreach ((GHashTable *) get_accounts (),
+  g_hash_table_foreach (max_user_conn_table,
 			(GHFunc) restore_all_max_user_conn_in,
 			&debug_mode);
-  unlock_acc ();
+  g_hash_table_remove_all (max_user_conn_table);
   if (is_any_flush)
     {
       flush_user_priv (debug_mode);
     }
   is_any_flush = 0;
   is_send_command_cycle = 0;
+}
+
+static void
+destroy_key(gpointer key)
+{
+  free (key);
 }
 
 void
@@ -279,29 +282,17 @@ send_commands (Command * cmd, void *data)
       Account *user_info = NULL;
       unsigned max_user_conn = 0;
 
-      if (cmd->command == FREEZE)
+      if (max_user_conn_table == NULL)
 	{
-	  max_user_conn = select_max_user_connections (cmd->username, data_cfg.log_mode);
+	  max_user_conn_table = g_hash_table_new_full (g_str_hash, g_str_equal, destroy_key, NULL);
 	}
-      lock_acc ();
-      user_info = g_hash_table_lookup ((GHashTable *) get_accounts (), cmd->username);
-      if (user_info)
-	{
-	  if (cmd->command == FREEZE)
-	    {
-	      user_info->max_user_connections = max_user_conn;
-	    }
-	  else if (cmd->command == UNFREEZE)
-	    {
-	      max_user_conn = user_info->max_user_connections;
-	    }
-	}
-      unlock_acc ();
 
       switch (cmd->command)
 	{
 	case FREEZE:
 	  {
+	    max_user_conn = select_max_user_connections (cmd->username, data_cfg.log_mode);
+	    g_hash_table_insert (max_user_conn_table, strdup (cmd->username), GUINT_TO_POINTER (max_user_conn));
 	    if (data_cfg.use_lve)
 	      {
 		if (add_user_to_list (cmd->username, data_cfg.all_lve) < 0)
@@ -343,6 +334,8 @@ send_commands (Command * cmd, void *data)
 	  break;
 	case UNFREEZE:
 	  {
+	    max_user_conn = GPOINTER_TO_UINT (g_hash_table_lookup (max_user_conn_table, cmd->username));
+	    g_hash_table_remove (max_user_conn_table, cmd->username);
 	    if (data_cfg.use_lve)
 	      {
 		if (delete_user_from_list (cmd->username) < 0)
