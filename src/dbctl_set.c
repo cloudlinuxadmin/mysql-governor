@@ -547,9 +547,8 @@ int setLveMode(char *mode) {
 		fprintf(stderr, "Error reading config file %s\n", xml_parse_error);
 		return 0;
 	}
-
-	if (strcmp(mode, "off") && strcmp(mode, "abusers") && strcmp(mode, "all")
-			&& strcmp(mode, "single") && strcmp(mode, "on")) {
+	if (mode == NULL || (strcmp(mode, "off") && strcmp(mode, "abusers")
+	    && strcmp(mode, "all") && strcmp(mode, "single") && strcmp(mode, "on"))) {
 		releaseConfigData(cfg);
 		fprintf(stderr, "Incorrect value mode\n");
 		return 0;
