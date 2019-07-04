@@ -123,8 +123,8 @@ class cPanelManager(InstallManager):
         for t in targets.values():
             exec_command('/usr/local/cpanel/scripts/update_local_rpm_versions --del target_settings.%(target)s' % {'target': t})
         # disable mysql targets for upcp not to fix them!
-        for k in filter(lambda x: 'mariadb' not in x and x != current_version['full'], targets.keys()):
-            exec_command('/usr/local/cpanel/scripts/update_local_rpm_versions --edit target_settings.%(target)s uninstalled' % {'target': targets[k]})
+        # for k in filter(lambda x: 'mariadb' not in x and x != current_version['full'], targets.keys()):
+        #     exec_command('/usr/local/cpanel/scripts/update_local_rpm_versions --edit target_settings.%(target)s uninstalled' % {'target': targets[k]})
 
         # update mysql version in cPanel's configuration file
         exec_command(self._rel("scripts/set_cpanel_mysql_version.pm %s" % current_version['short']))
