@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   45
+%define g_release   46
 %define g_key_library 9
 
 %if %{undefined _unitdir}
@@ -405,6 +405,9 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Tue Jul 31 2019 Rostyslav Tulchii <rtulchii@cloudlinux.com> 1.2-46
+- MYSQLG-410: handling of nontrivial cases with semaphores during the startup
+
 * Tue Jul 23 2019 Rostyslav Tulchii <rtulchii@cloudlinux.com> 1.2-45
 - MYSQLG-405: make governor update local.versions file properly on cPanel after uninstalling
 
