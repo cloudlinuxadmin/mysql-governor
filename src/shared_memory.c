@@ -26,7 +26,7 @@
 
 #define MAX_ITEMS_IN_TABLE 100000
 #define SHARED_MEMORY_NAME "governor_bad_users_list"
-#define SHARED_MEMORY_SEM "governor_bad_users_list_sem"
+#define SHARED_MEMORY_PATH "/dev/shm/"
 
 // this variable set in mysql_connector_common.c file. users only by governor binaries
 // don`t use in mysql shared library
@@ -38,13 +38,13 @@ typedef struct __items_structure {
 } items_structure;
 
 typedef struct __shm_structure {
+	sem_t sem;
 	long numbers;
 	items_structure items[MAX_ITEMS_IN_TABLE];
 } shm_structure;
 
 shm_structure *bad_list = NULL;
 int shm_fd = 0;
-sem_t *sem = NULL;
 
 int init_bad_users_list_utility() {
 
@@ -59,124 +59,136 @@ int init_bad_users_list_utility() {
 		return -1;
 	}
 
-	sem = sem_open(SHARED_MEMORY_SEM, O_CREAT, 0600, 1);
-
-	if (sem == SEM_FAILED) {
-		cl_munmap ((void *) bad_list, sizeof (shm_structure));
-		close(shm_fd);
-		return -1;
-	}
-	if (sem_wait(sem) == 0) {
+	if (sem_wait(&bad_list->sem) == 0) {
 		clear_bad_users_list();
-		sem_post(sem);
+		sem_post(&bad_list->sem);
 	}
 
 	return 0;
 }
 
 int remove_bad_users_list_utility() {
-	if (sem != SEM_FAILED)
-		sem_close(sem);
 	if (bad_list && (bad_list != MAP_FAILED))
+	{
 		cl_munmap ((void *) bad_list, sizeof (shm_structure));
+	}
 	close(shm_fd);
 	return 0;
 }
 
 int init_bad_users_list() {
 	//shm_unlink(SHARED_MEMORY_NAME);
-	sem_unlink(SHARED_MEMORY_SEM);
+	//sem_unlink(SHARED_MEMORY_SEM);
 	mode_t old_umask = umask(0);
 
 	int first = 0;
 	if ((shm_fd = shm_open(SHARED_MEMORY_NAME, (O_CREAT | O_EXCL | O_RDWR),
-			0755)) > 0) {
+			0755)) > 0)
+	{
 		first = 1;
-	} else if ((shm_fd = shm_open(SHARED_MEMORY_NAME, (O_CREAT | O_RDWR), 0755))
-			< 0) {
+	}
+	else if ((shm_fd = shm_open(SHARED_MEMORY_NAME, (O_CREAT | O_RDWR), 0755))
+			< 0)
+	{
 		umask(old_umask);
 		return -1;
+	}
+	else
+	{
+		struct stat file;
+		if (stat(SHARED_MEMORY_PATH SHARED_MEMORY_NAME, &file) == 0)
+		{
+			first = file.st_size < sizeof(shm_structure) ? 1 : first;
+		}
 	}
 
 	uid_t mysql_user_uid = 0;
 	gid_t mysql_user_gid = 0;
 
-	if (unix_socket_address) {
+	if (unix_socket_address)
+	{
 		// change permissions only for governor executable files
 		struct stat socket_stat;
-		if (stat(unix_socket_address, &socket_stat) == 0) {
+		if (stat(unix_socket_address, &socket_stat) == 0)
+		{
 			// find socket change owner and permissions for shared memory
-			if (fchown(shm_fd, socket_stat.st_uid, socket_stat.st_gid) != 0) {
+			if (fchown(shm_fd, socket_stat.st_uid, socket_stat.st_gid) != 0)
+			{
 				// log error
 				fprintf(stderr, "chown error: %s\n", strerror(errno));
-			} else if (fchmod(shm_fd, 0600) != 0) {
+			}
+			else if (fchmod(shm_fd, 0600) != 0)
+			{
 				// log error
 				fprintf(stderr, "chmod error: %s\n", strerror(errno));
 			}
 			mysql_user_uid = socket_stat.st_uid;
 			mysql_user_gid = socket_stat.st_gid;
-		} else {
+		}
+		else
+		{
 			// log error - can`t find
 			fprintf(stderr, "Use standard access to user's list\n");
 		}
-	} else {
+	}
+	else
+	{
 		// change permissions only for governor executable files
 		struct stat socket_stat;
-		if (stat("/var/lib/mysql/mysql.sock", &socket_stat) == 0) {
+		if (stat("/var/lib/mysql/mysql.sock", &socket_stat) == 0)
+		{
 			// find socket change owner and permissions for shared memory
-			if (fchown(shm_fd, socket_stat.st_uid, socket_stat.st_gid) != 0) {
+			if (fchown(shm_fd, socket_stat.st_uid, socket_stat.st_gid) != 0)
+			{
 				// log error
 				fprintf(stderr, "chown error: %s\n", strerror(errno));
-			} else if (fchmod(shm_fd, 0600) != 0) {
+			}
+			else if (fchmod(shm_fd, 0600) != 0)
+			{
 				// log error
 				fprintf(stderr, "chmod error: %s\n", strerror(errno));
 			}
 			mysql_user_uid = socket_stat.st_uid;
 			mysql_user_gid = socket_stat.st_gid;
-		} else {
+		}
+		else
+		{
 			// log error - can`t find
 			fprintf(stderr, "Use standard access to user's list\n");
 		}
 	}
 
-	if (first) {
+	if (first)
+	{
 		ftruncate(shm_fd, sizeof(shm_structure));
 	}
 
 	if ((bad_list = (shm_structure *) cl_mmap (0, sizeof (shm_structure),
 			(PROT_READ | PROT_WRITE), MAP_SHARED,
-			shm_fd, 0)) == MAP_FAILED) {
+			shm_fd, 0)) == MAP_FAILED)
+	{
 		close(shm_fd);
 		umask(old_umask);
 		return -1;
 	}
 
-	uid_t euid = -1;
-	gid_t egid = -1;
-	euid = geteuid();
-	egid = getegid();
-	if (mysql_user_uid > 0) {
-		setegid(mysql_user_gid);
-		seteuid(mysql_user_uid);
-	}
-
-	sem = sem_open(SHARED_MEMORY_SEM, O_CREAT, 0600, 1);
-
-	if (mysql_user_uid > 0 && euid != -1){
-		setegid(egid);
-		seteuid(euid);
+	if (first)
+	{
+		if (sem_init(&bad_list->sem, 1, 1) < 0)
+		{
+			cl_munmap ((void *) bad_list, sizeof (shm_structure));
+			close(shm_fd);
+			umask(old_umask);
+			return -1;
+		}
 	}
 
 	umask(old_umask);
 
-	if (sem == SEM_FAILED) {
-		cl_munmap ((void *) bad_list, sizeof (shm_structure));
-		close(shm_fd);
-		return -1;
-	}
-	if (sem_wait(sem) == 0) {
+	if (sem_wait(&bad_list->sem) == 0)
+	{
 		clear_bad_users_list();
-		sem_post(sem);
+		sem_post(&bad_list->sem);
 	}
 
 	return 0;
@@ -192,15 +204,15 @@ int init_bad_users_list_if_not_exitst() {
 void clear_bad_users_list() {
 	if (!bad_list || (bad_list == MAP_FAILED))
 		return;
-	memset((void *) bad_list, 0, sizeof(shm_structure));
+	bad_list->numbers = 0;
+	memset((void *) bad_list->items, 0, sizeof(bad_list->items));
 }
 
 int remove_bad_users_list() {
-	if (sem != SEM_FAILED)
-		sem_close(sem);
-	sem_unlink(SHARED_MEMORY_SEM);
 	if (bad_list && (bad_list != MAP_FAILED))
+	{
 		cl_munmap ((void *) bad_list, sizeof (shm_structure));
+	}
 	close(shm_fd);
 	return 0;
 }
@@ -230,11 +242,11 @@ int add_user_to_list(char *username, int is_all) {
 	if (!is_user_in_list(username)) {
 		if ((bad_list->numbers + 1) == MAX_ITEMS_IN_TABLE)
 			return -2;
-		if (sem_wait(sem) == 0) {
+		if (sem_wait(&bad_list->sem) == 0) {
 			strlcpy(bad_list->items[bad_list->numbers].username, username,
 			USERNAMEMAXLEN);
 			bad_list->items[bad_list->numbers++].uid = uid;
-			sem_post(sem);
+			sem_post(&bad_list->sem);
 		}
 	}
 	return 0;
@@ -246,10 +258,10 @@ int delete_user_from_list(char *username) {
 	long index;
 	for (index = 0; index < bad_list->numbers; index++) {
 		if (!strncmp(bad_list->items[index].username, username, USERNAMEMAXLEN)) {
-			if (sem_wait(sem) == 0) {
+			if (sem_wait(&bad_list->sem) == 0) {
 				if (index == (bad_list->numbers - 1)) {
 					bad_list->numbers--;
-					sem_post(sem);
+					sem_post(&bad_list->sem);
 					return 0;
 				} else {
 					memmove(
@@ -259,7 +271,7 @@ int delete_user_from_list(char *username) {
 									- index - 1));
 
 					bad_list->numbers--;
-					sem_post(sem);
+					sem_post(&bad_list->sem);
 					return 0;
 				}
 				//sem_post(sem);
@@ -272,9 +284,9 @@ int delete_user_from_list(char *username) {
 int delete_allusers_from_list() {
 	if (!bad_list || (bad_list == MAP_FAILED))
 		return -1;
-	if (sem_wait(sem) == 0) {
+	if (sem_wait(&bad_list->sem) == 0) {
 		clear_bad_users_list();
-		sem_post(sem);
+		sem_post(&bad_list->sem);
 		return 0;
 	}
 	return -2;
@@ -301,46 +313,38 @@ int32_t is_user_in_bad_list_cleint(char *username) {
 	int shm_fd_clents = 0;
 	int32_t fnd = 0;
 	shm_structure *bad_list_clents;
-	if ((shm_fd_clents = shm_open(SHARED_MEMORY_NAME, O_RDONLY, 0755)) < 0) {
+	if ((shm_fd_clents = shm_open(SHARED_MEMORY_NAME, O_RDWR, 0755)) < 0) {
 		return 0;
 	}
 	if ((bad_list_clents
 			= (shm_structure *) cl_mmap (0, sizeof (shm_structure),
-					PROT_READ, MAP_SHARED,
+					PROT_READ | PROT_WRITE, MAP_SHARED,
 					shm_fd_clents,
 					0)) == MAP_FAILED) {
 		close(shm_fd_clents);
 		return 0;
 	}
 
-	sem_t *sem_client = sem_open(SHARED_MEMORY_SEM, 0, 0600, 1);
-	int trys = 1, sem_reopen = 0;
-
-	if (sem_client != SEM_FAILED) {
+	if (bad_list_clents) {
+		int trys = 1;
 		while (trys) {
-			if (sem_trywait(sem_client) == 0) {
-				if (bad_list_clents) {
-					long index;
-					for (index = 0; index < bad_list_clents->numbers; index++) {
-						if (!strncmp(bad_list_clents->items[index].username,
-								username,
-								USERNAMEMAXLEN)) {
-							fnd = bad_list_clents->items[index].uid;
-							break;
-						}
+			if (sem_trywait(&bad_list_clents->sem) == 0) {
+				long index;
+				for (index = 0; index < bad_list_clents->numbers; index++) {
+					if (!strncmp(bad_list_clents->items[index].username,
+							username,
+							USERNAMEMAXLEN)) {
+						fnd = bad_list_clents->items[index].uid;
+						break;
 					}
 				}
 				trys = 0;
+				sem_post(&bad_list_clents->sem);
 			} else {
 				if (errno == EAGAIN) {
 					trys++;
-					if (trys == 100) {
-						trys = 1;
-						sem_close(sem_client);
-						sem_client = sem_open(SHARED_MEMORY_SEM, 0, 0600, 1);
-						sem_reopen++;
-						if (sem_reopen == 4)
-							break;
+					if (trys == 400) {
+						break;
 					}
 				} else {
 					trys = 0;
@@ -348,8 +352,6 @@ int32_t is_user_in_bad_list_cleint(char *username) {
 
 			}
 		}
-		sem_post(sem_client);
-		sem_close(sem_client);
 	}
 
 	cl_munmap ((void *) bad_list_clents, sizeof (shm_structure));
@@ -362,13 +364,13 @@ int user_in_bad_list_cleint_show() {
 	int fnd = 0;
 	mode_t old_umask = umask(0);
 	shm_structure *bad_list_clents;
-	if ((shm_fd_clents = shm_open(SHARED_MEMORY_NAME, O_RDONLY, 0755)) < 0) {
+	if ((shm_fd_clents = shm_open(SHARED_MEMORY_NAME, O_RDWR, 0755)) < 0) {
 		umask(old_umask);
 		return 0;
 	}
 	if ((bad_list_clents
 			= (shm_structure *) cl_mmap (0, sizeof (shm_structure),
-					PROT_READ, MAP_SHARED,
+					PROT_READ | PROT_WRITE, MAP_SHARED,
 					shm_fd_clents,
 					0)) == MAP_FAILED) {
 		close(shm_fd_clents);
@@ -376,36 +378,27 @@ int user_in_bad_list_cleint_show() {
 		return 0;
 	}
 
-	sem_t *sem_client = sem_open(SHARED_MEMORY_SEM, 0, 0600, 1);
 	umask(old_umask);
 	int trys = 1;
 
-	if (sem_client != SEM_FAILED) {
+	if (bad_list_clents) {
 		while (trys) {
-			if (sem_trywait(sem_client) == 0) {
-				if (bad_list_clents) {
-					long index;
-					for (index = 0; index < bad_list_clents->numbers; index++) {
-						printf("%s\n", bad_list_clents->items[index].username);
-					}
+			if (sem_trywait(&bad_list_clents->sem) == 0) {
+				long index;
+				for (index = 0; index < bad_list_clents->numbers; index++) {
+					printf("%s\n", bad_list_clents->items[index].username);
 				}
 				trys = 0;
+				sem_post(&bad_list_clents->sem);
 			} else {
 				if (errno == EAGAIN) {
 					trys++;
-					if (trys == 100) {
-						trys = 1;
-						sem_post(sem_client);
-						sem_client = sem_open(SHARED_MEMORY_SEM, 0, 0600, 1);
-					}
 				} else {
 					trys = 0;
 				}
 
 			}
 		}
-		sem_post(sem_client);
-		sem_close(sem_client);
 	}
 
 	cl_munmap ((void *) bad_list_clents, sizeof (shm_structure));
@@ -419,18 +412,29 @@ pthread_mutex_t mtx_shared = PTHREAD_MUTEX_INITIALIZER;
 
 int init_bad_users_list_client() {
 	mode_t old_umask = umask(0);
-	sem_t *sem_in = NULL;
 	pthread_mutex_lock(&mtx_shared);
-	int first = 0;
+	int first = 0, need_truncate = 0;
 	if ((shm_fd_clents_global = shm_open(SHARED_MEMORY_NAME,
-			(O_CREAT | O_EXCL | O_RDWR), 0600)) > 0) {
+			(O_CREAT | O_EXCL | O_RDWR), 0600)) > 0)
+	{
 		first = 1;
-	} else if ((shm_fd_clents_global = shm_open(SHARED_MEMORY_NAME,
-			(O_CREAT | O_RDWR), 0600)) < 0) {
+	}
+	else if ((shm_fd_clents_global = shm_open(SHARED_MEMORY_NAME,
+			(O_CREAT | O_RDWR), 0600)) < 0)
+	{
 		pthread_mutex_unlock(&mtx_shared);
 		umask(old_umask);
 		return -1;
 	}
+	else
+	{
+                struct stat file;
+                if (stat(SHARED_MEMORY_PATH SHARED_MEMORY_NAME, &file) == 0)
+		{
+                        need_truncate = file.st_size < sizeof(shm_structure) ? 1 : need_truncate;
+        	}
+	}
+
 	if ((bad_list_clents_global = (shm_structure *) cl_mmap (0,
 			sizeof
 			(shm_structure),
@@ -445,24 +449,24 @@ int init_bad_users_list_client() {
 		return -2;
 	}
 
-	if (first) {
+	if (first || need_truncate) {
 		ftruncate(shm_fd_clents_global, sizeof(shm_structure));
 
-		sem_in = sem_open(SHARED_MEMORY_SEM, 0);
-
-		if (sem_in == SEM_FAILED) {
+		if (sem_init(&bad_list_clents_global->sem, 1, 1) < 0)
+		{
 			cl_munmap ((void *) bad_list_clents_global, sizeof (shm_structure));
 			bad_list_clents_global = NULL;
 			close(shm_fd_clents_global);
 			pthread_mutex_unlock(&mtx_shared);
 			return -2;
 		}
-		if (sem_wait(sem_in) == 0) {
-			clear_bad_users_list();
-			sem_post(sem_in);
-		}
-		sem_close(sem_in);
+	}
 
+	if (first) {
+		if (sem_wait(&bad_list_clents_global->sem) == 0) {
+			clear_bad_users_list();
+			sem_post(&bad_list_clents_global->sem);
+		}
 	}
 
 	pthread_mutex_unlock(&mtx_shared);
@@ -481,36 +485,28 @@ int remove_bad_users_list_client() {
 }
 
 int32_t is_user_in_bad_list_cleint_persistent(char *username) {
-	sem_t *sem_client = sem_open(SHARED_MEMORY_SEM, 0, 0600, 1);
-	int trys = 1, sem_reopen = 0;
 	int32_t fnd = 0;
 
-	if (sem_client != SEM_FAILED) {
+	if (bad_list_clents_global && (bad_list_clents_global != MAP_FAILED)) {
+		int trys = 1;
 		while (trys) {
-			if (sem_trywait(sem_client) == 0) {
-				if (bad_list_clents_global && (bad_list_clents_global
-						!= MAP_FAILED)) {
-					long index = 0;
-					for (index = 0; index < bad_list_clents_global->numbers; index++) {
-						if (!strncmp(
-								bad_list_clents_global->items[index].username,
-								username, USERNAMEMAXLEN)) {
-							fnd = bad_list_clents_global->items[index].uid;
-							break;
-						}
+			if (sem_trywait(&bad_list_clents_global->sem) == 0) {
+				long index = 0;
+				for (index = 0; index < bad_list_clents_global->numbers; index++) {
+					if (!strncmp(
+							bad_list_clents_global->items[index].username,
+							username, USERNAMEMAXLEN)) {
+						fnd = bad_list_clents_global->items[index].uid;
+						break;
 					}
 				}
 				trys = 0;
+				sem_post(&bad_list_clents_global->sem);
 			} else {
 				if (errno == EAGAIN) {
 					trys++;
-					if (trys == 100) {
-						trys = 1;
-						sem_close(sem_client);
-						sem_client = sem_open(SHARED_MEMORY_SEM, 0, 0600, 1);
-						sem_reopen++;
-						if (sem_reopen == 4)
-							break;
+					if (trys == 400) {
+						break;
 					}
 				} else {
 					trys = 0;
@@ -518,8 +514,6 @@ int32_t is_user_in_bad_list_cleint_persistent(char *username) {
 
 			}
 		}
-		sem_post(sem_client);
-		sem_close(sem_client);
 	}
 
 	return fnd;
@@ -527,32 +521,24 @@ int32_t is_user_in_bad_list_cleint_persistent(char *username) {
 
 void printf_bad_list_cleint_persistent(void) {
 	printf(" USER             NUMBER\n");
-	sem_t *sem_client = sem_open(SHARED_MEMORY_SEM, 0, 0600, 1);
-	int trys = 1, sem_reopen = 0;
 
-	if (sem_client != SEM_FAILED) {
+	if (bad_list_clents_global && (bad_list_clents_global != MAP_FAILED)) {
+		int trys = 1;
 		while (trys) {
-			if (sem_trywait(sem_client) == 0) {
-				if (bad_list_clents_global && (bad_list_clents_global
-						!= MAP_FAILED)) {
-					long index = 0;
-					for (index = 0; index < bad_list_clents_global->numbers; index++) {
-						printf(" %-16s %ld\n",
-								bad_list_clents_global->items[index].username,
-								index);
-					}
+			if (sem_trywait(&bad_list_clents_global->sem) == 0) {
+				long index = 0;
+				for (index = 0; index < bad_list_clents_global->numbers; index++) {
+					printf(" %-16s %ld\n",
+							bad_list_clents_global->items[index].username,
+							index);
 				}
 				trys = 0;
+				sem_post(&bad_list_clents_global->sem);
 			} else {
 				if (errno == EAGAIN) {
 					trys++;
-					if (trys == 100) {
-						trys = 1;
-						sem_close(sem_client);
-						sem_client = sem_open(SHARED_MEMORY_SEM, 0, 0600, 1);
-						sem_reopen++;
-						if (sem_reopen == 4)
-							break;
+					if (trys == 400) {
+						break;
 					}
 				} else {
 					trys = 0;
@@ -560,8 +546,6 @@ void printf_bad_list_cleint_persistent(void) {
 
 			}
 		}
-		sem_post(sem_client);
-		sem_close(sem_client);
 	}
 
 	return;
