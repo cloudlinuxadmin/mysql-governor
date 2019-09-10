@@ -908,7 +908,7 @@ for native procedure restoring of MySQL packages""")
         """
         Specific actions after governor installation
         """
-        force_update_cagefs()
+        #force_update_cagefs()
 
     def _set_mysql_access(self):
         """
