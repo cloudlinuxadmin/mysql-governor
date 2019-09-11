@@ -107,54 +107,57 @@ class DirectAdminManager(InstallManager):
         """
         print "Detect MySQL version for AUTO"
 
-        check_file("/usr/local/directadmin/custombuild/build")
-        check_file("/usr/local/directadmin/custombuild/options.conf")
-        MYSQL_DA_VER = ""
-
-        # MYSQL_DA_TYPE=`cat /usr/local/directadmin/custombuild/options.conf | grep mysql_inst= | cut -d= -f2`
         try:
-            MYSQL_DA_VER = grep("/usr/local/directadmin/custombuild/options.conf", "mysql=")[0].split("=")[1].strip()
-            MYSQL_DA_TYPE = grep("/usr/local/directadmin/custombuild/options.conf", "mysql_inst=")[0].split("=")[1].strip()
-        except IndexError:
-            MYSQL_DA_VER = ""
-            MYSQL_DA_TYPE = ""
-        if MYSQL_DA_TYPE == "no":
-            if os.path.exists("/usr/share/lve/dbgovernor/da.tp.old"):
-                MYSQL_DA_TYPE = read_file("/usr/share/lve/dbgovernor/da.tp.old")
-            elif os.path.exists("/usr/bin/mysql"):
-                result = exec_command("/usr/bin/mysql -V | grep -c 'MariaDB' -i || true", True)
-                if result == "0":
-                    MYSQL_DA_TYPE = "mysql"
-                else:
-                    MYSQL_DA_TYPE = "mariadb"
+            MYSQL_DA_VER = self.prev_version['full']
+            print 'Detected successfully from installed mysql binary: {ver}'.format(ver=MYSQL_DA_VER)
+        except KeyError:
+            print 'Failed to detect from mysql binary, trying to detect from custombuild options'
+            check_file("/usr/local/directadmin/custombuild/build")
+            check_file("/usr/local/directadmin/custombuild/options.conf")
+            # MYSQL_DA_TYPE=`cat /usr/local/directadmin/custombuild/options.conf | grep mysql_inst= | cut -d= -f2`
+            try:
+                MYSQL_DA_VER = grep("/usr/local/directadmin/custombuild/options.conf", "mysql=")[0].split("=")[1].strip()
+                MYSQL_DA_TYPE = grep("/usr/local/directadmin/custombuild/options.conf", "mysql_inst=")[0].split("=")[1].strip()
+            except IndexError:
+                MYSQL_DA_VER = ""
+                MYSQL_DA_TYPE = ""
+            if MYSQL_DA_TYPE == "no":
+                if os.path.exists("/usr/share/lve/dbgovernor/da.tp.old"):
+                    MYSQL_DA_TYPE = read_file("/usr/share/lve/dbgovernor/da.tp.old")
+                elif os.path.exists("/usr/bin/mysql"):
+                    result = exec_command("/usr/bin/mysql -V | grep -c 'MariaDB' -i || true", True)
+                    if result == "0":
+                        MYSQL_DA_TYPE = "mysql"
+                    else:
+                        MYSQL_DA_TYPE = "mariadb"
 
-        print "I got %s and %s" % (MYSQL_DA_VER, MYSQL_DA_TYPE)
+            print "I got %s and %s" % (MYSQL_DA_VER, MYSQL_DA_TYPE)
 
-        mysql_version_map = {
-            "5.0": "mysql50",
-            "5.1": "mysql51",
-            "5.5": "mysql55",
-            "5.6": "mysql56",
-            "5.7": "mysql57",
-            "8.0": "mysql80",
-            "10.0.0": "mariadb100",
-            "10.1.1": "mariadb101"
-        }
-        mariadb_version_map = {
-            "10.3": "mariadb103",
-            "10.2": "mariadb102",
-            "10.1": "mariadb101",
-            "10.0": "mariadb100",
-            "5.6": "mariadb100",
-            "5.5": "mariadb100",
-            "10.0.0": "mariadb100",
-            "10.1.1": "mariadb100"
-        }
+            mysql_version_map = {
+                "5.0": "mysql50",
+                "5.1": "mysql51",
+                "5.5": "mysql55",
+                "5.6": "mysql56",
+                "5.7": "mysql57",
+                "8.0": "mysql80",
+                "10.0.0": "mariadb100",
+                "10.1.1": "mariadb101"
+            }
+            mariadb_version_map = {
+                "10.3": "mariadb103",
+                "10.2": "mariadb102",
+                "10.1": "mariadb101",
+                "10.0": "mariadb100",
+                "5.6": "mariadb100",
+                "5.5": "mariadb100",
+                "10.0.0": "mariadb100",
+                "10.1.1": "mariadb100"
+            }
 
-        if MYSQL_DA_TYPE == "mysql":
-            MYSQL_DA_VER = mysql_version_map[MYSQL_DA_VER]
-        elif MYSQL_DA_TYPE == "mariadb":
-            MYSQL_DA_VER = mariadb_version_map[MYSQL_DA_VER]
+            if MYSQL_DA_TYPE == "mysql":
+                MYSQL_DA_VER = mysql_version_map[MYSQL_DA_VER]
+            elif MYSQL_DA_TYPE == "mariadb":
+                MYSQL_DA_VER = mariadb_version_map[MYSQL_DA_VER]
 
         return MYSQL_DA_VER
 
@@ -168,7 +171,8 @@ class DirectAdminManager(InstallManager):
             return "yes"
 
         bad_pkg = False
-        list_of_rpm = glob("/usr/local/directadmin/custombuild/mysql/*.rpm")
+        list_of_rpm = glob("/usr/local/directadmin/custombuild/mysql/*.rpm") + glob(
+            "/usr/local/directadmin/scripts/packages/*.rpm")
         for found_package in list_of_rpm:
             try:
                 result = exec_command("/bin/rpm -qp %s" % found_package, True)
