@@ -19,3 +19,5 @@ popd
 #compiler-gcc
 sh build.sh &>compiler-gcc-log.log
 cat compiler-gcc-log.log|grep warning &>compiler-gcc-fin.log
+
+exit 0
