@@ -23,7 +23,6 @@ Requires: ncurses
 Requires: lve-utils >= 1.1-3
 Requires: lve-stats >= 0.9-27
 Requires: alt-python27
-Requires: alt-python27-cllib
 Requires: yum-utils
 Requires: tmpwatch
 Requires: wget
