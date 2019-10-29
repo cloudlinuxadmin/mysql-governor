@@ -138,15 +138,52 @@ run_dbtop_command (void *data)
   return NULL;
 }
 
+void *handle_client_connect(void *fd)
+{
+  int ns = (int) ((intptr_t) fd), result;
+  char buffer[_DBGOVERNOR_BUFFER_2048];
+  struct governor_config data_cfg;
+
+  get_config_data (&data_cfg);
+
+  client_type_t ctt;
+  result = read (ns, &ctt, sizeof (client_type_t));
+  switch (result)
+    {
+      case 0:
+      case -1:
+	close (ns);
+	return NULL;
+    }
+
+  if (ctt == DBTOP)
+    {
+      run_writer(fd);
+    }
+  else if (ctt == DBCTL)
+    {
+      run_dbctl_command(fd);
+    }
+  else if (ctt == DBTOPCL)
+    {
+      run_dbtop_command(fd);
+    }
+  else
+    {
+      WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
+		 "incorrect connection(DBTOP)", data_cfg.log_mode);
+
+      close (ns);
+    }
+  return NULL;
+}
+
 void
 accept_connections (int s)
 {
-  int ns, result;
   struct sockaddr_un fsaun;
   int fromlen = sizeof (fsaun);
   pthread_t thread;
-  int ret;
-  FILE *in, *out;
   char buffer[_DBGOVERNOR_BUFFER_2048];
   struct governor_config data_cfg;
 
@@ -154,6 +191,7 @@ accept_connections (int s)
 
   while (1)
     {
+      int ns;
 
       if ((ns = accept (s, (struct sockaddr *) &fsaun, &fromlen)) < 0)
 	{
@@ -172,44 +210,8 @@ accept_connections (int s)
 
 	}
       intptr_t accept_socket = (intptr_t) ns;
-      client_type_t ctt;
-      result = read (ns, &ctt, sizeof (client_type_t));
-      switch (result)
-	{
-	case 0:
-	case -1:
-	  close (ns);
-	  continue;
-	  break;
-	}
-
-      if (ctt == DBTOP)
-	{
-	  ret = pthread_create (&thread, NULL, run_writer,
-				(void *) accept_socket);
-	  pthread_detach (thread);
-	}
-      else if (ctt == DBCTL)
-	{
-	  ret = pthread_create (&thread, NULL, run_dbctl_command,
-				(void *) accept_socket);
-	  pthread_detach (thread);
-	}
-      else if (ctt == DBTOPCL)
-	{
-	  ret = pthread_create (&thread, NULL, run_dbtop_command,
-				(void *) accept_socket);
-	  pthread_detach (thread);
-	}
-      else
-	{
-
-	  WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		     "incorrect connection(DBTOP)", data_cfg.log_mode);
-
-	  close (ns);
-	}
-
+      pthread_create (&thread, NULL, handle_client_connect, (void*) accept_socket);
+      pthread_detach (thread);
     }
 }
 
@@ -340,7 +342,7 @@ run_dbctl_command (void *data)
 	    break;
 
 	  g_hash_table_foreach ((GHashTable *) get_accounts (),
-				(GHFunc) send_account, out);
+					(GHFunc) send_account, out);
 	  new_record = 2;
 	  if (!fwrite_wrapper (&new_record, sizeof (int), 1, out))
 	    break;
