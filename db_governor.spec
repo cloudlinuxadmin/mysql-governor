@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   47
+%define g_release   48
 %define g_key_library 9
 
 %if %{undefined _unitdir}
@@ -405,6 +405,9 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Tue Oct 29 2019 Rostyslav Tulchii <rtulchii@cloudlinux.com> 1.2-48
+- MYSQLG-429: Optimized handling dbtop-clients
+
 * Tue Sep 17 2019 Rostyslav Tulchii <rtulchii@cloudlinux.com>, Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-47
 - MYSQLG-422: mysql version detection for DirectAdmin improved
 - MYSQLG-421: Deleted one of cagefs force-update after governor installation
