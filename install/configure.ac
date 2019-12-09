@@ -71,7 +71,7 @@ fi
 AC_SUBST(PYTHONINTERPRETER)
 AC_MSG_CHECKING([for up to date python])
 echo -n "checking for up to date python... "
-if python -c 'i=1;i+=1' >/dev/null 2>&1 ; then
+if /opt/alt/python27/bin/python2.7 -c 'i=1;i+=1' >/dev/null 2>&1 ; then
 	AC_MSG_RESULT([ok])
 else
 	AC_MSG_RESULT([failed])

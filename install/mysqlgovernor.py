@@ -14,9 +14,6 @@ import sys
 import time
 import datetime
 import os
-
-from clcommon import cpapi
-
 from modules import InstallManager, Storage
 from utilities import exec_command, bcolors, query_yes_no, \
     correct_mysqld_service_for_cl7, set_debug, shadow_tracing, set_path_environ, \
@@ -191,7 +188,8 @@ def main(argv):
     storage_holder.check_root_permissions()
 
     # create install manager instance for current cp
-    manager = InstallManager.factory(cpapi.CP_NAME)
+    panel = exec_command("cldetect --detect-cp-name", as_string=True)
+    manager = InstallManager.factory(panel)
 
     if opts.debug_flag:
         set_debug(True)

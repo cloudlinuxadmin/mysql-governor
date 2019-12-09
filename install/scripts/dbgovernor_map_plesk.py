@@ -9,9 +9,9 @@
 import pwd
 import os
 import MySQLdb
-from clcommon import cpapi
 
 psa_conf = '/etc/psa/psa.conf'
+psa_shadow = '/etc/psa/.psa.shadow'
 db = 'psa'
 
 
@@ -21,7 +21,10 @@ def read_mysql_conn_params():
     username, password, socket (if exists)
     :return: dict {login: , pass: , socket:}
     """
-    access = cpapi.db_access()
+    access = dict()
+    access['login'] = 'admin'
+    with open(psa_shadow, 'r') as f:
+        access['pass'] = f.read().strip()
     with open(psa_conf, 'rb') as conf:
         mysql_sock = [l.strip() for l in conf.readlines() if 'MYSQL_SOCKET' in l]
     if mysql_sock:

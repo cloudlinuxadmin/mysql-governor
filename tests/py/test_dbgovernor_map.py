@@ -1,15 +1,5 @@
 import mock
-import sys
 import dbgovernor_map
-
-
-def mock_clcommon_import():
-    module = type(sys)('clcommon')
-    module.cpapi = ''
-    sys.modules['clcommon'] = module
-
-
-mock_clcommon_import()
 import dbgovernor_map_plesk
 
 
