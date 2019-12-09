@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   48
+%define g_release   49
 %define g_key_library 9
 
 %if %{undefined _unitdir}
@@ -41,7 +41,11 @@ BuildRequires: patch
 BuildRequires: systemd
 BuildRequires: systemd-devel
 # for python tests
+%if 0%{?rhel} == 8
+BuildRequires: python2-pytest python2-mock python2-MySQL-python
+%else
 BuildRequires: pytest python-mock MySQL-python
+%endif
 %endif
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 Conflicts: db-governor
@@ -177,8 +181,11 @@ touch $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/tmp/INFO
 echo "CloudLinux" > $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/tmp/INFO
 
 %check
-%if 0%{?rhel} > 6
 echo "****Start unittests for python code"
+%if 0%{?rhel} == 8
+PYTHONPATH=install:install/scripts:. /usr/bin/py.test-2 tests/py/
+%endif
+%if 0%{?rhel} == 7
 PYTHONPATH=install:install/scripts:. /usr/bin/py.test tests/py/
 %endif
 
@@ -404,6 +411,10 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Mon Dec 09 2019 Sergey Kokhan <skokhan@cloudlinux.com>, Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-49
+- MYSQLG-436: Add CL8 support for governor-mysql
+- MYSQLG-430: removed cpapi usage; cldetect instead
+
 * Tue Oct 29 2019 Rostyslav Tulchii <rtulchii@cloudlinux.com> 1.2-48
 - MYSQLG-429: Optimized handling dbtop-clients
 
