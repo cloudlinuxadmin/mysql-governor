@@ -6,7 +6,8 @@
 %define _unitdir /usr/lib/systemd/system
 %endif
 
-%define __python /opt/alt/python27/bin/python2.7
+%define pypath /opt/alt/python37/bin
+%define __python %{pypath}/python3
 %global __os_install_post %(echo '%{__os_install_post}' | sed -e 's!/usr/lib[^[:space:]]*/brp-python-bytecompile[[:space:]].*$!!g')
 
 
@@ -22,7 +23,8 @@ Requires: glib2
 Requires: ncurses
 Requires: lve-utils >= 1.1-3
 Requires: lve-stats >= 0.9-27
-Requires: alt-python27
+Requires: alt-python37
+Requires: alt-python37-MySQL-meta
 Requires: yum-utils
 Requires: tmpwatch
 Requires: wget
@@ -33,19 +35,20 @@ BuildRequires: ncurses-devel
 BuildRequires: glib2-devel
 BuildRequires: autoconf
 BuildRequires: tar
-BuildRequires: alt-python27
+BuildRequires: alt-python37
 BuildRequires: libxml2-devel
 BuildRequires: pcre-devel
 BuildRequires: patch
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
 BuildRequires: systemd
 BuildRequires: systemd-devel
-# for python tests
-%if 0%{?rhel} == 8
-BuildRequires: python2-pytest python2-mock python2-MySQL-python
-%else
-BuildRequires: pytest python-mock MySQL-python
 %endif
+# for python tests
+BuildRequires: alt-python37-pytest alt-python37-mock alt-python37-MySQL-meta
+%if 0%{?rhel} >= 7
+BuildRequires: mariadb-libs
+%else
+BuildRequires: mysql-libs
 %endif
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 Conflicts: db-governor
@@ -113,7 +116,7 @@ if [ -e autoconf ]; then
 fi
 
 cd install
-make DESTDIR=$RPM_BUILD_ROOT install
+#make DESTDIR=$RPM_BUILD_ROOT install
 cd -
 mkdir -p $RPM_BUILD_ROOT/var/lve/dbgovernor/
 mkdir -p $RPM_BUILD_ROOT/var/lve/dbgovernor-store/
@@ -150,6 +153,17 @@ install -D -m 755 build_test/lib/libgovernor.so $RPM_BUILD_ROOT%{_libdir}/libgov
 
 #install utility
 install -D -m 755 install/db-select-mysql $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/db-select-mysql
+install -D -m 755 install/mysqlgovernor.py $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/mysqlgovernor.py
+
+install -D -m 644 install/utilities.py $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utilities.py
+install -D -m 644 install/modules/__init__.py $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/modules/__init__.py
+install -D -m 644 install/modules/base.py $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/modules/base.py
+install -D -m 644 install/modules/cpanel.py $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/modules/cpanel.py
+install -D -m 644 install/modules/da.py $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/modules/da.py
+install -D -m 644 install/modules/plesk.py $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/modules/plesk.py
+install -D -m 644 install/modules/iworx.py $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/modules/iworx.py
+install -D -m 644 install/modules/ispmanager.py $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/modules/ispmanager.py
+install -D -m 644 install/modules/storage.py $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/modules/storage.py
 
 install -D -m 755 install/scripts/chek_mysql_rpms_local $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/chek_mysql_rpms_local
 install -D -m 755 install/scripts/cpanel-delete-hooks $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/cpanel-delete-hooks
@@ -182,12 +196,7 @@ echo "CloudLinux" > $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/tmp/INFO
 
 %check
 echo "****Start unittests for python code"
-%if 0%{?rhel} == 8
-PYTHONPATH=install:install/scripts:. /usr/bin/py.test-2 tests/py/
-%endif
-%if 0%{?rhel} == 7
-PYTHONPATH=install:install/scripts:. /usr/bin/py.test tests/py/
-%endif
+PYTHONPATH=install:install/scripts:. %{pypath}/py.test tests/py/
 
 %clean
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -rf "$RPM_BUILD_ROOT"

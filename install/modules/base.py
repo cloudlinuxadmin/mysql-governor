@@ -14,7 +14,7 @@ import os
 import shutil
 import sys
 import time
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import pwd
 import grp
 import re
@@ -32,10 +32,10 @@ from utilities import get_cl_num, exec_command, exec_command_out, new_lve_ctl, \
     correct_remove_notowned_mysql_service_names_not_symlynks_cl7, get_mysql_log_file, \
     check_mysqld_is_alive, makedir_recursive, patch_governor_config, bcolors, force_update_cagefs, \
     show_new_packages_info, wizard_install_confirm
-from ConfigParser import RawConfigParser
+from configparser import RawConfigParser
 
 
-class InstallManager(object):
+class InstallManager:
     """
     Base class with standard methods for any CP
     """
@@ -156,12 +156,12 @@ class InstallManager(object):
                 if opt in track['files']:
                     # inspect whole path
                     if not os.path.exists(val):
-                        print 'NO LOG for {opt} --> {v}'.format(opt=opt, v=val)
+                        print('NO LOG for {opt} --> {v}'.format(opt=opt, v=val))
                         conf.set(s, opt, default_log)
                 elif opt in track['paths']:
                     # inspect dir path
                     if not os.path.exists(os.path.dirname(val)):
-                        print 'NO PATH for {opt} --> {v}'.format(opt=opt, v=val)
+                        print('NO PATH for {opt} --> {v}'.format(opt=opt, v=val))
                         conf.set(s, opt, default_pid)
 
         if self._get_new_version() == 'mysql80':
@@ -170,7 +170,7 @@ class InstallManager(object):
             # MYSQLG-297, MySQLG-301
             conf.set('mysqld', 'default-authentication-plugin', 'mysql_native_password')
 
-        with open('/etc/my.cnf', 'wb') as configfile:
+        with open('/etc/my.cnf', 'w') as configfile:
             conf.write(configfile)
 
     def remove_current_packages(self):
@@ -193,7 +193,7 @@ class InstallManager(object):
         @param `path` str: path to packages for install
         """
         if not self.cl_version:
-            print "Unknown system type. Installation aborted"
+            print("Unknown system type. Installation aborted")
             sys.exit(1)
 
         self._before_install()
@@ -299,12 +299,12 @@ class InstallManager(object):
 
         self._mysqlservice("restart")
 
-        print "Giving mysqld a few seconds to start up..."
+        print("Giving mysqld a few seconds to start up...")
         time.sleep(5)
 
         if is_package_installed("governor-mysql"):
             service("restart", "db_governor")
-            print bcolors.ok("DB-Governor installed/updated...")
+            print(bcolors.ok("DB-Governor installed/updated..."))
 
         self._after_install_new_packages()
 
@@ -320,7 +320,7 @@ class InstallManager(object):
         """
         if self.ALL_PACKAGES_OLD_NOT_DOWNLOADED:
             self.print_warning_about_not_complete_of_pkg_saving()
-            print bcolors.fail("Rollback disabled")
+            print(bcolors.fail("Rollback disabled"))
             return False
 
         # self._before_install_new_packages()
@@ -361,12 +361,12 @@ class InstallManager(object):
         try:
             timestamp = int(timestamp)
         except (TypeError, ValueError):
-            print >> sys.stderr, "Invalid parameters"
+            print("Invalid parameters", file=sys.stderr)
             return False
 
         history_path = os.path.join(self.HISTORY_FOLDER, "old.%s" % timestamp)
         if not os.path.isdir(history_path):
-            print >> sys.stderr, "No packages for timestamp: %s" % timestamp
+            print("No packages for timestamp: %s" % timestamp, file=sys.stderr)
             return False
 
         self._mysqlservice("stop")
@@ -441,9 +441,9 @@ class InstallManager(object):
                 continue
 
             date = datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M")
-            print "DATE: %s, TS: %s" % (date, timestamp)
+            print("DATE: %s, TS: %s" % (date, timestamp))
             for name in sorted(os.listdir(full_path)):
-                print "    %s" % name
+                print("    %s" % name)
 
     def clear_history_folder(self):
         """
@@ -451,8 +451,8 @@ class InstallManager(object):
         """
         if os.path.isdir(self.HISTORY_FOLDER):
             shutil.rmtree(self.HISTORY_FOLDER)
-            os.mkdir(self.HISTORY_FOLDER, 0755)
-            os.chmod(self.HISTORY_FOLDER, 0755)
+            os.mkdir(self.HISTORY_FOLDER, 0o755)
+            os.chmod(self.HISTORY_FOLDER, 0o755)
 
     def cleanup(self):
         """
@@ -506,23 +506,23 @@ class InstallManager(object):
         cPanel specific action
         """
         # self.set_fs_suid_dumpable()
-        print "No need in fix"
+        print("No need in fix")
 
     def fix_mysqld_service(self):
         """
         DA specific action
         """
-        print "No need in fix"
+        print("No need in fix")
 
     def set_mysql_version(self, version):
         """
         Set new mysql version for next install
         """
         # check available versions
-        versions = ["auto"] + self.REPO_NAMES.keys()
+        versions = ["auto"] + list(self.REPO_NAMES.keys())
         if version not in versions:
-            print >> sys.stderr, "Invalid mysql version."
-            print >> sys.stderr, "Available versions: %s" % ", ".join(versions)
+            print("Invalid mysql version.", file=sys.stderr)
+            print("Available versions: %s" % ", ".join(versions), file=sys.stderr)
             sys.exit(1)
 
         write_file(self.NEW_VERSION_FILE, version)
@@ -532,19 +532,19 @@ class InstallManager(object):
         """
         Run this code in spec file
         """
-        print "Set FS suid_dumpable for governor to work correctly"
+        print("Set FS suid_dumpable for governor to work correctly")
         exec_command_out("sysctl -w fs.suid_dumpable=1")
         if os.path.exists("/etc/sysctl.conf"):
             if not grep("/etc/sysctl.conf", "fs.suid_dumpable=1"):
-                print "Add to /etc/sysctl.conf suid_dumpable instruction " \
-                      "for governor to work correctly"
+                print("Add to /etc/sysctl.conf suid_dumpable instruction " \
+                      "for governor to work correctly")
                 shutil.copy("/etc/sysctl.conf", "/etc/sysctl.conf.bak")
                 add_line("/etc/sysctl.conf", "fs.suid_dumpable=1")
             else:
-                print "Everything is present in /etc/sysctl.conf " \
-                      "for governor to work correctly"
+                print("Everything is present in /etc/sysctl.conf " \
+                      "for governor to work correctly")
         else:
-            print "Create /etc/sysctl.conf for governor to work correctly"
+            print("Create /etc/sysctl.conf for governor to work correctly")
             add_line("/etc/sysctl.conf", "fs.suid_dumpable=1")
 
     def _load_packages(self, beta):
@@ -561,20 +561,20 @@ class InstallManager(object):
         """
         Display warning in case of failed download of old packages
         """
-        print bcolors.fail(
+        print(bcolors.fail(
             """Restore of MySQL packages will not be completed because not \
 all old packages were downloaded.\nIf something went wrong during \
 or after installation process, execute \
 /usr/share/lve/dbgovernor/mysqlgovernor --delete \
-for native procedure restoring of MySQL packages""")
+for native procedure restoring of MySQL packages"""))
 
     @staticmethod
     def print_warning_about_not_complete_of_newpkg_saving():
         """
         Display warning in case of failed download of new packages
         """
-        print bcolors.fail("Install of MySQL packages will not be completed " \
-                           "because not all new packages have been downloaded")
+        print(bcolors.fail("Install of MySQL packages will not be completed " \
+                           "because not all new packages have been downloaded"))
 
     def _load_current_packages(self, download=True, folder="old"):
         """
@@ -582,7 +582,7 @@ for native procedure restoring of MySQL packages""")
         @param `download` bool: download rpm files or
                                 only return list of installed packages
         """
-        print bcolors.info("Start download current installed packages")
+        print(bcolors.info("Start download current installed packages"))
         PATTERNS = ["cl-mysql", "cl-mariadb", "cl-percona", "mysql", "mariadb",
                     "compat-mysql5", "Percona"]
         mysqld_path = exec_command("which mysqld", True, silent=True)
@@ -599,8 +599,8 @@ for native procedure restoring of MySQL packages""")
                                                     silent=True,
                                                     return_code=True)
             if check_if_mysql_installed == "no":
-                print "No mysql packages installed, " \
-                      "but mysqld file presents on system"
+                print("No mysql packages installed, " \
+                      "but mysqld file presents on system")
                 pkg_name = None
             else:
                 pkg_name = exec_command("""rpm -qf %s """ % mysqld_path, True,
@@ -612,11 +612,10 @@ for native procedure restoring of MySQL packages""")
         packages = exec_command("""rpm -qa|grep -iE "^(%s)" """ %
                                 "|".join(PATTERNS), silent=True)
         # try to exclude mysql-community release package from the list of packages to download
-        packages = filter(lambda x: not re.match(r'mysql\d+-community-release[a-z0-9\-]+.noarch', x),
-                          packages)
+        packages = [x for x in packages if not re.match(r'mysql\d+-community-release[a-z0-9\-]+.noarch', x)]
 
         if not len(packages):
-            print "No installed DB packages found"
+            print("No installed DB packages found")
             return False
 
         if pkg_name:
@@ -640,13 +639,13 @@ for native procedure restoring of MySQL packages""")
                 if "server" in package_item and package_item[:3] == "cl-":
                     IS_CL_MYSQL = True
 
-            if IS_CL_MYSQL == True:
+            if IS_CL_MYSQL is True:
                 if not download_packages(packages, folder, True):
                     self.ALL_PACKAGES_OLD_NOT_DOWNLOADED = True
             else:
                 if not download_packages(packages, folder, True,
                                          self._custom_download_of_rpm):
-                    print bcolors.info("Trying to load custom packages from yum")
+                    print(bcolors.info("Trying to load custom packages from yum"))
                     if not download_packages(packages, folder, True):
                         self.ALL_PACKAGES_OLD_NOT_DOWNLOADED = True
 
@@ -663,7 +662,7 @@ for native procedure restoring of MySQL packages""")
             detected_version_on_system = self._detect_version_if_auto()
             if detected_version_on_system != "+":
                 if detected_version_on_system == "":
-                    print >> sys.stderr, "Unknown SQL VERSION"
+                    print("Unknown SQL VERSION", file=sys.stderr)
                     sys.exit(1)
                 else:
                     sql_version = detected_version_on_system
@@ -673,7 +672,7 @@ for native procedure restoring of MySQL packages""")
         """
         detect and download packages for new installation
         """
-        print bcolors.info("Start download packages for new installation")
+        print(bcolors.info("Start download packages for new installation"))
         # based on sql_version get packages names list and repo name
         packages, requires = [], []
         arch = ".x86_64" if os.uname()[-1] == "x86_64" else ""
@@ -715,7 +714,7 @@ for native procedure restoring of MySQL packages""")
                             "cl-Percona-meta-devel"]
                 requires = packages[:3]
             else:
-                print >> sys.stderr, "Unknown SQL VERSION"
+                print("Unknown SQL VERSION", file=sys.stderr)
                 sys.exit(1)
 
         if sql_version == "mysql51":
@@ -736,15 +735,15 @@ for native procedure restoring of MySQL packages""")
         repo_url = "http://repo.cloudlinux.com/other/cl%s/mysqlmeta/%s" % (
             self.cl_version, repo)
         try:
-            content = urllib2.urlopen(repo_url).read()
-        except Exception, e:
-            print >> sys.stderr, "Can`t download repo file: %s" % e
+            content = urllib.request.urlopen(repo_url).read()
+        except Exception as e:
+            print("Can`t download repo file: %s" % e, file=sys.stderr)
             sys.exit(1)
         else:
             if os.path.exists("/etc/yum.repos.d/cl-mysql.repo"):
                 shutil.copy2("/etc/yum.repos.d/cl-mysql.repo",
                              "/etc/yum.repos.d/cl-mysql.repo.bak")
-            write_file("/etc/yum.repos.d/cl-mysql.repo", content)
+            write_file("/etc/yum.repos.d/cl-mysql.repo", content.decode())
 
         # update repositories
         exec_command_out("yum clean all")
@@ -807,7 +806,7 @@ for native procedure restoring of MySQL packages""")
         """
         current_version = self._check_mysql_version()
         if not self.prev_version or not current_version:
-            print 'Problem with version retrieving'
+            print('Problem with version retrieving')
             return False
         return current_version['mysql_type'] != self.prev_version['mysql_type'] or current_version['short'] != self.prev_version['short']
 
@@ -815,9 +814,9 @@ for native procedure restoring of MySQL packages""")
         """
         Run mysql_upgrade and mysql_fix_privilege_tables scripts if it is needed
         """
-        print 'Check for the need of mysql_upgrade...'
+        print('Check for the need of mysql_upgrade...')
         if self.check_need_for_mysql_upgrade():
-            print 'Tables should be upgraded!'
+            print('Tables should be upgraded!')
             if self.MYSQLPASSWORD:
                 cmd_upgrade = "/usr/bin/mysql_upgrade --user='{user}' --password='{passwd}'".format(user=self.MYSQLUSER, passwd=self.MYSQLPASSWORD)
                 cmd_fix = "/usr/bin/mysql_fix_privilege_tables --user='{user}' --password='{passwd}'".format(user=self.MYSQLUSER, passwd=self.MYSQLPASSWORD)
@@ -828,7 +827,7 @@ for native procedure restoring of MySQL packages""")
             if os.path.exists('/usr/bin/mysql_fix_privilege_tables'):
                 exec_command_out(cmd_fix)
         else:
-            print 'No need for upgrading tables'
+            print('No need for upgrading tables')
 
     def _before_install_new_packages(self):
         """
@@ -843,7 +842,7 @@ for native procedure restoring of MySQL packages""")
         self._set_mysql_access()
         # run mysql_upgrade if needed
         self.run_mysql_upgrade()
-        print "The installation of MySQL for db_governor completed"
+        print("The installation of MySQL for db_governor completed")
 
     def _after_install_rollback(self):
         """
@@ -871,7 +870,7 @@ for native procedure restoring of MySQL packages""")
         """
         Remove installed packages and install new
         """
-        print bcolors.info("Removing mysql for db_governor start")
+        print(bcolors.info("Removing mysql for db_governor start"))
 
         # download standard packages
         self._load_new_packages(False, "auto")
@@ -891,7 +890,7 @@ for native procedure restoring of MySQL packages""")
         # install auto packages
         install_packages("new", False)
 
-        print bcolors.ok("Removing mysql for db_governor completed")
+        print(bcolors.ok("Removing mysql for db_governor completed"))
 
     def _after_delete(self):
         """
@@ -916,13 +915,13 @@ for native procedure restoring of MySQL packages""")
         """
         self.get_mysql_user()
         if self.MYSQLUSER and self.MYSQLPASSWORD:
-            print "Patch governor configuration file"
+            print("Patch governor configuration file")
             check_file("/etc/container/mysql-governor.xml")
             patch_governor_config(self.MYSQLUSER, self.MYSQLPASSWORD)
 
             if exec_command("rpm -qa governor-mysql", True):
                 service("restart", "db_governor")
-                print "DB-Governor restarted..."
+                print("DB-Governor restarted...")
 
     @staticmethod
     def _kill_mysql():
@@ -930,12 +929,12 @@ for native procedure restoring of MySQL packages""")
         Kill mysqld processes.
         """
         if check_mysqld_is_alive():
-            print "Stop hunging MySQL"
+            print("Stop hunging MySQL")
             exec_command_out("/usr/bin/killall -SIGTERM mysqld_safe")
-            print "Waiting for mysqld_safe stop"
+            print("Waiting for mysqld_safe stop")
             time.sleep(10)
             exec_command_out("/usr/bin/killall -SIGTERM mysqld")
-            print "Waiting for mysqld stop"
+            print("Waiting for mysqld stop")
             time.sleep(10)
 
     def _enable_mariadb(self):
@@ -967,7 +966,7 @@ for native procedure restoring of MySQL packages""")
         """
         Remove upgrade marker for mysql
         """
-        print "Check for mysql pids and upgrade marker"
+        print("Check for mysql pids and upgrade marker")
         if os.path.exists("/var/lib/mysql/RPM_UPGRADE_MARKER"):
             shutil.move("/var/lib/mysql/RPM_UPGRADE_MARKER",
                         "/var/lib/mysql/RPM_UPGRADE_MARKER.old")
@@ -1032,8 +1031,8 @@ for native procedure restoring of MySQL packages""")
             # service util now uses timeout
             service(action, name)
         except RuntimeError as e:
-            print "Failed to {act} mysql service: {exc}. Please, check mysql service status and logs.".format(
-                act=action, exc=e)
+            print("Failed to {act} mysql service: {exc}. Please, check mysql service status and logs.".format(
+                act=action, exc=e))
             sys.exit(3)
 
     def _rel(self, path):
