@@ -729,6 +729,7 @@ for native procedure restoring of MySQL packages""")
 
         else:
             repo = "cl-%s-common.repo" % self.REPO_NAMES.get(sql_version, None)
+            module = self.MODULE_STREAMS.get(sql_version, None)
 
             if sql_version.startswith("mysql"):
                 packages = ["cl-MySQL-meta", "cl-MySQL-meta-client",
@@ -780,7 +781,6 @@ for native procedure restoring of MySQL packages""")
 
         # update repositories
         exec_command_out("yum clean all")
-        module = self.MODULE_STREAMS.get(sql_version, None)
         cl8_module_enable(module)
         # Add requires to packages list
         for name in requires:
