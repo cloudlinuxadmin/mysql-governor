@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   49
+%define g_release   50
 %define g_key_library 9
 
 %if %{undefined _unitdir}
@@ -411,6 +411,10 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Wed Dec 25 2019 Sergey Kokhan <skokhan@cloudlinux.com>, Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-50
+- MYSQLG-451: install script fixes for CL8
+- MYSQLG-419: setting fs.suid_dumpable value based on io permissions
+
 * Mon Dec 09 2019 Sergey Kokhan <skokhan@cloudlinux.com>, Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-49
 - MYSQLG-436: Add CL8 support for governor-mysql
 - MYSQLG-430: removed cpapi usage; cldetect instead
