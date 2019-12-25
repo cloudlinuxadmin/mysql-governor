@@ -12,7 +12,7 @@
 
 Name: governor-mysql
 Version: %{g_version}
-Release: %{g_release}%{?dist}.cloudlinux
+Release: %{g_release}%{?dist}.cloudlinux.1
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
