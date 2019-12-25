@@ -185,6 +185,18 @@ def is_file_owned_by_package(file_path):
     return out == "yes"
 
 
+def cl8_module_enable(module_name):
+    """
+    Enable given module.
+    Specific for CL8 only
+    """
+    if not module_name:
+        return
+    if get_cl_num() >= 8:
+        exec_command('dnf clean all && dnf module disable -y mysql && dnf module disable -y mariadb && dnf module disable -y percona', True, silent=True)
+        exec_command('dnf module enable -y {}'.format(module_name), True, silent=True)
+
+
 def download_packages(names, dest, beta, custom_download=None):
     """
     Download rpm packages to destination directory
@@ -201,12 +213,15 @@ def download_packages(names, dest, beta, custom_download=None):
         names = _custom_download_packages(names, path, custom_download)
     else:
         repo = "" if not beta else "--enablerepo=cloudlinux-updates-testing --disableplugin=protectbase"
-        if exec_command(
-                "yum repolist -y --enablerepo=* --setopt=cl-mysql.skip_if_unavailable=true --setopt=cl-mysql-debuginfo.skip_if_unavailable=true --setopt=cl-mysql-testing.skip_if_unavailable=true |grep mysql -c",
-                True, True) != "0":
+        if get_cl_num() >= 8:
             repo = "%s --enablerepo=mysqclient" % repo
+        else:
+            if exec_command(
+                    "yum repolist -y --enablerepo=* --setopt=cl-mysql.skip_if_unavailable=true --setopt=cl-mysql-debuginfo.skip_if_unavailable=true --setopt=cl-mysql-testing.skip_if_unavailable=true |grep mysql -c",
+                    True, True) != "0":
+                repo = "%s --enablerepo=mysqclient" % repo
 
-        exec_command("yumdownloader -y --destdir=%s --disableexcludes=all %s %s"
+        exec_command("yumdownloader -y --destdir=%s --disableexcludes=all --setopt=strict=0 %s %s"
                      % (path, repo, " ".join(names)), True, silent=True)
 
     pkg_not_found = False
@@ -773,12 +788,12 @@ def correct_mysqld_service_for_cl7(mysql_type):
     name = "mysqld"
     if mysql_type in ["mysql50", "mysql51", "mysql55", "mysql56", "mysql57", "auto"]:
         name = "mysqld"
-    elif mysql_type in ["mariadb101"]:
+    elif mysql_type in ["mariadb101", "mariadb103"]:
         name = "mariadb"
     elif mysql_type in ["mariadb55", "mariadb100", "percona56"]:
         name = "mysql"
     cl_ver = get_cl_num()
-    if cl_ver == 7:
+    if cl_ver >= 7:
         service_name = name + ".service"
         if check_mysqld_is_alive():
             service("stop", name)
@@ -843,7 +858,7 @@ def correct_remove_notowned_mysql_service_names_cl7():
     or mysqld or mariadb service files
     """
     cl_ver = get_cl_num()
-    if cl_ver == 7:
+    if cl_ver >= 7:
         disable_and_remove_service("/usr/lib/systemd/system/mysqld.service")
         disable_and_remove_service("/usr/lib/systemd/system/mysql.service")
         disable_and_remove_service("/usr/lib/systemd/system/mariadb.service")
@@ -871,7 +886,7 @@ def correct_remove_notowned_mysql_service_names_not_symlynks_cl7():
     or mysqld or mariadb service files
     """
     cl_ver = get_cl_num()
-    if cl_ver == 7:
+    if cl_ver >= 7:
         disable_and_remove_service_if_notsymlynk(
             "/etc/systemd/system/mysqld.service")
         disable_and_remove_service_if_notsymlynk(
@@ -896,7 +911,7 @@ def disable_service(name):
     systemd disabling service, Before disabling MySQL or MariaDB should be stopped.
     """
     cl_ver = get_cl_num()
-    if cl_ver == 7:
+    if cl_ver >= 7:
         service_name = name + ".service"
         if os.path.exists("/usr/lib/systemd/system/" + service_name):
             #Bingo! We found service from one step

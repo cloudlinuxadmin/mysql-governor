@@ -11,6 +11,7 @@ control panels
 """
 import math
 import os
+import stat
 import shutil
 import sys
 import time
@@ -31,7 +32,7 @@ from utilities import get_cl_num, exec_command, exec_command_out, new_lve_ctl, \
     correct_remove_notowned_mysql_service_names_cl7, \
     correct_remove_notowned_mysql_service_names_not_symlynks_cl7, get_mysql_log_file, \
     check_mysqld_is_alive, makedir_recursive, patch_governor_config, bcolors, force_update_cagefs, \
-    show_new_packages_info, wizard_install_confirm
+    show_new_packages_info, wizard_install_confirm, rewrite_file, cl8_module_enable
 from ConfigParser import RawConfigParser
 
 
@@ -58,6 +59,19 @@ class InstallManager(object):
         "mariadb102": "mariadb-10.2",
         "mariadb103": "mariadb-10.3",
         "percona56": "percona-5.6"
+    }
+    MODULE_STREAMS = {
+        "mysql55": "mysql:cl-MySQL55",
+        "mysql56": "mysql:cl-MySQL56",
+        "mysql57": "mysql:cl-MySQL57",
+        "mysql80": "mysql:cl-MySQL80",
+        "mariadb55": "mariadb:cl-MariaDB55",
+        "mariadb100": "mariadb:cl-MariaDB100",
+        "mariadb101": "mariadb:cl-MariaDB101",
+        "mariadb102": "mariadb:cl-MariaDB102",
+        "mariadb103": "mariadb:cl-MariaDB103",
+        "percona56": "percona:cl-Percona56",
+        "auto": "mariadb:10.3"
     }
     ALL_PACKAGES_NEW_NOT_DOWNLOADED = False
     ALL_PACKAGES_OLD_NOT_DOWNLOADED = False
@@ -180,7 +194,7 @@ class InstallManager(object):
         # stop mysql service
         self._mysqlservice("stop")
         # disable service for CL7 to eliminate broken symlinks after removing
-        if self.cl_version == 7:
+        if self.cl_version >= 7:
             self._mysqlservice("disable")
 
         # remove current mysql packages
@@ -286,15 +300,15 @@ class InstallManager(object):
 
         version = self._get_new_version()
         if version.startswith("mariadb") or version == "auto" \
-                and self.cl_version == 7:
+                and self.cl_version >= 7:
             self._enable_mariadb()
 
         if version.startswith("mysql") \
-                and self.cl_version == 7:
+                and self.cl_version >= 7:
             self._enable_mysql()
 
         if version.startswith("percona") \
-                and self.cl_version == 7:
+                and self.cl_version >= 7:
             self._enable_percona()
 
         self._mysqlservice("restart")
@@ -322,6 +336,11 @@ class InstallManager(object):
             self.print_warning_about_not_complete_of_pkg_saving()
             print bcolors.fail("Rollback disabled")
             return False
+
+        # to enable previously enabled mysql module
+        sql_version = self._get_previous_version()
+        module = self.MODULE_STREAMS.get(sql_version, None)
+        cl8_module_enable(module)
 
         # self._before_install_new_packages()
         self._mysqlservice("stop")
@@ -532,20 +551,29 @@ class InstallManager(object):
         """
         Run this code in spec file
         """
-        print "Set FS suid_dumpable for governor to work correctly"
-        exec_command_out("sysctl -w fs.suid_dumpable=1")
+        def check_io_perms():
+            """
+            Returns True if io is readable and False otherwise.
+            Readable io means that fs.suid_dumpable could be 0, otherwise it should be 1 for governor's correct work
+            """
+            mode = os.stat('/proc/{0}/task/{0}/io'.format(os.getpid())).st_mode
+            return stat.S_IMODE(mode) == 0o444
+        suid_dumpable_state = 'fs.suid_dumpable={0:d}'.format(not check_io_perms())
+        print "Set FS suid_dumpable for governor to work correctly ({0})".format(suid_dumpable_state)
+        exec_command_out("sysctl -w {0}".format(suid_dumpable_state))
         if os.path.exists("/etc/sysctl.conf"):
-            if not grep("/etc/sysctl.conf", "fs.suid_dumpable=1"):
+            if not grep("/etc/sysctl.conf", 'fs.suid_dumpable='):
                 print "Add to /etc/sysctl.conf suid_dumpable instruction " \
                       "for governor to work correctly"
                 shutil.copy("/etc/sysctl.conf", "/etc/sysctl.conf.bak")
-                add_line("/etc/sysctl.conf", "fs.suid_dumpable=1")
+                add_line("/etc/sysctl.conf", suid_dumpable_state)
             else:
-                print "Everything is present in /etc/sysctl.conf " \
-                      "for governor to work correctly"
+                print "Rewrite suid_dumpable instruction in /etc/sysctl.conf"
+                with open("/etc/sysctl.conf", 'r+') as f:
+                    rewrite_file(f, re.sub(r'fs.suid_dumpable=\d{1}', suid_dumpable_state, f.read()))
         else:
             print "Create /etc/sysctl.conf for governor to work correctly"
-            add_line("/etc/sysctl.conf", "fs.suid_dumpable=1")
+            add_line("/etc/sysctl.conf", suid_dumpable_state)
 
     def _load_packages(self, beta):
         """
@@ -676,18 +704,22 @@ for native procedure restoring of MySQL packages""")
         print bcolors.info("Start download packages for new installation")
         # based on sql_version get packages names list and repo name
         packages, requires = [], []
+        module = None
         arch = ".x86_64" if os.uname()[-1] == "x86_64" else ""
         sql_version = self._get_result_mysql_version(sql_version)
 
         if "auto" == sql_version:
             repo = "mysql-common.repo"
-            if 7 != self.cl_version:
-                packages = ["mysql", "mysql-server", "mysql-libs",
-                            "mysql-devel", "mysql-bench"]
+            if self.cl_version < 7:
+                packages = ["mysql", "mysql-server", "mysql-libs", "mysql-devel", "mysql-bench"]
             else:
-                packages = ["mariadb", "mariadb-server", "mariadb-libs",
-                            "mariadb-devel", "mariadb-bench"]
+                packages = ["mariadb", "mariadb-server", "mariadb-devel"]
 
+                if self.cl_version < 8:
+                    packages.extend(["mariadb-libs", "mariadb-bench"])
+
+            module = self.MODULE_STREAMS.get(sql_version, None)
+            cl8_module_enable(module)
             # download and install only need arch packages
             packages = ["%s%s" % (x, arch) for x in packages]
             for line in exec_command("yum info %s" % packages[0]):
@@ -748,7 +780,8 @@ for native procedure restoring of MySQL packages""")
 
         # update repositories
         exec_command_out("yum clean all")
-
+        module = self.MODULE_STREAMS.get(sql_version, None)
+        cl8_module_enable(module)
         # Add requires to packages list
         for name in requires:
             # query only for non-installed packages
@@ -942,7 +975,7 @@ for native procedure restoring of MySQL packages""")
         """
         Enable mariaDB services
         """
-        if 7 == self.cl_version:
+        if self.cl_version >= 7:
             exec_command_out("systemctl enable mariadb.service")
             exec_command_out("systemctl enable mysql.service")
             exec_command_out("systemctl enable mysqld.service")
@@ -951,7 +984,7 @@ for native procedure restoring of MySQL packages""")
         """
         Enable MySQL services
         """
-        if 7 == self.cl_version:
+        if self.cl_version >= 7:
             exec_command_out("systemctl enable mysql.service")
             exec_command_out("systemctl enable mysqld.service")
 
@@ -959,7 +992,7 @@ for native procedure restoring of MySQL packages""")
         """
         Enable Percona service
         """
-        if 7 == self.cl_version:
+        if self.cl_version >= 7:
             exec_command_out("systemctl enable mysql.service")
 
     @staticmethod
@@ -1011,7 +1044,7 @@ for native procedure restoring of MySQL packages""")
         Get current installed mysql version from cache file
         """
         if os.path.exists(self.CACHE_VERSION_FILE):
-            read_file(self.CACHE_VERSION_FILE)
+            return read_file(self.CACHE_VERSION_FILE)
 
         return None
 
@@ -1027,6 +1060,9 @@ for native procedure restoring of MySQL packages""")
                            "mysql57", "mysql80", "mariadb101", "mariadb102",
                            "mariadb103"]:
                 name = "mysql"
+        if 8 == self.cl_version:
+            if version in ["auto"]:
+                name = "mariadb"
 
         try:
             # service util now uses timeout
