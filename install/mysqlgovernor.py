@@ -203,6 +203,7 @@ def main(argv):
 
     elif opts.install or opts.install_beta:
         warn_message()
+        manager.cl8_save_current()
         manager.cleanup()
         # detect_percona(opts.force, manager)
 
@@ -221,6 +222,7 @@ def main(argv):
         if not manager.ALL_PACKAGES_NEW_NOT_DOWNLOADED and not manager.DISABLED:
             if check_mysqld_is_alive():
                 manager.save_installed_version()
+                manager.cl8_save_current()
                 print(bcolors.ok("Installation of mysql for db_governor completed"))
 
             # if sql server failed to start ask user to restore old packages

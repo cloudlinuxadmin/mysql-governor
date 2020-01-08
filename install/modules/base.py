@@ -11,6 +11,7 @@ control panels
 """
 import math
 import os
+import stat
 import shutil
 import sys
 import time
@@ -31,7 +32,7 @@ from utilities import get_cl_num, exec_command, exec_command_out, new_lve_ctl, \
     correct_remove_notowned_mysql_service_names_cl7, \
     correct_remove_notowned_mysql_service_names_not_symlynks_cl7, get_mysql_log_file, \
     check_mysqld_is_alive, makedir_recursive, patch_governor_config, bcolors, force_update_cagefs, \
-    show_new_packages_info, wizard_install_confirm
+    show_new_packages_info, wizard_install_confirm, rewrite_file, cl8_module_enable, debug_log
 from configparser import RawConfigParser
 
 
@@ -45,6 +46,8 @@ class InstallManager:
     NEW_VERSION_FILE = "/usr/share/lve/dbgovernor/mysql.type"
     # file with cached installed version before install
     CACHE_VERSION_FILE = "/usr/share/lve/dbgovernor/mysql.type.installed"
+    # file with cached CL8 module stream before install
+    CACHE_MODULE_FILE = "/usr/share/lve/dbgovernor/cl8_module.saved"
     HISTORY_FOLDER = "/usr/share/lve/dbgovernor/history"
     REPO_NAMES = {
         "mysql51": "mysql-5.1",
@@ -58,6 +61,19 @@ class InstallManager:
         "mariadb102": "mariadb-10.2",
         "mariadb103": "mariadb-10.3",
         "percona56": "percona-5.6"
+    }
+    MODULE_STREAMS = {
+        "mysql55": "mysql:cl-MySQL55",
+        "mysql56": "mysql:cl-MySQL56",
+        "mysql57": "mysql:cl-MySQL57",
+        "mysql80": "mysql:cl-MySQL80",
+        "mariadb55": "mariadb:cl-MariaDB55",
+        "mariadb100": "mariadb:cl-MariaDB100",
+        "mariadb101": "mariadb:cl-MariaDB101",
+        "mariadb102": "mariadb:cl-MariaDB102",
+        "mariadb103": "mariadb:cl-MariaDB103",
+        "percona56": "percona:cl-Percona56",
+        "auto": "mysql:8.0"
     }
     ALL_PACKAGES_NEW_NOT_DOWNLOADED = False
     ALL_PACKAGES_OLD_NOT_DOWNLOADED = False
@@ -168,6 +184,8 @@ class InstallManager:
             # for mysql80 set old authentication plugin as default one
             # in order to prevent php connection errors
             # MYSQLG-297, MySQLG-301
+            if not conf.has_section('mysqld'):
+                conf.add_section('mysqld')
             conf.set('mysqld', 'default-authentication-plugin', 'mysql_native_password')
 
         with open('/etc/my.cnf', 'w') as configfile:
@@ -180,7 +198,7 @@ class InstallManager:
         # stop mysql service
         self._mysqlservice("stop")
         # disable service for CL7 to eliminate broken symlinks after removing
-        if self.cl_version == 7:
+        if self.cl_version >= 7:
             self._mysqlservice("disable")
 
         # remove current mysql packages
@@ -219,11 +237,13 @@ class InstallManager:
         if wizard_mode:
             # wizard mode has its own confirmation logic
             if not wizard_install_confirm(new_version, self.prev_version):
+                self.cl8_enable_cached()
                 sys.exit(3)
         elif not confirm_packages_installation(new_version,
                                                self.prev_version,
                                                no_confirm):
             self.DISABLED = True
+            self.cl8_enable_cached()
             return False
 
         # if os.path.exists("/etc/my.cnf"):
@@ -286,15 +306,15 @@ class InstallManager:
 
         version = self._get_new_version()
         if version.startswith("mariadb") or version == "auto" \
-                and self.cl_version == 7:
+                and self.cl_version >= 7:
             self._enable_mariadb()
 
         if version.startswith("mysql") \
-                and self.cl_version == 7:
+                and self.cl_version >= 7:
             self._enable_mysql()
 
         if version.startswith("percona") \
-                and self.cl_version == 7:
+                and self.cl_version >= 7:
             self._enable_percona()
 
         self._mysqlservice("restart")
@@ -322,6 +342,9 @@ class InstallManager:
             self.print_warning_about_not_complete_of_pkg_saving()
             print(bcolors.fail("Rollback disabled"))
             return False
+
+        # to enable previously enabled mysql module
+        self.cl8_enable_cached()
 
         # self._before_install_new_packages()
         self._mysqlservice("stop")
@@ -423,6 +446,38 @@ class InstallManager:
         # run trigger after governor uninstall
         self._after_delete()
 
+    def cl8_enable_cached(self):
+        """
+        Enable saved module stream, e.g. previously/initially enabled one (CL8 method only),
+        or clean all mysql|mariadb|percona modules settings
+        """
+        if self.cl_version >= 8:
+            if os.path.exists(self.CACHE_MODULE_FILE):
+                with open(self.CACHE_MODULE_FILE) as module_file:
+                    module = module_file.read()
+                cl8_module_enable(module)
+                print('Cached module: %s' % module)
+            else:
+                exec_command(
+                    'dnf module disable -y mysql && dnf module disable -y mariadb && dnf module disable -y percona',
+                    True, silent=True)
+
+    def cl8_save_current(self):
+        """
+        Save currently enabled module stream (CL8 method only)
+        """
+        if self.cl_version >= 8:
+            enabled_modules = exec_command('dnf module list --enabled --quiet | grep -iE "^mysql|mariadb|percona"',
+                                           silent=True)
+            try:
+                current_module = ':'.join([l for l in enabled_modules[0].split(' ') if l][:2])
+                print('Saving current enabled module: %s' % current_module)
+                debug_log(exec_command('dnf module list --enabled', as_string=True))
+                with open(self.CACHE_MODULE_FILE, 'w') as module_file:
+                    module_file.write(current_module)
+            except IndexError:
+                pass
+
     def show_packages_history(self):
         """
         Show early downloaded packages
@@ -458,6 +513,9 @@ class InstallManager:
         """
         Cleanup downloaded packages and remove backup repo file
         """
+        # to enable previously enabled mysql module
+        self.cl8_enable_cached()
+
         tmp_path = "%s/old" % RPM_TEMP_PATH
         if os.path.isdir(tmp_path):
             # first move previous downloaded packages to history folder
@@ -532,20 +590,28 @@ class InstallManager:
         """
         Run this code in spec file
         """
-        print("Set FS suid_dumpable for governor to work correctly")
-        exec_command_out("sysctl -w fs.suid_dumpable=1")
+        def check_io_perms():
+            """
+            Returns True if io is readable and False otherwise.
+            Readable io means that fs.suid_dumpable could be 0, otherwise it should be 1 for governor's correct work
+            """
+            mode = os.stat('/proc/{0}/task/{0}/io'.format(os.getpid())).st_mode
+            return stat.S_IMODE(mode) == 0o444
+        suid_dumpable_state = 'fs.suid_dumpable={0:d}'.format(not check_io_perms())
+        print("Setting FS suid_dumpable for governor to work correctly ({0})".format(suid_dumpable_state))
+        exec_command_out("sysctl -w {0}".format(suid_dumpable_state))
         if os.path.exists("/etc/sysctl.conf"):
-            if not grep("/etc/sysctl.conf", "fs.suid_dumpable=1"):
-                print("Add to /etc/sysctl.conf suid_dumpable instruction " \
-                      "for governor to work correctly")
+            if not grep("/etc/sysctl.conf", 'fs.suid_dumpable='):
+                print("Adding suid_dumpable instruction to /etc/sysctl.conf for governor to work correctly")
                 shutil.copy("/etc/sysctl.conf", "/etc/sysctl.conf.bak")
-                add_line("/etc/sysctl.conf", "fs.suid_dumpable=1")
+                add_line("/etc/sysctl.conf", suid_dumpable_state)
             else:
-                print("Everything is present in /etc/sysctl.conf " \
-                      "for governor to work correctly")
+                print("Rewriting suid_dumpable instruction in /etc/sysctl.conf")
+                with open("/etc/sysctl.conf", 'r+') as f:
+                    rewrite_file(f, re.sub(r'fs.suid_dumpable=\d{1}', suid_dumpable_state, f.read()))
         else:
-            print("Create /etc/sysctl.conf for governor to work correctly")
-            add_line("/etc/sysctl.conf", "fs.suid_dumpable=1")
+            print("Creating /etc/sysctl.conf for governor to work correctly")
+            add_line("/etc/sysctl.conf", suid_dumpable_state)
 
     def _load_packages(self, beta):
         """
@@ -675,18 +741,21 @@ for native procedure restoring of MySQL packages"""))
         print(bcolors.info("Start download packages for new installation"))
         # based on sql_version get packages names list and repo name
         packages, requires = [], []
+        module = None
         arch = ".x86_64" if os.uname()[-1] == "x86_64" else ""
         sql_version = self._get_result_mysql_version(sql_version)
 
         if "auto" == sql_version:
             repo = "mysql-common.repo"
-            if 7 != self.cl_version:
-                packages = ["mysql", "mysql-server", "mysql-libs",
-                            "mysql-devel", "mysql-bench"]
+            if self.cl_version == 7:
+                packages = ["mariadb", "mariadb-server", "mariadb-devel", "mariadb-libs", "mariadb-bench"]
             else:
-                packages = ["mariadb", "mariadb-server", "mariadb-libs",
-                            "mariadb-devel", "mariadb-bench"]
+                packages = ["mysql", "mysql-server", "mysql-libs", "mysql-devel"]
+                if self.cl_version < 8:
+                    packages.append("mysql-bench")
 
+            module = self.MODULE_STREAMS.get(sql_version, None)
+            cl8_module_enable(module)
             # download and install only need arch packages
             packages = ["%s%s" % (x, arch) for x in packages]
             for line in exec_command("yum info %s" % packages[0]):
@@ -696,6 +765,7 @@ for native procedure restoring of MySQL packages"""))
 
         else:
             repo = "cl-%s-common.repo" % self.REPO_NAMES.get(sql_version, None)
+            module = self.MODULE_STREAMS.get(sql_version, None)
 
             if sql_version.startswith("mysql"):
                 packages = ["cl-MySQL-meta", "cl-MySQL-meta-client",
@@ -747,11 +817,11 @@ for native procedure restoring of MySQL packages"""))
 
         # update repositories
         exec_command_out("yum clean all")
-
+        cl8_module_enable(module)
         # Add requires to packages list
         for name in requires:
             # query only for non-installed packages
-            packages += exec_command("repoquery --requires %s" % name)
+            packages += exec_command("repoquery --requires %s --quiet" % name)
             # query for installed package
             # exec_command("rpm -q --requires cl-MySQL-meta")
 
@@ -889,6 +959,7 @@ for native procedure restoring of MySQL packages"""))
 
         # install auto packages
         install_packages("new", False)
+        self.cl8_save_current()
 
         print(bcolors.ok("Removing mysql for db_governor completed"))
 
@@ -941,7 +1012,7 @@ for native procedure restoring of MySQL packages"""))
         """
         Enable mariaDB services
         """
-        if 7 == self.cl_version:
+        if self.cl_version >= 7:
             exec_command_out("systemctl enable mariadb.service")
             exec_command_out("systemctl enable mysql.service")
             exec_command_out("systemctl enable mysqld.service")
@@ -950,7 +1021,7 @@ for native procedure restoring of MySQL packages"""))
         """
         Enable MySQL services
         """
-        if 7 == self.cl_version:
+        if self.cl_version >= 7:
             exec_command_out("systemctl enable mysql.service")
             exec_command_out("systemctl enable mysqld.service")
 
@@ -958,7 +1029,7 @@ for native procedure restoring of MySQL packages"""))
         """
         Enable Percona service
         """
-        if 7 == self.cl_version:
+        if self.cl_version >= 7:
             exec_command_out("systemctl enable mysql.service")
 
     @staticmethod
@@ -993,7 +1064,6 @@ for native procedure restoring of MySQL packages"""))
         """
         if os.path.exists(self.NEW_VERSION_FILE):
             return read_file(self.NEW_VERSION_FILE)
-
         return "auto"
 
     def _save_previous_version(self):
@@ -1010,9 +1080,8 @@ for native procedure restoring of MySQL packages"""))
         Get current installed mysql version from cache file
         """
         if os.path.exists(self.CACHE_VERSION_FILE):
-            read_file(self.CACHE_VERSION_FILE)
-
-        return None
+            return read_file(self.CACHE_VERSION_FILE)
+        return 'auto'
 
     def _mysqlservice(self, action):
         """
