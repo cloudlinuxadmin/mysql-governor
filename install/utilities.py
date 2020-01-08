@@ -193,7 +193,8 @@ def cl8_module_enable(module_name):
     if not module_name:
         return
     if get_cl_num() >= 8:
-        exec_command('dnf clean all && dnf module disable -y mysql && dnf module disable -y mariadb && dnf module disable -y percona', True, silent=True)
+        exec_command('dnf module disable -y mysql && dnf module disable -y mariadb && dnf module disable -y percona',
+                     True, silent=True)
         exec_command('dnf module enable -y {}'.format(module_name), True, silent=True)
 
 
@@ -786,9 +787,9 @@ def correct_mysqld_service_for_cl7(mysql_type):
     For cl7 check symlink pathes
     """
     name = "mysqld"
-    if mysql_type in ["mysql50", "mysql51", "mysql55", "mysql56", "mysql57", "auto"]:
+    if mysql_type in ["mysql50", "mysql51", "mysql55", "mysql56", "mysql57", "mysql80", "auto"]:
         name = "mysqld"
-    elif mysql_type in ["mariadb101", "mariadb103"]:
+    elif mysql_type in ["mariadb101", "mariadb102","mariadb103"]:
         name = "mariadb"
     elif mysql_type in ["mariadb55", "mariadb100", "percona56"]:
         name = "mysql"
