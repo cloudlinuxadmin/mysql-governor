@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   50
+%define g_release   51
 %define g_key_library 9
 
 %if %{undefined _unitdir}
@@ -12,7 +12,7 @@
 
 Name: governor-mysql
 Version: %{g_version}
-Release: %{g_release}%{?dist}.cloudlinux.1
+Release: %{g_release}%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -411,6 +411,9 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Wed Jan 15 2020 Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-51
+- MYSQLG-452: CL8 modularity caching during install, mysql:8.0 as auto version
+
 * Wed Dec 25 2019 Sergey Kokhan <skokhan@cloudlinux.com>, Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-50
 - MYSQLG-451: install script fixes for CL8
 - MYSQLG-419: setting fs.suid_dumpable value based on io permissions
