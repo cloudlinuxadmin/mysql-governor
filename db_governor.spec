@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   51
+%define g_release   52
 %define g_key_library 9
 
 %if %{undefined _unitdir}
@@ -420,6 +420,9 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Mon Jan 20 2020 Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-52
+- MYSQLG-458: migrated to Python 3.7
+
 * Wed Jan 15 2020 Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-51
 - MYSQLG-452: CL8 modularity caching during install, mysql:8.0 as auto version
 
