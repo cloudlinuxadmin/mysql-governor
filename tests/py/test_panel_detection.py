@@ -12,7 +12,7 @@ from modules.da import DirectAdminManager
     ('DirectAdmin', DirectAdminManager),
     ('Unknown', InstallManager)
 ])
-@mock.patch("__builtin__.open", mock.mock_open(read_data=''))
+@mock.patch("builtins.open", mock.mock_open(read_data=''))
 def test_panel_detection(mocked_content, expected):
     res = InstallManager.factory(mocked_content)
     assert res.__class__ == expected

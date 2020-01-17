@@ -35,7 +35,7 @@ class DirectAdminManager(InstallManager):
         """
         check_file("/usr/local/directadmin/custombuild/build")
 
-        print "Removing mysql for db_governor start"
+        print("Removing mysql for db_governor start")
 
         self._mysqlservice("stop")
         # remove governor package
@@ -50,13 +50,13 @@ class DirectAdminManager(InstallManager):
         exec_command_out("/usr/local/directadmin/custombuild/build set mysql_inst %s" % param)
         exec_command_out("/usr/local/directadmin/custombuild/build mysql update")
 
-        print "Removing mysql for db_governor completed"
+        print("Removing mysql for db_governor completed")
 
     def _before_install_new_packages(self):
         """
         Specific actions before new packages installation
         """
-        print "The installation of MySQL for db_governor has started"
+        print("The installation of MySQL for db_governor has started")
 
         check_file("/usr/local/directadmin/custombuild/build")
         check_file("/usr/local/directadmin/custombuild/options.conf")
@@ -98,20 +98,20 @@ class DirectAdminManager(InstallManager):
         # call parent after_install
         InstallManager._after_install_new_packages(self)
         # install MySQL-python module
-        exec_command("yum install -y MySQL-python --disableexcludes=all")
-        print "Rebuild php please... /usr/local/directadmin/custombuild/build php"
+        exec_command("yum install -y alt-python37-MySQL-meta --disableexcludes=all")
+        print("Rebuild php please... /usr/local/directadmin/custombuild/build php")
 
     def _detect_version_if_auto(self):
         """
         Detect vesrion of MySQL if mysql.type is auto
         """
-        print "Detect MySQL version for AUTO"
+        print("Detect MySQL version for AUTO")
 
         try:
             MYSQL_DA_VER = self.prev_version['full']
-            print 'Detected successfully from installed mysql binary: {ver}'.format(ver=MYSQL_DA_VER)
+            print('Detected successfully from installed mysql binary: {ver}'.format(ver=MYSQL_DA_VER))
         except KeyError:
-            print 'Failed to detect from mysql binary, trying to detect from custombuild options'
+            print('Failed to detect from mysql binary, trying to detect from custombuild options')
             check_file("/usr/local/directadmin/custombuild/build")
             check_file("/usr/local/directadmin/custombuild/options.conf")
             # MYSQL_DA_TYPE=`cat /usr/local/directadmin/custombuild/options.conf | grep mysql_inst= | cut -d= -f2`
@@ -131,7 +131,7 @@ class DirectAdminManager(InstallManager):
                     else:
                         MYSQL_DA_TYPE = "mariadb"
 
-            print "I got %s and %s" % (MYSQL_DA_VER, MYSQL_DA_TYPE)
+            print("I got %s and %s" % (MYSQL_DA_VER, MYSQL_DA_TYPE))
 
             mysql_version_map = {
                 "5.0": "mysql50",
@@ -181,7 +181,7 @@ class DirectAdminManager(InstallManager):
                     if pkg_name_real != "" and os.path.exists(pkg_name_real):
                         return "file:%s" % pkg_name_real
             except RuntimeError as e:
-                print "Failed to query package %s: %s\n" % (found_package, e)
+                print("Failed to query package %s: %s\n" % (found_package, e))
                 bad_pkg = True
 
         if bad_pkg:
@@ -209,6 +209,6 @@ class DirectAdminManager(InstallManager):
         try:
             shutil.copy(self._rel("scripts/mysqld.service"),
                         '/usr/local/directadmin/custombuild/configure/systemd/mysqld.service')
-            print 'mysqld.service restored!'
+            print('mysqld.service restored!')
         except Exception:
-            print 'ERROR occurred while attempt to restore mysqld.service!'
+            print('ERROR occurred while attempt to restore mysqld.service!')

@@ -1,5 +1,6 @@
 #!/usr/local/cpanel/3rdparty/bin/python
 
+from __future__ import print_function
 import sys
 import json
 
@@ -12,8 +13,8 @@ def get_passed_data():
     return json.loads(sys.stdin.readline())
 
 
-print 'I am python hook'
+print('I am python hook')
 
 data = get_passed_data()
-print 'My Event ', data['context']['event']
-print 'My JSON decoded data ', data['data']
+print('My Event ', data['context']['event'])
+print('My JSON decoded data ', data['data'])

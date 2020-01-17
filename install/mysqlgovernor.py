@@ -1,4 +1,4 @@
-#!/opt/alt/python27/bin/python2.7
+#!/opt/alt/python37/bin/python3
 # coding:utf-8
 
 # Copyright © Cloud Linux GmbH & Cloud Linux Software, Inc 2010-2019 All Rights Reserved
@@ -22,7 +22,7 @@ from utilities import exec_command, bcolors, query_yes_no, \
 LOG_FILE_NAME = "/usr/share/lve/dbgovernor/governor_install.log"
 
 
-class Logger(object):
+class Logger:
     """
     Logger class
     """
@@ -45,6 +45,9 @@ class Logger(object):
         :param message:
         """
         self.log.write(message)
+
+    def flush(self):
+        self.terminal.flush()
 
 
 def build_parser():
@@ -196,7 +199,7 @@ def main(argv):
 
     if opts.mysql_version:
         manager.set_mysql_version(opts.mysql_version)
-        print bcolors.ok("Now set MySQL to type '%s'" % opts.mysql_version)
+        print(bcolors.ok("Now set MySQL to type '%s'" % opts.mysql_version))
 
     elif opts.install or opts.install_beta:
         warn_message()
@@ -210,8 +213,7 @@ def main(argv):
 
         # remove current packages and install new packages
         if manager.install(opts.install_beta, opts.yes, opts.wizard):
-            print "Give mysql service time to start " \
-                  "before service checking(15 sec)"
+            print("Give mysql service time to start before service checking(15 sec)")
             time.sleep(15)
         else:
             sys.exit(0) if manager.DISABLED else sys.exit(1)
@@ -221,24 +223,24 @@ def main(argv):
             if check_mysqld_is_alive():
                 manager.save_installed_version()
                 manager.cl8_save_current()
-                print bcolors.ok("Installation of mysql for db_governor completed")
+                print(bcolors.ok("Installation of mysql for db_governor completed"))
 
             # if sql server failed to start ask user to restore old packages
             elif opts.wizard or query_yes_no(
                     "Installation failed. Restore previous version?"):
-                print bcolors.fail(
-                    "Installation of mysql for db_governor failed. Restore previous mysql version...")
+                print(bcolors.fail(
+                    "Installation of mysql for db_governor failed. Restore previous mysql version..."))
                 if not manager.install_rollback(opts.install_beta):
                     sys.exit(1)
 
         manager.cleanup()
         if manager.ROLLBACK:
-            print bcolors.ok("Rollback finished")
+            print(bcolors.ok("Rollback finished"))
             sys.exit(3)
 
     elif opts.delete:
         manager.delete()
-        print "Deletion is complete"
+        print("Deletion is complete")
 
         manager.cleanup()
     elif opts.dbupdate:
@@ -252,13 +254,13 @@ def main(argv):
     elif opts.clear_history:
         manager.clear_history_folder()
     elif opts.clean_mysql:
-        print "Option is deprecated."
+        print("Option is deprecated.")
     elif opts.clean_mysql_delete:
-        print "Option is deprecated."
+        print("Option is deprecated.")
     elif opts.upgrade:
-        print "Option is deprecated. Use `yum update` instead."
+        print("Option is deprecated. Use `yum update` instead.")
     elif opts.update_mysql_beta:
-        print "Option is deprecated. Use --install-beta instead."
+        print("Option is deprecated. Use --install-beta instead.")
     elif opts.fs_suid:
         manager.set_fs_suid_dumpable()
     elif opts.store_list:
@@ -303,16 +305,16 @@ def detect_percona(force, install_manager_instance):
 
     packages = exec_command("""rpm -qa|grep -iE "^percona-" """, silent=True)
     if len(packages):
-        print "Percona packages deteced:" + ",".join(packages)
-        print "You are running Percona, which is not supported by " \
+        print("Percona packages deteced:" + ",".join(packages))
+        print("You are running Percona, which is not supported by " \
               "MySQL Governor. If you want to run MySQL governor, " \
               "we would have to uninstall Percona, and substitute it " \
-              "for MariaDB or MySQL. Run installator next commands for install:"
-        print install_manager_instance.rel("mysqlgovernor.py") + \
+              "for MariaDB or MySQL. Run installator next commands for install:")
+        print(install_manager_instance.rel("mysqlgovernor.py") + \
               " --mysql-version=mysql56 (or mysql50, mysql51, mysql55, " \
-              "mysql57, mariadb55, mariadb100, mariadb101)"
-        print install_manager_instance.rel("mysqlgovernor.py") + \
-              " --install --force"
+              "mysql57, mariadb55, mariadb100, mariadb101)")
+        print(install_manager_instance.rel("mysqlgovernor.py") + \
+              " --install --force")
         sys.exit(1)
 
 
@@ -320,9 +322,9 @@ def warn_message():
     """
     Print warning message and sleep 10 sec (for user to make a decision)
     """
-    print bcolors.warning("!!!Before making any changing with database make sure that you have reserve copy of users data!!!")
-    print bcolors.fail("!!!!!!!!!!!!!!!!!!!!!!!!!!Ctrl+C for cancellation of installation!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-    print bcolors.ok("Instruction: how to create whole database backup - " + bcolors.OKBLUE + "http://docs.cloudlinux.com/index.html?backing_up_mysql.html")
+    print(bcolors.warning("!!!Before making any changing with database make sure that you have reserve copy of users data!!!"))
+    print(bcolors.fail("!!!!!!!!!!!!!!!!!!!!!!!!!!Ctrl+C for cancellation of installation!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"))
+    print(bcolors.ok("Instruction: how to create whole database backup - " + bcolors.OKBLUE + "http://docs.cloudlinux.com/index.html?backing_up_mysql.html"))
     time.sleep(10)
 
 
@@ -335,10 +337,10 @@ def protectbase_warning(beta, yes):
     :return: True or False, regarding user choice
     """
     if beta and os.path.exists('/etc/yum/pluginconf.d/protectbase.conf'):
-        print bcolors.warning('''\nYou are trying to install database related packages from the BETA repo.
+        print(bcolors.warning('''\nYou are trying to install database related packages from the BETA repo.
 But it appears that you have yum's protectbase plugin configured.
 In order to proceed with the installation, the plugin must be disabled.
-By confirming this action, the plugin will be disabled during packages installation process only.''')
+By confirming this action, the plugin will be disabled during packages installation process only.'''))
         if not yes:
             if not query_yes_no("Do you confirm this action?"):
                 return False

@@ -12,7 +12,7 @@ import os
 import re
 import shutil
 import sys
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import hashlib
 
 from utilities import exec_command_out, grep, add_line, \
@@ -44,14 +44,14 @@ class cPanelManager(InstallManager):
         """
         if 'CpuserNotInMap' in orig_msg:
             username = self.retrieve_username(orig_msg)
-            print bcolors.fail('cPanel user `{u}` does not exist in the database map.'.format(u=username))
-            print bcolors.info('Try to perform the following command: /scripts/rebuild_dbmap {u}\n'
-                               'and then run /usr/share/lve/dbgovernor/mysqlgovernor.py --dbupdate again.'.format(u=username))
-            print bcolors.warning('If this does not help, please, '
+            print(bcolors.fail('cPanel user `{u}` does not exist in the database map.'.format(u=username)))
+            print(bcolors.info('Try to perform the following command: /scripts/rebuild_dbmap {u}\n'
+                               'and then run /usr/share/lve/dbgovernor/mysqlgovernor.py --dbupdate again.'.format(u=username)))
+            print(bcolors.warning('If this does not help, please, '
                                   'contact cPanel support with the original error:\n{m}'.format(u=username,
-                                                                                                m=orig_msg.split('\n')[1]))
+                                                                                                m=orig_msg.split('\n')[1])))
         else:
-            print bcolors.fail(orig_msg)
+            print(bcolors.fail(orig_msg))
         sys.exit(1)
 
     @staticmethod
@@ -62,7 +62,7 @@ class cPanelManager(InstallManager):
         :return: username if retrieved, None otherwise
         """
         try:
-            return re.findall('cPanel user \xE2\x80\x9C(.+)\xE2\x80\x9D does not exist in the database map.', msg)[0]
+            return re.findall(r'cPanel user “(.+)” does not exist in the database map.', msg)[0]
         except IndexError:
             return None
 
@@ -108,7 +108,7 @@ class cPanelManager(InstallManager):
         """
         Install legacy packages after --delete procedure
         """
-        print 'Restoring known packages for {}'.format(current_version['full'])
+        print('Restoring known packages for {}'.format(current_version['full']))
         targets = {
             'mysql55': 'MySQL55',
             'mysql56': 'MySQL56',
@@ -160,7 +160,7 @@ class cPanelManager(InstallManager):
         pkgs = ('MariaDB-server', 'MariaDB-client', 'MariaDB-shared',
                 'MariaDB-devel', 'MariaDB-compat',)
         # prepare repo data
-        print 'Preparing official MariaDB repository...'
+        print('Preparing official MariaDB repository...')
         repo_data = """[mariadb]
 name = MariaDB
 baseurl = http://yum.mariadb.org/{maria_ver}/centos{cl_ver}-{arch}
@@ -171,13 +171,13 @@ gpgcheck=1
         mariadb_version = '{base}.{suffix}'.format(base=num[:-1],
                                                    suffix=num[-1])
         arch = 'amd64' if os.uname()[-1] == 'x86_64' else 'x86'
-        with open('/etc/yum.repos.d/MariaDB.repo', 'wb') as repo_file:
+        with open('/etc/yum.repos.d/MariaDB.repo', 'w') as repo_file:
             repo_file.write(
                 repo_data.format(maria_ver=mariadb_version,
                                  cl_ver=self.cl_version, arch=arch))
 
         # install MariaDB packages
-        print 'Installing packages'
+        print('Installing packages')
         exec_command(
             "yum install -y --disableexcludes=all --disablerepo=cl-mysql* --disablerepo=mysqclient* {pkgs}".format(
                 pkgs=' '.join(pkgs)))
@@ -193,12 +193,12 @@ gpgcheck=1
             self.download_and_install_mysql_repo()
 
         # select MySQL version
-        print 'Selected version %s' % version
+        print('Selected version %s' % version)
         exec_command('yum-config-manager --disable mysql*-community')
         exec_command('yum-config-manager --enable {version}-community'.format(version=version))
 
         # install mysql-community packages
-        print 'Installing packages'
+        print('Installing packages')
         exec_command(
             "yum install -y --disableexcludes=all --disablerepo=cl-mysql* --disablerepo=mysqclient* {pkgs}".format(
                 pkgs=' '.join(pkgs)))
@@ -214,16 +214,20 @@ gpgcheck=1
             6: 'f2befc44a4b8416864987b1686c4a72b',
             7: '739dc44566d739c5d7b893de96ee6848'
         }
-        opener = urllib2.build_opener()
+        opener = urllib.request.build_opener()
         opener.addheaders = [('User-agent', 'Mozilla/5.0')]
 
-        print 'Downloading %s' % url
-        rpm = opener.open(url).read()
-        with open(repo_file, 'wb') as f:
-            f.write(rpm)
+        print('Downloading %s' % url)
+        try:
+            rpm = opener.open(url).read()
+            with open(repo_file, 'wb') as f:
+                f.write(rpm)
+        except urllib.error.HTTPError as err:
+            print('Failed to download MySQL repository file: {e}'.format(e=err))
+            sys.exit(1)
 
         if hashlib.md5(open(repo_file, 'rb').read()).hexdigest() != repo_md5[self.cl_version]:
-            print 'Failed to download MySQL repository file. File is corrupted!'
+            print('Failed to download MySQL repository file. File is corrupted!')
             sys.exit(1)
 
         # install repo
@@ -253,7 +257,7 @@ gpgcheck=1
         """
         current_version = self._check_mysql_version()
         if not self.prev_version or not current_version:
-            print 'Problem with version retrieving'
+            print('Problem with version retrieving')
             return False
         return current_version['mysql_type'] == 'mariadb' and \
                (self.prev_version['mysql_type'] == 'mysql' or
@@ -266,13 +270,13 @@ gpgcheck=1
         # cpanel script for restart mysql service
         exec_command_out("/scripts/restartsrv_mysql")
 
-        print "db_governor checking: "
+        print("db_governor checking: ")
         if is_package_installed("governor-mysql"):
             exec_command_out("chkconfig --level 35 db_governor on")
             service("restart", "db_governor")
-            print "OK"
+            print("OK")
         else:
-            print "FAILED"
+            print("FAILED")
 
         # print "The installation of MySQL for db_governor completed"
 
@@ -442,6 +446,6 @@ gpgcheck=1
         Retrieve cPanel current version from /usr/local/cpanel/version file
         :return: major version value
         """
-        with open('/usr/local/cpanel/version', 'rb') as content:
+        with open('/usr/local/cpanel/version', 'r') as content:
             full_version = content.read().strip()
         return int(full_version.split('.')[1])

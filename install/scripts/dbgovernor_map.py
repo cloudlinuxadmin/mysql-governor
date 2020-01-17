@@ -1,4 +1,4 @@
-#!/opt/alt/python27/bin/python
+#!/opt/alt/python37/bin/python3
 # -*- coding: utf-8 -*-
 
 # Copyright © Cloud Linux GmbH & Cloud Linux Software, Inc 2010-2019 All Rights Reserved
@@ -33,20 +33,19 @@ def get_dauser(path):
                         p = pwd.getpwnam(userName)
                         users[userName] = p.pw_uid
                     except KeyError:
-                        print "Warning: user '%s' has no uid!" % userName
+                        print("Warning: user '%s' has no uid!" % userName)
                 f.close()
             except IOError:
-                print "No file " + fileDomains
+                print("No file " + fileDomains)
 
     return users
 
 
-def get_account_list():
+def get_account_list(conf_name='/usr/local/directadmin/conf/mysql.conf'):
     """
     Get list of accounts
     :return:
     """
-    conf_name = '/usr/local/directadmin/conf/mysql.conf'
     accountList = []
     params = {}
     userList = get_dauser('/usr/local/directadmin/data/users')
@@ -59,12 +58,12 @@ def get_account_list():
                 params[p[0].strip()] = p[1].strip()
         f.close()
     except IOError:
-        print "No file " + conf_name
+        print("No file " + conf_name)
 
     try:
         import MySQLdb
     except ImportError:
-        print >> sys.stderr, 'Error: package "MySQL-python" is not installed.'
+        print('Error: package "alt-python37-MySQL-meta" is not installed.', file=sys.stderr)
         return accountList
 
     if 'host' in params:
@@ -97,7 +96,7 @@ def get_account_list():
                 pass
         con.close()
     except MySQLdb.Error as e:
-        print e
+        print(e)
 
     return accountList
 
