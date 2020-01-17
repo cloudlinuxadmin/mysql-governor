@@ -14,14 +14,15 @@ import re
 import shutil
 import subprocess
 import sys
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import time
-import ConfigParser
+import configparser
 import shlex
 from threading import Timer
 from datetime import datetime
 from distutils.version import StrictVersion
 from glob import glob
+from io import StringIO
 import xml.etree.ElementTree as ET
 
 __all__ = [
@@ -70,8 +71,8 @@ def _trace_calls(frame, event, arg):
         return
 
     filename = frame.f_code.co_filename
-    if filename.startswith("/opt/alt/python27/"):
-        # ignore system functions
+    if filename.startswith("/opt/alt/python37/") or filename.startswith("<frozen"):
+        # ignore system functions and frozen importlib calls
         return
 
     f, level = frame, -1
@@ -88,7 +89,7 @@ def _trace_calls(frame, event, arg):
         line_no = f.f_lineno
         filename = f.f_code.co_filename
         i = f.f_locals if func_name != "<module>" else {}
-        args_str = ", ".join(["%s=%s" % x for x in i.iteritems()])
+        args_str = ", ".join(["%s=%s" % x for x in i.items()])
         return "%s(%s)|%s:%s" % (func_name, args_str, filename, line_no)
 
     date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -125,7 +126,7 @@ def debug_log(line):
     """
     global fDEBUG_FLAG
     if fDEBUG_FLAG:
-        print line
+        print(line)
     else:
         sys.stdout.write_extended(line)
 
@@ -207,7 +208,7 @@ def download_packages(names, dest, beta, custom_download=None):
     """
     path = "%s/%s" % (RPM_TEMP_PATH, dest)
     if not os.path.exists(path):
-        os.makedirs(path, 0755)
+        os.makedirs(path, 0o755)
 
     if custom_download is not None and callable(custom_download) \
             and custom_download("+") == "yes":
@@ -237,16 +238,16 @@ def download_packages(names, dest, beta, custom_download=None):
                 pkg_name_split = pkg_name.split('-', 2)[1]
                 list_of_rpm = glob("%s/*%s.rpm" % (path, pkg_name_split))
             for i in list_of_rpm:
-                print "Package %s was loaded" % i
+                print("Package %s was loaded" % i)
         except IndexError:
             pkg_not_found = True
-            print bcolors.warning(
-                "WARNING!!!! Package %s was not downloaded" % pkg_name)
+            print(bcolors.warning(
+                "WARNING!!!! Package %s was not downloaded" % pkg_name))
         else:
             if len(list_of_rpm) == 0:
                 pkg_not_found = True
-                print bcolors.warning(
-                    "WARNING!!!! Package %s was not downloaded" % pkg_name)
+                print(bcolors.warning(
+                    "WARNING!!!! Package %s was not downloaded" % pkg_name))
 
     return not pkg_not_found
 
@@ -266,12 +267,15 @@ def _custom_download_packages(names, path, downloader):
             elif pkg_url.startswith('file:'):
                 status = 200
             else:
-                status = urllib.urlopen(pkg_url).getcode()
-            print "URL %s; status %s" % (pkg_url, status)
+                try:
+                    status = urllib.request.urlopen(pkg_url).status
+                except urllib.error.HTTPError as err:
+                    status = err.code
+            print("URL %s; status %s" % (pkg_url, status))
             if status == 200:
                 file_name = "%s/%s.rpm" % (path, pkg_name)
                 try:
-                    response = urllib.urlopen(pkg_url)
+                    response = urllib.request.urlopen(pkg_url)
                     CHUNK = 16 * 1024
                     with open(file_name, 'wb') as f:
                         while True:
@@ -282,8 +286,8 @@ def _custom_download_packages(names, path, downloader):
                 except IOError:
                     status = 404
 
-                print "Downloaded file %s from %s with status %d" % \
-                      (file_name, pkg_url, status)
+                print("Downloaded file %s from %s with status %d" % \
+                      (file_name, pkg_url, status))
             result.append(pkg_name)
 
     return list(set(result))
@@ -300,14 +304,14 @@ def remove_packages(packages_list):
     new_pkg = []
     for pkg in packages_list:
         if "-server" in pkg:
-            print exec_command("rpm -e --nodeps %s" % pkg, True,
-                               cmd_on_error="rpm -e --nodeps --noscripts %s" % pkg)
+            print(exec_command("rpm -e --nodeps %s" % pkg, True,
+                               cmd_on_error="rpm -e --nodeps --noscripts %s" % pkg))
         else:
             new_pkg.append(pkg)
     if len(new_pkg) > 0:
         packages = " ".join(new_pkg)
-        print exec_command("rpm -e --nodeps %s" % packages, True,
-                           cmd_on_error="rpm -e --nodeps --noscripts %s" % packages)
+        print(exec_command("rpm -e --nodeps %s" % packages, True,
+                           cmd_on_error="rpm -e --nodeps --noscripts %s" % packages))
 
 
 def show_new_packages_info(rpm_dir):
@@ -324,8 +328,8 @@ def show_new_packages_info(rpm_dir):
     server = [p for p in packages_list if 'server' in p][0]
     pkg_ver, pkg_type = retrieve_server_version(server)
 
-    print bcolors.ok("New packages will be installed:\n\t%s" % "\n\t".join(
-        packages_list))
+    print(bcolors.ok("New packages will be installed:\n\t%s" % "\n\t".join(
+        packages_list)))
     return {'new_ver': pkg_ver, 'new_type': pkg_type, 'new_short': '.'.join(pkg_ver.split('.')[:2])}
 
 
@@ -340,17 +344,17 @@ def confirm_packages_installation(new_struct, prev_struct, no_confirm=None):
         # notify user if operation is dangerous
         if prev_struct:
             if new_struct['new_type'] != prev_struct['mysql_type']:
-                print bcolors.fail(
+                print(bcolors.fail(
                     "Changing MySQL version is a quite complicated procedure, "
                     "it causes system table structural changes which can lead to unexpected results."
                     "\nPlease make full database backup (including system tables) before you will do upgrade of MySQL or switch to MariaDB. "
-                    "\nThis action will prevent data losing in case if something goes wrong.")
+                    "\nThis action will prevent data losing in case if something goes wrong."))
             elif StrictVersion(new_struct['new_ver']) < StrictVersion(prev_struct['extended']):
-                print bcolors.fail(
+                print(bcolors.fail(
                     "You are attempting to install a LOWER {t} version ({new}) than currently installed one ({old})."
                     "\nThis could lead to unpredictable consequences, like fully non working service."
                     "\nThink twice before proceeding.".format(
-                        old=prev_struct['extended'], new=new_struct['new_ver'], t=new_struct['new_type']))
+                        old=prev_struct['extended'], new=new_struct['new_ver'], t=new_struct['new_type'])))
         if not no_confirm:
             if not query_yes_no("Continue?"):
                 return False
@@ -399,7 +403,7 @@ def install_packages(rpm_dir, is_beta, installer=None, abs_path=False):
         exec_command_out(
             "yum install %s --disableexcludes=all --nogpgcheck -y %s" % (
                 repo, " ".join(list_for_install)))
-        if is_server_found != "":
+        if is_server_found:
             exec_command_out(
                 "yum clean all --enablerepo=cloudlinux-updates-testing")
             exec_command_out(
@@ -412,10 +416,10 @@ def install_packages(rpm_dir, is_beta, installer=None, abs_path=False):
             if "-server" in found_package:
                 is_server_found = found_package
             else:
-                print "Going to install %s" % found_package
+                print("Going to install %s" % found_package)
                 installer(found_package)
         if is_server_found != "":
-            print "Going to install %s" % is_server_found
+            print("Going to install %s" % is_server_found)
             installer(is_server_found)
     return True
 
@@ -477,7 +481,7 @@ def check_file(path):
     Check file exists or exit with error
     """
     if not os.path.exists(path):
-        print "Installtion error file ---%s---- does not exists" % path
+        print("Installation error: file ---%s---- does not exists" % path)
         sys.exit(1)
 
     return True
@@ -500,16 +504,16 @@ def exec_command(command, as_string=False, silent=False, return_code=False,
             return "no"
 
     if p.returncode != 0 and not silent:
-        print >> sys.stderr, "Execution command: %s error" % command
+        print("Execution command: %s error" % command, file=sys.stderr)
         if cmd_on_error != "":
             return exec_command(cmd_on_error, as_string, silent, return_code,
                                 "")
-        raise RuntimeError("%s\n%s" % (out, err))
+        raise RuntimeError("%s\n%s" % (out.decode(), err.decode()))
 
     if as_string:
-        return out.strip()
+        return out.decode().strip()
 
-    return [x.strip() for x in out.split("\n") if x.strip()]
+    return [x.strip() for x in out.decode().split("\n") if x.strip()]
 
 
 def exec_command_out(command):
@@ -635,7 +639,7 @@ def grep(path, pattern, regex=False):
     """
     grep path or list of lines for pattern
     """
-    if isinstance(path, basestring):
+    if isinstance(path, str):
         if not os.path.isfile(path):
             return False
         iterator = open(path, "r")
@@ -657,7 +661,7 @@ def grep(path, pattern, regex=False):
             if pattern.match(line):
                 result.append(line)
 
-    if isinstance(iterator, file):
+    if isinstance(iterator, StringIO):
         iterator.close()
 
     return result
@@ -689,7 +693,7 @@ def touch(fname):
         open(fname, 'a').close()
 
 
-class bcolors(object):
+class bcolors:
     """
     Colorful stdout
     """
@@ -758,7 +762,7 @@ def query_yes_no(question, default=None):
 
     while True:
         sys.stdout.write(bcolors.warning("%s%s" % (question, prompt)))
-        choice = raw_input().lower()
+        choice = input().lower()
         if default is not None and choice == '':
             return valid[default]
         elif choice in valid:
@@ -848,7 +852,7 @@ def disable_and_remove_service(service_path):
     if os.path.exists(service_path):
         service_name = os.path.basename(service_path)
         if service_name != "" and is_file_owned_by_package(
-                service_path) == False:
+                service_path) is False:
             disable_service(os.path.splitext(service_name)[0])
             os.unlink(service_path)
 
@@ -876,7 +880,7 @@ def disable_and_remove_service_if_notsymlynk(service_path):
     if os.path.exists(service_path):
         service_name = os.path.basename(service_path)
         if service_name != "" and is_file_owned_by_package(
-                service_path) == False and not os.path.islink(service_path):
+                service_path) is False and not os.path.islink(service_path):
             disable_service(os.path.splitext(service_name)[0])
             os.unlink(service_path)
 
@@ -983,7 +987,7 @@ def get_mysql_cnf_value(section, name):
     Get value from my.cnf
     """
     if os.path.exists("/etc/my.cnf"):
-        configParser = ConfigParser.RawConfigParser(allow_no_value=True)
+        configParser = configparser.RawConfigParser(allow_no_value=True)
         configFilePath = r'/etc/my.cnf'
         try:
             configParser.read(configFilePath)
@@ -1048,19 +1052,19 @@ def fix_broken_governor_xml_config():
     """
     governor_config_file = '/etc/container/mysql-governor.xml'
     # declare regular expressions for finding data
-    pattern_limit = re.compile('(?<=current=\")18446744073708503040|(?<=short=\")18446744073708503040|(?<=mid=\")18446744073708503040|(?<=long=\")18446744073708503040')
-    pattern_login = re.compile('(?<=login=\")(?P<data>\S+)(?=\")')
-    pattern_passwd = re.compile('(?<=password=\")(?P<data>\S+)(?=\")')
+    pattern_limit = re.compile(r'(?<=current=\")18446744073708503040|(?<=short=\")18446744073708503040|(?<=mid=\")18446744073708503040|(?<=long=\")18446744073708503040')
+    pattern_login = re.compile(r'(?<=login=\")(?P<data>\S+)(?=\")')
+    pattern_passwd = re.compile(r'(?<=password=\")(?P<data>\S+)(?=\")')
     # declare regular expressions for escaping control characters
     replacements = {
-        re.compile('<'): '&lt;',
-        re.compile('>'): '&gt;',
-        re.compile("'"): '&apos;',
-        re.compile('"'): '&quot;',
-        re.compile('&(?!amp;|lt;|gt;|apos;|quot;)'): '&amp;'
+        re.compile(r'<'): '&lt;',
+        re.compile(r'>'): '&gt;',
+        re.compile(r"'"): '&apos;',
+        re.compile(r'"'): '&quot;',
+        re.compile(r'&(?!amp;|lt;|gt;|apos;|quot;)'): '&amp;'
     }
 
-    with open(governor_config_file, 'rb') as governor_config:
+    with open(governor_config_file, 'r') as governor_config:
         contents = governor_config.readlines()
 
     config_str = ''.join(contents)
@@ -1079,7 +1083,7 @@ def fix_broken_governor_xml_config():
         res = p.sub(data, res)
 
     # rewrite governor config
-    with open(governor_config_file, 'wb') as governor_config:
+    with open(governor_config_file, 'w') as governor_config:
         governor_config.write(res)
 
 
@@ -1111,7 +1115,7 @@ def force_update_cagefs():
     """
     Call cagefs force-update
     """
-    print 'Trying to update cagefs skeleton...'
+    print('Trying to update cagefs skeleton...')
     exec_command('/usr/sbin/cagefsctl --force-update', silent=True, return_code=True)
 
 
@@ -1152,7 +1156,7 @@ def wizard_install_confirm(new_struct, prev_struct):
         msg = "Failed to retrieve current mysql version. In such a case only manual installation is allowed. " \
               "\nInstruction: https://docs.cloudlinux.com/mysql_governor_installation.html"
     if msg:
-        print bcolors.fail(msg_template.format(msg=msg))
+        print(bcolors.fail(msg_template.format(msg=msg)))
         return False
     return True
 
@@ -1163,22 +1167,22 @@ def get_release_num(full_version):
 
 def get_status_info():
     if os.system('service db_governor status > /dev/null 2>&1') != 0:
-        print bcolors.fail("Service db_governor is not running.")
-        print bcolors.warning("Please run: service db_governor start")
+        print(bcolors.fail("Service db_governor is not running."))
+        print(bcolors.warning("Please run: service db_governor start"))
         return False
 
     if not os.path.exists('/usr/share/lve/dbgovernor/governor_connected'):
-        print bcolors.fail("Service db_governor can't connect to mysql.")
-        print bcolors.warning("Please check that mysql is running otherwise check that host, login and password are correct in /etc/container/mysql-governor.xml file.")
+        print(bcolors.fail("Service db_governor can't connect to mysql."))
+        print(bcolors.warning("Please check that mysql is running otherwise check that host, login and password are correct in /etc/container/mysql-governor.xml file."))
         return False
 
     if not os.path.exists('/usr/share/lve/dbgovernor/cll_lve_installed'):
-        print bcolors.fail("cll-lve mysql version not found.")
-        print bcolors.warning("Please run to update your mysql to cll-lve version: ")
-        print bcolors.warning("/usr/share/lve/dbgovernor/mysqlgovernor.py --mysql-version=DESIRED_MYSQL_VERSION")
-        print bcolors.warning("/usr/share/lve/dbgovernor/mysqlgovernor.py --install")
-        print bcolors.ok("Instruction: how to install cll-lve mysql/mariadb https://docs.cloudlinux.com/mysql_governor_installation.html")
+        print(bcolors.fail("cll-lve mysql version not found."))
+        print(bcolors.warning("Please run to update your mysql to cll-lve version: "))
+        print(bcolors.warning("/usr/share/lve/dbgovernor/mysqlgovernor.py --mysql-version=DESIRED_MYSQL_VERSION"))
+        print(bcolors.warning("/usr/share/lve/dbgovernor/mysqlgovernor.py --install"))
+        print(bcolors.ok("Instruction: how to install cll-lve mysql/mariadb https://docs.cloudlinux.com/mysql_governor_installation.html"))
         return False
 
-    print bcolors.ok("The db_governor service is correctly configured")
+    print(bcolors.ok("The db_governor service is correctly configured"))
     return True

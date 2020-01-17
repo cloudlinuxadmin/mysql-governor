@@ -1,4 +1,4 @@
-#!/opt/alt/python27/bin/python
+#!/opt/alt/python37/bin/python3
 # -*- coding: utf-8 -*-
 
 # Copyright © Cloud Linux GmbH & Cloud Linux Software, Inc 2010-2019 All Rights Reserved
@@ -8,7 +8,8 @@
 #
 import pwd
 import os
-import MySQLdb
+import sys
+
 
 psa_conf = '/etc/psa/psa.conf'
 psa_shadow = '/etc/psa/.psa.shadow'
@@ -25,7 +26,7 @@ def read_mysql_conn_params():
     access['login'] = 'admin'
     with open(psa_shadow, 'r') as f:
         access['pass'] = f.read().strip()
-    with open(psa_conf, 'rb') as conf:
+    with open(psa_conf, 'r') as conf:
         mysql_sock = [l.strip() for l in conf.readlines() if 'MYSQL_SOCKET' in l]
     if mysql_sock:
         access['socket'] = mysql_sock[0].split(' ')[1]
@@ -45,6 +46,12 @@ def get_users_data():
     dbhost = conn_params.get('host', 'localhost')
 
     try:
+        import MySQLdb
+    except ImportError:
+        print('Error: package "alt-python37-MySQL-meta" is not installed.', file=sys.stderr)
+        return [], {}
+
+    try:
         if 'socket' in conn_params:
             con = MySQLdb.connect(unix_socket=conn_params['socket'],
                                   user=conn_params['login'],
@@ -60,7 +67,7 @@ def get_users_data():
         psa_mapped_users = {u[0]: u[1] for u in cur.fetchall()}
         con.close()
     except MySQLdb.Error as e:
-        print e
+        print(e)
         return [], {}
 
     return psa_db_users, psa_mapped_users

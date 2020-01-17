@@ -19,7 +19,7 @@ sys.path.append("../")
 from utilities import is_file_owned_by_package, exec_command_out, get_cl_num, disable_service
 
 
-class Storage(object):
+class Storage:
     """
     Manage unneeded filesthat was left by previous MySQL installations
     """
@@ -33,7 +33,7 @@ class Storage(object):
                 self._is_writable(self.STORE_PATH) and \
                 not is_file_owned_by_package(path_to_file):
             if not self._check_initd_service(path_to_file):
-                print "File %s moved to storage" % path_to_file
+                print("File %s moved to storage" % path_to_file)
                 self._mkdir_p(self.STORE_PATH + path_to_file)
                 self._check_systemd_service("mysql", path_to_file)
                 self._check_systemd_service("mysqld", path_to_file)
@@ -45,7 +45,7 @@ class Storage(object):
         Restore file from storage
         """
         if self._file_from_list_exists(path_to_file, True):
-            print "File %s restored" % path_to_file
+            print("File %s restored" % path_to_file)
             self._mkdir_p(path_to_file)
             shutil.move("%s%s" % (self.STORE_PATH, path_to_file), path_to_file)
         self._find_empty_dirs_in_storage()
@@ -71,11 +71,11 @@ class Storage(object):
                     else:
                         access_time = time.ctime(os.path.getctime(f_path))
                     if dir_name.replace(root_dir, "") != "":
-                        print 'Moved to storage: %s\tFile: /%s/%s' % (
-                            access_time, dir_name.replace(root_dir, ""), fname)
+                        print('Moved to storage: %s\tFile: /%s/%s' % (
+                            access_time, dir_name.replace(root_dir, ""), fname))
                     else:
-                        print 'Moved to storage: %s\tFile: /%s' % (
-                            access_time, fname)
+                        print('Moved to storage: %s\tFile: /%s' % (
+                            access_time, fname))
         if restore:
             self._find_empty_dirs_in_storage()
 
@@ -105,7 +105,7 @@ class Storage(object):
                 elif os.path.isdir(file_path):
                     shutil.rmtree(file_path)
             except Exception as e:
-                print e
+                print(e)
 
     @staticmethod
     def check_root_permissions():
@@ -183,7 +183,7 @@ class Storage(object):
                 if dir_name_no_slash == self.STORE_PATH.rstrip('/'):
                     root_found = True
                     break
-                print "Directory %s is empty and will be removed" % dir_name
+                print("Directory %s is empty and will be removed" % dir_name)
                 shutil.rmtree(dir_name)
             result = list(self._find_empty_dirs_in_storage_one_iteration())
 
