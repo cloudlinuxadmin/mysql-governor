@@ -987,7 +987,7 @@ def get_mysql_cnf_value(section, name):
     Get value from my.cnf
     """
     if os.path.exists("/etc/my.cnf"):
-        configParser = configparser.RawConfigParser(allow_no_value=True)
+        configParser = configparser.RawConfigParser(allow_no_value=True, strict=False)
         configFilePath = r'/etc/my.cnf'
         try:
             configParser.read(configFilePath)
