@@ -767,8 +767,6 @@ for native procedure restoring of MySQL packages"""))
 
         else:
             repo = self.get_repo_name(sql_version)
-            #repo = "cl-%s-common.repo" % self.REPO_NAMES.get(sql_version, None)
-
             module = self.MODULE_STREAMS.get(sql_version, None)
 
             if sql_version.startswith("mysql"):
