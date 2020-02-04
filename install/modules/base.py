@@ -31,8 +31,7 @@ from utilities import get_cl_num, exec_command, exec_command_out, new_lve_ctl, \
     correct_remove_notowned_mysql_service_names_cl7, \
     correct_remove_notowned_mysql_service_names_not_symlynks_cl7, get_mysql_log_file, \
     check_mysqld_is_alive, makedir_recursive, patch_governor_config, bcolors, force_update_cagefs, \
-    show_new_packages_info, wizard_install_confirm, rewrite_file, cl8_module_enable, debug_log
-from configparser import RawConfigParser
+    show_new_packages_info, wizard_install_confirm, rewrite_file, cl8_module_enable, debug_log, read_config_file
 
 
 class InstallManager:
@@ -165,8 +164,7 @@ class InstallManager:
         default_log = '/var/lib/mysql/mysqld.error.log'
         default_pid = '/var/lib/mysql/mysqld.pid'
 
-        conf = RawConfigParser(allow_no_value=True, strict=False)
-        conf.read('/etc/my.cnf.prev')
+        conf = read_config_file('/etc/my.cnf.prev')
         # try to find non-existent paths, defined in /etc/my.cnf
         for s in conf.sections():
             for opt, val in conf.items(s):
