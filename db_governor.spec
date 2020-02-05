@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   52
+%define g_release   53
 %define g_key_library 9
 
 %if %{undefined _unitdir}
@@ -420,6 +420,10 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Mon Feb 03 2020 Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-53
+- MYSQLG-468: added mariadb104 support
+- MYSQLG-466: Allow duplicates when reading /etc/my.cnf
+
 * Mon Jan 20 2020 Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-52
 - MYSQLG-458: migrated to Python 3.7
 

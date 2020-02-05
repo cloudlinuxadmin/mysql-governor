@@ -31,8 +31,7 @@ from utilities import get_cl_num, exec_command, exec_command_out, new_lve_ctl, \
     correct_remove_notowned_mysql_service_names_cl7, \
     correct_remove_notowned_mysql_service_names_not_symlynks_cl7, get_mysql_log_file, \
     check_mysqld_is_alive, makedir_recursive, patch_governor_config, bcolors, force_update_cagefs, \
-    show_new_packages_info, wizard_install_confirm, rewrite_file, cl8_module_enable, debug_log
-from configparser import RawConfigParser
+    show_new_packages_info, wizard_install_confirm, rewrite_file, cl8_module_enable, debug_log, read_config_file
 
 
 class InstallManager:
@@ -59,6 +58,7 @@ class InstallManager:
         "mariadb101": "mariadb-10.1",
         "mariadb102": "mariadb-10.2",
         "mariadb103": "mariadb-10.3",
+        "mariadb104": "mariadb-10.4",
         "percona56": "percona-5.6"
     }
     MODULE_STREAMS = {
@@ -71,6 +71,7 @@ class InstallManager:
         "mariadb101": "mariadb:cl-MariaDB101",
         "mariadb102": "mariadb:cl-MariaDB102",
         "mariadb103": "mariadb:cl-MariaDB103",
+        "mariadb104": "mariadb:cl-MariaDB104",
         "percona56": "percona:cl-Percona56",
         "auto": "mysql:8.0"
     }
@@ -163,8 +164,7 @@ class InstallManager:
         default_log = '/var/lib/mysql/mysqld.error.log'
         default_pid = '/var/lib/mysql/mysqld.pid'
 
-        conf = RawConfigParser(allow_no_value=True)
-        conf.read('/etc/my.cnf.prev')
+        conf = read_config_file('/etc/my.cnf.prev')
         # try to find non-existent paths, defined in /etc/my.cnf
         for s in conf.sections():
             for opt, val in conf.items(s):
@@ -733,6 +733,9 @@ for native procedure restoring of MySQL packages"""))
                     sql_version = detected_version_on_system
         return sql_version
 
+    def get_repo_name(self, sql_version):
+        return "cl-%s-common.repo" % self.REPO_NAMES.get(sql_version, None)
+
     def _load_new_packages(self, beta, sql_version=None, folder="new"):
         """
         detect and download packages for new installation
@@ -763,7 +766,7 @@ for native procedure restoring of MySQL packages"""))
                         packages[0].split('.')[0], "".join(line.split(":")[1].split(".")[:2]).strip())
 
         else:
-            repo = "cl-%s-common.repo" % self.REPO_NAMES.get(sql_version, None)
+            repo = self.get_repo_name(sql_version)
             module = self.MODULE_STREAMS.get(sql_version, None)
 
             if sql_version.startswith("mysql"):
@@ -794,7 +797,7 @@ for native procedure restoring of MySQL packages"""))
                 packages += ["numactl-devel%s" % arch, "numactl%s" % arch, "mysqlclient18"]
         elif sql_version.startswith("mariadb"):
             packages += ["mysqlclient16", "mysqlclient15"]
-            if sql_version in ['mariadb102', 'mariadb103']:
+            if sql_version in ['mariadb102', 'mariadb103', 'mariadb104']:
                 packages += ["mysqlclient18-compat"]
         elif sql_version.startswith("percona"):
             packages += ["mysqlclient18", "mysqlclient16", "mysqlclient15"]
@@ -1092,7 +1095,7 @@ for native procedure restoring of MySQL packages"""))
         if 6 == self.cl_version:
             if version in ["mysql51", "mysql55", "mysql56",
                            "mysql57", "mysql80", "mariadb101", "mariadb102",
-                           "mariadb103"]:
+                           "mariadb103", "mariadb104"]:
                 name = "mysql"
 
         try:

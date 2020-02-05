@@ -10,3 +10,4 @@ target_settings:
   MariaDB101: unmanaged
   MariaDB102: unmanaged
   MariaDB103: unmanaged
+  MariaDB104: unmanaged
