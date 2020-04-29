@@ -6,6 +6,9 @@
     api_url: "{{ apiurl }}"
     api_username: "{{ apiusername }}"
     template_id: "{{ TEMPLATE_ID }}"
+    memory: 4 GB
+    cpu: 2
+    vcpu: 2
     attributes:
       name: "{{ VM_NAME }}"
   register: created_vm
@@ -13,25 +16,25 @@
 
 - name: ansible hosts add
   lineinfile:
-    path: ./ansible_hosts
+    path: ./ansible_hosts{{ machine_info | default('') }}
     line: '{{ created_vm.instances[0].networks[0].ip }}'
     create: yes
   when: one_act == 'crt'
 
 - name: vm id add
   lineinfile:
-    path: ./vm_id
+    path: ./vm_id{{ machine_info | default('') }}
     line: '{{ created_vm.instances_ids[0] }}'
     create: yes
   when: one_act == 'crt'
 
 - name: Read vmid
-  shell: tail -n 1 ./vm_id
+  shell: tail -n 1 ./vm_id{{ machine_info | default('') }}
   register: vmid
   when: (one_act == 'hrbt' or one_act == 'rmvm')
 
 - name: Read rebooted_status
-  shell: tail -n 1 ./rebooted_status
+  shell: tail -n 1 ./rebooted_status{{ machine_info | default('') }}
   register: rbt_stat
   when: one_act == 'hrbt'
 
@@ -55,3 +58,9 @@
     state: absent
     hard: yes
   when: one_act == 'rmvm'
+
+- wait_for_connection:
+    delay: 20
+    timeout: 180
+  delegate_to: '{{ created_vm.instances[0].networks[0].ip }}'
+  when: one_act == 'crt'
