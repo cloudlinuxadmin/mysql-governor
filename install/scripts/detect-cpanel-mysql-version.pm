@@ -71,13 +71,13 @@ my $sql_version_2 = $sql_version;
 
 if ($sql_version_2=="5.0"){
     $sql_version_2="mysql50";
-} 
+}
 if ($sql_version_2=="5.1"){
     $sql_version_2="mysql51";
-} 
+}
 if ($sql_version_2=="5.5"){
     $sql_version_2="mysql55";
-} 
+}
 if ($sql_version_2=="5.6"){
     $sql_version_2="mysql56";
 }
@@ -85,7 +85,11 @@ if ($sql_version_2=="5.6"){
 if ($sql_version_2=="5.7"){
     $sql_version_2="mysql57";
 }
- 
+
+if ($sql_version_2=="8.0"){
+    $sql_version_2="mysql80";
+}
+
 if ($sql_version_2=="10.0"){
     $sql_version_2="mariadb100";
 }

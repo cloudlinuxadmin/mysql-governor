@@ -1,11 +1,13 @@
---- 
-file_format: 
+---
+file_format:
   version: 2
-target_settings: 
+target_settings:
   MySQL50: unmanaged
   MySQL51: unmanaged
   MySQL55: unmanaged
   MySQL56: unmanaged
+  MySQL57: unmanaged
+  MySQL80: unmanaged
   MariaDB100: unmanaged
   MariaDB101: unmanaged
   MariaDB102: unmanaged

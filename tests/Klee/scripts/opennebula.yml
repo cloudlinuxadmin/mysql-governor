@@ -1,6 +1,8 @@
 ---
 
 - hosts: localhost
+  vars:
+    - ansible_python_interpreter: "/opt/alt/python27/bin/python"
   user: root
   roles:
     - opennebula_actions
