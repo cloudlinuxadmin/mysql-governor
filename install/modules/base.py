@@ -676,8 +676,13 @@ for native procedure restoring of MySQL packages"""))
         # %%{version}\n"|grep -iE "^(%s)" """ % "|".join(PATTERNS), silent=True)
         packages = exec_command("""rpm -qa|grep -iE "^(%s)" """ %
                                 "|".join(PATTERNS), silent=True)
-        # try to exclude mysql-community release package from the list of packages to download
-        packages = [x for x in packages if not re.match(r'mysql\d+-community-release[a-z0-9\-]+.noarch', x)]
+        # match pattern to exclude:
+        # - mysql-community release package
+        # - mysqld_exporter package
+        # - MySQL-python package
+        # from the list of packages to download
+        pattern = r'MySQL-python|mysql(d_exporter|\d+-community-release)'
+        packages = [x for x in packages if not re.match(pattern, x)]
 
         if not len(packages):
             print("No installed DB packages found")
