@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   54
+%define g_release   55
 %define g_key_library 9
 
 %if %{undefined _unitdir}
@@ -423,6 +423,9 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Mon Aug 03 2020 Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-55
+- MYSQLG-513: mysqld_exporter and MySQL-python excluded from the list of packages to remove
+
 * Tue Jun 23 2020 Sergey Kokhan <skokhan@cloudlinux.com> 1.2-54
 - MYSQLG-503: Added detect mysql 8.0 on cPanel
 
