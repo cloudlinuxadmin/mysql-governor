@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   55
+%define g_release   56
 %define g_key_library 9
 
 %if %{undefined _unitdir}
@@ -393,7 +393,7 @@ if [ -e /usr/share/lve/dbgovernor/mysqlgovernor.py ]; then
 fi
 
 %triggerin -- cl-MySQL55-client, cl-MySQL56-client, cl-MySQL57-client, cl-MySQL80-client, cl-MariaDB55, cl-MariaDB100, cl-MariaDB101, cl-MariaDB102, cl-MariaDB103, cl-Percona56-client, mysql-community-client, mariadb, Percona-Server-client-56
-if [ -e /usr/sbin/cagefsctl ]; then
+if [ -e /usr/sbin/cagefsctl -a -d /usr/share/cagefs-skeleton ]; then
     /usr/sbin/cagefsctl --force-update
 fi
 
@@ -423,6 +423,9 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Wed Aug 12 2020 Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-56
+- MYSQLG-489: Added check for uninited cagefs
+
 * Mon Aug 03 2020 Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-55
 - MYSQLG-513: mysqld_exporter and MySQL-python excluded from the list of packages to remove
 
