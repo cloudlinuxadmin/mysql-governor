@@ -214,7 +214,7 @@ def download_packages(names, dest, beta, custom_download=None):
             and custom_download("+") == "yes":
         names = _custom_download_packages(names, path, custom_download)
     else:
-        repo = "" if not beta else "--enablerepo=cloudlinux-updates-testing --disableplugin=protectbase"
+        repo = "--enablerepo=cloudlinux-rollout* --disableplugin=protectbase" if not beta else "--enablerepo=cloudlinux-updates-testing --disableplugin=protectbase"
         if get_cl_num() >= 8:
             repo = "%s --enablerepo=mysqclient" % repo
         else:
@@ -352,9 +352,12 @@ def confirm_packages_installation(new_struct, prev_struct, no_confirm=None):
             elif StrictVersion(new_struct['new_ver']) < StrictVersion(prev_struct['extended']):
                 print(bcolors.fail(
                     "You are attempting to install a LOWER {t} version ({new}) than currently installed one ({old})."
-                    "\nThis could lead to unpredictable consequences, like fully non working service."
-                    "\nThink twice before proceeding.".format(
+                    "\nThis could lead to unpredictable consequences, like fully non working service.".format(
                         old=prev_struct['extended'], new=new_struct['new_ver'], t=new_struct['new_type'])))
+                print(bcolors.fail(
+                    "Please follow this link to see more details - " + bcolors.OKBLUE +
+                    "https://cloudlinux.zendesk.com/hc/en-us/articles/360014058219"))
+                print(bcolors.fail("Think twice before proceeding."))
         if not no_confirm:
             if not query_yes_no("Continue?"):
                 return False

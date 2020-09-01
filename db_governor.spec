@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   56
+%define g_release   57
 %define g_key_library 9
 
 %if %{undefined _unitdir}
@@ -13,7 +13,7 @@
 
 Name: governor-mysql
 Version: %{g_version}
-Release: %{g_release}%{?dist}.cloudlinux.1
+Release: %{g_release}%{?dist}.cloudlinux
 Summary: DB control utilities
 License: CloudLinux Commercial License
 URL: http://cloudlinux.com
@@ -423,6 +423,10 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Fri Aug 28 2020 Sergey Kokhan <skokhan@cloudlinux.com> 1.2-57
+- MYSQLG-519: Added a link to the zendesk article in the error output
+- MYSQLG-502: Added support for gradual rollout repos
+
 * Wed Aug 12 2020 Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-56
 - MYSQLG-489: Added check for uninited cagefs
 
