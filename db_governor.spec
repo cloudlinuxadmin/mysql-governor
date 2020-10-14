@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   57
+%define g_release   58
 %define g_key_library 9
 
 %if %{undefined _unitdir}
@@ -423,6 +423,9 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Thu Oct 15 2020 Sergey Kokhan <skokhan@cloudlinux.com> 1.2-58
+- MYSQLG-529: Fixed issue when packages not downloaded
+
 * Fri Aug 28 2020 Sergey Kokhan <skokhan@cloudlinux.com> 1.2-57
 - MYSQLG-519: Added a link to the zendesk article in the error output
 - MYSQLG-502: Added support for gradual rollout repos

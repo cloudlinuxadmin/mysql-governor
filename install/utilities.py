@@ -210,11 +210,25 @@ def download_packages(names, dest, beta, custom_download=None):
     if not os.path.exists(path):
         os.makedirs(path, 0o755)
 
+    rollout = ""
+    if exec_command("yum repolist -y --enablerepo=* | grep cloudlinux-rollout -c", True, True) != "0":
+        rollout = "--enablerepo=cloudlinux-rollout*"
+
+    beta_repo = ""
+    if exec_command("yum repolist -y --enablerepo=* | grep \"cloudlinux-updates-testing \" -c", True, True) != "0":
+        beta_repo = "--enablerepo=cloudlinux-updates-testing"
+
     if custom_download is not None and callable(custom_download) \
             and custom_download("+") == "yes":
         names = _custom_download_packages(names, path, custom_download)
     else:
-        repo = "--enablerepo=cloudlinux-rollout* --disableplugin=protectbase" if not beta else "--enablerepo=cloudlinux-updates-testing --disableplugin=protectbase"
+        repo = "--disableplugin=protectbase"
+
+        if beta:
+            repo += f' {beta_repo}'
+        else:
+            repo += f' {rollout}'
+
         if get_cl_num() >= 8:
             repo = "%s --enablerepo=mysqclient" % repo
         else:
