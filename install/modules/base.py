@@ -31,7 +31,8 @@ from utilities import get_cl_num, exec_command, exec_command_out, new_lve_ctl, \
     correct_remove_notowned_mysql_service_names_cl7, \
     correct_remove_notowned_mysql_service_names_not_symlynks_cl7, get_mysql_log_file, \
     check_mysqld_is_alive, makedir_recursive, patch_governor_config, bcolors, force_update_cagefs, \
-    show_new_packages_info, wizard_install_confirm, rewrite_file, cl8_module_enable, debug_log, read_config_file
+    show_new_packages_info, wizard_install_confirm, rewrite_file, cl8_module_enable, debug_log, \
+    read_config_file, mycnf_writable
 
 
 class InstallManager:
@@ -123,7 +124,8 @@ class InstallManager:
         """
         # fix for packages without /etc/my.cnf file
         if action == 'touch':
-            touch("/etc/my.cnf")
+            if mycnf_writable():
+                touch("/etc/my.cnf")
             return
 
         actions = {
@@ -147,10 +149,13 @@ class InstallManager:
             working_path = "/etc/my.cnf.prev"
 
         if os.path.exists(working_path):
-            if action == 'backup_old':
-                shutil.move(working_path, "%s/my.cnf" % old_path)
-            else:
-                actions.get(action)(working_path)
+            try:
+                if action == 'backup_old':
+                    shutil.move(working_path, "%s/my.cnf" % old_path)
+                else:
+                    actions.get(action)(working_path)
+            except PermissionError as e:
+                print(f'Unable to perform actions on the my.cnf : {e}')
 
     def my_cnf_inspect(self):
         """
@@ -187,8 +192,9 @@ class InstallManager:
                 conf.add_section('mysqld')
             conf.set('mysqld', 'default-authentication-plugin', 'mysql_native_password')
 
-        with open('/etc/my.cnf', 'w') as configfile:
-            conf.write(configfile)
+        if mycnf_writable():
+            with open('/etc/my.cnf', 'w') as configfile:
+                conf.write(configfile)
 
     def remove_current_packages(self):
         """

@@ -1,6 +1,7 @@
 import mock
 import pytest
 import utilities
+from pyfakefs import fake_filesystem
 
 
 def test_exec_command_with_timeout_fail(monkeypatch):
@@ -70,3 +71,30 @@ def test_read_config(mocked_content):
     """
     with mock.patch('builtins.open', mock.mock_open(read_data=mocked_content)):
         assert utilities.read_config_file('')
+
+
+def test_mycnf_absent(fs):
+    """
+    Check the 'mycnf_writable' function in case of my.cnf file is absent
+    """
+    fs.add_mount_point('/etc')
+    assert utilities.mycnf_writable()
+
+
+def test_mycnf_writable(fs):
+    """
+    Check the 'mycnf_writable' function in case of my.cnf is writable.
+    """
+    fs.create_file('/etc/my.cnf')
+    assert utilities.mycnf_writable()
+
+
+def test_mycnf_read_only(fs):
+    """
+    Check the 'mycnf_writable' function in case of my.cnf is not writable.
+    """
+    fs.create_file('/etc/my.cnf')
+    fake_filesystem.set_uid(1)
+    os_module = fake_filesystem.FakeOsModule(fs)
+    os_module.chmod('/etc/my.cnf', 0o400)
+    assert not utilities.mycnf_writable()

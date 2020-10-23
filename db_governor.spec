@@ -44,13 +44,12 @@ BuildRequires: systemd
 BuildRequires: systemd-devel
 %endif
 # for python tests
-BuildRequires: alt-python37-pytest alt-python37-mock alt-python37-MySQL-meta
+BuildRequires: alt-python37-pytest alt-python37-mock alt-python37-MySQL-meta alt-python37-pyfakefs
 %if 0%{?rhel} == 7
 BuildRequires: mariadb-libs
+BuildRequires: mariadb
 %else
 BuildRequires: mysql-libs
-%endif
-%if 0%{?rhel} == 8
 BuildRequires: mysql
 %endif
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot

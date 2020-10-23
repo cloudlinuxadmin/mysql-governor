@@ -372,6 +372,10 @@ def confirm_packages_installation(new_struct, prev_struct, no_confirm=None):
                     "Please follow this link to see more details - " + bcolors.OKBLUE +
                     "https://cloudlinux.zendesk.com/hc/en-us/articles/360014058219"))
                 print(bcolors.fail("Think twice before proceeding."))
+        if not mycnf_writable():
+            print(bcolors.warning(
+                "\nWARNING!!!! /etc/my.cnf is not writable! For the proper execution of the installation script"
+                "\nmy.cnf must be writable for the root user!\n"))
         if not no_confirm:
             if not query_yes_no("Continue?"):
                 return False
@@ -708,6 +712,16 @@ def touch(fname):
         os.utime(fname, None)
     except (IOError, OSError):
         open(fname, 'a').close()
+
+
+def mycnf_writable():
+    """
+    Check if the /etc/my.cnf is exists and writable.
+    """
+    f = "/etc/my.cnf"
+    if os.access(f, os.F_OK):
+        return os.access(f, os.W_OK)
+    return True
 
 
 class bcolors:
@@ -1183,6 +1197,10 @@ def wizard_install_confirm(new_struct, prev_struct):
         # no current version retrieved
         msg = "Failed to retrieve current mysql version. In such a case only manual installation is allowed. " \
               "\nInstruction: https://docs.cloudlinux.com/mysql_governor_installation.html"
+    if not mycnf_writable():
+        print(bcolors.warning(
+            "\nWARNING!!!! /etc/my.cnf is not writable! The installation script does not have the ability"
+            "\nto perform actions on it\n"))
     if msg:
         print(bcolors.fail(msg_template.format(msg=msg)))
         return False
