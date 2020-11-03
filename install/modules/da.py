@@ -198,7 +198,7 @@ class DirectAdminManager(InstallManager):
         :return:
         """
         if not indicator:
-            exec_command_out("/bin/rpm --ihv --force --nodeps %s" % package_name)
+            exec_command_out("/bin/rpm -ihv --force --nodeps %s" % package_name)
             return ""
         else:
             return "yes"
