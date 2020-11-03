@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   58
+%define g_release   59
 %define g_key_library 9
 
 %if %{undefined _unitdir}
@@ -422,6 +422,9 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Tue Nov 03 2020 Sergey Kozhekin <skozhekin@cloudlinux.com> 1.2-59
+- MYSQLG-526: MariaDB (mysql) upgrade failed due to permission error
+
 * Thu Oct 15 2020 Sergey Kokhan <skokhan@cloudlinux.com> 1.2-58
 - MYSQLG-529: Fixed issue when packages not downloaded
 
