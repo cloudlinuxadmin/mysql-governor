@@ -414,6 +414,16 @@ gpgcheck=1
                              "/var/cpanel/rpm.versions.d/cloudlinux.versions")
         return
 
+    def unsupported_db_version(self, force=False):
+        """
+        Skip an installation if not supported db version has been set
+        """
+        version = InstallManager._get_result_mysql_version(self)
+        if version in ('mariadb104', 'mariadb105'):
+            print(bcolors.fail(f"{version} is unsupported version for cPanel"))
+            if not force:
+                sys.exit(1)
+
     @staticmethod
     def enable_mysql_monitor(enable=True):
         """

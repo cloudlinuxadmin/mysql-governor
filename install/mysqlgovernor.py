@@ -202,6 +202,7 @@ def main(argv):
         print(bcolors.ok("Now set MySQL to type '%s'" % opts.mysql_version))
 
     elif opts.install or opts.install_beta:
+        manager.unsupported_db_version(opts.force)
         warn_message()
         manager.cl8_save_current()
         manager.cleanup()
