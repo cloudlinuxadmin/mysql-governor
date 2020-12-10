@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   59
+%define g_release   60
 %define g_key_library 9
 
 %if %{undefined _unitdir}
@@ -422,6 +422,9 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Thu Dec 10 2020 Sergey Kozhekin <skozhekin@cloudlinux.com> 1.2-60
+- MYSQLG-546: restrict upgrading to maraidb10.4 and 10.5 on cPanel servers
+
 * Tue Nov 03 2020 Sergey Kozhekin <skozhekin@cloudlinux.com> 1.2-59
 - MYSQLG-526: MariaDB (mysql) upgrade failed due to permission error
 
