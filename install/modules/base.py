@@ -1168,3 +1168,10 @@ for native procedure restoring of MySQL packages"""))
         :return:
         """
         return
+
+    def unsupported_db_version(self, force=False):
+        """
+        Skip an installation if not supported db version has been set
+        By default - not needed
+        """
+        pass
