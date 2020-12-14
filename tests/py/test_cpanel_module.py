@@ -42,3 +42,57 @@ def test_update_user_map_exceptions(exception, expected_msg, capfd):
             assert cpanel.cPanelManager('').update_user_map_file()
         out, err = capfd.readouterr()
         assert expected_msg in out
+
+
+@pytest.mark.parametrize("mocked_content", [
+    'mariadb104',
+    'mariadb105',
+])
+@mock.patch("builtins.open", mock.mock_open(read_data=''))
+def test_for_unsupported_db_version(mocked_content):
+    """
+    This test is to check the response of the tested method to an unsupported
+    version of the database (expected "exit 1")
+    """
+    exit_mock = mock.MagicMock()
+    with mock.patch("modules.cpanel.sys.exit", exit_mock):
+        with mock.patch("modules.base.InstallManager._get_result_mysql_version",
+                        return_value=mocked_content):
+            cpanel.cPanelManager('').unsupported_db_version()
+    exit_mock.assert_called_once_with(1)
+
+
+@pytest.mark.parametrize("mocked_content", [
+    'mariadb104',
+    'mariadb105',
+])
+@mock.patch("builtins.open", mock.mock_open(read_data=''))
+def test_for_unsupported_db_version_with_force(mocked_content):
+    """
+    This test is to check the response of the tested method to an unsupported
+    version of the database (do nothing cause "force" key is passed)
+    """
+    exit_mock = mock.MagicMock()
+    with mock.patch("modules.cpanel.sys.exit", exit_mock):
+        with mock.patch("modules.base.InstallManager._get_result_mysql_version",
+                        return_value=mocked_content):
+            cpanel.cPanelManager('').unsupported_db_version(force=True)
+    exit_mock.assert_not_called()
+
+
+@pytest.mark.parametrize("mocked_content", [
+    'mariadb103',
+    'mysql57',
+])
+@mock.patch("builtins.open", mock.mock_open(read_data=''))
+def test_for_supported_db_version(mocked_content):
+    """
+    This test is to check the response of the tested method to a supported
+    version of the database (do nothing)
+    """
+    exit_mock = mock.MagicMock()
+    with mock.patch("modules.cpanel.sys.exit", exit_mock):
+        with mock.patch("modules.base.InstallManager._get_result_mysql_version",
+                        return_value=mocked_content):
+            cpanel.cPanelManager('').unsupported_db_version()
+    exit_mock.assert_not_called()
