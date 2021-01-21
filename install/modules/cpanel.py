@@ -213,7 +213,8 @@ gpgcheck=1
         repo_file = os.path.join(self.SOURCE, 'mysql-community-release.rpm')
         repo_md5 = {
             6: 'f2befc44a4b8416864987b1686c4a72b',
-            7: '739dc44566d739c5d7b893de96ee6848'
+            7: '739dc44566d739c5d7b893de96ee6848',
+            8: '7166fed89332ab92fb3ec666e95d6ad1'
         }
         opener = urllib.request.build_opener()
         opener.addheaders = [('User-agent', 'Mozilla/5.0')]
