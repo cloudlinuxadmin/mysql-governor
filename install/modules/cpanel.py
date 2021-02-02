@@ -17,7 +17,7 @@ import hashlib
 
 from utilities import exec_command_out, grep, add_line, \
     service, remove_lines, write_file, replace_lines, touch, \
-    is_package_installed, remove_packages, exec_command, parse_rpm_name, service_symlink, bcolors
+    is_package_installed, remove_packages, exec_command, parse_rpm_name, service_symlink, bcolors, get_cl_num
 from .base import InstallManager
 
 
@@ -160,28 +160,33 @@ class cPanelManager(InstallManager):
         """
         pkgs = ('MariaDB-server', 'MariaDB-client', 'MariaDB-shared',
                 'MariaDB-devel', 'MariaDB-compat',)
-        # prepare repo data
-        print('Preparing official MariaDB repository...')
-        repo_data = """[mariadb]
+
+        num = version.split('mariadb')[-1]
+        cpanel_alter_repo = f'MariaDB{num}'
+
+        # try to find preinstalled cPanel own repo for given version
+        if not self.install_from_existing_repo(cpanel_alter_repo, pkgs):
+            # prepare repo data
+            print('Preparing official MariaDB repository...')
+            repo_data = """[mariadb]
 name = MariaDB
 baseurl = http://yum.mariadb.org/{maria_ver}/centos{cl_ver}-{arch}
 gpgkey=https://yum.mariadb.org/RPM-GPG-KEY-MariaDB
 gpgcheck=1
 """
-        num = version.split('mariadb')[-1]
-        mariadb_version = '{base}.{suffix}'.format(base=num[:-1],
-                                                   suffix=num[-1])
-        arch = 'amd64' if os.uname()[-1] == 'x86_64' else 'x86'
-        with open('/etc/yum.repos.d/MariaDB.repo', 'w') as repo_file:
-            repo_file.write(
-                repo_data.format(maria_ver=mariadb_version,
-                                 cl_ver=self.cl_version, arch=arch))
+            mariadb_version = '{base}.{suffix}'.format(base=num[:-1],
+                                                       suffix=num[-1])
+            arch = 'amd64' if os.uname()[-1] == 'x86_64' else 'x86'
+            with open('/etc/yum.repos.d/MariaDB.repo', 'w') as repo_file:
+                repo_file.write(
+                    repo_data.format(maria_ver=mariadb_version,
+                                     cl_ver=self.cl_version, arch=arch))
 
-        # install MariaDB packages
-        print('Installing packages')
-        exec_command(
-            "yum install -y --disableexcludes=all --disablerepo=cl-mysql* --disablerepo=mysqclient* {pkgs}".format(
-                pkgs=' '.join(pkgs)))
+            # install MariaDB packages
+            print('Installing packages')
+            exec_command(
+                "yum install -y --disableexcludes=all --disablerepo=cl-mysql* --disablerepo=mysqclient* {pkgs}".format(
+                    pkgs=' '.join(pkgs)))
 
     def install_mysql_community(self, version):
         """
@@ -189,20 +194,49 @@ gpgcheck=1
         """
         pkgs = ('mysql-community-server', 'mysql-community-client',
                'mysql-community-common', 'mysql-community-libs')
-        # prepare mysql repo
-        if not exec_command('rpm -qa | grep mysql80-community', silent=True):
-            self.download_and_install_mysql_repo()
+        if get_cl_num() >= 8:
+            cpanel_alter_repo = f'{version.capitalize()}-community'
+        else:
+            cpanel_alter_repo = f'{version}-community'
 
-        # select MySQL version
-        print('Selected version %s' % version)
-        exec_command('yum-config-manager --disable mysql*-community')
-        exec_command('yum-config-manager --enable {version}-community'.format(version=version))
+        # try to find preinstalled cPanel own repo for given version
+        if not self.install_from_existing_repo(cpanel_alter_repo, pkgs):
+            # prepare mysql-community repo
+            if not exec_command('rpm -qa | grep mysql80-community', silent=True):
+                self.download_and_install_mysql_repo()
 
-        # install mysql-community packages
-        print('Installing packages')
-        exec_command(
-            "yum install -y --disableexcludes=all --disablerepo=cl-mysql* --disablerepo=mysqclient* {pkgs}".format(
-                pkgs=' '.join(pkgs)))
+            # select MySQL version
+            print('Selected version %s' % version)
+            exec_command('yum-config-manager --disable mysql*-community')
+            exec_command('yum-config-manager --enable {version}-community'.format(version=version))
+
+            # install mysql-community packages
+            print(f'Installing packages from {version}-community')
+            exec_command(
+                "yum install -y --disableexcludes=all --disablerepo=cl-mysql* --disablerepo=mysqclient* {pkgs}".format(
+                    pkgs=' '.join(pkgs)))
+
+    @staticmethod
+    def install_from_existing_repo(reponame, packages):
+        """
+        Try to install from existing repository and return result
+        Args:
+            reponame: repository name
+            packages: list pf packages to install
+
+        Returns: True in case of success, False otherwise
+
+        """
+        # try to find preinstalled cPanel own repo for given version
+        if exec_command(
+                f"yum repolist -y --enablerepo=* | grep {reponame} -c",
+                True, True) != "0":
+            print(f'Installing packages from {reponame}')
+            exec_command(
+                "yum install -y --disableexcludes=all --disablerepo=cl-mysql* --disablerepo=mysqclient* --enablerepo={repo} {pkgs}".format(
+                    repo=reponame, pkgs=' '.join(packages)))
+            return True
+        return False
 
     def download_and_install_mysql_repo(self):
         """
