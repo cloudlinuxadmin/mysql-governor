@@ -634,7 +634,8 @@ class InstallManager:
         """
         print(bcolors.fail(
             """Restore of MySQL packages will not be completed because not \
-all old packages were downloaded.\nIf something went wrong during \
+all old packages were downloaded.\nCheck if all related repositories \
+are enabled and try again\nIf something went wrong during \
 or after installation process, execute \
 /usr/share/lve/dbgovernor/mysqlgovernor --delete \
 for native procedure restoring of MySQL packages"""))

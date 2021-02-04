@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   60
+%define g_release   61
 %define g_key_library 9
 
 %if %{undefined _unitdir}
@@ -422,6 +422,10 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Thu Feb 04 2021 Sergey Kozhekin <skozhekin@cloudlinux.com>, Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-61
+- MYSQLG-552: deletion procedure for cPanel enhanced
+- MYSQLG-552: MD5 checksum for cl8 added to the "repo_md5" dictionary
+
 * Thu Dec 10 2020 Sergey Kozhekin <skozhekin@cloudlinux.com> 1.2-60
 - MYSQLG-546: restrict upgrading to maraidb10.4 and 10.5 on cPanel servers
 
