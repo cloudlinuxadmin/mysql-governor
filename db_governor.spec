@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   61
+%define g_release   62
 %define g_key_library 9
 
 %if %{undefined _unitdir}
@@ -157,6 +157,7 @@ install -D -m 755 build_test/lib/libgovernor.so $RPM_BUILD_ROOT%{_libdir}/libgov
 install -D -m 755 install/db-select-mysql $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/db-select-mysql
 install -D -m 755 install/mysqlgovernor.py $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/mysqlgovernor.py
 
+install -D -m 644 install/cl-mysql.repo.default $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cl-mysql.repo.default
 install -D -m 644 install/utilities.py $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utilities.py
 install -D -m 644 install/modules/__init__.py $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/modules/__init__.py
 install -D -m 644 install/modules/base.py $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/modules/base.py
@@ -391,7 +392,7 @@ if [ -e /usr/share/lve/dbgovernor/mysqlgovernor.py ]; then
     /usr/share/lve/dbgovernor/mysqlgovernor.py --fix-cpanel-hooks
 fi
 
-%triggerin -- cl-MySQL55-client, cl-MySQL56-client, cl-MySQL57-client, cl-MySQL80-client, cl-MariaDB55, cl-MariaDB100, cl-MariaDB101, cl-MariaDB102, cl-MariaDB103, cl-Percona56-client, mysql-community-client, mariadb, Percona-Server-client-56
+%triggerin -- cl-MySQL55-client, cl-MySQL56-client, cl-MySQL57-client, cl-MySQL80-client, cl-MariaDB55, cl-MariaDB100, cl-MariaDB101, cl-MariaDB102, cl-MariaDB103, cl-MariaDB104, cl-MariaDB105, cl-Percona56-client, mysql-community-client, mariadb, Percona-Server-client-56
 if [ -e /usr/sbin/cagefsctl -a -d /usr/share/cagefs-skeleton ]; then
     /usr/sbin/cagefsctl --force-update
 fi
@@ -422,6 +423,9 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Mon Feb 8 2021 Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-62
+- MYSQLG-514: MariaDB 10.5 support added
+
 * Thu Feb 04 2021 Sergey Kozhekin <skozhekin@cloudlinux.com>, Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-61
 - MYSQLG-552: deletion procedure for cPanel enhanced
 - MYSQLG-552: MD5 checksum for cl8 added to the "repo_md5" dictionary

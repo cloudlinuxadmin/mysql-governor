@@ -60,6 +60,7 @@ class InstallManager:
         "mariadb102": "mariadb-10.2",
         "mariadb103": "mariadb-10.3",
         "mariadb104": "mariadb-10.4",
+        "mariadb105": "mariadb-10.5",
         "percona56": "percona-5.6"
     }
     MODULE_STREAMS = {
@@ -73,6 +74,7 @@ class InstallManager:
         "mariadb102": "mariadb:cl-MariaDB102",
         "mariadb103": "mariadb:cl-MariaDB103",
         "mariadb104": "mariadb:cl-MariaDB104",
+        "mariadb105": "mariadb:cl-MariaDB105",
         "percona56": "percona:cl-Percona56",
         "auto": "mysql:8.0"
     }
@@ -809,7 +811,7 @@ for native procedure restoring of MySQL packages"""))
                 packages += ["numactl-devel%s" % arch, "numactl%s" % arch, "mysqlclient18"]
         elif sql_version.startswith("mariadb"):
             packages += ["mysqlclient16", "mysqlclient15"]
-            if sql_version in ['mariadb102', 'mariadb103', 'mariadb104']:
+            if sql_version in ['mariadb102', 'mariadb103', 'mariadb104', 'mariadb105']:
                 packages += ["mysqlclient18-compat"]
         elif sql_version.startswith("percona"):
             packages += ["mysqlclient18", "mysqlclient16", "mysqlclient15"]
@@ -821,13 +823,22 @@ for native procedure restoring of MySQL packages"""))
         try:
             content = urllib.request.urlopen(repo_url).read()
         except Exception as e:
-            print("Can`t download repo file: %s" % e, file=sys.stderr)
-            sys.exit(1)
+            print("Can`t download repo file(%s): %s" % (repo_url, e), file=sys.stderr)
+            #sys.exit(1)
+            # Use default cl-mysql repo with mysqlclient only
+            # expecting that meta packages are already available somewhere in predefined repos
+            if os.path.exists("/etc/yum.repos.d/cl-mysql.repo"):
+                shutil.copy2("/etc/yum.repos.d/cl-mysql.repo",
+                             "/etc/yum.repos.d/cl-mysql.repo.bak")
+            shutil.copy2("/usr/share/lve/dbgovernor/cl-mysql.repo.default",
+                         "/etc/yum.repos.d/cl-mysql.repo")
+            default_cl_mysql_repo = True
         else:
             if os.path.exists("/etc/yum.repos.d/cl-mysql.repo"):
                 shutil.copy2("/etc/yum.repos.d/cl-mysql.repo",
                              "/etc/yum.repos.d/cl-mysql.repo.bak")
             write_file("/etc/yum.repos.d/cl-mysql.repo", content.decode())
+            default_cl_mysql_repo = False
 
         # update repositories
         exec_command_out("yum clean all")
@@ -835,7 +846,14 @@ for native procedure restoring of MySQL packages"""))
         # Add requires to packages list
         for name in requires:
             # query only for non-installed packages
-            packages += exec_command("repoquery --requires %s --quiet" % name)
+            if default_cl_mysql_repo:
+                # We did not find specific repo for meta pkgs and installed default one instead,
+                # So let's try to find meta pkgs in any repo
+                packages += exec_command("repoquery --requires %s --quiet" % name)
+            else:
+                # We found specific repo for meta pkgs and installed it,
+                # So let's try to find meta pkgs in it only
+                packages += exec_command("repoquery --repoid cl-mysql-meta --requires %s --quiet" % name)
             # query for installed package
             # exec_command("rpm -q --requires cl-MySQL-meta")
 
@@ -1028,8 +1046,12 @@ for native procedure restoring of MySQL packages"""))
         """
         if self.cl_version >= 7:
             exec_command_out("systemctl enable mariadb.service")
-            exec_command_out("systemctl enable mysql.service")
-            exec_command_out("systemctl enable mysqld.service")
+            # MariaDB service file declare mysql and mysqld as its aliases
+            # So they will be created as symlinks by "enable mariadb.service" command
+            # Then those two commands lead to error like this:
+            # Failed to execute operation: Too many levels of symbolic links
+            #exec_command_out("systemctl enable mysql.service")
+            #exec_command_out("systemctl enable mysqld.service")
 
     def _enable_mysql(self):
         """
@@ -1107,7 +1129,7 @@ for native procedure restoring of MySQL packages"""))
         if 6 == self.cl_version:
             if version in ["mysql51", "mysql55", "mysql56",
                            "mysql57", "mysql80", "mariadb101", "mariadb102",
-                           "mariadb103", "mariadb104"]:
+                           "mariadb103", "mariadb104", "mariadb105"]:
                 name = "mysql"
 
         try:

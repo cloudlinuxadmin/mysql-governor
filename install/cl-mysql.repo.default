@@ -1,0 +1,6 @@
+[mysqclient]
+name=mysqlclient
+baseurl=http://repo.cloudlinux.com/other/cl$releasever/mysqlmeta/mysqlclient/$basearch/
+enabled=0
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CloudLinux

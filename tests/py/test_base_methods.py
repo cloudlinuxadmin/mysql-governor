@@ -50,6 +50,9 @@ def test_load_new_packages_auto(mocked_content, expected):
     ("mariadb104",
      ["cl-MariaDB-meta", "cl-MariaDB-meta-client", "cl-MariaDB-meta-devel", "mysqlclient16", "mysqlclient15",
       "mysqlclient18-compat", 'libaio.x86_64']),
+    ("mariadb105",
+     ["cl-MariaDB-meta", "cl-MariaDB-meta-client", "cl-MariaDB-meta-devel", "mysqlclient16", "mysqlclient15",
+      "mysqlclient18-compat", 'libaio.x86_64']),
     ("percona56",
      ["cl-Percona-meta", "cl-Percona-meta-client", "cl-Percona-meta-devel", "mysqlclient18", "mysqlclient16",
       "mysqlclient15", 'libaio.x86_64'])
@@ -79,6 +82,7 @@ def test_load_new_packages_version(mocked_content, expected):
     ("mariadb102", "cl-mariadb-10.2-common.repo"),
     ("mariadb103", "cl-mariadb-10.3-common.repo"),
     ("mariadb104", "cl-mariadb-10.4-common.repo"),
+    ("mariadb105", "cl-mariadb-10.5-common.repo"),
     ("percona56", "cl-percona-5.6-common.repo")
 ])
 @mock.patch("modules.base.get_cl_num", mock.MagicMock(return_value=7))
