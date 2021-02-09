@@ -110,6 +110,10 @@ if ($sql_version_2=="10.4"){
     $sql_version_2="mariadb104";
 }
 
+if ($sql_version_2=="10.5"){
+    $sql_version_2="mariadb105";
+}
+
 print "$sql_version_2";
 
 

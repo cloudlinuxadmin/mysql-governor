@@ -824,7 +824,7 @@ def correct_mysqld_service_for_cl7(mysql_type):
     name = "mysqld"
     if mysql_type in ["mysql50", "mysql51", "mysql55", "mysql56", "mysql57", "mysql80", "auto"]:
         name = "mysqld"
-    elif mysql_type in ["mariadb101", "mariadb102", "mariadb103", "mariadb104"]:
+    elif mysql_type in ["mariadb101", "mariadb102", "mariadb103", "mariadb104", "mariadb105"]:
         name = "mariadb"
     elif mysql_type in ["mariadb55", "mariadb100", "percona56"]:
         name = "mysql"
@@ -1005,10 +1005,12 @@ def check_mysqld_is_alive():
                                True, silent=True)
     check_mysql57_mariadb101 = exec_command("ps -Af | grep -v grep | grep /usr/sbin/mysqld",
                                True, silent=True)
+    check_mariadb105 = exec_command("ps -Af | grep -v grep | grep /usr/sbin/mariadbd",
+                               True, silent=True)
     check_mysqld = exec_command("/usr/bin/mysql -e \"select 1\" "
                                 "2>&1 1>/dev/null", True, silent=True,
                                         return_code=True)
-    if check_mysql57_mariadb101 or check_mysql or check_mysqld == "yes":
+    if check_mysql57_mariadb101 or check_mariadb105 or check_mysql or check_mysqld == "yes":
         return True
     return False
 

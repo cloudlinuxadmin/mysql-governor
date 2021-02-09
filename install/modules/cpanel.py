@@ -117,6 +117,7 @@ class cPanelManager(InstallManager):
             'mariadb102': 'MariaDB102',
             'mariadb103': 'MariaDB103',
             'mariadb104': 'MariaDB104',
+            'mariadb105': 'MariaDB105',
         }
         old = 'MySQL50,MySQL51,'  # old unsupported targets
         not_managed = ('mysql57', 'mysql80')  # latest mysql not managed by cPanel
