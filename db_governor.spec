@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   62
+%define g_release   63
 %define g_key_library 9
 
 %if %{undefined _unitdir}
@@ -423,6 +423,9 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Mon Feb 22 2021 Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-63
+- MYSQLG-560: libmariadb support installed for all mysql and mariadb versions
+
 * Mon Feb 8 2021 Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-62
 - MYSQLG-514: MariaDB 10.5 support added
 

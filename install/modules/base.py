@@ -806,13 +806,17 @@ for native procedure restoring of MySQL packages"""))
         if sql_version == "mysql51":
             packages += ["mysqlclient18", "mysqlclient15"]
         elif sql_version.startswith('mysql'):
-            packages += ["mysqlclient16", "mysqlclient15"]
+            # Install mysqlclient18 for all versions of mysql, even for 5.5 and 5.6
+            # because from now it contains also libmariadb support needed
+            # for some packages like net-snmp-agent-libs on CL8
+            packages += ["mysqlclient16", "mysqlclient15", "mysqlclient18"]
             if sql_version in ["mysql57", "mysql80"]:
-                packages += ["numactl-devel%s" % arch, "numactl%s" % arch, "mysqlclient18"]
+                packages += ["numactl-devel%s" % arch, "numactl%s" % arch]
         elif sql_version.startswith("mariadb"):
-            packages += ["mysqlclient16", "mysqlclient15"]
-            if sql_version in ['mariadb102', 'mariadb103', 'mariadb104', 'mariadb105']:
-                packages += ["mysqlclient18-compat"]
+            # Install mysqlclient18-compat for every version of MariaDB because
+            # cl-Maria* pkgs do not provide libmariadb,
+            # and it needed by some packages like net-snmp-agent-libs on CL8
+            packages += ["mysqlclient16", "mysqlclient15", "mysqlclient18-compat"]
         elif sql_version.startswith("percona"):
             packages += ["mysqlclient18", "mysqlclient16", "mysqlclient15"]
 
