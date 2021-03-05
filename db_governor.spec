@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   63
+%define g_release   64
 %define g_key_library 9
 
 %if %{undefined _unitdir}
@@ -423,6 +423,9 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Fri Mar 05 2021 Sergey Kokhan <skokhan@cloudlinux.com> 1.2-64
+- MYSQLG-574: Fixed issue with --install-beta flag
+
 * Mon Feb 22 2021 Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-63
 - MYSQLG-560: libmariadb support installed for all mysql and mariadb versions
 
