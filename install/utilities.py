@@ -215,7 +215,7 @@ def download_packages(names, dest, beta, custom_download=None):
         rollout = "--enablerepo=cloudlinux-rollout*"
 
     beta_repo = ""
-    if exec_command("yum repolist -y --enablerepo=* | grep \"cloudlinux-updates-testing \" -c", True, True) != "0":
+    if exec_command("yum repolist -y --enablerepo=* | grep \"cloudlinux-updates-testing\" -c", True, True) != "0":
         beta_repo = "--enablerepo=cloudlinux-updates-testing"
 
     if custom_download is not None and callable(custom_download) \
