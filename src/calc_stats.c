@@ -34,6 +34,7 @@
 #include "governor_config.h"
 #include "log-decoder.h"
 #include "commands.h"
+#include "dbuser_map.h"
 
 typedef struct __statistics_restrict_info
 {
@@ -1519,31 +1520,45 @@ add_all_users_to_list (gpointer key, Account * ac, void *data)
     }
 }
 
-void
-reinit_users_list ()
+void reinit_users_list()
 {
-  struct governor_config data_cfg;
-  get_config_data (&data_cfg);
+	char buffer[_DBGOVERNOR_BUFFER_2048];
+	struct governor_config data_cfg;
+	GHashTable *ac = NULL;
 
-  if (lock_write_map () == 0)
-    {
-      if (!get_map_file (&data_cfg))
-	{
-	  char buffer[_DBGOVERNOR_BUFFER_2048];
-	  WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		     "Failed read dbuser-map file", data_cfg.log_mode);
+	get_config_data(&data_cfg);
+
+	if (lock_write_map () == 0) {
+		if (!get_map_file (&data_cfg)) {
+			WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
+				"Failed read dbuser-map file", data_cfg.log_mode);
+		}
+		unlock_rdwr_map ();
 	}
 
-      unlock_rdwr_map ();
-    }
+	ac = (GHashTable *) get_accounts ();
+	if (ac == NULL) {
+		WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
+			"Failed to get accounts, service db_governor should be restarted.", data_cfg.log_mode);
+		return;
+	}
 
-  delete_allusers_from_list ();
-  if (data_cfg.all_lve)
-    {
-      GHashTable *ac = (GHashTable *) get_accounts ();
-      if (ac != NULL)
-	g_hash_table_foreach (ac, (GHFunc) add_all_users_to_list, NULL);
-    }
+	if (!data_cfg.is_gpl) {
+		lock_acc ();
+		g_hash_table_foreach(ac, (GHFunc)dbctl_unrestrict_all_set, NULL);
+		unlock_acc ();
+	}
+
+	delete_allusers_from_list ();
+
+	if (data_cfg.all_lve) {
+		g_hash_table_foreach(ac, (GHFunc)add_all_users_to_list, NULL);
+	}
+
+	if (data_cfg.log_mode == DEBUG_MODE) {
+		WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
+			"Reinit users list completed", data_cfg.log_mode);
+	}
 }
 
 gboolean
