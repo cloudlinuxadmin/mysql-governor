@@ -1,6 +1,6 @@
 %define g_version   1.2
-%define g_release   65
-%define g_key_library 9
+%define g_release   66
+%define g_key_library 10
 
 %if %{undefined _unitdir}
 %define _unitdir /usr/lib/systemd/system
@@ -258,6 +258,12 @@ if [ $1 -eq 2 ] ; then
 fi
 
 %post
+if [ $1 -gt 0 ]; then
+    # Initial installation or upgrade
+    [ -d /var/lve/dbgovernor-shm ] || mkdir -p /var/lve/dbgovernor-shm
+    mount | grep -q /var/lve/dbgovernor-shm || mount -t tmpfs none /var/lve/dbgovernor-shm -o 'rw,nosuid,nodev'
+fi
+
 if [ $1 -gt 0 ] ; then
     if [ -e "/usr/share/lve/dbgovernor/mysqlgovernor.py" ]; then
         /usr/share/lve/dbgovernor/mysqlgovernor.py --fs-suid
@@ -279,6 +285,11 @@ if [ $1 = 1 ]; then
     /sbin/chkconfig --level 35 db_governor on
 fi
 %endif
+
+if [ $1 -gt 0 ]; then
+    # Initial installation or upgrade
+    [ -e /dev/shm/governor_bad_users_list ] && rm /dev/shm/governor_bad_users_list 2>&1 >/dev/null || :
+fi
 
 %preun
 %if 0%{?rhel} >= 7
@@ -423,6 +434,9 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Tue Apr 6 2021 Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-66
+- MYSQLG-568: Bad users list moved to private dir
+
 * Mon Apr 05 2021 Sergey Kokhan <skokhan@cloudlinux.com> 1.2-65
 - MYSQLG-575: Fixed bug when users removed from bad users list after dbuser-map file updated
 

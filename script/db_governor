@@ -56,6 +56,8 @@ start() {
 #			return 1
 #		fi
         echo -n $"Starting $prog: "
+	[ -d /var/lve/dbgovernor-shm ] || mkdir -p /var/lve/dbgovernor-shm
+	mount | grep -q /var/lve/dbgovernor-shm || mount -t tmpfs none /var/lve/dbgovernor-shm -o 'rw,nosuid,nodev'
         daemon --pidfile=${pidfile} $prog
         RETVAL=$?
         echo
