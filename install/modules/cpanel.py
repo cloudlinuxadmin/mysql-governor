@@ -454,6 +454,7 @@ gpgcheck=1
         """
         Skip an installation if not supported db version has been set
         """
+        super().unsupported_db_version(force)
         version = InstallManager._get_result_mysql_version(self)
         if version in ('mariadb104', 'mariadb105'):
             print(bcolors.fail(f"{version} is unsupported version for cPanel"))

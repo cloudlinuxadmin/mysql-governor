@@ -95,7 +95,7 @@ def build_parser():
                         dest="fix_cpanel_hooks", action="store_true",
                         default=False)
     parser.add_argument("--force",
-                        help="Don`t exit if percona installation found",
+                        help="Force prohibited update, for example, upgrade from MySQL 8.0 to MariaDB 10.x",
                         dest="force", action="store_true", default=False)
     parser.add_argument("-u", "--upgrade",
                         help="Option is deprecated. Use `yum update` instead",
