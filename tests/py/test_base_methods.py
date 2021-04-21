@@ -97,3 +97,51 @@ def test_get_repo(mocked_content, expected):
     manager = InstallManager.factory('Unknown')
     res = manager.get_repo_name(sql_version=mocked_content)
     assert res == expected
+
+@pytest.mark.parametrize("mocked_current_version, mocked_version", [
+    ('mysql80', 'mariadb100'),
+    ('mysql80', 'mariadb101'),
+    ('mysql80', 'mariadb102'),
+    ('mysql80', 'mariadb103'),
+    ('mysql80', 'mariadb104'),
+    ('mysql80', 'mariadb105')
+])
+@mock.patch("builtins.open", mock.mock_open(read_data=''))
+def test_for_unsupported_db_version(mocked_current_version, mocked_version):
+    """
+    This test is to check the response of the tested method to an unsupported
+    combination of tha database versions (expected "exit 1")
+    """
+    exit_mock = mock.MagicMock()
+    with mock.patch("modules.base.sys.exit", exit_mock):
+        with mock.patch("modules.base.InstallManager._check_mysql_version",
+                        return_value={'full':mocked_current_version}):
+            with mock.patch("modules.base.InstallManager._get_result_mysql_version",
+                            return_value=mocked_version):
+                manager = InstallManager.factory('Unknown')
+                manager.unsupported_db_version()
+    exit_mock.assert_called_once_with(1)
+
+@pytest.mark.parametrize("mocked_current_version, mocked_version", [
+    ('mysql80', 'mariadb100'),
+    ('mysql80', 'mariadb101'),
+    ('mysql80', 'mariadb102'),
+    ('mysql80', 'mariadb103'),
+    ('mysql80', 'mariadb104'),
+    ('mysql80', 'mariadb105')
+])
+@mock.patch("builtins.open", mock.mock_open(read_data=''))
+def test_for_unsupported_db_version_with_force(mocked_current_version, mocked_version):
+    """
+    This test is to check the response of the tested method to an unsupported
+    combination of tha database versions (do nothing cause "force" key is passed)
+    """
+    exit_mock = mock.MagicMock()
+    with mock.patch("modules.base.sys.exit", exit_mock):
+        with mock.patch("modules.base.InstallManager._check_mysql_version",
+                        return_value={'full':mocked_current_version}):
+            with mock.patch("modules.base.InstallManager._get_result_mysql_version",
+                            return_value=mocked_version):
+                manager = InstallManager.factory('Unknown')
+                manager.unsupported_db_version(force=True)
+    exit_mock.assert_not_called()

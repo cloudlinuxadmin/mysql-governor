@@ -1198,7 +1198,20 @@ for native procedure restoring of MySQL packages"""))
 
     def unsupported_db_version(self, force=False):
         """
-        Skip an installation if not supported db version has been set
-        By default - not needed
+        Skip an installation if not supported db version has been set:
+        Update fom mysql80 to MariaDB 10.x version is not supported
         """
-        pass
+        current_version = self._check_mysql_version()
+        if current_version.get('full') == 'mysql80':
+            version = InstallManager._get_result_mysql_version(self)
+            if version.startswith('mariadb10'):
+                print(bcolors.fail(
+                    """!!! WARNING !!!\nUpgrade from MySQL 8 to MariaDB 10.x \
+isn't supported due to compatibility\nissues and will likely lead to a \
+disaster / break your database server completely.\nIn order to save you, \
+we've disabled this upgrade in DB Governor.\n!!! WARNING !!!\n\n\
+A detailed explanation and workaround for CloudLinux can be found in this articles:\n\
+MariaDB info about compatibility issue: https://mariadb.com/kb/en/upgrading-from-mysql-to-mariadb/\n\
+Workaround for CloudLinux: https://cloudlinux.zendesk.com/hc/en-us/articles/360020599839"""))
+                if not force:
+                    sys.exit(1)

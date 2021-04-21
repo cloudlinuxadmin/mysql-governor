@@ -25,8 +25,33 @@
 #include "dbuser_map.h"
 
 #define MAX_ITEMS_IN_TABLE 100000
-#define SHARED_MEMORY_NAME "governor_bad_users_list"
-#define SHARED_MEMORY_PATH "/dev/shm/"
+
+#define SHARED_MEMORY_NAME_PRIVATE "/var/lve/dbgovernor-shm/governor_bad_users_list"
+
+/*
+    Custom cl_shm_open is used, instead of system shm_open,
+    and bad users list will be located in the custom location -
+    /var/lve/dbgovernor-shm instead of /dev/shm
+*/
+static const char *shared_memory_name = SHARED_MEMORY_NAME_PRIVATE;
+
+#define cl_stat_shared_memory_file(st) stat(shared_memory_name, (st))
+
+int cl_shm_open (int oflag, mode_t mode)
+{
+  oflag |= O_NOFOLLOW | O_CLOEXEC;
+
+  /* Disable asynchronous cancellation.  */
+  int state;
+  pthread_setcancelstate (PTHREAD_CANCEL_DISABLE, &state);
+
+  int fd = open (shared_memory_name, oflag, mode);
+
+  pthread_setcancelstate (state, NULL);
+
+  return fd;
+}
+
 
 // this variable set in mysql_connector_common.c file. users only by governor binaries
 // don`t use in mysql shared library
@@ -48,7 +73,7 @@ int shm_fd = 0;
 
 int init_bad_users_list_utility() {
 
-	if ((shm_fd = shm_open(SHARED_MEMORY_NAME, (O_RDWR), 0755)) < 0) {
+	if ((shm_fd = cl_shm_open((O_RDWR), 0755)) < 0) {
 		return -1;
 	}
 
@@ -77,17 +102,17 @@ int remove_bad_users_list_utility() {
 }
 
 int init_bad_users_list() {
-	//shm_unlink(SHARED_MEMORY_NAME);
+	//if(shared_memory_name) shm_unlink(shared_memory_name);
 	//sem_unlink(SHARED_MEMORY_SEM);
 	mode_t old_umask = umask(0);
 
 	int first = 0;
-	if ((shm_fd = shm_open(SHARED_MEMORY_NAME, (O_CREAT | O_EXCL | O_RDWR),
+	if ((shm_fd = cl_shm_open((O_CREAT | O_EXCL | O_RDWR),
 			0755)) > 0)
 	{
 		first = 1;
 	}
-	else if ((shm_fd = shm_open(SHARED_MEMORY_NAME, (O_CREAT | O_RDWR), 0755))
+	else if ((shm_fd = cl_shm_open((O_CREAT | O_RDWR), 0755))
 			< 0)
 	{
 		umask(old_umask);
@@ -96,7 +121,7 @@ int init_bad_users_list() {
 	else
 	{
 		struct stat file;
-		if (stat(SHARED_MEMORY_PATH SHARED_MEMORY_NAME, &file) == 0)
+		if (cl_stat_shared_memory_file(&file) == 0)
 		{
 			first = file.st_size < sizeof(shm_structure) ? 1 : first;
 		}
@@ -313,7 +338,7 @@ int32_t is_user_in_bad_list_cleint(char *username) {
 	int shm_fd_clents = 0;
 	int32_t fnd = 0;
 	shm_structure *bad_list_clents;
-	if ((shm_fd_clents = shm_open(SHARED_MEMORY_NAME, O_RDWR, 0755)) < 0) {
+	if ((shm_fd_clents = cl_shm_open(O_RDWR, 0755)) < 0) {
 		return 0;
 	}
 	if ((bad_list_clents
@@ -364,7 +389,7 @@ int user_in_bad_list_cleint_show() {
 	int fnd = 0;
 	mode_t old_umask = umask(0);
 	shm_structure *bad_list_clents;
-	if ((shm_fd_clents = shm_open(SHARED_MEMORY_NAME, O_RDWR, 0755)) < 0) {
+	if ((shm_fd_clents = cl_shm_open(O_RDWR, 0755)) < 0) {
 		umask(old_umask);
 		return 0;
 	}
@@ -414,13 +439,11 @@ int init_bad_users_list_client() {
 	mode_t old_umask = umask(0);
 	pthread_mutex_lock(&mtx_shared);
 	int first = 0, need_truncate = 0;
-	if ((shm_fd_clents_global = shm_open(SHARED_MEMORY_NAME,
-			(O_CREAT | O_EXCL | O_RDWR), 0600)) > 0)
+	if ((shm_fd_clents_global = cl_shm_open((O_CREAT | O_EXCL | O_RDWR), 0600)) > 0)
 	{
 		first = 1;
 	}
-	else if ((shm_fd_clents_global = shm_open(SHARED_MEMORY_NAME,
-			(O_CREAT | O_RDWR), 0600)) < 0)
+	else if ((shm_fd_clents_global = cl_shm_open((O_CREAT | O_RDWR), 0600)) < 0)
 	{
 		pthread_mutex_unlock(&mtx_shared);
 		umask(old_umask);
@@ -429,7 +452,7 @@ int init_bad_users_list_client() {
 	else
 	{
                 struct stat file;
-                if (stat(SHARED_MEMORY_PATH SHARED_MEMORY_NAME, &file) == 0)
+                if (cl_stat_shared_memory_file(&file) == 0)
 		{
                         need_truncate = file.st_size < sizeof(shm_structure) ? 1 : need_truncate;
         	}
