@@ -434,8 +434,9 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
-* Tue Apr 6 2021 Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-66
+* Wed Apr 21 2021 Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-66
 - MYSQLG-568: Bad users list moved to private dir
+- MYSQLG-576: Prohibit clients upgrade MySQL 8 to MariaDB
 
 * Mon Apr 05 2021 Sergey Kokhan <skokhan@cloudlinux.com> 1.2-65
 - MYSQLG-575: Fixed bug when users removed from bad users list after dbuser-map file updated
