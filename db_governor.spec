@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   66
+%define g_release   67
 %define g_key_library 10
 
 %if %{undefined _unitdir}
@@ -374,10 +374,7 @@ if [ -e "/etc/container/dbgovernor-libcheck" ]; then
         fi
 fi
 
-
-ldconfig
-
-if [ $1 -eq 0 ]; then
+/sbin/ldconfig
 
 if [ -e /usr/share/lve/dbgovernor/mysqlgovernor.py ]; then
     if [ ! -e /usr/share/lve/dbgovernor/MYSQLG-178 ]; then
@@ -392,7 +389,7 @@ fi
 %else
 /etc/init.d/db_governor restart
 %endif
-fi
+
 echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
 echo "!!!Before making any changing with database make sure that you have reserve copy of users data!!!"
 echo "Instruction: how to create whole database backup - http://docs.cloudlinux.com/index.html?backing_up_mysql.html"
@@ -434,6 +431,9 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Wed Apr 29 2021 Sergey Kokhan <skokhan@cloudlinux.com> 1.2-67
+- MYSQLG-585: Fix posttrans scriptlet causes governor service stopped after update on CL8
+
 * Wed Apr 21 2021 Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-66
 - MYSQLG-568: Bad users list moved to private dir
 - MYSQLG-576: Prohibit clients upgrade MySQL 8 to MariaDB
