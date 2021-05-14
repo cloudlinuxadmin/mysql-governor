@@ -1,0 +1,13 @@
+[Unit]
+Description=DB Governor bad users list mount
+DefaultDependencies=no
+Conflicts=umount.target
+
+[Mount]
+What=none
+Where=/var/lve/dbgovernor-shm
+Type=tmpfs
+Options=rw,nosuid,nodev
+
+[Install]
+WantedBy=db_governor.service mysql.service mysqld.service mariadb.service

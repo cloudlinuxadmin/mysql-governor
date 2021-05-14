@@ -11,7 +11,6 @@ Restart=on-failure
 RestartSec=3
 TimeoutSec=10s
 
-ExecStartPre=/bin/sh -c "[ -d /var/lve/dbgovernor-shm ] || mkdir -p /var/lve/dbgovernor-shm; mount | grep -q /var/lve/dbgovernor-shm || mount -t tmpfs none /var/lve/dbgovernor-shm -o 'rw,nosuid,nodev'"
 ExecStart=/usr/sbin/db_governor
 ExecStopPost=/bin/sh -c "if pgrep db_governor 1>/dev/null; then pkill -SIGTERM db_governor 2>/dev/null; fi"
 

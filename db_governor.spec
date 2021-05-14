@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   67
+%define g_release   68
 %define g_key_library 10
 
 %if %{undefined _unitdir}
@@ -137,6 +137,7 @@ mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/history
 # install systemd unit files and scripts for handling server startup
 mkdir -p ${RPM_BUILD_ROOT}%{_unitdir}
 install -m 644 db_governor.service ${RPM_BUILD_ROOT}%{_unitdir}/
+install -m 644 var-lve-dbgovernor\\x2dshm.mount ${RPM_BUILD_ROOT}%{_unitdir}/
 %else
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/
 install -D -m 755 script/db_governor $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/
@@ -385,6 +386,7 @@ fi
 
 %if 0%{?rhel} >= 7
 /bin/systemctl daemon-reload >/dev/null 2>&1 || :
+/bin/systemctl enable var-lve-dbgovernor\\x2dshm.mount >/dev/null 2>&1 || :
 /bin/systemctl restart db_governor.service >/dev/null 2>&1 || :
 %else
 /etc/init.d/db_governor restart
@@ -421,6 +423,7 @@ fi
 %config(noreplace) %{_sysconfdir}/container/mysql-governor.xml
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
 %{_unitdir}/db_governor.service
+%{_unitdir}/var-lve-dbgovernor\x2dshm.mount
 %else
 %{_sysconfdir}/rc.d/init.d/*
 %endif
@@ -431,7 +434,11 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
-* Wed Apr 29 2021 Sergey Kokhan <skokhan@cloudlinux.com> 1.2-67
+* Mon May 17 2021 Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-68
+- MYSQLG-595: systemd mount added for governor private bad users list
+- MYSQLG-588: IO limit calculation fixed
+
+* Thu Apr 29 2021 Sergey Kokhan <skokhan@cloudlinux.com> 1.2-67
 - MYSQLG-585: Fix posttrans scriptlet causes governor service stopped after update on CL8
 
 * Wed Apr 21 2021 Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-66
