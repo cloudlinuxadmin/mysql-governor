@@ -453,10 +453,12 @@ gpgcheck=1
     def unsupported_db_version(self, force=False):
         """
         Skip an installation if not supported db version has been set
+        MariaDB 10.5 is supported starting from cPanel v.98
         """
         super().unsupported_db_version(force)
         version = InstallManager._get_result_mysql_version(self)
-        if version in ('mariadb104', 'mariadb105'):
+        if version in ('mariadb104',) or (
+                version == 'mariadb105' and self.get_panel_version() < 98):
             print(bcolors.fail(f"{version} is unsupported version for cPanel"))
             if not force:
                 sys.exit(1)
