@@ -239,9 +239,9 @@ help (void)
   printf
     ("                            'abusers' - when user reaches the limit,\n");
   printf
-    ("                                        put user's queries into LVE for that user (experimental)\n");
+    ("                                        put user's queries into LVE for that user\n");
   printf
-    ("                            'all' - user's queries always run inside LVE for that user (experimental)\n");
+    ("                            'all' - user's queries always run inside LVE for that user - deprecated\n");
   printf
     ("                            'single|on' - single LVE for all abusers. 'on' - deprecated\n");
 
