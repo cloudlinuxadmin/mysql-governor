@@ -32,166 +32,42 @@ typedef struct dbclt_options
   char *val;
 } Options;
 
-typedef char name_comm[256];
-
-int
-valid_comm (int argc, char **argv)
+typedef enum dbctl_keyword_enum
 {
-  name_comm level_111[] = { "set", "restrict" };
-  name_comm level_110[] = { "ignore", "monitor", "delete", "unrestrict" };
-  name_comm level_100[] =
-    { "list", "list-restricted", "unrestrict-all", "list-restricted-shm", "dbupdate" };
+	HELP_KWE,
+	VERSION_KWE,
+	LVE_MODE_KWE,
+	SET_KWE,
+	RESTRICT_KWE,
+	IGNORE_KWE,
+	MONITOR_KWE,
+	DELETE_KWE,
+	UNRESTRICT_KWE,
+	LIST_KWE,
+	LIST_RESTRICTED_KWE,
+	UNRESTRICT_ALL_KWE,
+	LIST_RESTRICTED_SHM_KWE,
+	DBUPDATE_KWE,
+	ERROR_KWE = -1
+} dbctl_keyword_t;
 
-  char _tmp_arg[11];
-  _tmp_arg[0] = '\0';
-  strlcpy (_tmp_arg, argv[1], sizeof (_tmp_arg));
+static const char HELP_KW[] = "--help";
+static const char VERSION_KW[] = "--version";
+static const char LVE_MODE_KW[] = "--lve-mode";
+static const char SET_KW[] = "set";
+static const char RESTRICT_KW[] = "restrict";
+static const char IGNORE_KW[] = "ignore";
+static const char MONITOR_KW[] = "monitor";
+static const char DELETE_KW[] = "delete";
+static const char UNRESTRICT_KW[] = "unrestrict";
+static const char LIST_KW[] = "list";
+static const char LIST_RESTRICTED_KW[] = "list-restricted";
+static const char UNRESTRICT_ALL_KW[] = "unrestrict-all";
+static const char LIST_RESTRICTED_SHM_KW[] = "list-restricted-shm";
+static const char DBUPDATE_KW[] = "dbupdate";
 
-  if (strcmp ("--help", argv[1]) == 0 ||
-      strcmp ("--version", argv[1]) == 0 ||
-      strcmp ("--lve-mode", _tmp_arg) == 0)
-    {
-      return 1;
-    }
-
-  int val_comm = 0;
-  int i = 0;
-  for (i = 0; i < 5; i++)
-    if (strcmp (level_100[i], argv[1]) == 0)
-      val_comm++;
-  for (i = 0; i < 4; i++)
-    if (strcmp (level_110[i], argv[1]) == 0)
-      val_comm++;
-  for (i = 0; i < 2; i++)
-    if (strcmp (level_111[i], argv[1]) == 0)
-      val_comm++;
-
-  if (!val_comm)
-    return 0;
-
-  for (i = 0; i < 5; i++)
-    {
-      if (strcmp (level_100[i], argv[1]) == 0)
-    if (!(!strcmp(argv[1], "list") && (argc == 3)) && (argc > 2))
-	  {
-	    printf ("Incorrect syntax. Command %s shouldn't has any parameter\n", argv[1]);
-	    return 0;
-	  }
-    }
-
-  for (i = 0; i < 4; i++)
-    {
-      if (strcmp (level_110[i], argv[1]) == 0)
-	{
-	  if (argc != 3)
-	    {
-	      printf ("Incorrect syntax. Command %s should has 3 parameters\n", argv[1]);
-	      return 0;
-	    }
-	  else
-	    {
-	      int j = 0;
-	      for (j = 0; j < 5; j++)
-		if (strcmp (level_100[j], argv[2]) == 0)
-		  {
-		    printf ("Incorrect syntax. Both parameters %s and %s can't be used together\n", argv[1], argv[2]);
-		    return 0;
-		  }
-
-	      for (j = 0; j < 4; j++)
-		if (strcmp (level_110[j], argv[2]) == 0)
-		  {
-		    printf ("Incorrect syntax. Both parameters %s and %s can't be used together\n", argv[1], argv[2]);
-		    return 0;
-		  }
-
-	      for (j = 0; j < 2; j++)
-		if (strcmp (level_111[j], argv[2]) == 0)
-		  {
-		    printf ("Incorrect syntax. Both parameters %s and %s can't be used together\n", argv[1], argv[2]);
-		    return 0;
-		  }
-
-	      if (strcmp ("default", argv[2]) == 0)
-		{
-		  printf ("Incorrect syntax. default in parameter can't use with this command\n");
-		  return 0;
-		}
-	    }
-	}
-    }
-
-  for (i = 0; i < 2; i++)
-    {
-      if (strcmp (level_111[i], argv[1]) == 0)
-	{
-	  if (argc > 2)
-	    {
-	      if (strcmp (level_111[i], "set") == 0)
-		{
-		  if (strcmp ("default", argv[2]) != 0)
-		    {
-		      int j = 0;
-		      for (j = 0; j < 5; j++)
-			if (strcmp (level_100[j], argv[2]) == 0)
-			  {
-			    printf ("Incorrect syntax. Both parameters %s and %s can't be used together\n", argv[1], argv[2]);
-			    return 0;
-			  }
-		      for (j = 0; j < 4; j++)
-			if (strcmp (level_110[j], argv[2]) == 0)
-			  {
-			    printf ("Incorrect syntax. Both parameters %s and %s can't be used together\n", argv[1], argv[2]);
-			    return 0;
-			  }
-		      for (j = 0; j < 2; j++)
-			if (strcmp (level_111[j], argv[2]) == 0)
-			  {
-			    printf ("Incorrect syntax. Both parameters %s and %s can't be used together\n", argv[1], argv[2]);
-			    return 0;
-			  }
-		    }
-		  else
-		    {
-		      if (argc == 3)
-			{
-			  printf ("Incorrect syntax\n");
-			  return 0;
-			}
-		    }
-		}
-	      if (strcmp (level_111[i], "restrict") == 0)
-		{
-		  int j = 0;
-		  for (j = 0; j < 5; j++)
-		    if (strcmp (level_100[j], argv[2]) == 0)
-		      {
-			printf ("Incorrect syntax. Both parameters %s and %s can't be used together\n", argv[1], argv[2]);
-			return 0;
-		      }
-		  for (j = 0; j < 4; j++)
-		    if (strcmp (level_110[j], argv[2]) == 0)
-		      {
-			printf ("Incorrect syntax. Both parameters %s and %s can't be used together\n", argv[1], argv[2]);
-			return 0;
-		      }
-		  for (j = 0; j < 2; j++)
-		    if (strcmp (level_111[j], argv[2]) == 0)
-		      {
-			printf ("Incorrect syntax. Both parameters %s and %s can't be used together\n", argv[1], argv[2]);
-			return 0;
-		      }
-		}
-	    }
-	  else
-	    {
-	      printf ("Incorrect syntax\n");
-	      return 0;
-	    }
-	}
-    }
-
-  return 1;
-}
+static dbctl_keyword_t
+parse_comm (int argc, char **argv);
 
 void
 version (void)
@@ -212,54 +88,43 @@ help (void)
   version ();
   usage ();
   printf ("commands:\n");
-  printf ("set                      set parameters for a db_governor\n");
+  printf ("%-24s set parameters for a db_governor\n", SET_KW);
 
-  printf
-    ("list         list users & their limits (list all known users in dbgovernor, not just those that have limits set )\n");
-  printf
-    ("list-restricted          list restricted customers, with their limits, restriction reason, and time period they will still be restricted\n");
+  printf ("%-24s list users & their limits (list all known users in dbgovernor, not just those that have limits set )\n", LIST_KW);
+  printf ("%-24s list restricted customers, with their limits, restriction reason, and time period they will still be restricted\n", LIST_RESTRICTED_KW);
 
-  printf ("ignore                   ignore particular user\n");
-  printf ("monitor                  cancel ignore particular user\n");
-  printf ("delete                   remove limits for user/use defaults\n");
+  printf ("%-24s ignore particular user\n", IGNORE_KW);
+  printf ("%-24s cancel ignore particular user\n", MONITOR_KW);
+  printf ("%-24s remove limits for user/use defaults\n", DELETE_KW);
 
-  printf
-    ("restrict                 restrict user using lowest level (or if --level specified, using the specified level)\n");
-  printf
-    ("unrestrict               unrestrict username (configuration file remains unchanged)\n");
-  printf
-    ("unrestrict-all           unrestrict all restricted users (configuration file remains unchanged)\n");
+  printf ("%-24s restrict user using lowest level (or if --level specified, using the specified level)\n", RESTRICT_KW);
+  printf ("%-24s unrestrict username (configuration file remains unchanged)\n", UNRESTRICT_KW);
+  printf ("%-24s unrestrict all restricted users (configuration file remains unchanged)\n", UNRESTRICT_ALL_KW);
 
-  printf ("--help                   show this message\n");
-  printf ("--version                version number\n");
-  printf
-    ("--lve-mode               set lve mode 'off|abusers|all|single|on'\n");
-  printf
-    ("                            'off' - not put user's queries into LVE\n");
-  printf
-    ("                            'abusers' - when user reaches the limit,\n");
-  printf
-    ("                                        put user's queries into LVE for that user\n");
-  printf
-    ("                            'all' - user's queries always run inside LVE for that user - deprecated\n");
-  printf
-    ("                            'single|on' - single LVE for all abusers. 'on' - deprecated\n");
+  printf ("%-24s show this message\n", HELP_KW);
+  printf ("%-24s version number\n", VERSION_KW);
+  printf ("%-24s set lve mode 'off|abusers|all|single|on'\n", LVE_MODE_KW);
+  printf ("%-27s 'off' - not put user's queries into LVE\n", "");
+  printf ("%-27s 'abusers' - when user reaches the limit,\n", "");
+  printf ("%-27s             put user's queries into LVE for that user\n", "");
+  printf ("%-27s 'all' - user's queries always run inside LVE for that user - deprecated\n", "");
+  printf ("%-27s 'single|on' - single LVE for all abusers. 'on' - deprecated\n", "");
 
   printf ("\nparameter:\n");
-  printf ("default                  set default parameter\n");
-  printf ("username                 set parameter for user\n");
+  printf ("%-24s set default parameter\n", "default");
+  printf ("%-24s set parameter for user\n", "username");
 
   printf ("\noptions:\n");
-  printf ("--cpu=N                  limit CPU   (pct)  usage\n");
-  printf ("--read=N                 limit READ  (MB/s) usage (can by k(KB/s), b(BB/s))\n");
-  printf ("--write=N                limit WRITE (MB/s) usage (can by k(KB/s), b(BB/s))\n");
+  printf ("%-24s limit CPU   (pct)  usage\n", "--cpu=N");
+  printf ("%-24s limit READ  (MB/s) usage (can by k(KB/s), b(BB/s))\n", "--read=N");
+  printf ("%-24s limit WRITE (MB/s) usage (can by k(KB/s), b(BB/s))\n", "--write=N");
+
   printf ("\noptions for parameter list:\n");
-  printf ("--kb                     show limits in Kbytes no pretty print\n");
-  printf ("--bb                     show limits in bytes no pretty print\n");
-  printf ("--mb                     show limits in Mbytes no pretty print\n");
-  printf
-    ("--slow=N                 limit time for long running select queries\n");
-  printf ("--level=N                level (1,2,3 or 4) specified\n");
+  printf ("%-24s show limits in Kbytes no pretty print\n", "--kb");
+  printf ("%-24s show limits in bytes no pretty print\n", "--bb");
+  printf ("%-24s show limits in Mbytes no pretty print\n", "--mb");
+  printf ("%-24s limit time for long running select queries\n", "--slow=N");
+  printf ("%-24s level (1,2,3 or 4) specified\n", "--level=N");
 }
 
 GList *
@@ -392,18 +257,32 @@ GetVal (char opt, GList * list)
 int
 GetCmd (int argc, char **argv)
 {
-  int ret;
-  ret = 0;
+  int ret = 0;
 
-  char _tmp_arg[11];
-  _tmp_arg[0] = '\0';
-  strlcpy (_tmp_arg, argv[1], sizeof (_tmp_arg));
-
-  if (!valid_comm (argc, argv))
+  dbctl_keyword_t kw = parse_comm(argc, argv);
+  if (kw == ERROR_KWE)
     return 1;
 
-  if (strcmp ("set", argv[1]) == 0)
-    {
+  switch (kw)
+  {
+    case ERROR_KWE:
+    return 1;
+
+    case HELP_KWE:
+    case VERSION_KWE:
+    default:
+      GetOptList (argc, argv, &ret);
+    return ret;
+
+    case LVE_MODE_KWE:
+      {
+        GList *list = (GList *) GetOptList (argc, argv, &ret);
+        if (!setLveMode ((char *) GetVal (100, list)))
+	  return 2;
+      }
+    break;
+
+    case SET_KWE:
       if (argc > 2)
 	{
 	  char *_argv = argv[2];
@@ -426,59 +305,9 @@ GetCmd (int argc, char **argv)
 	}
       else
 	return 1;
-    }
-  else if (strcmp ("ignore", argv[1]) == 0)
-    {
-      if (argc > 2)
-	{
-	  if (!ignoreUser (argv[2]))
-	    return 2;
-	}
-      else
-	return 1;
-    }
-  else if (strcmp ("monitor", argv[1]) == 0)
-    {
-      if (argc > 2)
-	{
-	  if (!watchUser (argv[2]))
-	    return 2;
-	}
-      else
-	return 1;
-    }
-  else if (strcmp ("delete", argv[1]) == 0)
-    {
-      if (argc > 2)
-	{
-	  if (!deleteUser (argv[2]))
-	    return 2;
-	}
-      else
-	return 1;
-    }
-  else if (strcmp ("list", argv[1]) == 0)
-    {
-      if (argc == 3)
-	{
-	  if (!strcmp(argv[2], "--bb")) kb_flag = 2;
-	  if (!strcmp(argv[2], "--kb")) kb_flag = 1;
-	  if (!strcmp(argv[2], "--mb")) kb_flag = 3;
-	}
-      if (!list(kb_flag, 0) != 0)
-	return 2;
-    }
-  else if (strcmp ("list-restricted", argv[1]) == 0)
-    {
-      if (!list_restricted ())
-	return 2;
-    }
-  else if (strcmp ("list-restricted-shm", argv[1]) == 0)
-    {
-      list_restricted_shm ();
-    }
-  else if (strcmp ("restrict", argv[1]) == 0)
-    {
+    break;
+
+    case RESTRICT_KWE:
       if (argc > 2)
 	{
 	  char *_argv = argv[2];
@@ -489,9 +318,39 @@ GetCmd (int argc, char **argv)
 	}
       else
 	return 1;
-    }
-  else if (strcmp ("unrestrict", argv[1]) == 0)
-    {
+    break;
+
+    case IGNORE_KWE:
+      if (argc > 2)
+	{
+	  if (!ignoreUser (argv[2]))
+	    return 2;
+	}
+      else
+	return 1;
+    break;
+
+    case MONITOR_KWE:
+      if (argc > 2)
+	{
+	  if (!watchUser (argv[2]))
+	    return 2;
+	}
+      else
+	return 1;
+    break;
+
+    case DELETE_KWE:
+      if (argc > 2)
+	{
+	  if (!deleteUser (argv[2]))
+	    return 2;
+	}
+      else
+	return 1;
+    break;
+
+    case UNRESTRICT_KWE:
       if (argc > 2)
 	{
 	  if (!unrestrict (argv[2]))
@@ -499,32 +358,39 @@ GetCmd (int argc, char **argv)
 	}
       else
 	return 1;
-    }
-  else if (strcmp ("unrestrict-all", argv[1]) == 0)
-    {
+    break;
+
+    case LIST_KWE:
+      if (argc == 3)
+	{
+	  if (!strcmp(argv[2], "--bb")) kb_flag = 2;
+	  if (!strcmp(argv[2], "--kb")) kb_flag = 1;
+	  if (!strcmp(argv[2], "--mb")) kb_flag = 3;
+	}
+      if (!list(kb_flag, 0) != 0)
+	return 2;
+    break;
+
+    case LIST_RESTRICTED_KWE:
+      if (!list_restricted ())
+	return 2;
+    break;
+
+    case UNRESTRICT_ALL_KWE:
       if (!unrestrict_all ())
 	return 2;
-    }
-  else if (strcmp ("--lve-mode", _tmp_arg) == 0)
-    {
-      char *_argv = argv[2];
-      GList *list = (GList *) GetOptList (argc, argv, &ret);
-      if (!setLveMode ((char *) GetVal (100, list)))
-	return 2;
-    }
-  else if (strcmp ("dbupdate", argv[1]) == 0)
-    {
+    break;
+
+    case LIST_RESTRICTED_SHM_KWE:
+      list_restricted_shm ();
+    break;
+
+    case DBUPDATE_KWE:
       if (!dbupdatecmd())
 	return 2;
-    }
-  else
-    {
-      GetOptList (argc, argv, &ret);
+    break;
 
-      int _ret = ret;
-      return _ret;
-    }
-
+  }
   return 0;
 }
 
@@ -537,4 +403,96 @@ main (int argc, char **argv)
     usage ();
 
   return ret;
+}
+
+
+typedef struct parse_info_t
+{
+	dbctl_keyword_t kwe;
+	const char *kw;
+	size_t kwlen;          /* ==0 for full compare, >0 for prefix compare */
+	int min_argc;          /* ==-1 if not used */
+	int min_argc_default;  /* alternative min_argc: ==-1 if not used */
+	int max_argc;          /* ==-1 if not used */
+} parse_info_t;
+
+
+#define PARSE_INFO_ENTRY(nm, min1, min2, max1) { nm##_KWE, nm##_KW, 0, min1, min2, max1 }
+
+static const parse_info_t parse_info[] =
+{
+	// args are ignored
+	PARSE_INFO_ENTRY(HELP, -1, -1, -1),
+	PARSE_INFO_ENTRY(VERSION, -1, -1, -1),
+	{ LVE_MODE_KWE, LVE_MODE_KW, sizeof LVE_MODE_KW - 1, -1, -1, -1 },
+
+	// min 3 args for user, min 4 args for default
+	PARSE_INFO_ENTRY(SET, 3, 4, -1),
+
+	// min 3 args
+	PARSE_INFO_ENTRY(RESTRICT, 3, -1, -1),
+
+	// 3 args exact
+	PARSE_INFO_ENTRY(IGNORE, 3, -1, 3),
+	PARSE_INFO_ENTRY(MONITOR, 3, -1, 3),
+	PARSE_INFO_ENTRY(DELETE, 3, -1, 3),
+	PARSE_INFO_ENTRY(UNRESTRICT, 3, -1, 3),
+
+	// 2 or 3 args
+	PARSE_INFO_ENTRY(LIST, -1, -1, 3),
+
+	// 2 args exact
+	PARSE_INFO_ENTRY(LIST_RESTRICTED, -1, -1, 2),
+	PARSE_INFO_ENTRY(UNRESTRICT_ALL, -1, -1, 2),
+	PARSE_INFO_ENTRY(LIST_RESTRICTED_SHM, -1, -1, 2),
+	PARSE_INFO_ENTRY(DBUPDATE, -1, -1, 2)
+};
+
+static int
+check_comm(const parse_info_t *cur, int argc, char **argv)
+{
+	int n;
+
+	if (cur->min_argc > 0 && argc < cur->min_argc)
+	{
+		n = cur->min_argc-2;
+		printf("Incorrect syntax: %s command requires at least %d parameter%s\n", cur->kw, n, n>1?"s":"");
+		return -1;
+	}
+
+	if (cur->min_argc_default > 0 && !strcmp(argv[2], "default") && argc < cur->min_argc_default)
+	{
+		n = cur->min_argc_default-2;
+		printf("Incorrect syntax: %s command for default requires at least %d parameter%s\n", cur->kw, n, n>1?"s":"");
+		return -1;
+	}
+
+	if (cur->max_argc > 0 && argc > cur->max_argc)
+	{
+		n = cur->max_argc-2;
+		if (n > 0)
+			printf("Incorrect syntax: %s command requires no more than %d parameter%s\n", cur->kw, n, n>1?"s":"" );
+		else
+			printf("Incorrect syntax: %s command shouldn't have any parameter\n", cur->kw);
+		return -1;
+	}
+	return 0;
+}
+
+static dbctl_keyword_t
+parse_comm (int argc, char **argv)
+{
+	int i;
+	const char *cmd = argv[1];
+	static const int parse_info_num = sizeof parse_info / sizeof parse_info[0];
+
+	for (i=0; i < parse_info_num; ++i)
+	{
+		const parse_info_t *cur = parse_info + i;
+		if (cur->kwlen ? strncmp(cmd, cur->kw, cur->kwlen) : strcmp(cmd, cur->kw) )
+			continue;
+
+		return check_comm(cur, argc, argv) ? ERROR_KWE : cur->kwe;
+	} //for (i=0; i < parse_info_num; ++i)
+	return ERROR_KWE;
 }
