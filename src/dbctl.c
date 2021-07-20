@@ -449,21 +449,21 @@ static const parse_info_t parse_info[] =
 };
 
 static int
-check_comm(const parse_info_t *cur, int argc, char **argv)
+check_argc(const parse_info_t *cur, int argc, char **argv)
 {
 	int n;
 
 	if (cur->min_argc > 0 && argc < cur->min_argc)
 	{
 		n = cur->min_argc-2;
-		printf("Incorrect syntax: %s command requires at least %d parameter%s\n", cur->kw, n, n>1?"s":"");
+		printf("Incorrect syntax: \"%s\" command requires at least %d parameter%s\n", cur->kw, n, n>1?"s":"");
 		return -1;
 	}
 
 	if (cur->min_argc_default > 0 && !strcmp(argv[2], "default") && argc < cur->min_argc_default)
 	{
 		n = cur->min_argc_default-2;
-		printf("Incorrect syntax: %s command for default requires at least %d parameter%s\n", cur->kw, n, n>1?"s":"");
+		printf("Incorrect syntax: \"%s\" command in \"default\" mode requires at least %d parameter%s\n", cur->kw, n, n>1?"s":"");
 		return -1;
 	}
 
@@ -471,9 +471,9 @@ check_comm(const parse_info_t *cur, int argc, char **argv)
 	{
 		n = cur->max_argc-2;
 		if (n > 0)
-			printf("Incorrect syntax: %s command requires no more than %d parameter%s\n", cur->kw, n, n>1?"s":"" );
+			printf("Incorrect syntax: \"%s\" command requires no more than %d parameter%s\n", cur->kw, n, n>1?"s":"" );
 		else
-			printf("Incorrect syntax: %s command shouldn't have any parameter\n", cur->kw);
+			printf("Incorrect syntax: \"%s\" command shouldn't have any parameter\n", cur->kw);
 		return -1;
 	}
 	return 0;
@@ -492,7 +492,8 @@ parse_comm (int argc, char **argv)
 		if (cur->kwlen ? strncmp(cmd, cur->kw, cur->kwlen) : strcmp(cmd, cur->kw) )
 			continue;
 
-		return check_comm(cur, argc, argv) ? ERROR_KWE : cur->kwe;
+		return check_argc(cur, argc, argv) ? ERROR_KWE : cur->kwe;
 	} //for (i=0; i < parse_info_num; ++i)
+	printf("Incorrect syntax: unknown command \"%s\"\n", cmd );
 	return ERROR_KWE;
 }
