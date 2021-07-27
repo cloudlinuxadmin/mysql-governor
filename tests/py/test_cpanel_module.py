@@ -44,12 +44,13 @@ def test_update_user_map_exceptions(exception, expected_msg, capfd):
         assert expected_msg in out
 
 
-@pytest.mark.parametrize("mocked_content", [
-    'mariadb104',
-    'mariadb105',
+@pytest.mark.parametrize("mocked_content, cpanel_version", [
+    ('mariadb104', 96),
+    ('mariadb105', 96),
+    ('mariadb104', 98),  # support for mariadb104 is skipped
 ])
 @mock.patch("builtins.open", mock.mock_open(read_data=''))
-def test_for_unsupported_db_version(mocked_content):
+def test_for_unsupported_db_version(mocked_content, cpanel_version):
     """
     This test is to check the response of the tested method to an unsupported
     version of the database (expected "exit 1")
@@ -58,16 +59,20 @@ def test_for_unsupported_db_version(mocked_content):
     with mock.patch("modules.cpanel.sys.exit", exit_mock):
         with mock.patch("modules.base.InstallManager._get_result_mysql_version",
                         return_value=mocked_content):
-            cpanel.cPanelManager('').unsupported_db_version()
+            with mock.patch(
+                    "modules.cpanel.cPanelManager.get_panel_version",
+                    return_value=cpanel_version):
+                cpanel.cPanelManager('').unsupported_db_version()
     exit_mock.assert_called_once_with(1)
 
 
-@pytest.mark.parametrize("mocked_content", [
-    'mariadb104',
-    'mariadb105',
+@pytest.mark.parametrize("mocked_content, cpanel_version", [
+    ('mariadb104', 96),
+    ('mariadb105', 96),
+    ('mariadb104', 98),
 ])
 @mock.patch("builtins.open", mock.mock_open(read_data=''))
-def test_for_unsupported_db_version_with_force(mocked_content):
+def test_for_unsupported_db_version_with_force(mocked_content, cpanel_version):
     """
     This test is to check the response of the tested method to an unsupported
     version of the database (do nothing cause "force" key is passed)
@@ -76,16 +81,22 @@ def test_for_unsupported_db_version_with_force(mocked_content):
     with mock.patch("modules.cpanel.sys.exit", exit_mock):
         with mock.patch("modules.base.InstallManager._get_result_mysql_version",
                         return_value=mocked_content):
-            cpanel.cPanelManager('').unsupported_db_version(force=True)
+            with mock.patch(
+                    "modules.cpanel.cPanelManager.get_panel_version",
+                    return_value=cpanel_version):
+                cpanel.cPanelManager('').unsupported_db_version(force=True)
     exit_mock.assert_not_called()
 
 
-@pytest.mark.parametrize("mocked_content", [
-    'mariadb103',
-    'mysql57',
+@pytest.mark.parametrize("mocked_content, cpanel_version", [
+    ('mariadb103', 96),
+    ('mysql57', 92),
+    ('mariadb103', 98),
+    ('mysql57', 98),
+    ('mariadb105', 98),  # mariadb105 is supported since cPanel v.98
 ])
 @mock.patch("builtins.open", mock.mock_open(read_data=''))
-def test_for_supported_db_version(mocked_content):
+def test_for_supported_db_version(mocked_content, cpanel_version):
     """
     This test is to check the response of the tested method to a supported
     version of the database (do nothing)
@@ -94,5 +105,8 @@ def test_for_supported_db_version(mocked_content):
     with mock.patch("modules.cpanel.sys.exit", exit_mock):
         with mock.patch("modules.base.InstallManager._get_result_mysql_version",
                         return_value=mocked_content):
-            cpanel.cPanelManager('').unsupported_db_version()
+            with mock.patch(
+                    "modules.cpanel.cPanelManager.get_panel_version",
+                    return_value=cpanel_version):
+                cpanel.cPanelManager('').unsupported_db_version()
     exit_mock.assert_not_called()

@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   68
+%define g_release   70
 %define g_key_library 10
 
 %if %{undefined _unitdir}
@@ -434,6 +434,13 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Thu Jul 15 2021 Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-70
+- MYSQLG-579: dbctl allowed usernames extended
+
+* Tue Jun 22 2021 Alexandr Demeshko <ademeshko@cloudlinux.com>, Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-69
+- MYSQLG-601: marked "all" mode as deprecated
+- MYSQLG-600: mariadb105 install is allowed on cPanel staring from v.98
+
 * Mon May 17 2021 Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-68
 - MYSQLG-595: systemd mount added for governor private bad users list
 - MYSQLG-588: IO limit calculation fixed
