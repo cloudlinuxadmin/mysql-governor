@@ -1,0 +1,47 @@
+#!/bin/sh
+eval 'if [ -x /usr/local/cpanel/3rdparty/bin/perl ]; then exec /usr/local/cpanel/3rdparty/bin/perl -x -- $0 ${1+"$@"}; else exec /usr/bin/perl -x $0 ${1+"$@"}; fi;'
+if 0;
+
+#!/usr/bin/perl
+
+BEGIN { unshift @INC, '/usr/local/cpanel', '/scripts'; }
+
+use strict;
+use warnings;
+use POSIX;
+use Try::Tiny;
+use Cpanel::Config::Users;
+use Cpanel::DB::Map;
+
+my $log = "/usr/share/lve/dbgovernor/map_rebuilder.log";
+
+# copy STDOUT/STDERR to another filehandle
+open (my $ORIGOUT, '>&', STDOUT);
+open (my $ORIGERR, '>&', STDERR);
+
+# redirect STDOUT/STDERR to log.txt
+open (STDOUT, '>>', $log);
+open (STDERR, ">&", STDOUT);
+
+my @users = Cpanel::Config::Users::getcpusers();
+foreach my $user (@users) {
+  try {
+     # try to obtain mapping for each user
+     my $user_map = Cpanel::DB::Map->new ( { cpuser => $user, db => 'MYSQL' } );
+  }
+  catch {
+    my $err = $_;
+    if (index($err, "CpuserNotInMap") != -1) {
+      # rebuild map if problem was detected
+      print strftime "---***--- %Y-%m-%d %H:%M:%S ", localtime time;
+      print "CpuserNotInMap detected for user `$user`\n", "Attempt to restore...\n";
+      my $cmd = "/scripts/rebuild_dbmap $user";
+      system($cmd);
+    }
+  }
+}
+close(STDOUT);
+close(STDERR);
+# restore STDOUT/STDERR
+open (STDOUT, '>&', $ORIGOUT);
+open (STDERR, '>&', $ORIGERR);

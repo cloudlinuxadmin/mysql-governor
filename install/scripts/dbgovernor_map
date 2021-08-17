@@ -24,6 +24,10 @@ eval "use  " .$pckg_name . "::DB                   ();";
 
 use Data::Dumper;
 
+# check and rebuild cPanel DB map before creating dbgov mapping
+my $cmd = "/usr/share/lve/dbgovernor/scripts/cpanel_map_rebuilder";
+system($cmd);
+
 my $mapfilename = "/etc/container/dbuser-map";
 my @old = ();
 my @new = ();
