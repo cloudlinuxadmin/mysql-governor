@@ -435,8 +435,9 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
-* Tue Aug 17 2021 Daria Kavchuk <dkavchuk@cloudlinux.com> 1.2-71
+* Fri Sep 10 2021 Daria Kavchuk <dkavchuk@cloudlinux.com>, Alexandr Demeshko <ademeshko@cloudlinux.com>  1.2-71
 - MYSQLG-617: autoremediation for broken cPanel DB mapping during `--dbupdate` command
+- MYSQLG-623: MariaDB 10.4+ mysql.users changed
 
 * Thu Jul 15 2021 Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-70
 - MYSQLG-579: dbctl allowed usernames extended

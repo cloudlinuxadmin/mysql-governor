@@ -54,6 +54,18 @@ enum mysql_option
 #define QUERY_USER_CONN_LIMIT_UNFREEZE "update mysql.user set max_user_connections=0 where max_user_connections=%lu"
 #define QUERY_USER_CONN_LIMIT_UNFREEZE_LVE "update mysql.user set max_user_connections=0 where max_user_connections<>0"
 #define QUERY_USER_CONN_LIMIT_UNFREEZE_DAILY "update mysql.user set max_user_connections=0 where max_user_connections=%lu"
+
+// MariaDB 10.4+ needs special sql for working with max_user_connections
+#define MARIADB104_USER_CONN_LIMIT "alter user '%s' with max_user_connections %lu"
+#define MARIADB104_USER_CONN_LIMIT_UNFREEZE \
+"SELECT JSON_SET(Priv, '$.max_user_connections', '0') FROM mysql.global_priv WHERE CAST(IFNULL(JSON_VALUE(Priv, '$.max_user_connections'), 0) AS SIGNED)=%lu"
+
+#define MARIADB104_USER_CONN_LIMIT_UNFREEZE_LVE \
+"SELECT JSON_SET(Priv, '$.max_user_connections', '0') FROM mysql.global_priv WHERE CAST(IFNULL(JSON_VALUE(Priv, '$.max_user_connections'), 0) AS SIGNED)<>0"
+
+#define MARIADB104_USER_CONN_LIMIT_UNFREEZE_DAILY \
+"SELECT JSON_SET(Priv, '$.max_user_connections', '0') FROM mysql.global_priv WHERE CAST(IFNULL(JSON_VALUE(Priv, '$.max_user_connections'), 0) AS SIGNED)=%lu"
+
 //Сброс userstat статистики
 #define QUERY_FLUSH_USER_STATISTICS "FLUSH USER_STATISTICS"
 /*

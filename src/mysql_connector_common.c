@@ -54,6 +54,7 @@ extern char *unix_socket_address;
 static char work_user[USERNAMEMAXLEN];
 
 int is_plugin_version = 0;
+static int is_mariadb_104plus = 0;
 
 //Pointer to DB connection that read statistic
 MYSQL *mysql_send_governor = NULL;
@@ -386,8 +387,16 @@ void
 unfreaze_all (MODE_TYPE debug_mode)
 {
   char sql_buffer[_DBGOVERNOR_BUFFER_8192];
-  snprintf (sql_buffer, _DBGOVERNOR_BUFFER_2048 - 1,
-	    QUERY_USER_CONN_LIMIT_UNFREEZE, (unsigned long) -1);
+  if (is_mariadb_104plus)
+  {
+      snprintf (sql_buffer, _DBGOVERNOR_BUFFER_2048 - 1,
+	        MARIADB104_USER_CONN_LIMIT_UNFREEZE, (unsigned long) -1);
+  }
+  else
+  {
+      snprintf (sql_buffer, _DBGOVERNOR_BUFFER_2048 - 1,
+	        QUERY_USER_CONN_LIMIT_UNFREEZE, (unsigned long) -1);
+  }
   if (db_mysql_exec_query (sql_buffer, &mysql_do_command, debug_mode))
     return;
   flush_user_priv (debug_mode);
@@ -397,9 +406,18 @@ unfreaze_all (MODE_TYPE debug_mode)
 void
 unfreaze_lve (MODE_TYPE debug_mode)
 {
-  if (db_mysql_exec_query (QUERY_USER_CONN_LIMIT_UNFREEZE_LVE,
+  if (is_mariadb_104plus)
+  {
+	if (db_mysql_exec_query (MARIADB104_USER_CONN_LIMIT_UNFREEZE_LVE,
 			   &mysql_do_command, debug_mode))
-    return;
+	return;
+  }
+  else
+  {
+	if (db_mysql_exec_query (QUERY_USER_CONN_LIMIT_UNFREEZE_LVE,
+			   &mysql_do_command, debug_mode))
+	return;
+  }
   flush_user_priv (debug_mode);
 }
 
@@ -410,8 +428,16 @@ unfreaze_daily (MODE_TYPE debug_mode)
   char buffer[_DBGOVERNOR_BUFFER_2048];
   if (mysql_do_command == NULL)
     return;
-  snprintf (buffer, _DBGOVERNOR_BUFFER_2048 - 1,
-	    QUERY_USER_CONN_LIMIT_UNFREEZE_DAILY, (unsigned long) -1);
+  if (is_mariadb_104plus)
+  {
+      snprintf (buffer, _DBGOVERNOR_BUFFER_2048 - 1,
+	        MARIADB104_USER_CONN_LIMIT_UNFREEZE_DAILY, (unsigned long) -1);
+  }
+  else
+  {
+      snprintf (buffer, _DBGOVERNOR_BUFFER_2048 - 1,
+	        QUERY_USER_CONN_LIMIT_UNFREEZE_DAILY, (unsigned long) -1);
+  }
   if (db_mysql_exec_query (buffer, &mysql_do_command, debug_mode))
     return;
   flush_user_priv (debug_mode);
@@ -506,8 +532,17 @@ update_user_limit_no_flush (char *user_name, unsigned int limit,
 
   (*_mysql_real_escape_string) (mysql_do_command, user_name_alloc, user_name,
 				strlen (user_name));
-  snprintf (sql_buffer, _DBGOVERNOR_BUFFER_8192 - 1, QUERY_USER_CONN_LIMIT,
-	    (unsigned long) limit, user_name_alloc);
+  if (is_mariadb_104plus)
+  {
+      snprintf (sql_buffer, _DBGOVERNOR_BUFFER_8192 - 1, MARIADB104_USER_CONN_LIMIT,
+	        user_name_alloc, (unsigned long) limit);
+  }
+  else
+  {
+      snprintf (sql_buffer, _DBGOVERNOR_BUFFER_8192 - 1, QUERY_USER_CONN_LIMIT,
+	        (unsigned long) limit, user_name_alloc);
+  }
+
   if (db_mysql_exec_query (sql_buffer, &mysql_do_command, debug_mode))
     {
       if (debug_mode != DEBUG_MODE)
@@ -938,6 +973,36 @@ db_connect (const char *host, const char *user_name,
 
 }
 
+static int find_mariadb104plus(char *buffer)
+{
+	char *saveptr;
+	char *ptr;
+	int ver;
+	if (strstr (buffer, "-MariaDB") == NULL)
+		return 0;
+
+	ptr = strtok_r(buffer, ".", &saveptr);
+	if (!ptr)
+		return 0;
+
+	ver = atoi(ptr);
+	if (ver > 10)
+		return 1;
+
+	if (ver < 10)
+		return 0;
+
+	ptr = strtok_r(NULL, ".", &saveptr);
+	if (!ptr)
+		return 0;
+
+	ver = atoi(ptr);
+	if (ver >= 4)
+		return 1;
+
+	return 0;
+}
+
 int
 check_mysql_version (MODE_TYPE debug_mode)
 {
@@ -967,19 +1032,28 @@ check_mysql_version (MODE_TYPE debug_mode)
 			       _DBGOVERNOR_BUFFER_2048);
 	  if (strstr (buffer, "-cll-lve"))
 	    {
+	      if (strstr (buffer, "-cll-lve-plg"))
+		{
+		  is_plugin_version = 1;
+		}
+	      is_mariadb_104plus = find_mariadb104plus(buffer);
+
 	      snprintf (outbuffer, _DBGOVERNOR_BUFFER_2048 - 1,
 			"MySQL version correct %s", buffer);
 	      WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
 			 outbuffer, data_cfg.log_mode);
-	      (*_mysql_free_result) (res);
-	      if (strstr (buffer, "-cll-lve-plg"))
+	      if (is_plugin_version)
 		{
-		  is_plugin_version = 1;
 		  snprintf (outbuffer, _DBGOVERNOR_BUFFER_2048 - 1,
 			    "Governor with plugin mode enabled");
 		  WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
 			     outbuffer, data_cfg.log_mode);
 		}
+	      snprintf (outbuffer, _DBGOVERNOR_BUFFER_2048 - 1,
+			    "MariaDB version 10.4+ %sFOUND", is_mariadb_104plus ? "" : "NOT ");
+	      WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
+			     outbuffer, data_cfg.log_mode);
+	      (*_mysql_free_result) (res);
 	      return 1;
 	    }
 	  else
