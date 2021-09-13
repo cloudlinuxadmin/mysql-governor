@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   70
+%define g_release   71
 %define g_key_library 10
 
 %if %{undefined _unitdir}
@@ -173,6 +173,7 @@ install -D -m 755 install/scripts/chek_mysql_rpms_local $RPM_BUILD_ROOT/usr/shar
 install -D -m 755 install/scripts/cpanel-delete-hooks $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/cpanel-delete-hooks
 install -D -m 755 install/scripts/cpanel-install-hooks $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/cpanel-install-hooks
 install -D -m 755 install/scripts/cpanel-common-lve $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/cpanel-common-lve
+install -D -m 755 install/scripts/cpanel_map_rebuilder $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/cpanel_map_rebuilder
 install -D -m 755 install/scripts/dbgovernor_map $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/dbgovernor_map
 install -D -m 755 install/scripts/dbgovernor_map.py $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/dbgovernor_map.py
 install -D -m 755 install/scripts/dbgovernor_map_plesk.py $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/dbgovernor_map_plesk.py
@@ -434,6 +435,10 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Fri Sep 10 2021 Daria Kavchuk <dkavchuk@cloudlinux.com>, Alexandr Demeshko <ademeshko@cloudlinux.com>  1.2-71
+- MYSQLG-617: autoremediation for broken cPanel DB mapping during `--dbupdate` command
+- MYSQLG-623: MariaDB 10.4+ mysql.users changed
+
 * Thu Jul 15 2021 Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-70
 - MYSQLG-579: dbctl allowed usernames extended
 
