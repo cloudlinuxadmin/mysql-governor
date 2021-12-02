@@ -1,0 +1,5 @@
+governor-mysql (1.2-71.ubuntu1.1) unstable; urgency=medium
+
+  * Initial Ubuntu release
+
+ -- Alexandr Demeshko <ademeshko@cloudlinux.com>  Wed, 8 Dec 2021 12:15:33 +0000

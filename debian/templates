@@ -1,0 +1,4 @@
+Template: governor-mysql/g_key_library
+Type: string
+Default: 10
+Description: Governor Library version
