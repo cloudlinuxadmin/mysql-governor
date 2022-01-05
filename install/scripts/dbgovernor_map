@@ -65,6 +65,8 @@ if ($numArgs>0) {
 
         open (MAPFILE, ">$mapfilename"); 
         foreach my $item (@old){
+            # We can filter out temporary db accounts by "cpses_" prefix,
+            # but we should not do this in order to prevent denial-of-service attack via phpMyAdmin
             print MAPFILE $$item[0], " ", $$item[1], " ", $$item[2], "\n";
         }
         close(MAPFILE);

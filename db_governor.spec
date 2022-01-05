@@ -200,6 +200,8 @@ touch $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/tmp/INFO
 echo "CloudLinux" > $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/tmp/INFO
 
 %check
+ls -l /usr/bin/mysql
+/usr/bin/mysql -V
 echo "****Start unittests for python code"
 PYTHONPATH=install:install/scripts:. %{pypath}/py.test tests/py/
 
