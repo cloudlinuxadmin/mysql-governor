@@ -813,10 +813,16 @@ for native procedure restoring of MySQL packages"""))
             if sql_version in ["mysql57", "mysql80"]:
                 packages += ["numactl-devel%s" % arch, "numactl%s" % arch]
         elif sql_version.startswith("mariadb"):
-            # Install mysqlclient18-compat for every version of MariaDB because
-            # cl-Maria* pkgs do not provide libmariadb,
-            # and it needed by some packages like net-snmp-agent-libs on CL8
-            packages += ["mysqlclient16", "mysqlclient15", "mysqlclient18-compat"]
+            packages += ["mysqlclient16", "mysqlclient15"]
+            if sql_version in ["mariadb55", "mariadb100", "mariadb101", "mariadb102", "mariadb103"] \
+                    and get_cl_num() == 8:
+                # net-snmp-agent-libs on CL8 requires libmariadb.so.3() and libmariadb.so.3(libmysqlclient_18)
+                # Old versions of MariaDB up to 10.1 do not contain libmariadb at all.
+                # So we need to install mysqlclient18-compat for mariadb55, mariadb100 and mariadb101
+                # Currently our meta-client pkgs of MariaDB 10.2 and 10.3 don't declare
+                # that they provide libmariadb, though in fact their libs pkgs contain it.
+                # So we need to install mysqlclient18-compat for mariadb102 and mariadb103 also.
+                packages += ["mysqlclient18-compat"]
         elif sql_version.startswith("percona"):
             packages += ["mysqlclient18", "mysqlclient16", "mysqlclient15"]
 

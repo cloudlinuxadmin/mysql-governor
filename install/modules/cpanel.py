@@ -108,6 +108,14 @@ class cPanelManager(InstallManager):
         """
         Install legacy packages after --delete procedure
         """
+        if current_version['full'] == 'mariadb104':
+            print('{} is unsupported by cPanel, mariadb105 will be installed instead'.format(
+                current_version['full']))
+            current_version = {
+                'short': '10.5',
+                'mysql_type': 'mariadb',
+                'full': 'mariadb105'
+            }
         print('Restoring known packages for {}'.format(current_version['full']))
         targets = {
             'mysql55': 'MySQL55',

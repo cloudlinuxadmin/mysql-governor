@@ -1313,24 +1313,34 @@ select_max_user_connections (char *username, MODE_TYPE debug_mode)
   if (db_mysql_exec_query(select_buffer, &mysql_do_command, debug_mode) != 0)
     {
       WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		 "Can't execute the select request (user: %s)", debug_mode, username);
+		 "Can't execute request for max_user_connections (user: %s)", debug_mode, username);
       return 0;
     }
   res = (*_mysql_store_result) (mysql_do_command);
   if (res == NULL)
     {
       WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		 "Can't store result from the select request (user: %s)", debug_mode, username);
+		 "Can't store result for max_user_connections (user: %s)", debug_mode, username);
       return 0;
     }
   row = (*_mysql_fetch_row) (res);
   if (row == NULL)
+  {
+    if (debug_mode == DEBUG_MODE)
     {
-      WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		 "Can't fetch data from the select request (user: %s)", debug_mode, username);
-      (*_mysql_free_result) (res);
-      return 0;
+/*
+    Log it as debug, not as warning, it is ok, that the account is already removed, but still presents in dbuser-map.
+
+    We store in dbuser-map all db accounts, even temporary ones, in order to prevent
+    denial-of-service attack via phpMyAdmin.
+*/
+	WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
+		   "Can't fetch data from for max_user_connections (user: %s)", debug_mode, username);
+
     }
+    (*_mysql_free_result) (res);
+    return 0;
+  }
   val = strtol(*row, NULL, 10);
   result = (unsigned) val;
   if (val < 0 || val > UINT_MAX || errno == ERANGE)
