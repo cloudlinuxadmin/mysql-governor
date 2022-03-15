@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   71
+%define g_release   72
 %define g_key_library 10
 
 %if %{undefined _unitdir}
@@ -437,6 +437,11 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Tue Mar 15 2022 Daria Kavchuk <dkavchuk@cloudlinux.com>, Alexandr Demeshko <ademeshko@cloudlinux.com>  1.2-72
+- MYSQLG-664: install MariaDB105 during deletion procedure of cl-MariaDB104 on cPanel
+- MYSQLG-665: mysqlclient18-compat installation avoided for MariaDB 10.4+
+- MYSQLG-655: Wrong governor warnings removed from the log
+
 * Fri Sep 10 2021 Daria Kavchuk <dkavchuk@cloudlinux.com>, Alexandr Demeshko <ademeshko@cloudlinux.com>  1.2-71
 - MYSQLG-617: autoremediation for broken cPanel DB mapping during `--dbupdate` command
 - MYSQLG-623: MariaDB 10.4+ mysql.users changed
