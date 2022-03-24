@@ -1156,11 +1156,15 @@ def force_update_cagefs():
     """
     Call cagefs force-update
     """
-    if os.path.isdir('/usr/share/cagefs-skeleton/bin') and os.path.isfile('/usr/sbin/cagefsctl'):
-        print('Trying to update cagefs skeleton...')
-        exec_command('/usr/sbin/cagefsctl --force-update', silent=True, return_code=True)
+    if os.path.isfile('/usr/sbin/cagefsctl'):
+        cagefs_initialized = exec_command('/usr/sbin/cagefsctl --check-cagefs-initialized', silent=True, return_code=True)
+        if cagefs_initialized == "yes":
+            print('Trying to update cagefs skeleton...')
+            exec_command('/usr/sbin/cagefsctl --wait-lock --force-update', silent=True, return_code=True)
+        else:
+            print('Skipping cagefs skeleton update, as cagefs is not initialized')
     else:
-        print('Skipping cagefs skeleton update, as no cagefsctl or skeleton/bin')
+        print('Skipping cagefs skeleton update, as no cagefsctl')
 
 
 def wizard_install_confirm(new_struct, prev_struct):

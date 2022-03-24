@@ -535,7 +535,7 @@ update_user_limit_no_flush (char *user_name, unsigned int limit,
   if (is_mariadb_104plus)
   {
       snprintf (sql_buffer, _DBGOVERNOR_BUFFER_8192 - 1, MARIADB104_USER_CONN_LIMIT,
-	        user_name_alloc, (unsigned long) limit);
+	        (unsigned long) limit, user_name_alloc);
   }
   else
   {
