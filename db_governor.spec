@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   72
+%define g_release   73
 %define g_key_library 10
 
 %if %{undefined _unitdir}
@@ -406,8 +406,10 @@ if [ -e /usr/share/lve/dbgovernor/mysqlgovernor.py ]; then
 fi
 
 %triggerin -- cl-MySQL55-client, cl-MySQL56-client, cl-MySQL57-client, cl-MySQL80-client, cl-MariaDB55, cl-MariaDB100, cl-MariaDB101, cl-MariaDB102, cl-MariaDB103, cl-MariaDB104, cl-MariaDB105, cl-Percona56-client, mysql-community-client, mariadb, Percona-Server-client-56
-if [ -e /usr/sbin/cagefsctl -a -d /usr/share/cagefs-skeleton ]; then
-    /usr/sbin/cagefsctl --force-update
+if [ -e /usr/sbin/cagefsctl ]; then
+    if /usr/sbin/cagefsctl --check-cagefs-initialized ; then
+        /usr/sbin/cagefsctl --wait-lock --force-update
+    fi
 fi
 
 %files
@@ -437,6 +439,10 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Fri Mar 25 2022 Alexandr Demeshko <ademeshko@cloudlinux.com>  1.2-73
+- MYSQLG-674: Legacy alter user statement avoided for MariaDB 10.4+
+- MYSQLG-675: Check for cagefs-skeleton initialization added
+
 * Tue Mar 15 2022 Daria Kavchuk <dkavchuk@cloudlinux.com>, Alexandr Demeshko <ademeshko@cloudlinux.com>  1.2-72
 - MYSQLG-664: install MariaDB105 during deletion procedure of cl-MariaDB104 on cPanel
 - MYSQLG-665: mysqlclient18-compat installation avoided for MariaDB 10.4+
