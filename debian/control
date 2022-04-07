@@ -1,0 +1,27 @@
+Source: governor-mysql
+Section: System/Base
+Priority: optional
+Maintainer: Cloudlinux Packaging Team <packager@cloudlinux.com>
+Build-Depends: debhelper-compat (= 12),
+               libglib2.0-dev,
+               libxml2-dev,
+               libncurses-dev,
+               cmake,
+               autoconf,
+               tar,
+               libpcre3-dev,
+               patch,
+               libsystemd-dev,
+               libmariadb-dev,
+               alt-python37
+Standards-Version: 4.4.1
+Homepage: http://cloudlinux.com
+
+Package: governor-mysql
+Architecture: any
+Pre-Depends: debconf,
+             procps,
+             systemd
+Depends: ${shlibs:Depends}, ${misc:Depends}, debconf, alt-python37
+Description: DB control utilities
+ This package provides dbtop, db_governor utilities.
