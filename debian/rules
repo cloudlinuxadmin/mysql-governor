@@ -29,11 +29,11 @@ override_dh_auto_install:
 	dh_auto_install
 	mkdir -p $(CURDIR)/debian/tmp/usr/sbin/
 	mkdir -p $(CURDIR)/debian/tmp/usr/lib/
-	install -m 755 $(CURDIR)/debian/governor-mysql/usr/bin/db_governor $(CURDIR)/debian/tmp/usr/sbin
-	install -m 755 $(CURDIR)/debian/governor-mysql/usr/bin/dbtop $(CURDIR)/debian/tmp/usr/sbin
-	install -m 755 $(CURDIR)/debian/governor-mysql/usr/bin/dbctl $(CURDIR)/debian/tmp/usr/sbin
-	install -m 755 $(CURDIR)/debian/governor-mysql/usr/bin/mysql_unfreeze $(CURDIR)/debian/tmp/usr/sbin
-	install -m 755 $(CURDIR)/debian/governor-mysql/usr/lib/libgovernor.so $(CURDIR)/debian/tmp/usr/lib
+	install -m 755 $(CURDIR)/debian/governor-mysql/usr/bin/db_governor $(CURDIR)/debian/tmp/usr/sbin/db_governor
+	install -m 755 $(CURDIR)/debian/governor-mysql/usr/bin/dbtop $(CURDIR)/debian/tmp/usr/sbin/dbtop
+	install -m 755 $(CURDIR)/debian/governor-mysql/usr/bin/dbctl $(CURDIR)/debian/tmp/usr/sbin/dbctl
+	install -m 755 $(CURDIR)/debian/governor-mysql/usr/bin/mysql_unfreeze $(CURDIR)/debian/tmp/usr/sbin/mysql_unfreeze
+	install -m 755 $(CURDIR)/debian/governor-mysql/usr/lib/libgovernor.so $(CURDIR)/debian/tmp/usr/lib/libgovernor.so
 
 	mkdir -p $(CURDIR)/debian/tmp/var/lve/dbgovernor/
 	mkdir -p $(CURDIR)/debian/tmp/var/lve/dbgovernor-store/
@@ -47,7 +47,7 @@ override_dh_auto_install:
 	mkdir -p $(CURDIR)/debian/tmp/usr/share/lve/dbgovernor/history
 # install systemd unit files and scripts for handling server startup
 	mkdir -p $(CURDIR)/debian/tmp/usr/lib/systemd/system/
-	install -m 644 $(CURDIR)/db_governor.service $(CURDIR)/debian/tmp/usr/lib/systemd/system/
+	install -m 644 $(CURDIR)/db_governor_ubuntu.service $(CURDIR)/debian/tmp/usr/lib/systemd/system/db_governor.service
 	install -m 644 $(CURDIR)/var-lve-dbgovernor\\x2dshm.mount $(CURDIR)/debian/tmp/usr/lib/systemd/system/
 	install -D -m 600 $(CURDIR)/db-governor.xml $(CURDIR)/debian/tmp/etc/container/mysql-governor.xml
 # db_governor_test is still not built
@@ -55,11 +55,12 @@ override_dh_auto_install:
 #	install -D -m 755 build_test/lib/libgovernor.so $(CURDIR)/debian/tmp/usr/lib/libgov_test.so.%{version}
 #install utility
 	install -D -m 755 $(CURDIR)/install/db-select-mysql $(CURDIR)/debian/tmp/usr/share/lve/dbgovernor/db-select-mysql
-	install -D -m 755 $(CURDIR)/install/mysqlgovernor.py $(CURDIR)/debian/tmp/usr/share/lve/dbgovernor/mysqlgovernor.py
+	install -D -m 755 $(CURDIR)/install/mysqlgovernor_ubuntu.py $(CURDIR)/debian/tmp/usr/share/lve/dbgovernor/mysqlgovernor.py
 	install -D -m 644 $(CURDIR)/install/cl-mysql.repo.default $(CURDIR)/debian/tmp/usr/share/lve/dbgovernor/cl-mysql.repo.default
 	install -D -m 644 $(CURDIR)/install/utilities.py $(CURDIR)/debian/tmp/usr/share/lve/dbgovernor/utilities.py
 	install -D -m 644 $(CURDIR)/install/modules/__init__.py $(CURDIR)/debian/tmp/usr/share/lve/dbgovernor/modules/__init__.py
 	install -D -m 644 $(CURDIR)/install/modules/base.py $(CURDIR)/debian/tmp/usr/share/lve/dbgovernor/modules/base.py
+	install -D -m 644 $(CURDIR)/install/modules/base_ubuntu.py $(CURDIR)/debian/tmp/usr/share/lve/dbgovernor/modules/base_ubuntu.py
 	install -D -m 644 $(CURDIR)/install/modules/cpanel.py $(CURDIR)/debian/tmp/usr/share/lve/dbgovernor/modules/cpanel.py
 	install -D -m 644 $(CURDIR)/install/modules/da.py $(CURDIR)/debian/tmp/usr/share/lve/dbgovernor/modules/da.py
 	install -D -m 644 $(CURDIR)/install/modules/plesk.py $(CURDIR)/debian/tmp/usr/share/lve/dbgovernor/modules/plesk.py

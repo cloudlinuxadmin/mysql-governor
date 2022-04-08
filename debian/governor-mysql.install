@@ -12,6 +12,7 @@
  usr/share/lve/dbgovernor/utilities.py
  usr/share/lve/dbgovernor/modules/__init__.py
  usr/share/lve/dbgovernor/modules/base.py
+ usr/share/lve/dbgovernor/modules/base_ubuntu.py
  usr/share/lve/dbgovernor/modules/cpanel.py
  usr/share/lve/dbgovernor/modules/da.py
  usr/share/lve/dbgovernor/modules/plesk.py

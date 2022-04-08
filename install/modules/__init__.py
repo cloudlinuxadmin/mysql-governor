@@ -11,4 +11,5 @@ Init module
 
 from .base import InstallManager
 from .storage import Storage
+from .base_ubuntu import UbuntuInstallManager
 
