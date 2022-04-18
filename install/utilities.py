@@ -432,14 +432,12 @@ def retrieve_server_version(server_pkg):
         # example output: mysql-server-8.0_1%3a8.0.27-0ubuntu0.20.04.1+cloudlinux1.1_amd64.deb
         # after split: ['mysql', 'server', '8.0']
         parts = server_pkg.split('_')[0].split('-')
-        m_type = parts[0]
-        ver = parts[2]
-        ver = '8.0.27'
     else:
         parts = server_pkg.split('-')
-        m_type = re.findall(r'[A-Za-z]+',
-                            parts[parts.index('server') - 1])[0].lower()
-        ver = parts[parts.index('server') + 1]
+
+    m_type = re.findall(r'[A-Za-z]+',
+                        parts[parts.index('server') - 1])[0].lower()
+    ver = parts[parts.index('server') + 1]
     return ver, 'mysql' if m_type == 'percona' else m_type
 
 

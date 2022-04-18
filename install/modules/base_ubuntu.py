@@ -47,7 +47,7 @@ class UbuntuInstallManager(InstallManager):
         This function is used to install some dependencies before governor install new download packages
         Some packages needs to be installed before
         """
-        needed_packages = ['mysql-common']
+        needed_packages = ['mysql-common', 'mariadb-common', 'cl-mariadb103-common']
         must_be_installed = []
         for package in needed_packages:
             if not is_package_installed(package):
@@ -261,7 +261,29 @@ class UbuntuInstallManager(InstallManager):
         detect and download packages for new installation
         """
         print(bcolors.info("Start download packages for new installation"))
-        packages = ["mysql-server-8.0", "mysql-server-core-8.0", "mysql-client-8.0", "mysql-client-core-8.0", "libmysqlclient21", "mysql-common"]
+        sql_version = self._get_result_mysql_version(sql_version)
+
+        if sql_version == "auto" or sql_version.startswith("mysql80"):
+            packages = [
+                "mysql-server-8.0",
+                "mysql-server-core-8.0",
+                "mysql-client-8.0",
+                "mysql-client-core-8.0",
+                "libmysqlclient21",
+                "mysql-common"
+            ]
+
+        elif sql_version == "mariadb103":
+            packages = [
+                'cl-mariadb103-server',
+                'cl-mariadb103-client',
+                'cl-mariadb103-client-core',
+                'cl-mariadb103-common',
+                'cl-mariadb103-server-core'
+            ]
+
+
+
 
         try:
             install_deb_from_url(CLOUDLINUX_RELEASE)

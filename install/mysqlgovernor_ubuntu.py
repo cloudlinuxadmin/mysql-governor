@@ -62,9 +62,9 @@ def build_parser():
                         dest="verbose", action="store_true", default=False)
     parser.add_argument("--mysql-version",
                         help="select MySQL version for db-governor. "
-                             "Available mysql types: auto, mysql80, ",
+                             "Available mysql types: auto, mysql80, mariadb103",
                         dest="mysql_version", required=False,
-                        choices=['auto', 'mysql80'])
+                        choices=['auto', 'mysql80', 'mariadb103'])
     parser.add_argument("-i", "--install", help="install MySQL for db-governor",
                         dest="install", action="store_true", default=False)
     parser.add_argument("--install-beta",
