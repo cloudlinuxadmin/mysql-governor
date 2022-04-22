@@ -276,14 +276,14 @@ class UbuntuInstallManager(InstallManager):
         elif sql_version == "mariadb103":
             packages = [
                 'cl-mariadb103-server',
+                'cl-mariadb103-server-10.3',
+                'cl-mariadb103-server-core-10.3',
                 'cl-mariadb103-client',
-                'cl-mariadb103-client-core',
+                'cl-mariadb103-client-10.3',
+                'cl-mariadb103-client-core-10.3',
                 'cl-mariadb103-common',
-                'cl-mariadb103-server-core'
+
             ]
-
-
-
 
         try:
             install_deb_from_url(CLOUDLINUX_RELEASE)
