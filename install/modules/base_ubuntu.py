@@ -53,7 +53,7 @@ class UbuntuInstallManager(InstallManager):
             if not is_package_installed(package):
                 must_be_installed.append(package)
         if must_be_installed:
-            exec_command(f'apt-get install -y {must_be_installed}')
+            exec_command(f'apt-get install -y {" ".join(str(package) for package in must_be_installed)}')
 
     def install(self, beta, no_confirm, wizard_mode):
         """
