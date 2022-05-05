@@ -38,3 +38,5 @@
  usr/share/lve/dbgovernor/utils/mysql_export
  usr/share/lve/dbgovernor/cpanel/upgrade-mysql-disabler.sh
  usr/share/lve/dbgovernor/tmp/INFO
+ var/lve/dbgovernor
+ var/lve/dbgovernor-store

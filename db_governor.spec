@@ -209,11 +209,8 @@ PYTHONPATH=install:install/scripts:. %{pypath}/py.test tests/py/
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -rf "$RPM_BUILD_ROOT"
 
 %pre
-/sbin/service db_governor stop > /dev/null 2>&1
-rs=$(pgrep governor)
-if [ ! -z "$rs" ];then
-    kill $(pgrep governor)
-fi
+/sbin/service db_governor stop > /dev/null 2>&1 || :
+pkill db_governor || :
 
 #Check if libgovernor.so will be changed on package action
 #if install just save KEY
