@@ -180,7 +180,7 @@ class UbuntuInstallManager(InstallManager):
         """
         print(bcolors.info("Start download current installed packages"))
         PATTERNS = ["cl-mysql", "cl-mariadb", "cl-percona", "mysql", "mariadb",
-                    "compat-mysql5", "Percona"]
+                    "compat-mysql5", "Percona", "libmaria"]
         mysqld_path = exec_command("which mysqld", True, silent=True)
         pkg_name = False
         if mysqld_path:
