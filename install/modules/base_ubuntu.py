@@ -40,14 +40,19 @@ class UbuntuInstallManager(InstallManager):
 
     def __init__(self):
         self.cl_version = 8
+        self.new_version_of_db = self._get_new_version()
 
-    @staticmethod
-    def check_and_install_needed_packages():
+    def check_and_install_needed_packages(self):
         """Install packages needed if not installed
         This function is used to install some dependencies before governor install new download packages
         Some packages needs to be installed before
         """
-        needed_packages = ['mysql-common', 'mariadb-common', 'cl-mariadb103-common']
+        
+        if 'mysql' in self.new_version_of_db or self.new_version_of_db == 'auto':
+            needed_packages = ['mysql-common', 'mariadb-common']
+        elif 'mariadb' in self.new_version_of_db:
+            needed_packages = ['cl-mariadb103-common']
+
         must_be_installed = []
         for package in needed_packages:
             if not is_package_installed(package):
@@ -293,7 +298,7 @@ class UbuntuInstallManager(InstallManager):
             exit(1)
 
         # Fix broken packages
-        exec_command('apt --fix-broken install -y')
+        # exec_command('apt --fix-broken install -y')
 
         if not download_apt_packages(packages, folder, disable_repos=False):
             self.ALL_PACKAGES_NEW_NOT_DOWNLOADED = True
