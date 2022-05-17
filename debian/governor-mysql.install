@@ -40,3 +40,4 @@
  usr/share/lve/dbgovernor/tmp/INFO
  var/lve/dbgovernor
  var/lve/dbgovernor-store
+ etc/cron.d/lvedbgovernor-utils-cron
