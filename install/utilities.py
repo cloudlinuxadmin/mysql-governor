@@ -574,8 +574,7 @@ def exec_command(command, as_string=False, silent=False, return_code=False,
     if p.returncode != 0 and not silent:
         print("Execution command: %s error" % command, file=sys.stderr)
         if cmd_on_error != "":
-            return exec_command(cmd_on_error, as_string, silent, return_code,
-                                "")
+            return exec_command(cmd_on_error, as_string, silent, return_code, "")
         raise RuntimeError("%s\n%s" % (out.decode(), err.decode()))
 
     if as_string:
@@ -1384,6 +1383,50 @@ def install_deb_packages(deb_dir: str, installer=None):
             exec_command_out(command)
 
     return True
+
+
+def get_package_info(package_name: str) -> dict:
+    """Get package information
+    Args:
+        package_name (str): Name of package to get info
+    """
+    package_info = {}
+    out = exec_command(f'apt info {package_name}')
+    for line in out:
+        if ':' in line:
+            info_line = line.split(':', maxsplit=1)
+            package_info[info_line[0].strip()] = info_line[1].strip()
+    return package_info
+
+
+def check_mysql_compatibilty(prev_version: dict, new_package_name: str):
+    """Check new mysql version. Downgrade not supported
+    If new version is less than currently installed one exit
+    Args:
+        prev_version (dict): prev_version holds information about currently installed package
+        new_package_name (str): Name of new package to get version information about.
+    Return:
+        None
+    """
+    if prev_version.get('mysql_type') != 'mysql':
+        return
+
+    currently_installed_mysql_version = prev_version.get('extended')
+
+    new_package_info = get_package_info(package_name=new_package_name)
+
+    # Example: '1:8.0.27-0ubuntu0.20.04.1+cloudlinux1.1'
+    new_package_full_version = new_package_info.get('Version')
+
+    new_package_version = new_package_full_version[2:].split('-')[0]
+
+    if new_package_version < '8':
+        print(bcolors.fail('Instruction how to upgrade: https://dev.mysql.com/doc/refman/8.0/en/upgrading.html'))
+        sys.exit(1)
+
+    if new_package_version < currently_installed_mysql_version:
+        print(bcolors.fail('Instruction how to downgrade: https://dev.mysql.com/doc/refman/8.0/en/downgrading.html'))
+        sys.exit(1)
 
 
 @contextmanager

@@ -24,7 +24,7 @@ from utilities import exec_command, service, touch, \
     correct_remove_notowned_mysql_service_names_cl7, \
     correct_remove_notowned_mysql_service_names_not_symlynks_cl7, get_mysql_log_file, \
     makedir_recursive, bcolors, show_new_packages_info, wizard_install_confirm, \
-    is_ubuntu, install_deb_from_url, install_deb_packages
+    is_ubuntu, install_deb_from_url, install_deb_packages, check_mysql_compatibilty
 
 from .base import InstallManager
 
@@ -74,6 +74,14 @@ class UbuntuInstallManager(InstallManager):
 
         # remember installed mysql version
         self.prev_version = self._check_mysql_version()
+        self.new_packages = self.get_new_packages()
+
+        # Check new mysql version. Downgrade not supported
+        # If new version is less than currently installed one exit
+        for package in self.new_packages:
+            if 'mysql-server-8.0' in package:
+                check_mysql_compatibilty(self.prev_version, 'mysql-server-8.0')
+                break
 
         # first download packages for current and new mysql versions
         self._load_packages(beta)
@@ -261,10 +269,8 @@ class UbuntuInstallManager(InstallManager):
                     self.ALL_PACKAGES_OLD_NOT_DOWNLOADED = True
         return packages
 
-    def _load_new_packages(self, beta, sql_version=None, folder="new"):
-        """
-        detect and download packages for new installation
-        """
+    def get_new_packages(self, sql_version=None):
+        """detect packages for new installation"""
         print(bcolors.info("Start download packages for new installation"))
         sql_version = self._get_result_mysql_version(sql_version)
 
@@ -297,8 +303,11 @@ class UbuntuInstallManager(InstallManager):
             print('err ->', err)
             exit(1)
 
-        # Fix broken packages
-        # exec_command('apt --fix-broken install -y')
+        return packages
+
+    def _load_new_packages(self, beta, sql_version=None, folder="new"):
+        """Load new packages"""
+        packages = self.get_new_packages(sql_version)
 
         if not download_apt_packages(packages, folder, disable_repos=False):
             self.ALL_PACKAGES_NEW_NOT_DOWNLOADED = True
