@@ -82,6 +82,10 @@ def build_parser():
                         dest="debug_flag", action="store_true", default=False)
     parser.add_argument("--wizard", help="Wizard mode on", dest="wizard", action="store_true", default=False)
     parser.add_argument("--status", help="Check status info", dest="check_status", action="store_true", default=False)
+    parser.add_argument("-d", "--delete", help="delete MySQL for db-governor",
+                        dest="delete", action="store_true", default=False)
+    parser.add_argument("-t", "--dbupdate", help="update UserMap file",
+                        dest="dbupdate", action="store_true", default=False)
     return parser
 
 

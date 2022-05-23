@@ -276,12 +276,14 @@ class UbuntuInstallManager(InstallManager):
 
         if sql_version == "auto" or sql_version.startswith("mysql80"):
             packages = [
-                "mysql-server-8.0",
-                "mysql-server-core-8.0",
-                "mysql-client-8.0",
-                "mysql-client-core-8.0",
-                "libmysqlclient21",
-                "mysql-common"
+                'cl-mysql80',
+                'cl-mysql80-server',
+                'cl-mysql80-server-core',
+                'cl-mysql80-client',
+                'cl-mysql80-client-core',
+                'libmysqlclient21',
+                'mysql-common'
+
             ]
 
         elif sql_version == "mariadb103":
