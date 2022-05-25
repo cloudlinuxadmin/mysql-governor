@@ -113,7 +113,8 @@ def main(argv):
     storage_holder.check_root_permissions()
 
     # create install manager instance for current cp
-    manager = UbuntuInstallManager()
+    panel = exec_command("cldetect --detect-cp-name", as_string=True)
+    manager = UbuntuInstallManager(panel)
 
     if opts.debug_flag:
         set_debug(True)
@@ -159,7 +160,7 @@ def main(argv):
 
         manager.cleanup()
     elif opts.dbupdate:
-        manager.update_user_map_file()
+        manager.panel_manager.update_user_map_file()
     elif opts.fix_cpanel_hooks:
         manager.install_mysql_beta_testing_hooks()
     elif opts.install_from_history:

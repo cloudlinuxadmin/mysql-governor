@@ -14,6 +14,7 @@ import time
 import pwd
 import grp
 import re
+import shutil
 
 
 sys.path.append("../")
@@ -29,7 +30,7 @@ from utilities import exec_command, service, touch, \
 from .base import InstallManager
 
 CLOUDLINUX_RELEASE = 'https://repo.cloudlinux.com/cloudlinux-ubuntu/cloudlinux/stable/cloudlinux-release-latest-20_04.deb'
-
+DEB_TEMP_PATH = "/usr/share/lve/dbgovernor/tmp/governor-tmp"
 
 class UbuntuInstallManager(InstallManager):
     """
@@ -38,9 +39,11 @@ class UbuntuInstallManager(InstallManager):
 
     IS_UBUNTU = is_ubuntu()
 
-    def __init__(self):
+    def __init__(self, cp_name):
         self.cl_version = 8
         self.new_version_of_db = self._get_new_version()
+        self.cp_name = cp_name
+        self.panel_manager = InstallManager.factory(cp_name)
 
     def check_and_install_needed_packages(self):
         """Install packages needed if not installed
@@ -63,8 +66,11 @@ class UbuntuInstallManager(InstallManager):
     def install(self, beta, no_confirm, wizard_mode):
         """
         Install stable or beta packages
-        @param `beta` bool: install beta or production
-        @param `path` str: path to packages for install
+        Args:
+            beta (bool) : install beta or production
+            path (str)  : path to packages for install
+            wizard_mode : wizard mode
+            cp_name (string) : Panel name
         """
         if not self.cl_version:
             print("Unknown system type. Installation aborted")
@@ -72,8 +78,13 @@ class UbuntuInstallManager(InstallManager):
 
         self._before_install()
 
+        if self.cp_name == 'cPanel':
+            self.panel_manager.prepare_statement_for_ubuntu()
+
         # remember installed mysql version
         self.prev_version = self._check_mysql_version()
+        if self.cp_name == 'cPanel':
+            setattr(self.panel_manager, 'prev_version', self.prev_version)
         self.new_packages = self.get_new_packages()
 
         # Check new mysql version. Downgrade not supported
@@ -82,6 +93,7 @@ class UbuntuInstallManager(InstallManager):
             if 'mysql-server-8.0' in package:
                 check_mysql_compatibilty(self.prev_version, 'mysql-server-8.0')
                 break
+
 
         # first download packages for current and new mysql versions
         self._load_packages(beta)
@@ -177,7 +189,7 @@ class UbuntuInstallManager(InstallManager):
             service("restart", "db_governor")
             print(bcolors.ok("DB-Governor installed/updated..."))
 
-        self._after_install_new_packages()
+        self.panel_manager._after_install_new_packages()
 
         self._ld_fix()
 
@@ -346,3 +358,25 @@ class UbuntuInstallManager(InstallManager):
         except Exception:
             return {}
         return version
+
+    def cleanup(self):
+        """
+        Cleanup downloaded packages and remove backup repo file
+        """
+        tmp_path = "%s/old" % DEB_TEMP_PATH
+
+        if os.path.isdir(tmp_path):
+            # first move previous downloaded packages to history folder
+            history_path = os.path.join(self.HISTORY_FOLDER, "old.%s" %
+                                        int(time.time()))
+            shutil.move(tmp_path, history_path)
+
+            self.my_cnf_manager('backup_old', history_path)
+
+        if os.path.exists(DEB_TEMP_PATH):
+            shutil.rmtree(DEB_TEMP_PATH)
+
+        self.my_cnf_manager('cleanup')
+
+        if os.path.exists("/etc/cron.d/dbgovernor-usermap-cron.bak"):
+            os.unlink("/etc/cron.d/dbgovernor-usermap-cron.bak")

@@ -417,13 +417,32 @@ int (*lve_exit) (void *, uint32_t *) = NULL;
 int (*lve_enter_pid) (void *, uint32_t, pid_t) = NULL;
 int (*is_in_lve) (void *) = NULL;
 
+// XXX temporary, to debug governor_init_lve faile on Ubuntu
+static void log_init_lve_error(const char *buf)
+{
+	FILE *fptr = fopen("/var/log/mysql/init_lve.log", "a+");
+	if(fptr)
+	{
+		fputs(buf, fptr);
+		fclose(fptr);
+	}
+}
+
+
 void *
 governor_load_lve_library ()
 {
+  char errbuf[256];
   lve_library_handle = NULL;
 
   char *error_dl = NULL;
   lve_library_handle = dlopen ("liblve.so.0", RTLD_LAZY);
+  if (!lve_library_handle)
+  {
+	snprintf(errbuf, sizeof errbuf, "governor_load_lve_library: dlopen(liblve.so.0) failed; errno %d\n", errno);
+	log_init_lve_error(errbuf);
+  }
+
   if (lve_library_handle)
     {
       while (1)
@@ -432,6 +451,8 @@ governor_load_lve_library ()
 							"init_lve");
 	  if ((error_dl = dlerror ()) != NULL)
 	    {
+		snprintf(errbuf, sizeof errbuf, "governor_load_lve_library: ERROR dlerror after dlsym(init_lve) ret (%s); init_lve(%p) errno %d\n", error_dl, init_lve, errno);
+		log_init_lve_error(errbuf);
 	      init_lve = NULL;
 	      destroy_lve = NULL;
 	      lve_enter_flags = NULL;
@@ -444,6 +465,7 @@ governor_load_lve_library ()
 						 "destroy_lve");
 	  if ((error_dl = dlerror ()) != NULL)
 	    {
+		snprintf(errbuf, sizeof errbuf, "governor_load_lve_library: ERROR dlerror after dlsym(destroy_lve) ret (%s); destroy_lve(%p) errno %d\n", error_dl, destroy_lve, errno);
 	      init_lve = NULL;
 	      destroy_lve = NULL;
 	      lve_enter_flags = NULL;
@@ -458,6 +480,7 @@ governor_load_lve_library ()
 	    dlsym (lve_library_handle, "lve_enter_flags");
 	  if ((error_dl = dlerror ()) != NULL)
 	    {
+		snprintf(errbuf, sizeof errbuf, "governor_load_lve_library: ERROR dlerror after dlsym(lve_enter_flags) ret (%s); lve_enter_flags(%p) errno %d\n", error_dl, lve_enter_flags, errno);
 	      init_lve = NULL;
 	      destroy_lve = NULL;
 	      lve_enter_flags = NULL;
@@ -470,6 +493,7 @@ governor_load_lve_library ()
 							  "lve_exit");
 	  if ((error_dl = dlerror ()) != NULL)
 	    {
+		snprintf(errbuf, sizeof errbuf, "governor_load_lve_library: ERROR dlerror after dlsym(lve_exit) ret (%s); lve_exit(%p) errno %d\n", error_dl, lve_exit, errno);
 	      init_lve = NULL;
 	      destroy_lve = NULL;
 	      lve_enter_flags = NULL;
@@ -483,6 +507,7 @@ governor_load_lve_library ()
 						      "lve_enter_pid");
 	  if ((error_dl = dlerror ()) != NULL)
 	    {
+		snprintf(errbuf, sizeof errbuf, "governor_load_lve_library: ERROR dlerror after dlsym(lve_enter_pid) ret (%s); lve_enter_pid(%p) errno %d\n", error_dl, lve_enter_pid, errno);
 	      init_lve = NULL;
 	      destroy_lve = NULL;
 	      lve_enter_flags = NULL;
@@ -495,6 +520,7 @@ governor_load_lve_library ()
 					       "is_in_lve");
 	  if ((error_dl = dlerror ()) != NULL)
 	    {
+		snprintf(errbuf, sizeof errbuf, "governor_load_lve_library: WARN dlerror after dlsym(is_in_lve) ret (%s); is_in_lve(%p) errno %d\n", error_dl, is_in_lve, errno);
 	      is_in_lve = NULL;
 	      break;
 	    }
@@ -511,22 +537,35 @@ governor_load_lve_library ()
   return lve_library_handle;
 }
 
+
+
 int
 governor_init_lve ()
 {
-  if (init_lve)
-    {
-      if (lve == NULL)
+	if (init_lve)
 	{
-	  lve = init_lve (malloc, free);
+		if (lve == NULL)
+		{
+			lve = init_lve (malloc, free);
+			if (!lve)
+			{
+				char errbuf[256];
+				snprintf(errbuf, sizeof errbuf, "governor_init_lve: ERROR, init_lve failed: errno %d\n", errno);
+				log_init_lve_error(errbuf);
+			}
+		}
 	}
-    }
-  if (lve == NULL)
-    {
-      return -1;
-    }
-  governor_init_users_list ();
-  return 0;
+	else
+	{
+		log_init_lve_error("governor_init_lve: ERROR, init_lve is not initialized\n");
+	}
+
+	if (lve == NULL)
+	{
+		return -1;
+	}
+	governor_init_users_list ();
+	return 0;
 }
 
 int

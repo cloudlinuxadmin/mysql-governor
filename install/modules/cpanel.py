@@ -17,7 +17,9 @@ import hashlib
 
 from utilities import exec_command_out, grep, add_line, \
     service, remove_lines, write_file, replace_lines, touch, \
-    is_package_installed, remove_packages, exec_command, parse_rpm_name, service_symlink, bcolors, get_cl_num
+    is_package_installed, remove_packages, exec_command, \
+    parse_rpm_name, service_symlink, bcolors, get_cl_num, is_ubuntu
+
 from .base import InstallManager
 
 
@@ -490,3 +492,29 @@ gpgcheck=1
         with open('/usr/local/cpanel/version', 'r') as content:
             full_version = content.read().strip()
         return int(full_version.split('.')[1])
+
+    @staticmethod
+    def prepare_statement_for_ubuntu():
+        """For cPanel preparing system for governor.
+        1. Skip if not ubuntu
+        2. Remove /etc/apt/sources.list.d/mysql.list
+        3. Remove unneeded packages
+        """
+        if not is_ubuntu():
+            return
+
+        mysql_list = '/etc/apt/sources.list.d/mysql.list'
+
+        try:
+            os.remove(mysql_list)
+        except FileNotFoundError:
+            print(f'{mysql_list} not exists. Already deleted')
+
+        exec_command_out('apt-get update')
+
+        exec_command_out('apt remove mysql-community-server -y')
+        exec_command_out('apt remove mysql-client -y')
+        exec_command_out('apt remove libmysqlclient21 libmysqlclient-dev mysql-community* -y')
+
+        if is_package_installed('mysql-client'):
+            exec_command_out('dpkg -P mysql-client')

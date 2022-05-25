@@ -1220,3 +1220,6 @@ MariaDB info about compatibility issue: https://mariadb.com/kb/en/upgrading-from
 Workaround for CloudLinux: https://cloudlinux.zendesk.com/hc/en-us/articles/360020599839"""))
                 if not force:
                     sys.exit(1)
+
+    def prepare_statement_for_ubuntu(self):
+        """Specific actions before governor installation"""

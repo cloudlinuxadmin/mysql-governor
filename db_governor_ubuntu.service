@@ -4,8 +4,7 @@ After=syslog.target network.target mysql.service mysqld.service mariadb.service
 
 [Service]
 Environment="G_SLICE=always-malloc" "HOME=/root"
-Type=notify
-WatchdogSec=240s
+Type=simple
 PIDFile=/var/run/db-governor.pid
 Restart=on-failure
 RestartSec=3

@@ -1,4 +1,5 @@
 /*
+
  * Copyright © Cloud Linux GmbH & Cloud Linux Software, Inc 2010-2019 All Rights Reserved
  *
  * Licensed under CLOUD LINUX LICENSE AGREEMENT
@@ -144,7 +145,9 @@ add_empty_stats_for_uid (username_t username)
 
   User_stats *us = (User_stats *) g_hash_table_lookup (users, username);
   if (!us)
+  {
     add_user_stats (username, accounts, users);
+  }
   unlock_acc ();
 }
 
@@ -329,6 +332,7 @@ check_restrict (Account * ac)
       ac->info.field_level_restrict = _cur;
       if (!old_restricted)
 	account_restrict (ac, sl);
+/* MYSQLG-697: XXX Log restriction leads governor to fall, should be rewritten
       if (data_cfg.restrict_log)
 	{
 	  char tmp_buf[_DBGOVERNOR_BUFFER_8192];
@@ -339,6 +343,7 @@ check_restrict (Account * ac)
 		     _DBGOVERNOR_BUFFER_8192, tmp_buf, data_cfg.log_mode);
 
 	}
+*/
       return 1;
 
     }
@@ -366,6 +371,7 @@ check_restrict (Account * ac)
 	  ac->info.field_level_restrict = _short;
 	  if (!old_restricted)
 	    account_restrict (ac, sl);
+/* MYSQLG-697: XXX Log restriction leads governor to fall, should be rewritten
 	  if (data_cfg.restrict_log)
 	    {
 	      char tmp_buf[_DBGOVERNOR_BUFFER_8192];
@@ -376,6 +382,7 @@ check_restrict (Account * ac)
 			 _DBGOVERNOR_BUFFER_8192, tmp_buf, data_cfg.log_mode);
 
 	    }
+*/
 	  return 1;
 	}
       else
@@ -402,6 +409,7 @@ check_restrict (Account * ac)
 	      ac->info.field_level_restrict = _mid;
 	      if (!old_restricted)
 		account_restrict (ac, sl);
+/* MYSQLG-697: XXX Log restriction leads governor to fall, should be rewritten
 	      if (data_cfg.restrict_log)
 		{
 		  char tmp_buf[_DBGOVERNOR_BUFFER_8192];
@@ -412,6 +420,7 @@ check_restrict (Account * ac)
 			     _DBGOVERNOR_BUFFER_8192,
 			     tmp_buf, data_cfg.log_mode);
 		}
+*/
 	      return 1;
 	    }
 	  else
@@ -439,6 +448,7 @@ check_restrict (Account * ac)
 		  ac->info.field_level_restrict = _long;
 		  if (!old_restricted)
 		    account_restrict (ac, sl);
+/* MYSQLG-697: XXX Log restriction leads governor to fall, should be rewritten
 		  if (data_cfg.restrict_log)
 		    {
 		      char tmp_buf[_DBGOVERNOR_BUFFER_8192];
@@ -450,6 +460,7 @@ check_restrict (Account * ac)
 				 _DBGOVERNOR_BUFFER_8192,
 				 tmp_buf, data_cfg.log_mode);
 		    }
+*/
 		  return 1;
 		}
 	    }
@@ -485,6 +496,7 @@ check_restrict_limit (Account * ac)
       ac->info.field_level_restrict = _cur;
       if (!old_restricted)
 	account_restrict (ac, sl);
+/*
       if (data_cfg.restrict_log)
 	{
 	  char tmp_buf[_DBGOVERNOR_BUFFER_8192];
@@ -495,6 +507,7 @@ check_restrict_limit (Account * ac)
 		     _DBGOVERNOR_BUFFER_8192, tmp_buf, data_cfg.log_mode);
 
 	}
+*/
       return 1;
 
     }
@@ -516,6 +529,7 @@ check_restrict_limit (Account * ac)
 	  ac->info.field_level_restrict = _short;
 	  if (!old_restricted)
 	    account_restrict (ac, sl);
+/* MYSQLG-697: XXX Log restriction leads governor to fall, should be rewritten
 	  if (data_cfg.restrict_log)
 	    {
 	      char tmp_buf[_DBGOVERNOR_BUFFER_8192];
@@ -526,6 +540,7 @@ check_restrict_limit (Account * ac)
 			 _DBGOVERNOR_BUFFER_8192, tmp_buf, data_cfg.log_mode);
 
 	    }
+*/
 	  return 1;
 	}
       else
@@ -546,6 +561,7 @@ check_restrict_limit (Account * ac)
 	      ac->info.field_level_restrict = _mid;
 	      if (!old_restricted)
 		account_restrict (ac, sl);
+/* MYSQLG-697: XXX Log restriction leads governor to fall, should be rewritten
 	      if (data_cfg.restrict_log)
 		{
 		  char tmp_buf[_DBGOVERNOR_BUFFER_8192];
@@ -556,6 +572,7 @@ check_restrict_limit (Account * ac)
 			     _DBGOVERNOR_BUFFER_8192,
 			     tmp_buf, data_cfg.log_mode);
 		}
+*/
 	      return 1;
 	    }
 	  else
@@ -577,6 +594,7 @@ check_restrict_limit (Account * ac)
 		  ac->info.field_level_restrict = _long;
 		  if (!old_restricted)
 		    account_restrict (ac, sl);
+/* MYSQLG-697: XXX Log restriction leads governor to fall, should be rewritten
 		  if (data_cfg.restrict_log)
 		    {
 		      char tmp_buf[_DBGOVERNOR_BUFFER_8192];
@@ -588,6 +606,7 @@ check_restrict_limit (Account * ac)
 				 _DBGOVERNOR_BUFFER_8192,
 				 tmp_buf, data_cfg.log_mode);
 		    }
+*/
 		  return 1;
 		}
 	    }
@@ -639,10 +658,12 @@ account_analyze_limit (gpointer * key, Account * ac, void *data)
 	      ac->info.field_level_restrict = NORESTRICT_PARAM2;
 	      ac->timeout = 0;
 	      account_unrestrict (ac);
+/* MYSQLG-697: XXX Log restriction leads governor to fall, should be rewritten
 	      sprintf (tmp_buf, "Restrict mode is over for user %s\n",
 		       ac->id);
 	      WRITE_LOG (NULL, 1, tmp_buf, _DBGOVERNOR_BUFFER_8192, tmp_buf,
 			 data_cfg.log_mode);
+*/
 	    }
 	}
 
@@ -1052,6 +1073,7 @@ proceed_accounts (double tm)
 			(gpointer) & snd);
   pthread_mutex_unlock (&mtx_counters);
   g_hash_table_foreach (users, (GHFunc) tick_empty_users, NULL);
+
   g_hash_table_foreach (accounts, (GHFunc) calc_acc_stats, (gpointer) & snd);
   if (data_cfg.restrict_mode)
     {
@@ -1325,7 +1347,9 @@ dbctl_restrict_set (gpointer key, Account * ac, void *data)
     {
       //us = (User_stats *)g_hash_table_lookup( users, command->options.username );
       if (us)
+      {
 	ac = us->account;
+      }
     }
 
   if ((strncmp (ac->id, command->options.username, USERNAMEMAXLEN) == 0)
@@ -1365,25 +1389,35 @@ dbctl_restrict_set (gpointer key, Account * ac, void *data)
 	  ac->restricted = level;
 	}
       if (data_cfg.statistic_mode)
+      {
 	if (level >= 0)
+	{
 	  IncNumberOfRestricts (ac->id,
 				RESTRICT_BY_CPU | RESTRICT_BY_READ |
 				RESTRICT_BY_WRITE);
+	  }
+      }
       time (&ac->start_count);
       ac->info.field_restrict = CURRENT_PERIOD;
       ac->info.field_level_restrict = _cur;
       account_restrict (ac, sl);
 
+/* MYSQLG-697: XXX Log restriction leads governor to fall, should be rewritten
       if (data_cfg.restrict_log)
 	{
-	  char tmp_buf[_DBGOVERNOR_BUFFER_8192];
+	  char restrict_buf[_DBGOVERNOR_BUFFER_8192];
 	  if (data_cfg.restrict_mode)
-	    prepareRestrictDescriptionLimit (tmp_buf, ac, sl);
+	  {
+	    prepareRestrictDescriptionLimit (restrict_buf, ac, sl);
+	  }
 	  else
-	    prepareRestrictDescription (tmp_buf, ac, sl);
+	  {
+	    prepareRestrictDescription (restrict_buf, ac, sl);
+	  }
 	  WRITE_LOG (&ac->current, 1, tmp_buf, _DBGOVERNOR_BUFFER_8192,
-		     tmp_buf, data_cfg.log_mode);
+		     restrict_buf, data_cfg.log_mode);
 	}
+*/
     }
 
 }

@@ -194,11 +194,12 @@ def is_package_installed(name):
     Check is package installed
     """
     if IS_UBUNTU:
-        command = "/usr/bin/dpkg-query --show --showformat='${db:Status-Status}\n' %s" % name
-        out = exec_command(command, True, silent=True, return_code=True)
+        command = "/usr/bin/dpkg-query --show --showformat='${db:Status-Status}' %s" % name
+        out = subprocess.run(command, shell=True, capture_output=True, text=True).stdout
+        return out == 'installed'
     else:
         out = exec_command("rpm -q %s" % name, True, silent=True, return_code=True)
-    return out == "yes"
+        return out == "yes"
 
 
 def is_file_owned_by_package(file_path):
