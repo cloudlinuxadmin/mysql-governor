@@ -11,7 +11,6 @@ This module contains helpful utilities to perform common actions
 import errno
 import os
 import re
-import shutil
 import subprocess
 import sys
 import urllib.request, urllib.parse, urllib.error
@@ -24,6 +23,7 @@ from distutils.version import StrictVersion
 from glob import glob
 from io import StringIO
 import xml.etree.ElementTree as ET
+from contextlib import contextmanager
 
 __all__ = [
     "mysql_version", "clean_whitespaces", "is_package_installed",
@@ -39,13 +39,27 @@ __all__ = [
     "correct_remove_notowned_mysql_service_names_not_symlynks_cl7",
     "disable_and_remove_service",
     "disable_and_remove_service_if_notsymlynk", "check_mysqld_is_alive",
-    "get_mysql_log_file", "get_mysql_cnf_value", "makedir_recursive"
+    "get_mysql_log_file", "get_mysql_cnf_value", "makedir_recursive", "is_ubuntu",
+    "download_apt_packages", "install_deb_packages"
 ]
 
 RPM_TEMP_PATH = "/usr/share/lve/dbgovernor/tmp/governor-tmp"
 WHITESPACES_REGEX = re.compile(r"\s+")
 TRACE_LOG_FILE = "/usr/share/lve/dbgovernor/install_trace.log"
 fDEBUG_FLAG = False
+
+
+def is_ubuntu():
+    """Check if ubuntu"""
+    if os.path.exists('/etc/os-release'):
+        with open('/etc/os-release') as f:
+            content = f.read()
+        if 'ubuntu' in content.lower():
+            return True
+    return False
+
+
+IS_UBUNTU = is_ubuntu()
 
 
 def set_path_environ():
@@ -140,13 +154,19 @@ def mysql_version():
     if not path:
         return None
 
-    output = exec_command("""rpm -qf --qf="%%{name} %%{version}" %s""" % path,
-                          True, silent=True, return_code=True)
+    if IS_UBUNTU:
+        output = exec_command(f'dpkg -S {path}', True, silent=True, return_code=True)
+    else:
+        output = exec_command("""rpm -qf --qf="%%{name} %%{version}" %s""" % path,
+                              True, silent=True, return_code=True)
     if output == "no":
         return None
 
-    output = exec_command("""rpm -qf --qf="%%{name} %%{version}" %s""" % path,
-                          True, silent=True)
+    if IS_UBUNTU:
+        output = exec_command(f'dpkg -S {path}', True, silent=True)
+    else:
+        output = exec_command("""rpm -qf --qf="%%{name} %%{version}" %s""" % path,
+                              True, silent=True)
 
     name, version = output.lower().split(" ")
     if name.startswith("cl-mariadb"):
@@ -173,8 +193,13 @@ def is_package_installed(name):
     """
     Check is package installed
     """
-    out = exec_command("rpm -q %s" % name, True, silent=True, return_code=True)
-    return out == "yes"
+    if IS_UBUNTU:
+        command = "/usr/bin/dpkg-query --show --showformat='${db:Status-Status}' %s" % name
+        out = subprocess.run(command, shell=True, capture_output=True, text=True).stdout
+        return out == 'installed'
+    else:
+        out = exec_command("rpm -q %s" % name, True, silent=True, return_code=True)
+        return out == "yes"
 
 
 def is_file_owned_by_package(file_path):
@@ -210,6 +235,7 @@ def download_packages(names, dest, beta, custom_download=None):
     if not os.path.exists(path):
         os.makedirs(path, 0o755)
 
+
     rollout = ""
     if exec_command("yum repolist -y --enablerepo=* | grep cloudlinux-rollout -c", True, True) != "0":
         rollout = "--enablerepo=cloudlinux-rollout*"
@@ -241,6 +267,7 @@ def download_packages(names, dest, beta, custom_download=None):
                      % (path, repo, " ".join(names)), True, silent=True)
 
     pkg_not_found = False
+
     for pkg_name in names:
         try:
             pkg_name_split = pkg_name.split('.', 1)[0]
@@ -316,16 +343,23 @@ def remove_packages(packages_list):
         return
     # Try to find server package, because it should be removed first
     new_pkg = []
+
     for pkg in packages_list:
         if "-server" in pkg:
-            print(exec_command("rpm -e --nodeps %s" % pkg, True,
-                               cmd_on_error="rpm -e --nodeps --noscripts %s" % pkg))
+            if IS_UBUNTU:
+                print(exec_command("dpkg -r --force-depends  %s" % pkg, True))
+            else:
+                print(exec_command("rpm -e --nodeps %s" % pkg, True,
+                                   cmd_on_error="rpm -e --nodeps --noscripts %s" % pkg))
         else:
             new_pkg.append(pkg)
     if len(new_pkg) > 0:
         packages = " ".join(new_pkg)
-        print(exec_command("rpm -e --nodeps %s" % packages, True,
-                           cmd_on_error="rpm -e --nodeps --noscripts %s" % packages))
+        if IS_UBUNTU:
+            print(exec_command("dpkg -r --force-depends  %s" % packages, True))
+        else:
+            print(exec_command("rpm -e --nodeps %s" % packages, True,
+                               cmd_on_error="rpm -e --nodeps --noscripts %s" % packages))
 
 
 def show_new_packages_info(rpm_dir):
@@ -335,11 +369,17 @@ def show_new_packages_info(rpm_dir):
     :return: dict(new_server_version, new_server_type)
     """
     pkg_path = "%s/" % os.path.join(RPM_TEMP_PATH, rpm_dir.strip("/"))
-    packages_list = sorted(
-        [x.replace(pkg_path, "") for x in glob("%s*.rpm" % pkg_path)])
+    if IS_UBUNTU:
+        pkg_path = "%s/" % os.path.join(RPM_TEMP_PATH, rpm_dir.strip("/") + '/archives')
+        packages_list = sorted(
+            [x.replace(pkg_path, "") for x in glob("%s*.deb" % pkg_path)])
+    else:
+        packages_list = sorted(
+            [x.replace(pkg_path, "") for x in glob("%s*.rpm" % pkg_path)])
 
     # retrieve server full version and type
     server = [p for p in packages_list if 'server' in p][0]
+
     pkg_ver, pkg_type = retrieve_server_version(server)
 
     print(bcolors.ok("New packages will be installed:\n\t%s" % "\n\t".join(
@@ -389,7 +429,20 @@ def retrieve_server_version(server_pkg):
     :param server_pkg: name of server package
     :return: tuple -- version, type
     """
-    parts = server_pkg.split('-')
+
+    if IS_UBUNTU:
+        if 'cl-mysql' in server_pkg:
+            # 'cl-mysql80-server_1%3a8.0.29-cl1.1.1653223485.105993.18_amd64.deb'
+            # after split cl-mysql80-server
+            package_name = server_pkg.split('_')[0].split('-')
+            parts = ['mysql', package_name[2], server_pkg.split('3a')[1].split('-')[0]]
+        else:
+            # example output: mysql-server-8.0_1%3a8.0.27-0ubuntu0.20.04.1+cloudlinux1.1_amd64.deb
+            # after split: ['mysql', 'server', '8.0']
+            parts = server_pkg.split('_')[0].split('-')
+    else:
+        parts = server_pkg.split('-')
+
     m_type = re.findall(r'[A-Za-z]+',
                         parts[parts.index('server') - 1])[0].lower()
     ver = parts[parts.index('server') + 1]
@@ -416,11 +469,13 @@ def install_packages(rpm_dir, is_beta, installer=None, abs_path=False):
         list_for_install = []
         is_server_found = []
         list_of_rpm = glob("%s/*.rpm" % pkg_path)
+
         for found_package in list_of_rpm:
             if "-server" in found_package or "-meta-" in found_package:
                 is_server_found.append(found_package)
             else:
                 list_for_install.append(found_package)
+
         exec_command_out(
             "yum install %s --disableexcludes=all --nogpgcheck -y %s" % (
                 repo, " ".join(list_for_install)))
@@ -527,8 +582,7 @@ def exec_command(command, as_string=False, silent=False, return_code=False,
     if p.returncode != 0 and not silent:
         print("Execution command: %s error" % command, file=sys.stderr)
         if cmd_on_error != "":
-            return exec_command(cmd_on_error, as_string, silent, return_code,
-                                "")
+            return exec_command(cmd_on_error, as_string, silent, return_code, "")
         raise RuntimeError("%s\n%s" % (out.decode(), err.decode()))
 
     if as_string:
@@ -585,16 +639,17 @@ def get_cl_num():
     """
     Get CL version number
     """
-    with open("/etc/redhat-release", "r") as f:
-        words = f.read().strip().split(" ")
+    if os.path.exists('/etc/redhat-release'):
+        with open("/etc/redhat-release", "r") as f:
+            words = f.read().strip().split(" ")
 
-    for word in words:
-        try:
-            return int(float(word))
-        except ValueError:
-            pass
-
-    return None
+        for word in words:
+            try:
+                return int(float(word))
+            except ValueError:
+                pass
+    else:
+        return 8
 
 
 def remove_lines(path, value):
@@ -1238,3 +1293,183 @@ def get_status_info():
 
     print(bcolors.ok("The db_governor service is correctly configured"))
     return True
+
+
+def download_deb_package(package_name: str, path: str, disable_repos: bool = False):
+    """Download deb package and dependencies with curl"""
+
+    command = f'apt-get -y install --reinstall --download-only {package_name} -o Dir::Cache={path}'
+    if disable_repos:
+        with disable_ubuntu_repos():
+            exec_command(command)
+    else:
+        exec_command(command)
+
+
+def download_apt_packages(names: list, destination: str, disable_repos: bool = False):
+    """
+    Download apt packages to destination directory
+    Args:
+        names: list: list of packages for download
+        destination: str: destination folder. concatenate with RPM_TEMP_PATH
+        disable_repos: bool: Disable all repos except cloudlinux
+    """
+
+    path = "%s/%s" % (RPM_TEMP_PATH, destination)
+
+    if not os.path.exists(path):
+        os.makedirs(path, 0o755)
+
+    for package in names:
+        download_deb_package(package_name=package, path=path, disable_repos=disable_repos)
+
+    pkg_not_found = False
+
+    for pkg_name in names:
+        try:
+            list_of_deb = glob(f'{path}/archives/{pkg_name}*')
+
+            for i in list_of_deb:
+                print("Package %s was loaded" % i)
+        except IndexError:
+            pkg_not_found = True
+            print(bcolors.warning(
+                "WARNING!!!! Package %s was not downloaded" % pkg_name))
+        else:
+            if len(list_of_deb) == 0:
+                pkg_not_found = True
+                print(bcolors.warning(
+                    "WARNING!!!! Package %s was not downloaded" % pkg_name))
+
+    return not pkg_not_found
+
+
+def install_deb_from_url(url: str):
+    """Perform installation from repository or custom urls
+    Attributes:
+        url: string - link to package
+    """
+    import tempfile
+    from urllib.request import urlretrieve
+    with tempfile.NamedTemporaryFile(dir='/root') as tmp:
+        try:
+            urlretrieve(url, tmp.name)
+            exec_command(f'dpkg -i {tmp.name}')
+        except Exception as err:
+            print('Error happened while downloading and installing from url %s: %s', url, err)
+            exit(1)
+
+
+def install_deb_packages(deb_dir: str, installer=None):
+    """
+    Install new packages from deb files in directory
+    Args:
+        deb_dir (str): Path to deb packages
+        installer (func): Custom install function
+    """
+    cache_path = os.path.join(RPM_TEMP_PATH, deb_dir.strip("/"))
+    pkg_path = cache_path + '/archives/'
+
+    if installer is None:
+        list_for_install = []
+        is_server_found = []
+        list_of_deb = glob("%s/*.deb" % pkg_path)
+
+        for found_package in list_of_deb:
+            if "-server" in found_package or "-meta-" in found_package:
+                is_server_found.append(found_package)
+            else:
+                list_for_install.append(found_package)
+
+        command = f'apt-get -y install {" ".join(list_for_install)} ' \
+                  f'-o Dir::Cache={cache_path}'
+        exec_command_out(command)
+
+        if is_server_found:
+            command = f'apt-get -y install {" ".join(is_server_found)} ' \
+                      f'-o Dir::Cache={cache_path}'
+            exec_command_out(command)
+
+    return True
+
+
+def get_package_info(package_name: str) -> dict:
+    """Get package information
+    Args:
+        package_name (str): Name of package to get info
+    """
+    package_info = {}
+    out = exec_command(f'apt info {package_name}')
+    for line in out:
+        if ':' in line:
+            info_line = line.split(':', maxsplit=1)
+            package_info[info_line[0].strip()] = info_line[1].strip()
+    return package_info
+
+
+def check_mysql_compatibilty(prev_version: dict, new_package_name: str):
+    """Check new mysql version. Downgrade not supported
+    If new version is less than currently installed one exit
+    Args:
+        prev_version (dict): prev_version holds information about currently installed package
+        new_package_name (str): Name of new package to get version information about.
+    Return:
+        None
+    """
+    if prev_version.get('mysql_type') != 'mysql':
+        return
+
+    currently_installed_mysql_version = prev_version.get('extended')
+
+    new_package_info = get_package_info(package_name=new_package_name)
+
+    # Example: '1:8.0.27-0ubuntu0.20.04.1+cloudlinux1.1'
+    new_package_full_version = new_package_info.get('Version')
+
+    new_package_version = new_package_full_version[2:].split('-')[0]
+
+    if new_package_version < '8':
+        print(bcolors.fail('Instruction how to upgrade: https://dev.mysql.com/doc/refman/8.0/en/upgrading.html'))
+        sys.exit(1)
+
+    if new_package_version < currently_installed_mysql_version:
+        print(bcolors.fail('Instruction how to downgrade: https://dev.mysql.com/doc/refman/8.0/en/downgrading.html'))
+        sys.exit(1)
+
+
+@contextmanager
+def cwd(path):
+    """Temporarily change current working directory to specified one"""
+    oldpwd = os.getcwd()
+    os.chdir(path)
+    try:
+        yield
+    finally:
+        os.chdir(oldpwd)
+
+
+@contextmanager
+def disable_ubuntu_repos():
+    """Temporarily disable all repos in ubuntu except cloudlinux
+    With context manager move all *.list files to *.list.bak except cloudlinux.list
+    At the end return back to original
+    """
+    import shutil
+
+    # List of source files that will be disabled/enabled
+    repo_files = ['/etc/apt/sources.list']
+
+    source_list_d = '/etc/apt/sources.list.d/'
+
+    for list_file in os.listdir(source_list_d):
+        repo_files.append(source_list_d + list_file)
+
+    for list_file in repo_files:
+        if 'cloudlinux.list' not in list_file:
+            shutil.move(list_file, list_file + '.bak')
+    try:
+        yield
+    finally:
+        for list_file in repo_files:
+            if 'cloudlinux.list' not in list_file:
+                shutil.move(list_file + '.bak', list_file)

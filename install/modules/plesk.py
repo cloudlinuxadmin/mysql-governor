@@ -33,3 +33,13 @@ class PleskManager(InstallManager):
         Update user mapping file for Plesk
         """
         self._script("dbgovernor_map_plesk.py")
+
+    def _detect_version_if_auto(self):
+        """
+        Plesk in CL8: in auto mode governor chooses mysql8 as default to install.
+        We change this behavior because of plesk in CL8 uses mariadb103 as default
+        """
+        if self.cl_version == 8:
+            return 'mariadb103'
+        else:
+            return super()._detect_version_if_auto()

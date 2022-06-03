@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   73
+%define g_release   74
 %define g_key_library 10
 
 %if %{undefined _unitdir}
@@ -209,11 +209,8 @@ PYTHONPATH=install:install/scripts:. %{pypath}/py.test tests/py/
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -rf "$RPM_BUILD_ROOT"
 
 %pre
-/sbin/service db_governor stop > /dev/null 2>&1
-rs=$(pgrep governor)
-if [ ! -z "$rs" ];then
-    kill $(pgrep governor)
-fi
+/sbin/service db_governor stop > /dev/null 2>&1 || :
+pkill db_governor || :
 
 #Check if libgovernor.so will be changed on package action
 #if install just save KEY
@@ -439,6 +436,9 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Fri Jun 03 2022 Alexandr Demeshko <ademeshko@cloudlinux.com>  1.2-74
+- MYSQLG-697: Buggy restriction logging removed
+
 * Fri Mar 25 2022 Alexandr Demeshko <ademeshko@cloudlinux.com>  1.2-73
 - MYSQLG-674: Legacy alter user statement avoided for MariaDB 10.4+
 - MYSQLG-675: Check for cagefs-skeleton initialization added

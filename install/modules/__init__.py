@@ -9,6 +9,10 @@
 Init module
 """
 
+from utilities import is_ubuntu
 from .base import InstallManager
 from .storage import Storage
+
+if is_ubuntu():
+    from .base_ubuntu import UbuntuInstallManager
 

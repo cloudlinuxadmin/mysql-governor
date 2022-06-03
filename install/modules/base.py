@@ -32,7 +32,7 @@ from utilities import get_cl_num, exec_command, exec_command_out, new_lve_ctl, \
     correct_remove_notowned_mysql_service_names_not_symlynks_cl7, get_mysql_log_file, \
     check_mysqld_is_alive, makedir_recursive, patch_governor_config, bcolors, force_update_cagefs, \
     show_new_packages_info, wizard_install_confirm, rewrite_file, cl8_module_enable, debug_log, \
-    read_config_file, mycnf_writable
+    read_config_file, mycnf_writable, IS_UBUNTU
 
 
 class InstallManager:
@@ -690,7 +690,7 @@ for native procedure restoring of MySQL packages"""))
         # - mysqld_exporter package
         # - MySQL-python package
         # from the list of packages to download
-        pattern = r'MySQL-python|mysql(d_exporter|\d+-community-release)'
+        pattern = r'MySQL-python|mysql(d_exporter|\d+-community-release)|mysql-common'
         packages = [x for x in packages if not re.match(pattern, x)]
 
         if not len(packages):
@@ -729,7 +729,6 @@ for native procedure restoring of MySQL packages"""))
                         self.ALL_PACKAGES_OLD_NOT_DOWNLOADED = True
 
         return packages
-        # return [x.replace(" ", "-") for x in packages]
 
     def _get_result_mysql_version(self, sql_version=None):
         """
@@ -1032,7 +1031,7 @@ for native procedure restoring of MySQL packages"""))
             check_file("/etc/container/mysql-governor.xml")
             patch_governor_config(self.MYSQLUSER, self.MYSQLPASSWORD)
 
-            if exec_command("rpm -qa governor-mysql", True):
+            if is_package_installed('governor-mysql'):
                 service("restart", "db_governor")
                 print("DB-Governor restarted...")
 
@@ -1221,3 +1220,6 @@ MariaDB info about compatibility issue: https://mariadb.com/kb/en/upgrading-from
 Workaround for CloudLinux: https://cloudlinux.zendesk.com/hc/en-us/articles/360020599839"""))
                 if not force:
                     sys.exit(1)
+
+    def prepare_statement_for_ubuntu(self):
+        """Specific actions before governor installation"""
