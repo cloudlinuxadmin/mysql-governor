@@ -33,7 +33,7 @@ static void *lib_handle = NULL;
 // -1 - error
 //  0 - OK
 int
-init_mysql_function ()
+init_mysql_function (void)
 {
   char *error;
 
@@ -90,7 +90,7 @@ init_mysql_function ()
 }
 
 void
-delete_mysql_function ()
+delete_mysql_function (void)
 {
   if (lib_handle != NULL)
     {

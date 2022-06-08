@@ -28,7 +28,7 @@
 #include "dbctl_conn.h"
 
 int
-connect_to_server_dbctl ()
+connect_to_server_dbctl (void)
 {
   int s, len;
   struct sockaddr_un saun;

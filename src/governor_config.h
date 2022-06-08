@@ -54,16 +54,16 @@ struct governor_config
 
 stats_limit_cfg *config_get_account_limit (const char *account_id,
 					   stats_limit_cfg * cfgin);
-void config_free ();
+void config_free (void);
 struct governor_config *config_init (const char *path);
 int save_duplicate_config (xml_data* xml);
-void reread_config ();
-void config_destroy_lock ();
+void reread_config (void);
+void config_destroy_lock (void);
 void config_add_work_user (const char *user_name);
 //struct governor_config * get_config();
 void get_config_data (struct governor_config *data);
-MODE_TYPE get_config_log_mode ();
-struct governor_config *get_config ();
+MODE_TYPE get_config_log_mode (void);
+struct governor_config *get_config (void);
 void print_config_full(void);
 
 #endif

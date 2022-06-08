@@ -64,7 +64,7 @@ sighandler (int sig)
 }
 
 static void
-declsighandler ()
+declsighandler (void)
 {
   struct sigaction action;
 
@@ -76,7 +76,7 @@ declsighandler ()
 }
 
 void
-create_socket ()
+create_socket (void)
 {
   char buffer[_DBGOVERNOR_BUFFER_2048];
   int i, s, len;
@@ -136,7 +136,7 @@ create_socket ()
 }
 
 int
-get_soket ()
+get_soket (void)
 {
   return global_socket;
 }

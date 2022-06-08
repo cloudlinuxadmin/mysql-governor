@@ -12,13 +12,13 @@
 unsigned long long tick_id = 0;
 
 void
-increment_tick ()
+increment_tick (void)
 {
   tick_id++;
 }
 
 unsigned long long
-get_current_tick ()
+get_current_tick (void)
 {
   return tick_id;
 }

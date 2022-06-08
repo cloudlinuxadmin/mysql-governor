@@ -15,6 +15,9 @@
 #include <stdlib.h>
 
 #include "dbctl_cfg.h"
+#include "dbctl_conn.h"
+#include "wrappers.h"
+#include "dbgovernor_string_functions.h"
 
 GPtrArray *FoundTag = NULL;
 #define SIZEOF_OUTPUT_BUFFER 512
@@ -179,7 +182,7 @@ void ReadCfg(char *file_name, char *tag) {
 }
 
 GPtrArray *
-GetCfg() {
+GetCfg(void) {
 	return FoundTag;
 }
 

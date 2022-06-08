@@ -23,6 +23,7 @@
 #include <time.h>
 
 #include "tid_table.h"
+#include "dbgovernor_string_functions.h"
 
 #define SEC2NANO 1000000000
 
@@ -55,7 +56,7 @@ remove_tid_data_inner (pid_t * pid, void *data)
 }
 
 void
-remove_tid_bad_from_list ()
+remove_tid_bad_from_list (void)
 {
   g_list_foreach (bad_tid_list, (GFunc) remove_tid_data_inner, NULL);
 }
@@ -78,7 +79,7 @@ g_list_free_full_tid_bad_my (GList * list, GDestroyNotify free_func)
 }
 
 void
-remove_tid_bad_list ()
+remove_tid_bad_list (void)
 {
   if (bad_tid_list)
     {
@@ -102,7 +103,7 @@ free_tid_key (gpointer ti)
 }
 
 int
-init_tid_table ()
+init_tid_table (void)
 {
   threads_list = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL,
 					free_tid);
@@ -116,7 +117,7 @@ init_tid_table ()
 }
 
 void
-free_tid_table ()
+free_tid_table (void)
 {
   if (threads_list)
     {
@@ -337,13 +338,13 @@ reset_counters (char *username)
 }
 
 GHashTable *
-get_counters_table ()
+get_counters_table (void)
 {
   return user_counters_list;
 }
 
 long
-get_tid_size ()
+get_tid_size (void)
 {
   pthread_mutex_lock (&mtx_tid);
   if (threads_list)
@@ -386,13 +387,13 @@ get_cnt_threads (const char *username)
 }
 
 void
-lock_tid_data ()
+lock_tid_data (void)
 {
   pthread_mutex_lock (&mtx_tid);
 }
 
 void
-unlock_tid_data ()
+unlock_tid_data (void)
 {
   pthread_mutex_unlock (&mtx_tid);
 }
@@ -406,7 +407,7 @@ print_tid_data_item (gpointer key, tid_table * item, gpointer user_data)
 }
 
 void
-print_tid_data ()
+print_tid_data (void)
 {
   printf ("----------------------------Head-------------------------\n");
   pthread_mutex_lock (&mtx_tid);

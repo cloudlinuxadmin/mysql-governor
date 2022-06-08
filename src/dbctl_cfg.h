@@ -39,7 +39,7 @@ typedef struct dbctl_print_list
 
 void ReadCfg (char *file_name, char *tag);
 void FreeCfg (void);
-GPtrArray *GetCfg ();
+GPtrArray *GetCfg (void);
 
 //---------------------------------------------------
 void *SearchTagByName (xml_data *cfg, char *name_tag, char *name);

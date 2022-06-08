@@ -10,8 +10,8 @@
 #ifndef TICK_GENERATOR_H_
 #define TICK_GENERATOR_H_
 
-void increment_tick ();
-unsigned long long get_current_tick ();
+void increment_tick (void);
+unsigned long long get_current_tick (void);
 int is_new_tick (long long tick);
 
 #endif /* TICK_GENERATOR_H_ */

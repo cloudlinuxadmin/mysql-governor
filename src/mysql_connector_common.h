@@ -133,8 +133,16 @@ int
 db_mysql_exec_query (const char *query, MYSQL ** mysql_internal,
 		     MODE_TYPE debug_mode);
 
+int
+db_connect (const char *host, const char *user_name,
+      const char *user_password, const char *db_name, int argc,
+      char *argv[], MODE_TYPE debug_mode);
+
+int
+check_mysql_version (MODE_TYPE debug_mode);
+
 //Закрыть ВСЕ соединения к БД
-int db_close ();
+int db_close (void);
 //Разблокировать все пользоватлей (соединение должно быть открыто)
 void unfreaze_all (MODE_TYPE debug_mode);
 void unfreaze_daily (MODE_TYPE debug_mode);
@@ -163,14 +171,14 @@ void governor_enable (MODE_TYPE debug_mode);
 void governor_enable_reconn (MODE_TYPE debug_mode);
 void governor_enable_lve (MODE_TYPE debug_mode);
 void governor_enable_reconn_lve (MODE_TYPE debug_mode);
-char *get_work_user ();
+char *get_work_user (void);
 void lve_connection (char *user_name, MODE_TYPE debug_mode);
 void log_user_queries (char *user_name, MODE_TYPE debug_mode);
-MYSQL **get_mysql_connect ();
+MYSQL **get_mysql_connect (void);
 int activate_plugin (MODE_TYPE debug_mode);
 
-void db_close_kill ();
-void db_close_command ();
-void db_close_send ();
+void db_close_kill (void);
+void db_close_command (void);
+void db_close_send (void);
 
 #endif /* MYSQL_CONNECTOR_COMMON_H_ */
