@@ -83,7 +83,7 @@ class UbuntuInstallManager(InstallManager):
 
         # remember installed mysql version
         self.prev_version = self._check_mysql_version()
-        if self.cp_name == 'cPanel':
+        if not hasattr(self.panel_manager, 'prev_version'):
             setattr(self.panel_manager, 'prev_version', self.prev_version)
         self.new_packages = self.get_new_packages()
 
