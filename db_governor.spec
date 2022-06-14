@@ -437,7 +437,7 @@ fi
 
 %changelog
 * Fri Jun 03 2022 Alexandr Demeshko <ademeshko@cloudlinux.com>  1.2-74
-- MYSQLG-697: Buggy restriction logging removed
+- MYSQLG-671, MYSQLG-654: LVE restriction bug fixed
 
 * Fri Mar 25 2022 Alexandr Demeshko <ademeshko@cloudlinux.com>  1.2-73
 - MYSQLG-674: Legacy alter user statement avoided for MariaDB 10.4+
