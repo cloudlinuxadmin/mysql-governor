@@ -28,13 +28,15 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <execinfo.h>
 
 #include "wrappers.h"
+#include "dbgovernor_string_functions.h"
 
 #include "help.h"
 
-void printHeader ();
-void *screen_regenerate ();
+void printHeader (void);
+void *screen_regenerate (void);
 char *print_formatted_user_name (char *name, char *buf);
 
 static void
@@ -67,7 +69,7 @@ get_signal (int signo)
 }
 
 int
-connect_to_server_dbtop ()
+connect_to_server_dbtop (void)
 {
   int s, len;
   struct sockaddr_un saun;
@@ -149,7 +151,7 @@ GList *accounts = NULL;
 GList *recv_accounts = NULL;
 
 void
-closesock ()
+closesock (void)
 {
   if (in)
     {
@@ -188,6 +190,13 @@ GINT_COMPARE_FUNCTION (write)
 }
 
 ;
+
+static int
+getTimeToEnd (Account * ac)
+{
+  return (((ac->start_count + ac->timeout) - time (NULL)) < 0) ? 0
+    : ((ac->start_count + ac->timeout) - time (NULL));
+}
 
 gint
 gint_compare_by_tte (gconstpointer ptr_a, gconstpointer ptr_b)
@@ -282,7 +291,7 @@ str_real_len (char *str)
 void
 printString2 (char *str, int attr, int len, int endline)
 {
-  static index = 0;
+  static int idx = 0;
   int screen_height, screen_weight;
 
   getmaxyx (stdscr, screen_height, screen_weight);
@@ -291,21 +300,21 @@ printString2 (char *str, int attr, int len, int endline)
 
   int ln = (str_real_len (str) > len) ? len : str_real_len (str);
   chtype ch;
-  for (index = 0; index < len; index++)
+  for (idx = 0; idx < len; idx++)
     {
-      if (index > screen_weight)
+      if (idx > screen_weight)
 	{
 	  endline = 1;
 	  break;
 	}
       else
 	{
-	  if (index < ln)
+	  if (idx < ln)
 	    {
-	      if (str[index] == '+')
-		ch = str[++index] | attr | A_BOLD | A_UNDERLINE;
+	      if (str[idx] == '+')
+		ch = str[++idx] | attr | A_BOLD | A_UNDERLINE;
 	      else
-		ch = str[index] | attr;
+		ch = str[idx] | attr;
 	    }
 	  else
 	    ch = ' ' | attr;
@@ -322,7 +331,7 @@ printString2 (char *str, int attr, int len, int endline)
 void
 printString (char *str, int attr, int len, int endline)
 {
-  static x_counter = 0;
+  static int x_counter = 0;
   int screen_height, screen_weight, counter;
 
   getmaxyx (stdscr, screen_height, screen_weight);
@@ -495,13 +504,6 @@ getRestrictChar (GOVERNORS_PERIOD_NAME restrict_level)
   return ch;
 }
 
-int
-getTimeToEnd (Account * ac)
-{
-  return (((ac->start_count + ac->timeout) - time (NULL)) < 0) ? 0
-    : ((ac->start_count + ac->timeout) - time (NULL));
-}
-
 void
 print_account_screen1 (Account * ac)
 {
@@ -552,7 +554,7 @@ print_account_screen1 (Account * ac)
 }
 
 void
-reset_accounts ()
+reset_accounts (void)
 {
   if (accounts != NULL)
     {
@@ -563,7 +565,7 @@ reset_accounts ()
 }
 
 void
-reset_recv_accounts ()
+reset_recv_accounts (void)
 {
   if (recv_accounts != NULL)
     {
@@ -574,7 +576,7 @@ reset_recv_accounts ()
 }
 
 void
-sort_accounts ()
+sort_accounts (void)
 {
 
   switch (sort_type)
@@ -605,7 +607,7 @@ sort_accounts ()
 }
 
 void *
-read_info ()
+read_info (void)
 {
   Account *ac;
   int new_record;
@@ -655,7 +657,7 @@ read_info ()
 }
 
 void
-colorize ()
+colorize (void)
 {
   if (has_colors ())
     is_colorize = 1 - is_colorize;
@@ -664,7 +666,7 @@ colorize ()
 }
 
 void
-printOneScreen ()
+printOneScreen (void)
 {
   GList *l;
   Account *tmp;
@@ -727,7 +729,7 @@ printOneScreen ()
 }
 
 void
-printHeader ()
+printHeader (void)
 {
   int screen_height, screen_weight;
   char header_buf[1024];
@@ -794,7 +796,7 @@ print_account_screen1_no_curses (Account * ac)
 }
 
 void
-printOneScreenNoCurses ()
+printOneScreenNoCurses (void)
 {
   GList *l;
   Account *tmp;
@@ -815,7 +817,7 @@ printOneScreenNoCurses ()
 }
 
 void *
-read_keys ()
+read_keys (void)
 {
   time_t start_time = time(NULL);
   time_t current_time = 0;
@@ -903,7 +905,7 @@ read_keys ()
 }
 
 void *
-screen_regenerate ()
+screen_regenerate (void)
 {
   client_type_t ctt = DBTOPCL;
   fwrite (&ctt, sizeof (client_type_t), 1, out);

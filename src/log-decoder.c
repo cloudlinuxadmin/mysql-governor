@@ -13,6 +13,7 @@
 #include "stats.h"
 #include "log-decoder.h"
 #include "math.h"
+#include "dbgovernor_string_functions.h"
 
 #include <stdlib.h>
 #include <string.h>

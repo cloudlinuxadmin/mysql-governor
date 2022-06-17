@@ -42,13 +42,13 @@ add_user_stats (username_t username, GHashTable * accounts,
 }
 
 void
-init_user_account_table ()
+init_user_account_table (void)
 {
   user_account_table = g_hash_table_new (g_str_hash, g_str_equal);
 }
 
 void
-free_user_account_table ()
+free_user_account_table (void)
 {
   g_hash_table_foreach (user_account_table, (GHFunc) free, NULL);
   g_hash_table_unref (user_account_table);

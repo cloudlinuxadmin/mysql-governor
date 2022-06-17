@@ -18,23 +18,23 @@ typedef struct _sock_data
   int status;
 } sock_data;
 
-int connect_to_server ();
+int connect_to_server (void);
 int send_info_begin (char *username);
 int send_info_end (char *username);
-int close_sock ();
-sock_data *get_sock ();
+int close_sock (void);
+sock_data *get_sock (void);
 
-void *governor_load_lve_library ();
-int governor_init_lve ();
-void governor_destroy_lve ();
+void *governor_load_lve_library (void);
+int governor_init_lve (void);
+void governor_destroy_lve (void);
 int governor_enter_lve (uint32_t * cookie, char *username);
 void governor_lve_exit (uint32_t * cookie);
 int governor_enter_lve_light (uint32_t * cookie);
-void governor_lve_exit_null ();
+void governor_lve_exit_null (void);
 int governor_lve_enter_pid (pid_t pid);
 int governor_lve_enter_pid_user (pid_t pid, char *username);
-int governor_is_in_lve ();
-int governor_init_users_list ();
+int governor_is_in_lve (void);
+int governor_init_users_list (void);
 
 
 #endif /* GOVERNOR_WRITE_DATA_H_ */

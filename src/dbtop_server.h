@@ -14,7 +14,7 @@
 #define DBMAPHOOK_ANTIDDOS 60
 
 void *run_server (void *data);
-int connect_to_server_dbtop ();
+int connect_to_server_dbtop (void);
 void *
 renew_map_on_request (void *data);
 

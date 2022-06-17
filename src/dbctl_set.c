@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 #include <glib.h>
+#include <ctype.h>
 
 #include "xml.h"
 #include "data.h"

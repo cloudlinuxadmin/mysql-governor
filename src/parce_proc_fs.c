@@ -81,7 +81,7 @@ has_sysfs (void)
 }
 
 static int
-set_linux_version ()
+set_linux_version (void)
 {
   struct utsname uts;
   unsigned x = 0, y = 0, z = 0;
@@ -222,7 +222,7 @@ get_cpu (dbgov_cpu * buf)
 }
 
 int
-dbgov_init ()
+dbgov_init (void)
 {
   smp_num_cpus = sysconf (_SC_NPROCESSORS_ONLN);
   if (smp_num_cpus < 1)
@@ -352,7 +352,7 @@ get_proc_mem (dbgov_proc_mem * buf, pid_t pid, pid_t tid)
 }
 
 long
-get_cpu_num ()
+get_cpu_num (void)
 {
   return smp_num_cpus;
 }

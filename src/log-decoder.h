@@ -25,5 +25,7 @@ stats_limit *getRestrictDump (Account * ac);
 void
 prepareRestrictDescriptionLimit (char *buffer, Account * ac,
 				 stats_limit_cfg * limit);
+void
+getParamName (char *buffer, Account * ac);
 
 #endif /* LOG_DECODER_H_ */

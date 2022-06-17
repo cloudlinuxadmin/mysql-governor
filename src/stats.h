@@ -65,9 +65,6 @@ typedef struct user_stats_struct
 User_stats *init_user_stats (const char *id, Account * ac);
 void free_user_stats (gpointer ignored, User_stats * us);
 
-const int LONG_SIZE;
-const int SHORT_SIZE;
-const int MID_SIZE;
 
 
 /* add two stats records */

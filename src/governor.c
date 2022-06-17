@@ -12,6 +12,7 @@
 #include <glib.h>
 #include <string.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <dirent.h>
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -273,8 +274,8 @@ void becameDaemon(int self_supporting) {
 	close(STDERR_FILENO);
 }
 
-int install_signals_handlers() {
-	sigignore(SIGPIPE);
+int install_signals_handlers(void) {
+	signal(SIGPIPE, SIG_IGN);
 	//Т.к мы можем создавать потомков демона, нужно бы их корректно закрывать
 	//sigset (SIGCHLD, &whenchildwasdie);
 	//Вариант, отдать чилда процессу init
@@ -465,7 +466,7 @@ int main(int argc, char *argv[]) {
 	while (1) {
 		get_config_data(&data_cfg);
 		if (db_connect(data_cfg.host, data_cfg.db_login, data_cfg.db_password,
-				"information_schema", argc, argv) < 0) {
+				"information_schema", argc, argv, data_cfg.log_mode) < 0) {
 			trying_to_connect++;
 			if (trying_to_connect > 3) {
 				WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
@@ -492,7 +493,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	get_config_data(&data_cfg);
-	if (!check_mysql_version()) {
+	if (!check_mysql_version(data_cfg.log_mode)) {
 		WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
 				"Incorrect mysql version", data_cfg.log_mode);
 		db_close();

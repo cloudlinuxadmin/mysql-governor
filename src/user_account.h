@@ -25,8 +25,10 @@ struct user_account
   username_t account;
 };
 
-void init_user_table ();
-void free_user_table ();
+void init_user_account_table (void);
+void init_user_table (void);
+void free_user_table (void);
+void free_user_account_table (void);
 struct user_account *get_user_account (username_t username);
 int check_if_user_restricted (username_t username, GHashTable * accounts);
 

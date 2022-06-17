@@ -257,6 +257,18 @@ static void set_stats_limit(void *inner_xml, stats_limit_cfg * st,
 	releaseElemValue(val_ptr);
 }
 
+static int check_liblve(void) {
+	void *lve_library_handle = NULL;
+
+	lve_library_handle = dlopen("liblve.so.0", RTLD_LAZY);
+	if (lve_library_handle) {
+		dlclose(lve_library_handle);
+		return 0;
+	} else {
+		return 1;
+	}
+}
+
 stats_limit_cfg *
 config_get_account_limit(const char *account_id, stats_limit_cfg * cfgin) {
 	int rc = pthread_rwlock_rdlock(&rwlock);
@@ -273,7 +285,7 @@ config_get_account_limit(const char *account_id, stats_limit_cfg * cfgin) {
 	return cfgin;
 }
 
-void config_free() {
+void config_free(void) {
 	if (cfg) {
 		if (cfg->debug_user)
 			free(cfg->debug_user);
@@ -666,7 +678,7 @@ int save_duplicate_config(xml_data *xml) {
 }
 
 struct governor_config *
-get_config() {
+get_config(void) {
 	return cfg;
 }
 
@@ -678,7 +690,7 @@ void get_config_data(struct governor_config *data) {
 	rc = pthread_rwlock_unlock(&rwlock);
 }
 
-MODE_TYPE get_config_log_mode() {
+MODE_TYPE get_config_log_mode(void) {
 	int rc;
 	MODE_TYPE _log_mode;
 
@@ -689,7 +701,7 @@ MODE_TYPE get_config_log_mode() {
 	return _log_mode;
 }
 
-void reread_config() {
+void reread_config(void) {
 	int rc;
 
 	rc = pthread_rwlock_wrlock(&rwlock);
@@ -698,21 +710,9 @@ void reread_config() {
 	rc = pthread_rwlock_unlock(&rwlock);
 }
 
-void config_destroy_lock() {
+void config_destroy_lock(void) {
 	pthread_rwlock_destroy(&rwlock);
 	pthread_rwlock_init(&rwlock, NULL);
-}
-
-int check_liblve() {
-	void *lve_library_handle = NULL;
-
-	lve_library_handle = dlopen("liblve.so.0", RTLD_LAZY);
-	if (lve_library_handle) {
-		dlclose(lve_library_handle);
-		return 0;
-	} else {
-		return 1;
-	}
 }
 
 static void print_account_configs(gpointer key, gpointer value,

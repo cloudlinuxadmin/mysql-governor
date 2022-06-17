@@ -36,6 +36,7 @@
 #include "log-decoder.h"
 #include "commands.h"
 #include "dbuser_map.h"
+#include "shared_memory.h"
 
 typedef struct __statistics_restrict_info
 {
@@ -75,7 +76,7 @@ is_stat_overlimit_## x(Stats *st, stats_limit_cfg *limit) \
 }
 
 void
-init_accounts_and_users ()
+init_accounts_and_users (void)
 {
   accounts = g_hash_table_new (g_str_hash, g_str_equal);
   users = g_hash_table_new (g_str_hash, g_str_equal);
@@ -83,7 +84,7 @@ init_accounts_and_users ()
 }
 
 void
-free_accounts_and_users ()
+free_accounts_and_users (void)
 {
   if (accounts)
     {
@@ -783,20 +784,24 @@ dbgov_was_user_activity (dbgov_statitrics * dbgovst)
 
 static GHashTable *pwdusers = NULL;
 
-static GHashTable *pwdload() {
+static GHashTable *pwdload(void) {
     GHashTable *r = NULL;
     FILE *stream = fopen("/etc/passwd", "r");
     size_t buflen = sysconf(_SC_GETPW_R_SIZE_MAX);
-    char *buf = malloc(buflen);
+    char buf[buflen];
     struct passwd pwbuf, *pwbufp;
 
     if (stream == NULL)
         return NULL;
 
-    r = g_hash_table_new_full(g_str_hash, g_str_equal, free, NULL);
+    r = g_hash_table_new_full(g_str_hash, g_str_equal, free, free);
 
-    while (!fgetpwent_r(stream, &pwbuf, buf, buflen, &pwbufp))
-        g_hash_table_insert(r, (gpointer)strdup(pwbuf.pw_name), ((gpointer) pwbuf.pw_uid));
+    while (!fgetpwent_r(stream, &pwbuf, buf, buflen, &pwbufp)) {
+        uid_t *val = (uid_t *) malloc(sizeof(uid_t));
+        if (val)
+            *val = pwbuf.pw_uid;
+        g_hash_table_insert(r, (gpointer)strdup(pwbuf.pw_name), (gpointer)val);
+    }
 
     if (!g_hash_table_size(r)) {
         g_hash_table_unref(r);
@@ -831,7 +836,7 @@ dbstat_print_table (gpointer key, dbgov_statitrics * dbgov_statitrics__,
               pwdusers = pwdload();
 
           if (pwdusers && g_hash_table_lookup_extended(pwdusers, dbgov_statitrics__->username, &pwdkey, &pwdval)) 
-              need_uid = (uid_t)pwdval;
+              need_uid = *((uid_t *)pwdval);
 
 	  fprintf (dbgov_stats,
 		   "%s;%d;%f;%f;%f;%f;%f;%f;%d;%ld;%ld;%ld;%d;%d\n",
@@ -1292,19 +1297,19 @@ print_to_restrict_log_stats (void *data)
 }
 
 void
-lock_acc ()
+lock_acc (void)
 {
   pthread_mutex_lock (&mtx_account);
 }
 
 void
-unlock_acc ()
+unlock_acc (void)
 {
   pthread_mutex_unlock (&mtx_account);
 }
 
 void *
-get_accounts ()
+get_accounts (void)
 {
   return accounts;
 }
@@ -1550,7 +1555,7 @@ add_all_users_to_list (gpointer key, Account * ac, void *data)
     }
 }
 
-void reinit_users_list()
+void reinit_users_list(void)
 {
 	char buffer[_DBGOVERNOR_BUFFER_2048];
 	struct governor_config data_cfg;
