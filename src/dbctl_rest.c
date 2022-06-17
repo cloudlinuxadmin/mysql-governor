@@ -14,6 +14,9 @@
 
 #include "dbctl_cfg.h"
 #include "dbctl_rest.h"
+#include "dbctl_conn.h"
+#include "wrappers.h"
+#include "dbgovernor_string_functions.h"
 
 int restrict_user(char *user, char *level) {
 	FILE *in = NULL;

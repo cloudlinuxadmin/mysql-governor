@@ -81,11 +81,11 @@ typedef struct _dbgov_proc_mem
 
 int get_io_stat (dbgov_iostat * info, pid_t pid, pid_t tid);
 void io_stat_reset (dbgov_iostat * info);
-int dbgov_init ();
+int dbgov_init (void);
 void get_cpu (dbgov_cpu * buf);
 int get_proc_time (dbgov_proc_time * buf, pid_t pid, pid_t tid);
 void get_mem (dbgov_mem * buf);
 void get_proc_mem (dbgov_proc_mem * buf, pid_t pid, pid_t tid);
-long get_cpu_num ();
+long get_cpu_num (void);
 
 #endif /* PARCE_PROC_FS_H_ */

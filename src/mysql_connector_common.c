@@ -26,12 +26,14 @@
 
 #include <pthread.h>
 #include <glib.h>
+#include <glib/gstdio.h>
 
 #include "log.h"
 #include "dlload.h"
 #include "mysql_connector_common.h"
 #include "wrappers.h"
 #include "governor_config.h"
+#include "dbgovernor_string_functions.h"
 
 extern M_mysql_store_result;
 extern M_mysql_num_rows;
@@ -343,7 +345,7 @@ db_mysql_exec_query (const char *query, MYSQL ** mysql_internal,
 }
 
 void
-db_close_kill ()
+db_close_kill (void)
 {
   if (mysql_do_kill != NULL)
     {
@@ -353,7 +355,7 @@ db_close_kill ()
 }
 
 void
-db_close_command ()
+db_close_command (void)
 {
   if (mysql_do_command != NULL)
     {
@@ -363,7 +365,7 @@ db_close_command ()
 }
 
 void
-db_close_send ()
+db_close_send (void)
 {
   if (mysql_send_governor != NULL)
     {
@@ -374,7 +376,7 @@ db_close_send ()
 
 //Close all databases connections
 int
-db_close ()
+db_close (void)
 {
   db_close_kill ();
   db_close_command ();
@@ -1087,7 +1089,7 @@ check_mysql_version (MODE_TYPE debug_mode)
 }
 
 char *
-get_work_user ()
+get_work_user (void)
 {
   return work_user;
 }
@@ -1131,7 +1133,7 @@ lve_connection (char *user_name, MODE_TYPE debug_mode)
 
 //LOGGER USER QUERIES
 int
-create_dir ()
+create_dir (void)
 {
   char tek_day_dir[11];
   GDate *date = g_date_new ();
@@ -1222,7 +1224,7 @@ log_user_queries (char *user_name, MODE_TYPE debug_mode)
 }
 
 MYSQL **
-get_mysql_connect ()
+get_mysql_connect (void)
 {
   return &mysql_do_kill;
 }

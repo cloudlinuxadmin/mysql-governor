@@ -20,9 +20,9 @@ int write_log (const char *error_file, int error_line,
 	       const char *error_string, MODE_TYPE mode);
 char *prepare_output (char *buffer, size_t size, char *fmt, ...);
 
-FILE *get_log ();
-FILE *get_restrict_log ();
-FILE *get_slow_queries_log ();
+FILE *get_log (void);
+FILE *get_restrict_log (void);
+FILE *get_slow_queries_log (void);
 
 #define WRITE_LOG(stats, type, buffer, size, message, mode, ...) if (type==0) \
 	write_log(__FILE__, __LINE__, prepare_output(buffer, size, message, ##__VA_ARGS__), mode); \

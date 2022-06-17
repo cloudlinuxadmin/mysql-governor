@@ -26,7 +26,7 @@
 #define M_mysql_free_result void (*_mysql_free_result)(void *)
 #define M_mysql_fetch_lengths unsigned long * (*_mysql_fetch_lengths)(void *)
 #define M_mysql_fetch_row char ** (*_mysql_fetch_row)(void *)
-#define M_my_init char (*_my_init)()
+#define M_my_init char (*_my_init)(void)
 #define M_load_defaults int (*_load_defaults)(const char *, const char **, int *, char ***)
 #define M_mysql_init void * (*_mysql_init)(void *)
 #define M_mysql_real_connect void * (*_mysql_real_connect)( \
@@ -45,7 +45,7 @@
 #define M_mysql_real_escape_string unsigned long (*_mysql_real_escape_string)(void *mysql, char *, const char *, unsigned long)
 #define M_mysql_ping int (*_mysql_ping)(void *mysql)
 
-int init_mysql_function ();
-void delete_mysql_function ();
+int init_mysql_function (void);
+void delete_mysql_function (void);
 
 #endif /* DLLOAD_H_ */

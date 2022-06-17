@@ -249,19 +249,19 @@ write_slow_queries_log (const char *error_string)
 }
 
 FILE *
-get_log ()
+get_log (void)
 {
   return log;
 }
 
 FILE *
-get_restrict_log ()
+get_restrict_log (void)
 {
   return restrict_log;
 }
 
 FILE *
-get_slow_queries_log ()
+get_slow_queries_log (void)
 {
   return slow_queries_log;
 }

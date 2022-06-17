@@ -40,7 +40,7 @@
 #include <systemd/sd-daemon.h>
 #endif
 
-void free_commands_list_send ();
+void free_commands_list_send (void);
 
 static GList *command_list = NULL, *command_list_send = NULL;
 static GHashTable *max_user_conn_table = NULL;
@@ -82,7 +82,7 @@ print_stats_to_buffer (char *buffer, stats_limit * s, int size)
 }
 
 void
-reinit_command_list ()
+reinit_command_list (void)
 {
   pthread_mutex_lock (&mtx_commands);
   free_commands_list ();
@@ -91,7 +91,7 @@ reinit_command_list ()
 }
 
 void
-free_commands_list ()
+free_commands_list (void)
 {
   if (command_list)
     {
@@ -101,14 +101,14 @@ free_commands_list ()
 }
 
 void
-reinit_command_list_send ()
+reinit_command_list_send (void)
 {
   free_commands_list_send ();
   command_list_send = g_list_alloc ();
 }
 
 void
-free_commands_list_send ()
+free_commands_list_send (void)
 {
   if (command_list_send)
     {
@@ -404,7 +404,7 @@ copy_commands (Command * cmd, void *data)
 }
 
 void
-send_command_copy_list ()
+send_command_copy_list (void)
 {
   reinit_command_list_send ();
   pthread_mutex_lock (&mtx_commands);
@@ -415,7 +415,7 @@ send_command_copy_list ()
 }
 
 void
-send_commands_cycle ()
+send_commands_cycle (void)
 {
   struct governor_config data_cfg;
   get_config_data (&data_cfg);

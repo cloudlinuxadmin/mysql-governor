@@ -43,7 +43,7 @@ trim (char *s)
 }
 
 time_t
-last_modify_map ()
+last_modify_map (void)
 {
   struct stat sb;
 
@@ -200,7 +200,7 @@ list_uid (gpointer key, UserMap * um, void *data)
 }
 
 void
-set_dbuser_map ()
+set_dbuser_map (void)
 {
   g_hash_table_foreach (userMap, (GHFunc) list_uid, NULL);
 }
@@ -260,13 +260,13 @@ find_uid (gpointer key, UserMap * um, void *data)
 }
 
 int
-get_uid (username_t u)
+get_uid (const username_t u)
 {
   UserMap *UserMap_ = NULL;
   if (userMap)
     {
       UserMap_
-	= (UserMap *) g_hash_table_find (userMap, (GHRFunc) find_uid, u);
+	= (UserMap *) g_hash_table_find (userMap, (GHRFunc) find_uid, (gpointer)u);
     }
 
   return UserMap_ ? UserMap_->uid : BAD_LVE;
@@ -286,19 +286,19 @@ get_account (username_t u)
 }
 
 int
-lock_read_map ()
+lock_read_map (void)
 {
   return pthread_rwlock_rdlock (&map_rw_lock);
 }
 
 int
-lock_write_map ()
+lock_write_map (void)
 {
   return pthread_rwlock_wrlock (&map_rw_lock);
 }
 
 int
-unlock_rdwr_map ()
+unlock_rdwr_map (void)
 {
   return pthread_rwlock_unlock (&map_rw_lock);
 }
