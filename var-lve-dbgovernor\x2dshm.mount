@@ -7,7 +7,7 @@ Conflicts=umount.target
 What=none
 Where=/var/lve/dbgovernor-shm
 Type=tmpfs
-Options=rw,nosuid,nodev,mode=777
+Options=rw,mode=777,nosuid,nodev
 
 [Install]
 WantedBy=db_governor.service mysql.service mysqld.service mariadb.service
