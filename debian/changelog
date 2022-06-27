@@ -1,3 +1,9 @@
+governor-mysql (1.2-75.ubuntu1.1) unstable; urgency=medium
+
+  * MYSQLG-721: BAD list init error fixed
+
+ -- Alexandr Demeshko <ademeshko@cloudlinux.com>  Mon, 14 Jun 2022 11:06:33 +0000
+
 governor-mysql (1.2-74.ubuntu1.1) unstable; urgency=medium
 
   * MYSQLG-671, MYSQLG-654: LVE restriction bug fixed
