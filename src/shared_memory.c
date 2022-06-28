@@ -112,7 +112,7 @@ int init_bad_users_list(void) {
 	{
 		first = 1;
 	}
-	else if ((shm_fd = cl_shm_open((O_CREAT | O_RDWR), 0755))
+	else if ((shm_fd = cl_shm_open(O_RDWR, 0755))
 			< 0)
 	{
 		umask(old_umask);
@@ -443,7 +443,7 @@ int init_bad_users_list_client(void) {
 	{
 		first = 1;
 	}
-	else if ((shm_fd_clents_global = cl_shm_open((O_CREAT | O_RDWR), 0600)) < 0)
+	else if ((shm_fd_clents_global = cl_shm_open(O_RDWR, 0600)) < 0)
 	{
 		pthread_mutex_unlock(&mtx_shared);
 		umask(old_umask);

@@ -437,7 +437,7 @@ fi
 
 %changelog
 * Mon Jun 27 2022 Alexandr Demeshko <ademeshko@cloudlinux.com>  1.2-75
-- MYSQLG-721: BAD list init error fixed
+- MYSQLG-721: BAD list initialization error fixed
 
 * Fri Jun 03 2022 Alexandr Demeshko <ademeshko@cloudlinux.com>  1.2-74
 - MYSQLG-671, MYSQLG-654: LVE restriction bug fixed
