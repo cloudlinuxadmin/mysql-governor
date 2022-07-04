@@ -32,7 +32,7 @@ from utilities import get_cl_num, exec_command, exec_command_out, new_lve_ctl, \
     correct_remove_notowned_mysql_service_names_not_symlynks_cl7, get_mysql_log_file, \
     check_mysqld_is_alive, makedir_recursive, patch_governor_config, bcolors, force_update_cagefs, \
     show_new_packages_info, wizard_install_confirm, rewrite_file, cl8_module_enable, debug_log, \
-    read_config_file, mycnf_writable, IS_UBUNTU
+    read_config_file, mycnf_writable, IS_UBUNTU, install_deb_packages
 
 
 class InstallManager:
@@ -993,13 +993,19 @@ for native procedure restoring of MySQL packages"""))
         self._mysqlservice("stop")
 
         # remove governor package
-        exec_command_out("rpm -e governor-mysql")
+        if IS_UBUNTU:
+            exec_command_out('apt remove governor-mysql -y')
+        else:
+            exec_command_out("rpm -e governor-mysql")
 
         # delete installed packages
         remove_packages(installed_packages)
 
         # install auto packages
-        install_packages("new", False)
+        if IS_UBUNTU:
+            install_deb_packages('new')
+        else:
+            install_packages("new", False)
         self.cl8_save_current()
 
         print(bcolors.ok("Removing mysql for db_governor completed"))
