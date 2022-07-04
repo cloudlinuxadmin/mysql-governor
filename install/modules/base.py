@@ -32,7 +32,7 @@ from utilities import get_cl_num, exec_command, exec_command_out, new_lve_ctl, \
     correct_remove_notowned_mysql_service_names_not_symlynks_cl7, get_mysql_log_file, \
     check_mysqld_is_alive, makedir_recursive, patch_governor_config, bcolors, force_update_cagefs, \
     show_new_packages_info, wizard_install_confirm, rewrite_file, cl8_module_enable, debug_log, \
-    read_config_file, mycnf_writable, IS_UBUNTU, install_deb_packages
+    read_config_file, mycnf_writable, IS_UBUNTU, install_deb_packages, get_mysql_cnf_value, restore_my_cnf_d
 
 
 class InstallManager:
@@ -121,6 +121,20 @@ class InstallManager:
         self.cl_version = get_cl_num()
         self.cp_name = cp_name
 
+        # In case of custom database my.cnf file can be located in some nonstandard path.
+        # That's why we try to get it from os environ
+        self.my_cnf_path = os.environ.get('MY_CNF_PATH') if os.environ.get('MY_CNF_PATH') else '/etc/my.cnf'
+
+        # Take datadir of mysql dynamically from cnf file
+        # Someone can change /var/lib/mysql to other directory
+        __my_cnf_datadir = get_mysql_cnf_value('mysqld', 'datadir', self.my_cnf_path)
+
+        if __my_cnf_datadir is None or __my_cnf_datadir == '':
+            self.my_cnf_datadir = '/var/lib/mysql'
+        else:
+            self.my_cnf_datadir = __my_cnf_datadir
+
+
     @staticmethod
     def my_cnf_manager(action, old_path=None):
         """
@@ -141,11 +155,25 @@ class InstallManager:
             'restore_rpmsave': lambda x: shutil.copy2(x, "/etc/my.cnf"),
             'cleanup': lambda x: os.unlink(x),
             'backup_old': '',
+            'backup_my_cnf_d': lambda x: shutil.copytree(x, "/etc/my.cnf.d.bak"),
+            'restore_my_cnf_d': lambda x: restore_my_cnf_d(x, "/etc/my.cnf.d"),
         }
 
         if action not in actions.keys():
             raise RuntimeError('Cannot manage /etc/my.cnf: '
                                'unknown action %s' % action)
+
+        if action == 'backup_my_cnf_d':
+            my_cnf_d_path = '/etc/my.cnf.d'
+            if os.path.exists(my_cnf_d_path):
+                actions.get(action)(my_cnf_d_path)
+                return
+
+        if action == 'restore_my_cnf_d':
+            my_cnf_d_bak_path = '/etc/my.cnf.d.bak'
+            if os.path.exists(my_cnf_d_bak_path):
+                actions.get(action)(my_cnf_d_bak_path)
+                return
 
         if action == 'backup':
             working_path = "/etc/my.cnf"
@@ -172,8 +200,8 @@ class InstallManager:
             'files': ('log-error', ),
             'paths': ('pid-file', )
         }
-        default_log = '/var/lib/mysql/mysqld.error.log'
-        default_pid = '/var/lib/mysql/mysqld.pid'
+        default_log = f'{self.my_cnf_datadir}/mysqld.error.log'
+        default_pid = f'{self.my_cnf_datadir}/mysqld.pid'
 
         conf = read_config_file('/etc/my.cnf.prev')
         # try to find non-existent paths, defined in /etc/my.cnf
@@ -259,6 +287,7 @@ class InstallManager:
 
         # if os.path.exists("/etc/my.cnf"):
         #     shutil.copy2("/etc/my.cnf", "/etc/my.cnf.prev")
+        self.my_cnf_manager('backup_my_cnf_d')
         self.my_cnf_manager('backup')
 
         create_mysqld_link("mysqld", "mysql")
@@ -314,6 +343,7 @@ class InstallManager:
             os.chown(log_file, target_uid, target_gid)
 
         self.my_cnf_inspect()
+        self.my_cnf_manager('restore_my_cnf_d')
 
         version = self._get_new_version()
         if version.startswith("mariadb") or version == "auto" \
@@ -1117,15 +1147,14 @@ for native procedure restoring of MySQL packages"""))
         if self.cl_version >= 7:
             exec_command_out("systemctl enable mysql.service")
 
-    @staticmethod
-    def _check_leave_pid():
+    def _check_leave_pid(self):
         """
         Remove upgrade marker for mysql
         """
         print("Check for mysql pids and upgrade marker")
-        if os.path.exists("/var/lib/mysql/RPM_UPGRADE_MARKER"):
-            shutil.move("/var/lib/mysql/RPM_UPGRADE_MARKER",
-                        "/var/lib/mysql/RPM_UPGRADE_MARKER.old")
+        if os.path.exists(f"{self.my_cnf_datadir}/RPM_UPGRADE_MARKER"):
+            shutil.move(f"{self.my_cnf_datadir}/RPM_UPGRADE_MARKER",
+                        f"{self.my_cnf_datadir}/RPM_UPGRADE_MARKER.old")
 
     @staticmethod
     def _ld_fix():

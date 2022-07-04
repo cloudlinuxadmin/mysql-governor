@@ -17,6 +17,7 @@ import urllib.request, urllib.parse, urllib.error
 import time
 import configparser
 import shlex
+import shutil
 from threading import Timer
 from datetime import datetime
 from distutils.version import StrictVersion
@@ -40,7 +41,7 @@ __all__ = [
     "disable_and_remove_service",
     "disable_and_remove_service_if_notsymlynk", "check_mysqld_is_alive",
     "get_mysql_log_file", "get_mysql_cnf_value", "makedir_recursive", "is_ubuntu",
-    "download_apt_packages", "install_deb_packages"
+    "download_apt_packages", "install_deb_packages", "restore_my_cnf_d"
 ]
 
 RPM_TEMP_PATH = "/usr/share/lve/dbgovernor/tmp/governor-tmp"
@@ -1070,12 +1071,12 @@ def check_mysqld_is_alive():
     return False
 
 
-def get_mysql_cnf_value(section, name):
+def get_mysql_cnf_value(section, name, my_cnf_path='/etc/my.cnf'):
     """
     Get value from my.cnf
     """
     try:
-        configParser = read_config_file('/etc/my.cnf')
+        configParser = read_config_file(my_cnf_path)
         return configParser.get(section, name)
     except configparser.Error:
         return ""
@@ -1473,3 +1474,32 @@ def disable_ubuntu_repos():
         for list_file in repo_files:
             if 'cloudlinux.list' not in list_file:
                 shutil.move(list_file + '.bak', list_file)
+
+def restore_my_cnf_d(backup_dir, target_dir):
+    """Restore /etc/my.cnf.d.bak to /etc/my.cnf.d
+    To restore files we need to check target dir. If file exists rename to *.govnew
+
+    Args:
+        backup_dir (str): Directory to restore from: /etc/my.cnf.d.bak
+        target_dir (str): Directory to restore to: /etc/my.cnf.d
+    """
+    # Files in /etc/my.cnf.d.bak directory
+    files_in_my_cnf_d_bak = os.listdir(backup_dir)
+
+    # Files in /etc/my.cnf.d directory
+    files_in_my_cnf_d = os.listdir(target_dir)
+
+    # If /etc/my.cnf.d exists, copy files from /etc/my.cnf.d.bak and remove /etc/my.cnf.d.bak
+    if os.path.exists(target_dir):
+        for backup_file in files_in_my_cnf_d_bak:
+            if backup_file in files_in_my_cnf_d:
+                # rename /etc/my.cnf.d/example to /etc/my.cnf.d/example.govnew
+                print(f'Renaming in target: {target_dir}/{backup_file}', f'{target_dir}/{backup_file}.govnew')
+                shutil.move(f'{target_dir}/{backup_file}', f'{target_dir}/{backup_file}.govnew')
+
+            # move /etc/my.cnf.d.bak/example to /etc/my.cnf.d/example
+            print(f'Moving from backup: {backup_dir}/{backup_file}', f'{target_dir}/{backup_file}')
+            shutil.move(f'{backup_dir}/{backup_file}', f'{target_dir}/{backup_file}')
+        os.rmdir(backup_dir)
+    else:
+        shutil.move(backup_dir, target_dir)
