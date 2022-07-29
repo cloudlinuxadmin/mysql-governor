@@ -110,6 +110,9 @@ class cPanelManager(InstallManager):
         """
         Install legacy packages after --delete procedure
         """
+        # According to July 2022 CPanel Letter, they will not be supporting MariaDB 10.7, 10.8, or 10.9
+        # since they will now be reaching end-of-life sometime in 2023.
+        # So we will need to add this to unsupported logic MYSQLG-730
         if current_version['full'] == 'mariadb104':
             print('{} is unsupported by cPanel, mariadb105 will be installed instead'.format(
                 current_version['full']))
@@ -128,6 +131,7 @@ class cPanelManager(InstallManager):
             'mariadb103': 'MariaDB103',
             'mariadb104': 'MariaDB104',
             'mariadb105': 'MariaDB105',
+            'mariadb106': 'MariaDB106',
         }
         old = 'MySQL50,MySQL51,'  # old unsupported targets
         not_managed = ('mysql57', 'mysql80')  # latest mysql not managed by cPanel
@@ -465,6 +469,9 @@ gpgcheck=1
         Skip an installation if not supported db version has been set
         MariaDB 10.5 is supported starting from cPanel v.98
         """
+        # According to July 2022 CPanel Letter, they will not be supporting MariaDB 10.7, 10.8, or 10.9
+        # since they will now be reaching end-of-life sometime in 2023.
+        # So we will need to add this to unsupported logic MYSQLG-730
         super().unsupported_db_version(force)
         version = InstallManager._get_result_mysql_version(self)
         if version in ('mariadb104',) or (

@@ -61,6 +61,7 @@ class InstallManager:
         "mariadb103": "mariadb-10.3",
         "mariadb104": "mariadb-10.4",
         "mariadb105": "mariadb-10.5",
+        "mariadb106": "mariadb-10.6",
         "percona56": "percona-5.6"
     }
     MODULE_STREAMS = {
@@ -75,6 +76,7 @@ class InstallManager:
         "mariadb103": "mariadb:cl-MariaDB103",
         "mariadb104": "mariadb:cl-MariaDB104",
         "mariadb105": "mariadb:cl-MariaDB105",
+        "mariadb106": "mariadb:cl-MariaDB106",
         "percona56": "percona:cl-Percona56",
         "auto": "mysql:8.0"
     }
@@ -1144,7 +1146,7 @@ for native procedure restoring of MySQL packages"""))
         if 6 == self.cl_version:
             if version in ["mysql51", "mysql55", "mysql56",
                            "mysql57", "mysql80", "mariadb101", "mariadb102",
-                           "mariadb103", "mariadb104", "mariadb105"]:
+                           "mariadb103", "mariadb104", "mariadb105", "mariadb106"]:
                 name = "mysql"
 
         try:

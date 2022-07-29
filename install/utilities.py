@@ -879,10 +879,10 @@ def correct_mysqld_service_for_cl7(mysql_type):
     name = "mysqld"
     if mysql_type in ["mysql50", "mysql51", "mysql55", "mysql56", "mysql57", "mysql80", "auto"]:
         name = "mysqld"
-    elif mysql_type in ["mariadb101", "mariadb102", "mariadb103", "mariadb104", "mariadb105"]:
-        name = "mariadb"
     elif mysql_type in ["mariadb55", "mariadb100", "percona56"]:
         name = "mysql"
+    elif mysql_type.startswith("mariadb1")
+        name = "mariadb"
     cl_ver = get_cl_num()
     if cl_ver >= 7:
         service_name = name + ".service"

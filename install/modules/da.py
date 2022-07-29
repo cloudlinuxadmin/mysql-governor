@@ -144,6 +144,7 @@ class DirectAdminManager(InstallManager):
                 "10.1.1": "mariadb101"
             }
             mariadb_version_map = {
+                "10.6": "mariadb106",
                 "10.5": "mariadb105",
                 "10.4": "mariadb104",
                 "10.3": "mariadb103",
@@ -153,7 +154,7 @@ class DirectAdminManager(InstallManager):
                 "5.6": "mariadb100",
                 "5.5": "mariadb100",
                 "10.0.0": "mariadb100",
-                "10.1.1": "mariadb100"
+                "10.1.1": "mariadb101"
             }
 
             if MYSQL_DA_TYPE == "mysql":
