@@ -25,7 +25,8 @@ from utilities import exec_command, service, touch, \
     correct_remove_notowned_mysql_service_names_cl7, \
     correct_remove_notowned_mysql_service_names_not_symlynks_cl7, get_mysql_log_file, \
     makedir_recursive, bcolors, show_new_packages_info, wizard_install_confirm, \
-    is_ubuntu, install_deb_from_url, install_deb_packages, check_mysql_compatibilty
+    is_ubuntu, install_deb_from_url, install_deb_packages, check_mysql_compatibilty, \
+    check_file
 
 from .base import InstallManager
 
@@ -380,3 +381,35 @@ class UbuntuInstallManager(InstallManager):
 
         if os.path.exists("/etc/cron.d/dbgovernor-usermap-cron.bak"):
             os.unlink("/etc/cron.d/dbgovernor-usermap-cron.bak")
+
+    def delete(self):
+        """
+        Delete governor packages
+        """
+        # first check config file
+        check_file("/etc/my.cnf")
+
+        # save current installed mysql version
+        self._save_previous_version()
+
+        # get list of installed packages
+        installed_packages = self._load_current_packages()
+
+        # remove cron file
+        if os.path.exists("/etc/cron.d/dbgovernor-usermap-cron"):
+            shutil.move("/etc/cron.d/dbgovernor-usermap-cron",
+                        "/etc/cron.d/dbgovernor-usermap-cron.bak")
+
+        # backup my.cnf file for restore if uninstall will be failed
+        # if os.path.exists("/etc/my.cnf"):
+        #     shutil.copy2("/etc/my.cnf", "/etc/my.cnf.prev")
+        self.my_cnf_manager('backup')
+
+        # run trigger before governor uninstal
+        self._before_delete()
+
+        # run uninstall action
+        self._delete(installed_packages)
+
+        # run trigger after governor uninstall
+        self._after_delete()
