@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   75
+%define g_release   76
 %define g_key_library 10
 
 %if %{undefined _unitdir}
@@ -436,6 +436,9 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Mon Aug 01 2022 Alexandr Demeshko <ademeshko@cloudlinux.com>  1.2-76
+- MYSQLG-726: MariaDB 10.6 support added
+
 * Mon Jun 27 2022 Alexandr Demeshko <ademeshko@cloudlinux.com>  1.2-75
 - MYSQLG-721: BAD list initialization error fixed
 
