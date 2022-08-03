@@ -426,10 +426,28 @@ class InstallManager:
         check_file("/etc/my.cnf")
 
         # save current installed mysql version
-        self._save_previous_version()
+        # self._save_previous_version()
 
         # get list of installed packages
-        installed_packages = self._load_current_packages()
+        installed_packages = self._load_current_packages(download=False)
+
+        installed_db_version = self._check_mysql_version().get('full')
+        
+        if not installed_db_version:
+            print(bcolors.info("Current installed database couldn't be found. Exiting..."))
+            exit(1)
+
+        previous_db_version = self._get_previous_version()
+        
+        if previous_db_version == 'auto':
+            previous_db_version = 'mysql80'
+
+        print('installed_db_version ->', installed_db_version)
+        print('previous_db_version ->', previous_db_version)
+
+        if installed_db_version > previous_db_version:
+            print("Not supported to downgrade database. Exiting...")
+            exit(1)
 
         # remove repo file
         if os.path.exists("/etc/yum.repos.d/cl-mysql.repo"):
@@ -658,9 +676,14 @@ for native procedure restoring of MySQL packages"""))
         @param `download` bool: download rpm files or
                                 only return list of installed packages
         """
-        print(bcolors.info("Start download current installed packages"))
+        if download:
+            print(bcolors.info("Start download current installed packages"))
+        else:
+            print(bcolors.info("Get list of current installed packages"))
+
         PATTERNS = ["cl-mysql", "cl-mariadb", "cl-percona", "mysql", "mariadb",
                     "compat-mysql5", "Percona"]
+        
         mysqld_path = exec_command("which mysqld", True, silent=True)
         pkg_name = False
         if mysqld_path:
@@ -831,6 +854,7 @@ for native procedure restoring of MySQL packages"""))
 
         repo_url = "http://repo.cloudlinux.com/other/cl%s/mysqlmeta/%s" % (
             self.cl_version, repo)
+
         try:
             content = urllib.request.urlopen(repo_url).read()
         except Exception as e:
@@ -867,7 +891,6 @@ for native procedure restoring of MySQL packages"""))
                 packages += exec_command("repoquery --repoid cl-mysql-meta --requires %s --quiet" % name)
             # query for installed package
             # exec_command("rpm -q --requires cl-MySQL-meta")
-
         if not download_packages(packages, folder, beta):
             self.ALL_PACKAGES_NEW_NOT_DOWNLOADED = True
 
