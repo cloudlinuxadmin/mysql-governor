@@ -472,8 +472,14 @@ gpgcheck=1
         # According to July 2022 CPanel Letter, they will not be supporting MariaDB 10.7, 10.8, or 10.9
         # since they will now be reaching end-of-life sometime in 2023.
         # So we will need to add this to unsupported logic MYSQLG-730
+        UNSUPPORTED_MARIADB_VERSIONS = ['mariadb107', 'mariadb108', 'mariadb109']
+
         super().unsupported_db_version(force)
         version = InstallManager._get_result_mysql_version(self)
+        if version in UNSUPPORTED_MARIADB_VERSIONS:
+            print(bcolors.fail(f"{version} is unsupported version for cPanel"))
+            sys.exit(1)
+
         if version in ('mariadb104',) or (
                 version == 'mariadb105' and self.get_panel_version() < 98):
             print(bcolors.fail(f"{version} is unsupported version for cPanel"))

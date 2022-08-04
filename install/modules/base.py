@@ -62,6 +62,7 @@ class InstallManager:
         "mariadb104": "mariadb-10.4",
         "mariadb105": "mariadb-10.5",
         "mariadb106": "mariadb-10.6",
+        "mariadb107": "mariadb-10.7",
         "percona56": "percona-5.6"
     }
     MODULE_STREAMS = {
@@ -77,6 +78,7 @@ class InstallManager:
         "mariadb104": "mariadb:cl-MariaDB104",
         "mariadb105": "mariadb:cl-MariaDB105",
         "mariadb106": "mariadb:cl-MariaDB106",
+        "mariadb107": "mariadb:cl-MariaDB107",
         "percona56": "percona:cl-Percona56",
         "auto": "mysql:8.0"
     }
