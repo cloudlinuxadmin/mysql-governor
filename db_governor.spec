@@ -436,8 +436,9 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
-* Mon Aug 01 2022 Alexandr Demeshko <ademeshko@cloudlinux.com>  1.2-76
+* Tue Aug 09 2022 Alexandr Demeshko <ademeshko@cloudlinux.com>, Hasan Aliev <haliev@cloudlinux.com>  1.2-76
 - MYSQLG-726: MariaDB 10.6 support added
+- MYSQLG-723: Optimized package downloading in --delete command
 
 * Mon Jun 27 2022 Alexandr Demeshko <ademeshko@cloudlinux.com>  1.2-75
 - MYSQLG-721: BAD list initialization error fixed
