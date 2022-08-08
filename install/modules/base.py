@@ -878,19 +878,24 @@ for native procedure restoring of MySQL packages"""))
         # update repositories
         exec_command_out("yum clean all")
         cl8_module_enable(module)
+
         # Add requires to packages list
-        for name in requires:
-            # query only for non-installed packages
-            if default_cl_mysql_repo:
-                # We did not find specific repo for meta pkgs and installed default one instead,
-                # So let's try to find meta pkgs in any repo
+        if default_cl_mysql_repo:
+            # We did not find specific repo for meta pkgs and installed default one instead,
+            # So let's try to find meta pkgs in any repo
+            for name in requires:
                 packages += exec_command("repoquery --requires %s --quiet" % name)
-            else:
-                # We found specific repo for meta pkgs and installed it,
-                # So let's try to find meta pkgs in it only
-                packages += exec_command("repoquery --repoid cl-mysql-meta --requires %s --quiet" % name)
-            # query for installed package
-            # exec_command("rpm -q --requires cl-MySQL-meta")
+        else:
+            # We found specific repo for meta pkgs and installed it,
+            # So let's try to find meta pkgs in it only
+            for name in requires:
+                req_packages = exec_command("repoquery --repoid cl-mysql-meta --requires %s --quiet" % name)
+                if len(req_packages):
+                    packages += req_packages
+                else:
+                    # in case of repos are already created but still empty - fallback to any repo case
+                    packages += exec_command("repoquery --requires %s --quiet" % name)
+
         if not download_packages(packages, folder, beta):
             self.ALL_PACKAGES_NEW_NOT_DOWNLOADED = True
 

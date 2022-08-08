@@ -1,3 +1,10 @@
+governor-mysql (1.2-76) unstable; urgency=medium
+
+  * MYSQLG-726: MariaDB 10.6 support added
+  * MYSQLG-723: Optimized package downloading in --delete command
+
+ -- Alexandr Demeshko <ademeshko@cloudlinux.com>  Tue, 09 Aug 2022 11:06:33 +0000
+
 governor-mysql (1.2-75.ubuntu1.1) unstable; urgency=medium
 
   * MYSQLG-721: BAD list init error fixed
