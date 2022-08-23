@@ -849,6 +849,8 @@ for native procedure restoring of MySQL packages"""))
                 # that they provide libmariadb, though in fact their libs pkgs contain it.
                 # So we need to install mysqlclient18-compat for mariadb102 and mariadb103 also.
                 packages += ["mysqlclient18-compat"]
+            elif sql_version == "mariadb106":
+                packages += ["mysqlclient18"]
         elif sql_version.startswith("percona"):
             packages += ["mysqlclient18", "mysqlclient16", "mysqlclient15"]
 
