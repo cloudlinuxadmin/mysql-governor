@@ -62,6 +62,7 @@ class InstallManager:
         "mariadb104": "mariadb-10.4",
         "mariadb105": "mariadb-10.5",
         "mariadb106": "mariadb-10.6",
+        "mariadb107": "mariadb-10.7",
         "percona56": "percona-5.6"
     }
     MODULE_STREAMS = {
@@ -77,6 +78,7 @@ class InstallManager:
         "mariadb104": "mariadb:cl-MariaDB104",
         "mariadb105": "mariadb:cl-MariaDB105",
         "mariadb106": "mariadb:cl-MariaDB106",
+        "mariadb107": "mariadb:cl-MariaDB107",
         "percona56": "percona:cl-Percona56",
         "auto": "mysql:8.0"
     }
@@ -847,6 +849,8 @@ for native procedure restoring of MySQL packages"""))
                 # that they provide libmariadb, though in fact their libs pkgs contain it.
                 # So we need to install mysqlclient18-compat for mariadb102 and mariadb103 also.
                 packages += ["mysqlclient18-compat"]
+            elif sql_version == "mariadb106":
+                packages += ["mysqlclient18"]
         elif sql_version.startswith("percona"):
             packages += ["mysqlclient18", "mysqlclient16", "mysqlclient15"]
 
