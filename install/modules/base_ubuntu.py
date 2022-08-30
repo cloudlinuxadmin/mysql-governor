@@ -134,8 +134,8 @@ class UbuntuInstallManager(InstallManager):
 
         # restore my.cnf, because removing of packages
         # renames /etc/my.cnf to /etc/my.cnf.rpmsave
-        # if os.path.exists("/etc/my.cnf.prev"):
-        #     shutil.copy2("/etc/my.cnf.prev", "/etc/my.cnf")
+        # if os.path.exists("/etc/my.cnf.rpmsave"):
+        #     shutil.copy2("/etc/my.cnf.rpmsave", "/etc/my.cnf")
         self.my_cnf_manager('restore_rpmsave')
 
         self.set_fs_suid_dumpable()
@@ -402,7 +402,7 @@ class UbuntuInstallManager(InstallManager):
 
         # backup my.cnf file for restore if uninstall will be failed
         # if os.path.exists("/etc/my.cnf"):
-        #     shutil.copy2("/etc/my.cnf", "/etc/my.cnf.prev")
+        #     shutil.copy2("/etc/my.cnf", "/etc/my.cnf.govprev")
         self.my_cnf_manager('backup')
 
         # run trigger before governor uninstal
