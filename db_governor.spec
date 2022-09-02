@@ -29,6 +29,7 @@ Requires: yum-utils
 Requires: tmpwatch
 Requires: wget
 Requires: libxml2
+Requires: alt-python27-cllib
 Requires(preun): /sbin/chkconfig
 BuildRequires: cmake
 BuildRequires: ncurses-devel
@@ -39,6 +40,7 @@ BuildRequires: alt-python37
 BuildRequires: libxml2-devel
 BuildRequires: pcre-devel
 BuildRequires: patch
+BuildRequires: alt-python27-cllib
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
 BuildRequires: systemd
 BuildRequires: systemd-devel
@@ -157,6 +159,8 @@ install -D -m 755 build_test/lib/libgovernor.so $RPM_BUILD_ROOT%{_libdir}/libgov
 #install utility
 install -D -m 755 install/db-select-mysql $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/db-select-mysql
 install -D -m 755 install/mysqlgovernor.py $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/mysqlgovernor.py
+install -D -m 755 install/governor_package_limitting.py $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/governor_package_limitting.py
+touch $RPM_BUILD_ROOT/etc/container/governor_package_limit.yaml
 
 install -D -m 644 install/cl-mysql.repo.default $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cl-mysql.repo.default
 install -D -m 644 install/utilities.py $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utilities.py
@@ -423,6 +427,7 @@ fi
 %{_libdir}/libgovernor.so.%{version}
 %{_libdir}/libgov_test.so.%{version}
 %config(noreplace) %{_sysconfdir}/container/mysql-governor.xml
+%config(noreplace) %{_sysconfdir}/container/governor_package_limit.yaml
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
 %{_unitdir}/db_governor.service
 %{_unitdir}/var-lve-dbgovernor\x2dshm.mount

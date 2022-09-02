@@ -41,13 +41,41 @@ __all__ = [
     "disable_and_remove_service",
     "disable_and_remove_service_if_notsymlynk", "check_mysqld_is_alive",
     "get_mysql_log_file", "get_mysql_cnf_value", "makedir_recursive", "is_ubuntu",
-    "download_apt_packages", "install_deb_packages"
+    "download_apt_packages", "install_deb_packages", "Logger"
 ]
 
 RPM_TEMP_PATH = "/usr/share/lve/dbgovernor/tmp/governor-tmp"
 WHITESPACES_REGEX = re.compile(r"\s+")
 TRACE_LOG_FILE = "/usr/share/lve/dbgovernor/install_trace.log"
 fDEBUG_FLAG = False
+
+
+class Logger:
+    """
+    Logger class
+    """
+    def __init__(self, stream, filename="Default.log"):
+        self.terminal = stream
+        self.log = open(filename, "a")
+        os.chmod(filename, 0o600)
+
+    def write(self, message):
+        """
+        Write message to logfile and stdout
+        :param message:
+        """
+        self.terminal.write(message)
+        self.log.write(message)
+
+    def write_extended(self, message):
+        """
+        Write message to logfile only
+        :param message:
+        """
+        self.log.write(message)
+
+    def flush(self):
+        self.terminal.flush()
 
 
 def is_ubuntu():
