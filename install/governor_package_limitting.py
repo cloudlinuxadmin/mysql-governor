@@ -49,18 +49,6 @@ def build_parser():
     _set.add_argument('--write', help='limit WRITE (MB/s) usage', nargs='+')
     _set.add_argument('--debug', action='store_true', help='Turn on debug mode')
 
-    ################ UPDATE ################
-    update = subparser.add_parser('update',
-                                  help='Update limits for governor packages limits',
-                                  description='Description: Update cpu limit for governor package',
-                                  usage='governor_package_limitting.py update --package [PACKAGE_NAME] [OPTIONS]')
-    update._optionals.title = 'Options'
-    update.add_argument('--package', help='Package name', type=str, required=True)
-    update.add_argument('--cpu', help='limit CPU (pct) usage', nargs='+',)
-    update.add_argument('--read', help='limit READ (MB/s) usage', nargs='+')
-    update.add_argument('--write', help='limit WRITE (MB/s) usage', nargs='+')
-    update.add_argument('--debug', action='store_true', help='Turn on debug mode')
-
     ################ DELETE ################
     delete = subparser.add_parser('delete',
                                   help='Delete governor package limits',
@@ -136,7 +124,6 @@ def limits_serializer(args: List):
 
 def set_package_limits(package: str, cpu: list = None, io_read: List = None, io_write: list = None):
     """Setting package limits
-    If package exists return message about existence and suggest to update.
     Args:
         package (str): Package name
         cpu: (list): cpu limits
@@ -243,9 +230,10 @@ def run_dbctl_command(users: list, action: str, limits: list = None):
             print(f'Some limits are not given: {err}')
             sys.exit(1)
 
-        command = f'dbctl set {" ".join(users)} --cpu={cpu} --read={io_read} --write={io_write}'
-        debug_log(f'Running command: {command}')
-        subprocess.run(command, shell=True, text=True)
+        for user in users:
+            command = f'dbctl set {user} --cpu={cpu} --read={io_read} --write={io_write}'
+            debug_log(f'Running command: {command}')
+            subprocess.run(command, shell=True, text=True)
 
 
 def dbctl_sync(action: str, package: str = None):
