@@ -187,16 +187,12 @@ account_restrict (Account * ac, stats_limit_cfg * limit)
     {
       pid_t trigger_pid;
       /*Готовим список передаваемых скрипту параметров */
-      char period_name[_DBGOVERNOR_BUFFER_128];
-      char varName[_DBGOVERNOR_BUFFER_128];
       char varValue[_DBGOVERNOR_BUFFER_128];
       char limValue[_DBGOVERNOR_BUFFER_128];
       char penValue[_DBGOVERNOR_BUFFER_128];
       char loadAvg[GETSYSINFO_MAXFILECONTENT];
       char vmStat[GETSYSINFO_MAXFILECONTENT];
       char dump[_DBGOVERNOR_BUFFER_8192];
-      getPeriodName (period_name, ac);
-      getParamName (varName, ac);
       snprintf (varValue, _DBGOVERNOR_BUFFER_128, "%lld",
 		getRestrictValue (ac));
       snprintf (limValue, _DBGOVERNOR_BUFFER_128, "%ld",
@@ -217,7 +213,7 @@ account_restrict (Account * ac, stats_limit_cfg * limit)
 	  if (!trigger_pid)
 	    {
 	      execl (data_cfg.exec_script, data_cfg.exec_script,
-		     ac->id, period_name, varName, varValue, limValue,
+		     ac->id, getPeriodName(ac), getParamName(ac), varValue, limValue,
 		     penValue, loadAvg, vmStat, dump, NULL);
 	      WRITE_LOG (NULL, 0, "(%d)Exec error (trigger). Path %s",
 			 data_cfg.log_mode, errno, data_cfg.exec_script);

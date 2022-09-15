@@ -142,46 +142,37 @@ getLimitValue (Account * ac, stats_limit_cfg * lm)
     }
 }
 
-void
-getPeriodName (char *ch, Account * ac)
+const char *
+getPeriodName (Account * ac)
 {
   switch (ac->info.field_restrict)
     {
     case CURRENT_PERIOD:
-      strcpy (ch, "current value");
-      break;
+      return "current value";
     case SHORT_PERIOD:
-      strcpy (ch, "short av.value");
-      break;
+      return "short av.value";
     case MID_PERIOD:
-      strcpy (ch, "middle av.value");
-      break;
+      return "middle av.value";
     case LONG_PERIOD:
-      strcpy (ch, "long av.value");
-      break;
+      return "long av.value";
     default:
-      strcpy (ch, "undef");
-      break;
+      return "undef";
     };
 }
 
-void
-getParamName (char *buffer, Account * ac)
+const char *
+getParamName (Account * ac)
 {
   switch (ac->info.field_level_restrict)
     {
     case CPU_PARAM:
-      strcpy (buffer, "cpu");
-      break;
+      return "cpu";
     case READ_PARAM:
-      strcpy (buffer, "read");
-      break;
+      return "read";
     case WRITE_PARAM:
-      strcpy (buffer, "write");
-      break;
+      return "write";
     default:
-      strcpy (buffer, "manual");
-      break;
+      return "manual";
     }
 }
 
@@ -202,8 +193,6 @@ void
 prepareRestrictDescription (char *buffer, Account * ac,
 			    stats_limit_cfg * limit)
 {
-  char ch[32];
-  char varName[_DBGOVERNOR_BUFFER_128];
   strcpy (buffer, "");
   if (ac->info.field_restrict == NO_PERIOD)
     {
@@ -215,11 +204,9 @@ prepareRestrictDescription (char *buffer, Account * ac,
   else
     {
 
-      getPeriodName (ch, ac);
-      getParamName (varName, ac);
       sprintf (buffer,
 	       "%s LIMIT_ENFORCED period %s, field %s value %llu/limit %ld restrict level %d",
-	       ac->id, ch, varName,
+	       ac->id, getPeriodName(ac), getParamName(ac),
 	       (unsigned long long) getRestrictValue (ac), getLimitValue (ac,
 									  limit),
 	       ac->restricted + 1);
@@ -235,8 +222,6 @@ void
 prepareRestrictDescriptionLimit (char *buffer, Account * ac,
 				 stats_limit_cfg * limit)
 {
-  char ch[32];
-  char varName[_DBGOVERNOR_BUFFER_128];
   strcpy (buffer, "");
   if (ac->info.field_restrict == NO_PERIOD)
     {
@@ -248,11 +233,9 @@ prepareRestrictDescriptionLimit (char *buffer, Account * ac,
   else
     {
 
-      getPeriodName (ch, ac);
-      getParamName (varName, ac);
       sprintf (buffer,
 	       "%s LIMIT_ENFORCED period %s, field %s value %llu/limit %ld",
-	       ac->id, ch, varName,
+	       ac->id, getPeriodName(ac), getParamName(ac),
 	       (unsigned long long) getRestrictValue (ac), getLimitValue (ac,
 									  limit));
       if (cfg->restrict_format >= 2)
