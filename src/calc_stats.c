@@ -326,7 +326,6 @@ check_restrict (Account * ac)
       ac->info.field_level_restrict = _cur;
       if (!old_restricted)
 	account_restrict (ac, sl);
-/* MYSQLG-697: XXX Log restriction leads governor to fall, should be rewritten
       if (data_cfg.restrict_log)
 	{
 	  char tmp_buf[_DBGOVERNOR_BUFFER_8192];
@@ -336,7 +335,6 @@ check_restrict (Account * ac)
 		     tmp_buf, data_cfg.log_mode);
 
 	}
-*/
       return 1;
 
     }
@@ -364,7 +362,6 @@ check_restrict (Account * ac)
 	  ac->info.field_level_restrict = _short;
 	  if (!old_restricted)
 	    account_restrict (ac, sl);
-/* MYSQLG-697: XXX Log restriction leads governor to fall, should be rewritten
 	  if (data_cfg.restrict_log)
 	    {
 	      char tmp_buf[_DBGOVERNOR_BUFFER_8192];
@@ -374,7 +371,6 @@ check_restrict (Account * ac)
 			 tmp_buf, data_cfg.log_mode);
 
 	    }
-*/
 	  return 1;
 	}
       else
@@ -401,7 +397,6 @@ check_restrict (Account * ac)
 	      ac->info.field_level_restrict = _mid;
 	      if (!old_restricted)
 		account_restrict (ac, sl);
-/* MYSQLG-697: XXX Log restriction leads governor to fall, should be rewritten
 	      if (data_cfg.restrict_log)
 		{
 		  char tmp_buf[_DBGOVERNOR_BUFFER_8192];
@@ -410,7 +405,6 @@ check_restrict (Account * ac)
 			     1,
 			     tmp_buf, data_cfg.log_mode);
 		}
-*/
 	      return 1;
 	    }
 	  else
@@ -438,7 +432,6 @@ check_restrict (Account * ac)
 		  ac->info.field_level_restrict = _long;
 		  if (!old_restricted)
 		    account_restrict (ac, sl);
-/* MYSQLG-697: XXX Log restriction leads governor to fall, should be rewritten
 		  if (data_cfg.restrict_log)
 		    {
 		      char tmp_buf[_DBGOVERNOR_BUFFER_8192];
@@ -448,7 +441,6 @@ check_restrict (Account * ac)
 				 1,
 				 tmp_buf, data_cfg.log_mode);
 		    }
-*/
 		  return 1;
 		}
 	    }
@@ -483,7 +475,6 @@ check_restrict_limit (Account * ac)
       ac->info.field_level_restrict = _cur;
       if (!old_restricted)
 	account_restrict (ac, sl);
-/*
       if (data_cfg.restrict_log)
 	{
 	  char tmp_buf[_DBGOVERNOR_BUFFER_8192];
@@ -493,7 +484,6 @@ check_restrict_limit (Account * ac)
 		     tmp_buf, data_cfg.log_mode);
 
 	}
-*/
       return 1;
 
     }
@@ -515,7 +505,6 @@ check_restrict_limit (Account * ac)
 	  ac->info.field_level_restrict = _short;
 	  if (!old_restricted)
 	    account_restrict (ac, sl);
-/* MYSQLG-697: XXX Log restriction leads governor to fall, should be rewritten
 	  if (data_cfg.restrict_log)
 	    {
 	      char tmp_buf[_DBGOVERNOR_BUFFER_8192];
@@ -525,7 +514,6 @@ check_restrict_limit (Account * ac)
 			 tmp_buf, data_cfg.log_mode);
 
 	    }
-*/
 	  return 1;
 	}
       else
@@ -546,7 +534,6 @@ check_restrict_limit (Account * ac)
 	      ac->info.field_level_restrict = _mid;
 	      if (!old_restricted)
 		account_restrict (ac, sl);
-/* MYSQLG-697: XXX Log restriction leads governor to fall, should be rewritten
 	      if (data_cfg.restrict_log)
 		{
 		  char tmp_buf[_DBGOVERNOR_BUFFER_8192];
@@ -555,7 +542,6 @@ check_restrict_limit (Account * ac)
 			     1,
 			     tmp_buf, data_cfg.log_mode);
 		}
-*/
 	      return 1;
 	    }
 	  else
@@ -577,7 +563,6 @@ check_restrict_limit (Account * ac)
 		  ac->info.field_level_restrict = _long;
 		  if (!old_restricted)
 		    account_restrict (ac, sl);
-/* MYSQLG-697: XXX Log restriction leads governor to fall, should be rewritten
 		  if (data_cfg.restrict_log)
 		    {
 		      char tmp_buf[_DBGOVERNOR_BUFFER_8192];
@@ -587,7 +572,6 @@ check_restrict_limit (Account * ac)
 				 1,
 				 tmp_buf, data_cfg.log_mode);
 		    }
-*/
 		  return 1;
 		}
 	    }
@@ -602,7 +586,6 @@ account_analyze_limit (gpointer * key, Account * ac, void *data)
   stats_limit_cfg cfg_buf;
   stats_limit_cfg *sl = config_get_account_limit (ac->id, &cfg_buf);
   int restrict_period = 0;
-  char tmp_buf[_DBGOVERNOR_BUFFER_8192];
   struct governor_config data_cfg;
   get_config_data (&data_cfg);
 
@@ -639,11 +622,13 @@ account_analyze_limit (gpointer * key, Account * ac, void *data)
 	      ac->info.field_level_restrict = NORESTRICT_PARAM2;
 	      ac->timeout = 0;
 	      account_unrestrict (ac);
-/* MYSQLG-697: XXX Log restriction leads governor to fall, should be rewritten
+		  if (data_cfg.restrict_log)
+		  {
+	      char tmp_buf[_DBGOVERNOR_BUFFER_8192];
 	      sprintf (tmp_buf, "Restrict mode is over for user %s\n",
 		       ac->id);
 	      WRITE_LOG (NULL, 1, tmp_buf, data_cfg.log_mode);
-*/
+		  }
 	    }
 	}
 
@@ -1370,7 +1355,6 @@ dbctl_restrict_set (gpointer key, Account * ac, void *data)
       ac->info.field_level_restrict = _cur;
       account_restrict (ac, sl);
 
-/* MYSQLG-697: XXX Log restriction leads governor to fall, should be rewritten
       if (data_cfg.restrict_log)
 	{
 	  char restrict_buf[_DBGOVERNOR_BUFFER_8192];
@@ -1384,7 +1368,6 @@ dbctl_restrict_set (gpointer key, Account * ac, void *data)
 	  }
 	  WRITE_LOG (&ac->current, 1, restrict_buf, data_cfg.log_mode);
 	}
-*/
     }
 
 }
