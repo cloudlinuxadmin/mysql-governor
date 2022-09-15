@@ -182,11 +182,8 @@ calc_acc_stats (gpointer key, Account * ac, gpointer data)
       us = (User_stats *) g_ptr_array_index (ac->users, i++);
       if (ac->need_dbg)
 	{
-	  char output_buffer[_DBGOVERNOR_BUFFER_2048];
 	  WRITE_LOG (NULL,
 		     1,
-		     output_buffer,
-		     _DBGOVERNOR_BUFFER_2048,
 		     " step 2-%d: proceed user stats %s, c %f, r %llu, w %llu",
 		     internal_info->log_mode,
 		     i, us->id ? us->id : "Unk", fifo_stats_get (us->stats,
@@ -204,11 +201,8 @@ calc_acc_stats (gpointer key, Account * ac, gpointer data)
 
   if (ac->need_dbg)
     {
-      char output_buffer[_DBGOVERNOR_BUFFER_2048];
       WRITE_LOG (NULL,
 		 1,
-		 output_buffer,
-		 _DBGOVERNOR_BUFFER_2048,
 		 " step 3: summary, c %f, r %llu, w %llu",
 		 internal_info->log_mode,
 		 ac->current.cpu, ac->current.read, ac->current.write);
@@ -305,7 +299,6 @@ check_restrict (Account * ac)
 {
   stats_limit_cfg cfg_buf;
   stats_limit_cfg *sl = config_get_account_limit (ac->id, &cfg_buf);
-  char restrict_bufer[_DBGOVERNOR_BUFFER_4096];
   int restrict_period = 0;
   GOVERNORS_FIELD_NAME _cur = is_stat_overlimit_current (&ac->current, sl);
   time_t now;
@@ -340,8 +333,7 @@ check_restrict (Account * ac)
 	  prepareRestrictDescription (tmp_buf, ac, sl);
 	  WRITE_LOG (&ac->current,
 		     1,
-		     tmp_buf,
-		     _DBGOVERNOR_BUFFER_8192, tmp_buf, data_cfg.log_mode);
+		     tmp_buf, data_cfg.log_mode);
 
 	}
 */
@@ -379,8 +371,7 @@ check_restrict (Account * ac)
 	      prepareRestrictDescription (tmp_buf, ac, sl);
 	      WRITE_LOG (&ac->short_average,
 			 1,
-			 tmp_buf,
-			 _DBGOVERNOR_BUFFER_8192, tmp_buf, data_cfg.log_mode);
+			 tmp_buf, data_cfg.log_mode);
 
 	    }
 */
@@ -417,8 +408,6 @@ check_restrict (Account * ac)
 		  prepareRestrictDescription (tmp_buf, ac, sl);
 		  WRITE_LOG (&ac->mid_average,
 			     1,
-			     tmp_buf,
-			     _DBGOVERNOR_BUFFER_8192,
 			     tmp_buf, data_cfg.log_mode);
 		}
 */
@@ -457,8 +446,6 @@ check_restrict (Account * ac)
 
 		      WRITE_LOG (&ac->long_average,
 				 1,
-				 tmp_buf,
-				 _DBGOVERNOR_BUFFER_8192,
 				 tmp_buf, data_cfg.log_mode);
 		    }
 */
@@ -475,7 +462,6 @@ check_restrict_limit (Account * ac)
 {
   stats_limit_cfg cfg_buf;
   stats_limit_cfg *sl = config_get_account_limit (ac->id, &cfg_buf);
-  char restrict_bufer[_DBGOVERNOR_BUFFER_4096];
   int restrict_period = 0;
   GOVERNORS_FIELD_NAME _cur = is_stat_overlimit_current (&ac->current, sl);
   time_t now;
@@ -504,8 +490,7 @@ check_restrict_limit (Account * ac)
 	  prepareRestrictDescriptionLimit (tmp_buf, ac, sl);
 	  WRITE_LOG (&ac->current,
 		     1,
-		     tmp_buf,
-		     _DBGOVERNOR_BUFFER_8192, tmp_buf, data_cfg.log_mode);
+		     tmp_buf, data_cfg.log_mode);
 
 	}
 */
@@ -537,8 +522,7 @@ check_restrict_limit (Account * ac)
 	      prepareRestrictDescriptionLimit (tmp_buf, ac, sl);
 	      WRITE_LOG (&ac->short_average,
 			 1,
-			 tmp_buf,
-			 _DBGOVERNOR_BUFFER_8192, tmp_buf, data_cfg.log_mode);
+			 tmp_buf, data_cfg.log_mode);
 
 	    }
 */
@@ -569,8 +553,6 @@ check_restrict_limit (Account * ac)
 		  prepareRestrictDescriptionLimit (tmp_buf, ac, sl);
 		  WRITE_LOG (&ac->mid_average,
 			     1,
-			     tmp_buf,
-			     _DBGOVERNOR_BUFFER_8192,
 			     tmp_buf, data_cfg.log_mode);
 		}
 */
@@ -603,8 +585,6 @@ check_restrict_limit (Account * ac)
 
 		      WRITE_LOG (&ac->long_average,
 				 1,
-				 tmp_buf,
-				 _DBGOVERNOR_BUFFER_8192,
 				 tmp_buf, data_cfg.log_mode);
 		    }
 */
@@ -662,8 +642,7 @@ account_analyze_limit (gpointer * key, Account * ac, void *data)
 /* MYSQLG-697: XXX Log restriction leads governor to fall, should be rewritten
 	      sprintf (tmp_buf, "Restrict mode is over for user %s\n",
 		       ac->id);
-	      WRITE_LOG (NULL, 1, tmp_buf, _DBGOVERNOR_BUFFER_8192, tmp_buf,
-			 data_cfg.log_mode);
+	      WRITE_LOG (NULL, 1, tmp_buf, data_cfg.log_mode);
 */
 	    }
 	}
@@ -715,8 +694,6 @@ account_analyze (gpointer * key, Account * ac, void *data)
 			   ac->id, ac->timeout, ac->start_count);
 		  WRITE_LOG (NULL,
 			     1,
-			     tmp_buf,
-			     _DBGOVERNOR_BUFFER_8192,
 			     tmp_buf, data_cfg.log_mode);
 		}
 	      //} else if (ac->start_count + data_cfg.timeout <= now) {
@@ -734,8 +711,7 @@ account_analyze (gpointer * key, Account * ac, void *data)
 		       ac->timeout, ac->start_count);
 	      WRITE_LOG (NULL,
 			 1,
-			 tmp_buf,
-			 _DBGOVERNOR_BUFFER_8192, tmp_buf, data_cfg.log_mode);
+			 tmp_buf, data_cfg.log_mode);
 	    }
 	}
     }
@@ -756,11 +732,8 @@ add_user_stats_from_counter (gpointer key, Stat_counters * item,
       int len = strlen (internal_info->dbg);
       if (!strncmp (internal_info->dbg, (char *) key, len))
 	{
-	  char output_buffer[_DBGOVERNOR_BUFFER_2048];
 	  WRITE_LOG (NULL,
 		     1,
-		     output_buffer,
-		     _DBGOVERNOR_BUFFER_2048,
 		     " step 1: counters c %f, r %llu, w %llu, tm %f",
 		     internal_info->log_mode,
 		     item->s.cpu, item->s.read, item->s.write,
@@ -1255,14 +1228,11 @@ clac_stats_difference_inner_add_to_counters (long long cpu, long long read,
 void
 print_to_restrict_log_account_info (gpointer * key, Account * ac, void *data)
 {
-  char buffer[_DBGOVERNOR_BUFFER_2048];
   struct governor_config data_cfg;
   get_config_data (&data_cfg);
 
   WRITE_LOG (NULL,
 	     1,
-	     buffer,
-	     _DBGOVERNOR_BUFFER_2048,
 	     "Screen item %s Cur: cpu %f, read %lld, write %lld | Shrt: cpu %f, read %lld, write %lld | Mid: cpu %f, read %lld, write %lld | Lng: cpu %f, read %lld, write %lld |",
 	     data_cfg.log_mode,
 	     ac->id, ac->current.cpu, ac->current.read, ac->current.write,
@@ -1276,22 +1246,17 @@ print_to_restrict_log_account_info (gpointer * key, Account * ac, void *data)
 void
 print_to_restrict_log_stats (void *data)
 {
-  char buffer[_DBGOVERNOR_BUFFER_2048];
   struct governor_config data_cfg;
   get_config_data (&data_cfg);
 
   time_t tm = time (NULL);
   WRITE_LOG (NULL,
 	     1,
-	     buffer,
-	     _DBGOVERNOR_BUFFER_2048,
 	     "Begin screen %ld", data_cfg.log_mode, tm);
   g_hash_table_foreach (accounts, (GHFunc) print_to_restrict_log_account_info,
 			NULL);
   WRITE_LOG (NULL,
 	     1,
-	     buffer,
-	     _DBGOVERNOR_BUFFER_2048,
 	     "End screen %ld", data_cfg.log_mode, tm);
 
 }
@@ -1335,7 +1300,6 @@ void
 dbctl_restrict_set (gpointer key, Account * ac, void *data)
 {
   int first = 0;
-  char tmp_buf[_DBGOVERNOR_BUFFER_8192];
   DbCtlCommand *command = (DbCtlCommand *) data;
   struct governor_config data_cfg;
   get_config_data (&data_cfg);
@@ -1362,7 +1326,6 @@ dbctl_restrict_set (gpointer key, Account * ac, void *data)
     {
       stats_limit_cfg cfg_buf;
       stats_limit_cfg *sl = config_get_account_limit (ac->id, &cfg_buf);
-      char restrict_bufer[_DBGOVERNOR_BUFFER_4096];
       int restrict_period = 0, timeout_coeff = 0;
       GOVERNORS_FIELD_NAME _cur =
 	is_stat_overlimit_current (&ac->current, sl);
@@ -1419,8 +1382,7 @@ dbctl_restrict_set (gpointer key, Account * ac, void *data)
 	  {
 	    prepareRestrictDescription (restrict_buf, ac, sl);
 	  }
-	  WRITE_LOG (&ac->current, 1, tmp_buf, _DBGOVERNOR_BUFFER_8192,
-		     restrict_buf, data_cfg.log_mode);
+	  WRITE_LOG (&ac->current, 1, restrict_buf, data_cfg.log_mode);
 	}
 */
     }
@@ -1497,8 +1459,7 @@ dbctl_unrestrict_set (gpointer key, Account * ac, void *data)
 	{
 	  sprintf (tmp_buf, "No unrestrict yet for %s %d %ld\n",
 		   ac->id, ac->timeout, ac->start_count);
-	  WRITE_LOG (NULL, 1, tmp_buf, _DBGOVERNOR_BUFFER_8192,
-		     tmp_buf, data_cfg.log_mode);
+	  WRITE_LOG (NULL, 1, tmp_buf, data_cfg.log_mode);
 	}
     }
 }
@@ -1506,7 +1467,6 @@ dbctl_unrestrict_set (gpointer key, Account * ac, void *data)
 void
 dbctl_unrestrict_all_set (gpointer key, Account * ac, void *data)
 {
-  char tmp_buf[_DBGOVERNOR_BUFFER_8192];
   struct governor_config data_cfg;
   get_config_data (&data_cfg);
 
@@ -1557,7 +1517,6 @@ add_all_users_to_list (gpointer key, Account * ac, void *data)
 
 void reinit_users_list(void)
 {
-	char buffer[_DBGOVERNOR_BUFFER_2048];
 	struct governor_config data_cfg;
 	GHashTable *ac = NULL;
 
@@ -1565,16 +1524,14 @@ void reinit_users_list(void)
 
 	if (lock_write_map () == 0) {
 		if (!get_map_file (&data_cfg)) {
-			WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-				"Failed read dbuser-map file", data_cfg.log_mode);
+			WRITE_LOG(NULL, 0, "Failed read dbuser-map file", data_cfg.log_mode);
 		}
 		unlock_rdwr_map ();
 	}
 
 	ac = (GHashTable *) get_accounts ();
 	if (ac == NULL) {
-		WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-			"Failed to get accounts, service db_governor should be restarted.", data_cfg.log_mode);
+		WRITE_LOG(NULL, 0, "Failed to get accounts, service db_governor should be restarted.", data_cfg.log_mode);
 		return;
 	}
 
@@ -1591,8 +1548,7 @@ void reinit_users_list(void)
 	}
 
 	if (data_cfg.log_mode == DEBUG_MODE) {
-		WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-			"Reinit users list completed", data_cfg.log_mode);
+		WRITE_LOG(NULL, 0, "Reinit users list completed", data_cfg.log_mode);
 	}
 }
 

@@ -85,7 +85,6 @@ db_connect_common (MYSQL ** internal_db, const char *host,
   char *hst = NULL;
   char *user = NULL;
   char *password = NULL;
-  char buf[_DBGOVERNOR_BUFFER_512];
   int db_connection_method = 0;
   my_bool reconnect = 1;
 
@@ -105,8 +104,7 @@ db_connect_common (MYSQL ** internal_db, const char *host,
   if (*internal_db != NULL)
     {
       //Already connected
-      WRITE_LOG (NULL, 0, buf, _DBGOVERNOR_BUFFER_512,
-		 "Connection already exists", data_cfg.log_mode);
+      WRITE_LOG (NULL, 0, "Connection already exists", data_cfg.log_mode);
       return -1;
     }
 
@@ -115,8 +113,7 @@ db_connect_common (MYSQL ** internal_db, const char *host,
   *internal_db = (*_mysql_init) (NULL);
   if (*internal_db == NULL)
     {
-      WRITE_LOG (NULL, 0, buf, _DBGOVERNOR_BUFFER_512,
-		 "Can't init mysql structure", data_cfg.log_mode);
+      WRITE_LOG (NULL, 0, "Can't init mysql structure", data_cfg.log_mode);
       return -1;
     }
 
@@ -161,8 +158,7 @@ db_connect_common (MYSQL ** internal_db, const char *host,
         }
   }
 
-  WRITE_LOG (NULL, 0, buf, _DBGOVERNOR_BUFFER_512,
-	     "Try to connect with options from dbgovernor config file",
+  WRITE_LOG (NULL, 0, "Try to connect with options from dbgovernor config file",
 	     data_cfg.log_mode);
   strlcpy (work_user, "", USERNAMEMAXLEN);
   if (user_name)
@@ -173,12 +169,10 @@ db_connect_common (MYSQL ** internal_db, const char *host,
 			       db_name, 0, unix_socket_address, 0))
     {
       //Previous attempt failed, try with data from my.cnf, .my.cnf
-      WRITE_LOG (NULL, 0, buf, _DBGOVERNOR_BUFFER_512,
-		 "Try to connect with no password under root",
+      WRITE_LOG (NULL, 0, "Try to connect with no password under root",
 		 data_cfg.log_mode);
 	//Error again, stop to try
-      WRITE_LOG (NULL, 0, buf, _DBGOVERNOR_BUFFER_512,
-		    db_getlasterror (*internal_db), data_cfg.log_mode);
+      WRITE_LOG (NULL, 0, db_getlasterror (*internal_db), data_cfg.log_mode);
       //Try to connect again
       if (user)
 	strlcpy (work_user, user, USERNAMEMAXLEN);
@@ -187,11 +181,9 @@ db_connect_common (MYSQL ** internal_db, const char *host,
 				   db_name, 0, unix_socket_address, 0))
 	{
 	  //Error again, stop to try
-	  WRITE_LOG (NULL, 0, buf, _DBGOVERNOR_BUFFER_512,
-		     db_getlasterror (*internal_db), data_cfg.log_mode);
+	  WRITE_LOG (NULL, 0, db_getlasterror (*internal_db), data_cfg.log_mode);
 
-	  WRITE_LOG (NULL, 0, buf, _DBGOVERNOR_BUFFER_512,
-                 "Try to connect with no password, no host, no user under root",
+	  WRITE_LOG (NULL, 0, "Try to connect with no password, no host, no user under root",
                  data_cfg.log_mode);
           (*_mysql_options) (*internal_db, MYSQL_OPT_RECONNECT, &reconnect);
           if (!_load_defaults){
@@ -204,8 +196,7 @@ db_connect_common (MYSQL ** internal_db, const char *host,
           if (!(*_mysql_real_connect) (*internal_db, NULL, NULL, NULL,
                                    NULL, 0, unix_socket_address, 0)){
               	  //Error again, stop to try
-	      WRITE_LOG (NULL, 0, buf, _DBGOVERNOR_BUFFER_512,
-		     db_getlasterror (*internal_db), data_cfg.log_mode);
+	      WRITE_LOG (NULL, 0, db_getlasterror (*internal_db), data_cfg.log_mode);
               return -1;
           }
 
@@ -246,7 +237,6 @@ db_connect_common (MYSQL ** internal_db, const char *host,
 static int
 local_reconnect (MYSQL ** mysql_internal, MODE_TYPE debug_mode)
 {
-  char buf[_DBGOVERNOR_BUFFER_512];
   struct governor_config data_cfg;
   get_config_data (&data_cfg);
   char *unm = NULL;
@@ -257,8 +247,7 @@ local_reconnect (MYSQL ** mysql_internal, MODE_TYPE debug_mode)
   *mysql_internal = (*_mysql_init) (NULL);
   if (*mysql_internal == NULL)
     {
-      WRITE_LOG (NULL, 0, buf, _DBGOVERNOR_BUFFER_512,
-		 "Can't init mysql structure(on reconnect)",
+      WRITE_LOG (NULL, 0, "Can't init mysql structure(on reconnect)",
 		 data_cfg.log_mode);
       return -1;
     }
@@ -285,8 +274,7 @@ local_reconnect (MYSQL ** mysql_internal, MODE_TYPE debug_mode)
           if (!(*_mysql_real_connect) (*mysql_internal, NULL, NULL, NULL,
                                    NULL, 0, unix_socket_address, 0)){
               	  //Error again, stop to try
-	      WRITE_LOG (NULL, 0, buf, _DBGOVERNOR_BUFFER_512,
-		     db_getlasterror (*mysql_internal), data_cfg.log_mode);
+	      WRITE_LOG (NULL, 0, db_getlasterror (*mysql_internal), data_cfg.log_mode);
               return -1;
           }
     }
@@ -298,7 +286,6 @@ int
 db_mysql_exec_query (const char *query, MYSQL ** mysql_internal,
 		     MODE_TYPE debug_mode)
 {
-  char buf[_DBGOVERNOR_BUFFER_2048];
   struct governor_config data_cfg;
   get_config_data (&data_cfg);
 
@@ -326,14 +313,12 @@ db_mysql_exec_query (const char *query, MYSQL ** mysql_internal,
 	{
 	  if (debug_mode != DEBUG_MODE)
 	    {
-	      WRITE_LOG (NULL, 0, buf, _DBGOVERNOR_BUFFER_2048,
-			 db_getlasterror (*mysql_internal),
+	      WRITE_LOG (NULL, 0, db_getlasterror (*mysql_internal),
 			 data_cfg.log_mode);
 	    }
 	  else
 	    {
-	      WRITE_LOG (NULL, 0, buf, _DBGOVERNOR_BUFFER_2048,
-			 "%s --- Request: %s",
+	      WRITE_LOG (NULL, 0, "%s --- Request: %s",
 			 data_cfg.log_mode, db_getlasterror (*mysql_internal),
 			 query);
 	    }
@@ -521,7 +506,6 @@ void
 update_user_limit_no_flush (char *user_name, unsigned int limit,
 			    MODE_TYPE debug_mode)
 {
-  char buffer[_DBGOVERNOR_BUFFER_2048];
   char sql_buffer[_DBGOVERNOR_BUFFER_8192];
   char user_name_alloc[USERNAMEMAXLEN * 2];
   MYSQL_RES *res;
@@ -549,14 +533,12 @@ update_user_limit_no_flush (char *user_name, unsigned int limit,
     {
       if (debug_mode != DEBUG_MODE)
 	{
-	  WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		     "Can't execute sql request. Restriction aborted",
+	  WRITE_LOG (NULL, 0, "Can't execute sql request. Restriction aborted",
 		     data_cfg.log_mode);
 	}
       else
 	{
-	  WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		     "%s --- Request: %s",
+	  WRITE_LOG (NULL, 0, "%s --- Request: %s",
 		     data_cfg.log_mode,
 		     "Can't execute sql request. Restriction aborted",
 		     sql_buffer);
@@ -586,7 +568,6 @@ flush_user_stat (MODE_TYPE debug_mode)
 void
 flush_user_priv (MODE_TYPE debug_mode)
 {
-  char buffer[_DBGOVERNOR_BUFFER_2048];
   MYSQL_RES *res;
   struct governor_config data_cfg;
   get_config_data (&data_cfg);
@@ -598,13 +579,11 @@ flush_user_priv (MODE_TYPE debug_mode)
     {
       if (debug_mode != DEBUG_MODE)
 	{
-	  WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		     "Can't flush user privs", data_cfg.log_mode);
+	  WRITE_LOG (NULL, 0, "Can't flush user privs", data_cfg.log_mode);
 	}
       else
 	{
-	  WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		     "%s --- Request: %s",
+	  WRITE_LOG (NULL, 0, "%s --- Request: %s",
 		     data_cfg.log_mode, "Can't flush user privs",
 		     QUERY_FLUSH_USER_PRIV);
 	}
@@ -618,7 +597,6 @@ flush_user_priv (MODE_TYPE debug_mode)
 void
 kill_query (char *user_name, MODE_TYPE debug_mode)
 {
-  char buffer[_DBGOVERNOR_BUFFER_2048];
   char sql_buffer[_DBGOVERNOR_BUFFER_8192];
   char user_name_alloc[USERNAMEMAXLEN * 2];
   MYSQL_RES *res;
@@ -636,14 +614,12 @@ kill_query (char *user_name, MODE_TYPE debug_mode)
 
       if (debug_mode != DEBUG_MODE)
 	{
-	  WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		     "Can't execute sql request. Kill query",
+	  WRITE_LOG (NULL, 0, "Can't execute sql request. Kill query",
 		     data_cfg.log_mode);
 	}
       else
 	{
-	  WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		     "%s --- Request: %s",
+	  WRITE_LOG (NULL, 0, "%s --- Request: %s",
 		     data_cfg.log_mode,
 		     "Can't execute sql request. Kill query", sql_buffer);
 	}
@@ -656,7 +632,6 @@ kill_query (char *user_name, MODE_TYPE debug_mode)
 void
 kill_query_by_id (long id, MODE_TYPE debug_mode, MYSQL ** mysql_internal)
 {
-  char buffer[_DBGOVERNOR_BUFFER_2048];
   char sql_buffer[_DBGOVERNOR_BUFFER_8192];
   MYSQL_RES *res;
   struct governor_config data_cfg;
@@ -671,14 +646,12 @@ kill_query_by_id (long id, MODE_TYPE debug_mode, MYSQL ** mysql_internal)
 
       if (debug_mode != DEBUG_MODE)
 	{
-	  WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		     "Can't execute sql request. Kill query",
+	  WRITE_LOG (NULL, 0, "Can't execute sql request. Kill query",
 		     data_cfg.log_mode);
 	}
       else
 	{
-	  WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		     "%s --- Request: %s",
+	  WRITE_LOG (NULL, 0, "%s --- Request: %s",
 		     data_cfg.log_mode,
 		     "Can't execute sql request. Kill query", sql_buffer);
 	}
@@ -691,7 +664,6 @@ kill_query_by_id (long id, MODE_TYPE debug_mode, MYSQL ** mysql_internal)
 void
 governor_enable (MODE_TYPE debug_mode)
 {
-  char buffer[_DBGOVERNOR_BUFFER_2048];
   MYSQL_RES *res;
   struct governor_config data_cfg;
   get_config_data (&data_cfg);
@@ -702,8 +674,7 @@ governor_enable (MODE_TYPE debug_mode)
 			       &mysql_send_governor, debug_mode))
 	{
 
-	  WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		     "Can't execute sql request. ENABLE_GOVERNOR_PLG",
+	  WRITE_LOG (NULL, 0, "Can't execute sql request. ENABLE_GOVERNOR_PLG",
 		     data_cfg.log_mode);
 
 	}
@@ -711,8 +682,7 @@ governor_enable (MODE_TYPE debug_mode)
 			       &mysql_send_governor, debug_mode))
 	{
 
-	  WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		     "Can't execute sql request. ENABLE_GOVERNOR_SECOND",
+	  WRITE_LOG (NULL, 0, "Can't execute sql request. ENABLE_GOVERNOR_SECOND",
 		     data_cfg.log_mode);
 
 	}
@@ -723,8 +693,7 @@ governor_enable (MODE_TYPE debug_mode)
 			       &mysql_send_governor, debug_mode))
 	{
 
-	  WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		     "Can't execute sql request. ENABLE_GOVERNOR",
+	  WRITE_LOG (NULL, 0, "Can't execute sql request. ENABLE_GOVERNOR",
 		     data_cfg.log_mode);
 
 	}
@@ -739,7 +708,6 @@ governor_enable (MODE_TYPE debug_mode)
 void
 governor_enable_reconn (MODE_TYPE debug_mode)
 {
-  char buffer[_DBGOVERNOR_BUFFER_2048];
   MYSQL_RES *res;
   struct governor_config data_cfg;
   get_config_data (&data_cfg);
@@ -750,8 +718,7 @@ governor_enable_reconn (MODE_TYPE debug_mode)
 			       &mysql_send_governor, debug_mode))
 	{
 
-	  WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		     "Can't execute sql request. ENABLE_GOVERNOR",
+	  WRITE_LOG (NULL, 0, "Can't execute sql request. ENABLE_GOVERNOR",
 		     data_cfg.log_mode);
 
 	}
@@ -759,8 +726,7 @@ governor_enable_reconn (MODE_TYPE debug_mode)
 			       &mysql_send_governor, debug_mode))
 	{
 
-	  WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		     "Can't execute sql request. ENABLE_GOVERNOR_SECOND",
+	  WRITE_LOG (NULL, 0, "Can't execute sql request. ENABLE_GOVERNOR_SECOND",
 		     data_cfg.log_mode);
 
 	}
@@ -771,8 +737,7 @@ governor_enable_reconn (MODE_TYPE debug_mode)
 			       &mysql_send_governor, debug_mode))
 	{
 
-	  WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		     "Can't execute sql request. ENABLE_GOVERNOR",
+	  WRITE_LOG (NULL, 0, "Can't execute sql request. ENABLE_GOVERNOR",
 		     data_cfg.log_mode);
 
 	}
@@ -787,7 +752,6 @@ governor_enable_reconn (MODE_TYPE debug_mode)
 void
 governor_enable_lve (MODE_TYPE debug_mode)
 {
-  char buffer[_DBGOVERNOR_BUFFER_2048];
   MYSQL_RES *res;
   struct governor_config data_cfg;
   get_config_data (&data_cfg);
@@ -798,8 +762,7 @@ governor_enable_lve (MODE_TYPE debug_mode)
 			       &mysql_send_governor, debug_mode))
 	{
 
-	  WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		     "Can't execute sql request. ENABLE_GOVERNOR",
+	  WRITE_LOG (NULL, 0, "Can't execute sql request. ENABLE_GOVERNOR",
 		     data_cfg.log_mode);
 
 	}
@@ -807,8 +770,7 @@ governor_enable_lve (MODE_TYPE debug_mode)
 			       &mysql_send_governor, debug_mode))
 	{
 
-	  WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		     "Can't execute sql request. ENABLE_GOVERNOR_SECOND",
+	  WRITE_LOG (NULL, 0, "Can't execute sql request. ENABLE_GOVERNOR_SECOND",
 		     data_cfg.log_mode);
 
 	}
@@ -819,8 +781,7 @@ governor_enable_lve (MODE_TYPE debug_mode)
 			       &mysql_send_governor, debug_mode))
 	{
 
-	  WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		     "Can't execute sql request. ENABLE_GOVERNOR",
+	  WRITE_LOG (NULL, 0, "Can't execute sql request. ENABLE_GOVERNOR",
 		     data_cfg.log_mode);
 
 	}
@@ -835,7 +796,6 @@ governor_enable_lve (MODE_TYPE debug_mode)
 void
 governor_enable_reconn_lve (MODE_TYPE debug_mode)
 {
-  char buffer[_DBGOVERNOR_BUFFER_2048];
   MYSQL_RES *res;
   struct governor_config data_cfg;
   get_config_data (&data_cfg);
@@ -846,8 +806,7 @@ governor_enable_reconn_lve (MODE_TYPE debug_mode)
 			       &mysql_send_governor, debug_mode))
 	{
 
-	  WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		     "Can't execute sql request. ENABLE_GOVERNOR",
+	  WRITE_LOG (NULL, 0, "Can't execute sql request. ENABLE_GOVERNOR",
 		     data_cfg.log_mode);
 
 	}
@@ -855,8 +814,7 @@ governor_enable_reconn_lve (MODE_TYPE debug_mode)
 			       &mysql_send_governor, debug_mode))
 	{
 
-	  WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		     "Can't execute sql request. ENABLE_GOVERNOR_SECOND",
+	  WRITE_LOG (NULL, 0, "Can't execute sql request. ENABLE_GOVERNOR_SECOND",
 		     data_cfg.log_mode);
 
 	}
@@ -867,8 +825,7 @@ governor_enable_reconn_lve (MODE_TYPE debug_mode)
 			       &mysql_send_governor, debug_mode))
 	{
 
-	  WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		     "Can't execute sql request. ENABLE_GOVERNOR",
+	  WRITE_LOG (NULL, 0, "Can't execute sql request. ENABLE_GOVERNOR",
 		     data_cfg.log_mode);
 
 	}
@@ -884,7 +841,6 @@ governor_enable_reconn_lve (MODE_TYPE debug_mode)
 void
 kill_connection (char *user_name, MODE_TYPE debug_mode)
 {
-  char buffer[_DBGOVERNOR_BUFFER_2048];
   char sql_buffer[_DBGOVERNOR_BUFFER_8192];
   char user_name_alloc[USERNAMEMAXLEN * 2];
   MYSQL_RES *res;
@@ -902,14 +858,12 @@ kill_connection (char *user_name, MODE_TYPE debug_mode)
 
       if (debug_mode != DEBUG_MODE)
 	{
-	  WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		     "Can't execute sql request. Kill connection",
+	  WRITE_LOG (NULL, 0, "Can't execute sql request. Kill connection",
 		     data_cfg.log_mode);
 	}
       else
 	{
-	  WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		     "%s --- Request: %s",
+	  WRITE_LOG (NULL, 0, "%s --- Request: %s",
 		     data_cfg.log_mode,
 		     "Can't execute sql request. Kill connection",
 		     sql_buffer);
@@ -925,7 +879,6 @@ db_connect (const char *host, const char *user_name,
 	    const char *user_password, const char *db_name, int argc,
 	    char *argv[], MODE_TYPE debug_mode)
 {
-  char buffer[_DBGOVERNOR_BUFFER_2048];
   struct governor_config data_cfg;
   get_config_data (&data_cfg);
 
@@ -935,27 +888,23 @@ db_connect (const char *host, const char *user_name,
   strcpy (global_user_password, "");
   strcpy (global_db_name, "");
 
-  WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-	     "Open govern connection operation", data_cfg.log_mode);
+  WRITE_LOG (NULL, 0, "Open govern connection operation", data_cfg.log_mode);
 
   if (db_connect_common (&mysql_send_governor, host, user_name, user_password,
 			 db_name, debug_mode, argc, argv, 1) < 0)
     {
-      WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		 "Send governor connection error", data_cfg.log_mode);
+      WRITE_LOG (NULL, 0, "Send governor connection error", data_cfg.log_mode);
 
       return -1;
     }
   else
     {
-      WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		 "Open write connection operation", data_cfg.log_mode);
+      WRITE_LOG (NULL, 0, "Open write connection operation", data_cfg.log_mode);
       if (db_connect_common (&mysql_do_command, host, user_name,
 			     user_password, db_name, debug_mode, argc, argv,
 			     0) < 0)
 	{
-	  WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		     "Write connection error", data_cfg.log_mode);
+	  WRITE_LOG (NULL, 0, "Write connection error", data_cfg.log_mode);
 	  return -1;
 	}
       else
@@ -964,8 +913,7 @@ db_connect (const char *host, const char *user_name,
 				 user_password, db_name, debug_mode, argc,
 				 argv, 0) < 0)
 	    {
-	      WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-			 "Kill connection error", data_cfg.log_mode);
+	      WRITE_LOG (NULL, 0, "Kill connection error", data_cfg.log_mode);
 	      return -1;
 	    }
 	}
@@ -1020,8 +968,7 @@ check_mysql_version (MODE_TYPE debug_mode)
       if (db_mysql_exec_query (QUERY_GET_SERVER_INFO, &mysql_send_governor,
 			       debug_mode))
 	{
-	  WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		     "Get mysql vesrion request failed", data_cfg.log_mode);
+	  WRITE_LOG (NULL, 0, "Get mysql vesrion request failed", data_cfg.log_mode);
 
 	  return 0;
 	}
@@ -1042,19 +989,16 @@ check_mysql_version (MODE_TYPE debug_mode)
 
 	      snprintf (outbuffer, _DBGOVERNOR_BUFFER_2048 - 1,
 			"MySQL version correct %s", buffer);
-	      WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-			 outbuffer, data_cfg.log_mode);
+	      WRITE_LOG (NULL, 0, outbuffer, data_cfg.log_mode);
 	      if (is_plugin_version)
 		{
 		  snprintf (outbuffer, _DBGOVERNOR_BUFFER_2048 - 1,
 			    "Governor with plugin mode enabled");
-		  WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-			     outbuffer, data_cfg.log_mode);
+		  WRITE_LOG (NULL, 0, outbuffer, data_cfg.log_mode);
 		}
 	      snprintf (outbuffer, _DBGOVERNOR_BUFFER_2048 - 1,
 			    "MariaDB version 10.4+ %sFOUND", is_mariadb_104plus ? "" : "NOT ");
-	      WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-			     outbuffer, data_cfg.log_mode);
+	      WRITE_LOG (NULL, 0, outbuffer, data_cfg.log_mode);
 	      (*_mysql_free_result) (res);
 	      return 1;
 	    }
@@ -1064,8 +1008,7 @@ check_mysql_version (MODE_TYPE debug_mode)
 			_DBGOVERNOR_BUFFER_2048 - 1,
 			"Update your MySQL to CLL version from repo.cloudlinux.com. Current is %s",
 			buffer);
-	      WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-			 outbuffer, data_cfg.log_mode);
+	      WRITE_LOG (NULL, 0, outbuffer, data_cfg.log_mode);
 	      (*_mysql_free_result) (res);
 	      return 0;
 	    }
@@ -1074,16 +1017,14 @@ check_mysql_version (MODE_TYPE debug_mode)
       else
 	{
 	  (*_mysql_free_result) (res);
-	  WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		     "Unknown mysql version", data_cfg.log_mode);
+	  WRITE_LOG (NULL, 0, "Unknown mysql version", data_cfg.log_mode);
 	  return 0;
 	}
     }
   else
     {
 
-      WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		 "Connection to db is absent", data_cfg.log_mode);
+      WRITE_LOG (NULL, 0, "Connection to db is absent", data_cfg.log_mode);
       return 0;
     }
 }
@@ -1098,7 +1039,6 @@ get_work_user (void)
 void
 lve_connection (char *user_name, MODE_TYPE debug_mode)
 {
-  char buffer[_DBGOVERNOR_BUFFER_2048];
   char sql_buffer[_DBGOVERNOR_BUFFER_8192];
   char user_name_alloc[USERNAMEMAXLEN * 2];
   MYSQL_RES *res;
@@ -1114,14 +1054,12 @@ lve_connection (char *user_name, MODE_TYPE debug_mode)
 
       if (debug_mode != DEBUG_MODE)
 	{
-	  WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		     "Can't execute sql request. LVE connection",
+	  WRITE_LOG (NULL, 0, "Can't execute sql request. LVE connection",
 		     data_cfg.log_mode);
 	}
       else
 	{
-	  WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		     "%s --- Request: %s",
+	  WRITE_LOG (NULL, 0, "%s --- Request: %s",
 		     data_cfg.log_mode,
 		     "Can't execute sql request. LVE connection", sql_buffer);
 	}
@@ -1183,8 +1121,7 @@ log_user_queries (char *user_name, MODE_TYPE debug_mode)
   snprintf (sql_buffer, _DBGOVERNOR_BUFFER_8192, QUERY_GET_PROCESSLIST_INFO);
   if (db_mysql_exec_query (sql_buffer, &mysql_do_command, debug_mode))
     {
-      WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		 "Get show processlist failed", data_cfg.log_mode);
+      WRITE_LOG (NULL, 0, "Get show processlist failed", data_cfg.log_mode);
       return;
     }
 
@@ -1215,8 +1152,7 @@ log_user_queries (char *user_name, MODE_TYPE debug_mode)
       else
 	{
 	  (*_mysql_free_result) (res);
-	  WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		     "Can't open file %s", data_cfg.log_mode, file_name);
+	  WRITE_LOG (NULL, 0, "Can't open file %s", data_cfg.log_mode, file_name);
 	  return;
 	}
     }
@@ -1238,8 +1174,7 @@ activate_plugin (MODE_TYPE debug_mode)
       MYSQL_RES *res;
       MYSQL_ROW row;
       unsigned long *lengths;
-      char buffer[_DBGOVERNOR_BUFFER_2048],
-	outbuffer[_DBGOVERNOR_BUFFER_2048];
+      char buffer[_DBGOVERNOR_BUFFER_2048];
       struct governor_config data_cfg;
       get_config_data (&data_cfg);
 
@@ -1248,8 +1183,7 @@ activate_plugin (MODE_TYPE debug_mode)
 	  if (db_mysql_exec_query (QUERY_GET_PLUGIN_INFO,
 				   &mysql_send_governor, debug_mode))
 	    {
-	      WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-			 "Get mysql plugin request failed",
+	      WRITE_LOG (NULL, 0, "Get mysql plugin request failed",
 			 data_cfg.log_mode);
 	      return 0;
 	    }
@@ -1275,8 +1209,7 @@ activate_plugin (MODE_TYPE debug_mode)
 		    {
 		    }
 		  {
-		    WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-			       "Set mysql plugin request failed",
+		    WRITE_LOG (NULL, 0, "Set mysql plugin request failed",
 			       data_cfg.log_mode);
 		    return 0;
 		  }
@@ -1289,8 +1222,7 @@ activate_plugin (MODE_TYPE debug_mode)
       else
 	{
 
-	  WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		     "Connection to db is absent", data_cfg.log_mode);
+	  WRITE_LOG (NULL, 0, "Connection to db is absent", data_cfg.log_mode);
 	  return 0;
 	}
     }
@@ -1300,7 +1232,6 @@ activate_plugin (MODE_TYPE debug_mode)
 unsigned
 select_max_user_connections (char *username, MODE_TYPE debug_mode)
 {
-  char buffer[_DBGOVERNOR_BUFFER_2048];
   char select_buffer[_DBGOVERNOR_BUFFER_8192] = {0};
   MYSQL_RES *res;
   MYSQL_ROW row;
@@ -1314,15 +1245,13 @@ select_max_user_connections (char *username, MODE_TYPE debug_mode)
   snprintf(select_buffer, _DBGOVERNOR_BUFFER_8192 - 1, QUERY_SELECT_MAX_USER_CONNECTIONS, username);
   if (db_mysql_exec_query(select_buffer, &mysql_do_command, debug_mode) != 0)
     {
-      WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		 "Can't execute request for max_user_connections (user: %s)", debug_mode, username);
+      WRITE_LOG (NULL, 0, "Can't execute request for max_user_connections (user: %s)", debug_mode, username);
       return 0;
     }
   res = (*_mysql_store_result) (mysql_do_command);
   if (res == NULL)
     {
-      WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		 "Can't store result for max_user_connections (user: %s)", debug_mode, username);
+      WRITE_LOG (NULL, 0, "Can't store result for max_user_connections (user: %s)", debug_mode, username);
       return 0;
     }
   row = (*_mysql_fetch_row) (res);
@@ -1336,8 +1265,7 @@ select_max_user_connections (char *username, MODE_TYPE debug_mode)
     We store in dbuser-map all db accounts, even temporary ones, in order to prevent
     denial-of-service attack via phpMyAdmin.
 */
-	WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		   "Can't fetch data from for max_user_connections (user: %s)", debug_mode, username);
+	WRITE_LOG (NULL, 0, "Can't fetch data from for max_user_connections (user: %s)", debug_mode, username);
 
     }
     (*_mysql_free_result) (res);

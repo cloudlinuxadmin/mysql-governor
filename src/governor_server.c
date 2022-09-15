@@ -78,7 +78,6 @@ declsighandler (void)
 void
 create_socket (void)
 {
-  char buffer[_DBGOVERNOR_BUFFER_2048];
   int i, s, len;
   struct sockaddr_un saun;
   int ret;
@@ -90,8 +89,7 @@ create_socket (void)
 
   if ((global_socket = socket (AF_UNIX, SOCK_STREAM, 0)) < 0)
     {
-      WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		 "Can't create socket", data_cfg.log_mode);
+      WRITE_LOG (NULL, 0, "Can't create socket", data_cfg.log_mode);
       close_log ();
       close_restrict_log ();
       exit (EXIT_FAILURE);
@@ -100,8 +98,7 @@ create_socket (void)
   if (setsockopt (global_socket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof opt)
       < 0)
     {
-      WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		 "Can't change socket options", data_cfg.log_mode);
+      WRITE_LOG (NULL, 0, "Can't change socket options", data_cfg.log_mode);
       close_log ();
       close_restrict_log ();
       exit (EXIT_FAILURE);
@@ -115,8 +112,7 @@ create_socket (void)
 
   if (bind (global_socket, (struct sockaddr *) &saun, len) < 0)
     {
-      WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		 "Can't bind to socket address %s", data_cfg.log_mode,
+      WRITE_LOG (NULL, 0, "Can't bind to socket address %s", data_cfg.log_mode,
 		 SOCK_ADDRESS);
       close_log ();
       close_restrict_log ();
@@ -125,8 +121,7 @@ create_socket (void)
 
   if (listen (global_socket, 32) < 0)
     {
-      WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		 "Can't listen on socket", data_cfg.log_mode);
+      WRITE_LOG (NULL, 0, "Can't listen on socket", data_cfg.log_mode);
       close_log ();
       close_restrict_log ();
       exit (EXIT_FAILURE);
@@ -217,7 +212,6 @@ term_handler (int i)
 void *
 get_data_from_client (void *data)
 {
-  char buffer[_DBGOVERNOR_BUFFER_2048];
   int ret;
   int timeout = 1000;
   struct sockaddr_un fsaun;
@@ -263,8 +257,7 @@ get_data_from_client (void *data)
       if (ret == -1)
 	{
 	  //Try to recreate socket
-	  WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		     "Error on polling socket. Recreating socket",
+	  WRITE_LOG (NULL, 0, "Error on polling socket. Recreating socket",
 		     data_cfg.log_mode);
 	  for (i = 0; (i < nfds) && (ret); i++)
 	    {
@@ -317,8 +310,7 @@ get_data_from_client (void *data)
 #endif
 	      if ((fds + nfds)->fd == -1)
 		{
-		  WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-			     "Error on polling socket. Accepting error",
+		  WRITE_LOG (NULL, 0, "Error on polling socket. Accepting error",
 			     data_cfg.log_mode);
 		  cleanup (0, (fds + nfds)->fd, 1);
 		  fds_tmp = (struct pollfd *) realloc (fds,
@@ -406,8 +398,7 @@ get_data_from_client (void *data)
 	      //printf("Error descriptor %d\n", (fds + i)->fd);
 #endif
 	      remove_tid_data_by_fd ((fds + i)->fd);
-	      WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-			 "Error on polling socket. Error %d",
+	      WRITE_LOG (NULL, 0, "Error on polling socket. Error %d",
 			 data_cfg.log_mode, errno);
 	      cleanup (0, (fds + i)->fd, 2);
 	      nfds--;
@@ -452,8 +443,7 @@ get_data_from_client (void *data)
 		    }
 		  else
 		    {
-		      WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-				 "Error on polling socket. Read %d",
+		      WRITE_LOG (NULL, 0, "Error on polling socket. Read %d",
 				 data_cfg.log_mode, errno);
 		      cleanup (0, (fds + i)->fd, 1);
 		    }
@@ -477,8 +467,6 @@ get_data_from_client (void *data)
 		    {
 		      WRITE_LOG (NULL,
 				 1,
-				 buffer,
-				 _DBGOVERNOR_BUFFER_2048,
 				 "Received info descriptor %d TYPE %d, WATCH TID %d, USER NAME %s, CPU %ld, WRITE %ld, READ %ld",
 				 data_cfg.log_mode,
 				 (fds + i)->fd, message.type, message.tid,
@@ -498,8 +486,7 @@ get_data_from_client (void *data)
 		         && (!strncmp(tbl_buff.username, message.username,
 		         USERNAMEMAXLEN))) {
 		         if (data_cfg.log_mode == DEBUG_MODE)
-		         WRITE_LOG(NULL, 0, buffer,
-		         _DBGOVERNOR_BUFFER_2048,
+		         WRITE_LOG(NULL, 0,
 		         "Lost TID user info. User name %s",
 		         data_cfg.log_mode, tbl->username);
 		         } */
@@ -534,7 +521,6 @@ chek_user_perf (gpointer key, tid_table * item, gpointer user_data)
 {
   if (!item)
     return;
-  char buffer[_DBGOVERNOR_BUFFER_2048];
   pid_t kkey = GPOINTER_TO_INT (key);
   double old_tm = item->update_time
     + (double) item->naoseconds / (double) SEC2NANO;
@@ -550,8 +536,6 @@ chek_user_perf (gpointer key, tid_table * item, gpointer user_data)
     {
       WRITE_LOG (NULL,
 		 1,
-		 buffer,
-		 _DBGOVERNOR_BUFFER_2048,
 		 "Watch info for WATCH TID %d, USER NAME %s, CPU %ld, WRITE %ld, READ %ld Time %f",
 		 data_cfg.log_mode,
 		 kkey, item->username, item->cpu, item->write, item->read,
@@ -573,8 +557,6 @@ chek_user_perf (gpointer key, tid_table * item, gpointer user_data)
 	{
 	  WRITE_LOG (NULL,
 		     1,
-		     buffer,
-		     _DBGOVERNOR_BUFFER_2048,
 		     "Proceed info for WATCH TID %d, USER NAME %s, CPU %ld, WRITE %ld, READ %ld Time %f---> NEW CPU %f, WRITE %ld, READ %ld Cur_tm %f",
 		     data_cfg.log_mode,
 		     kkey, item->username, item->cpu, item->write, item->read,
@@ -613,14 +595,12 @@ chek_user_perf (gpointer key, tid_table * item, gpointer user_data)
 void
 monitor_data_from_client (void *data)
 {
-  char buffer[_DBGOVERNOR_BUFFER_2048];
   struct governor_config data_cfg;
 
   get_config_data (&data_cfg);
   if (data_cfg.restrict_format >= 4)
     {
-      WRITE_LOG (NULL, 1, buffer, _DBGOVERNOR_BUFFER_2048,
-		 "TID Table size %ld", data_cfg.log_mode, get_tid_size ());
+      WRITE_LOG (NULL, 1, "TID Table size %ld", data_cfg.log_mode, get_tid_size ());
     }
   struct timespec cur_tm;
   clock_gettime (CLOCK_REALTIME, &cur_tm);

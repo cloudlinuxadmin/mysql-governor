@@ -58,7 +58,6 @@ get_map_file (struct governor_config *data_cfg)
 {
   FILE *map;
   char buf[1024];
-  char buffer[_DBGOVERNOR_BUFFER_2048];
   username_t username, account_name;
   parameter_t uid;
   int len = 0;
@@ -164,8 +163,7 @@ get_map_file (struct governor_config *data_cfg)
 
 		  if (data_cfg->log_mode == DEBUG_MODE)
 		    {
-		      WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-				 "Added user %s account %s with uid %d",
+		      WRITE_LOG (NULL, 0, "Added user %s account %s with uid %d",
 				 data_cfg->log_mode, UserMap_->username,
 				 UserMap_->account_name, tmp_uid);
 		    }
@@ -208,7 +206,6 @@ set_dbuser_map (void)
 void *
 parse_map_file_every_hour (void *data)
 {
-  char buffer[_DBGOVERNOR_BUFFER_2048];
   struct governor_config data_cfg;
   time_t last_mod, curr;
 
@@ -232,8 +229,7 @@ parse_map_file_every_hour (void *data)
 	    {
 	      if (!get_map_file (&data_cfg))
 		{
-		  WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-			     "Failed read dbuser-map file",
+		  WRITE_LOG (NULL, 0, "Failed read dbuser-map file",
 			     data_cfg.log_mode);
 		}
 	      else

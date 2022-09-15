@@ -154,7 +154,6 @@ account_unrestrict (Account * ac)
 void
 account_restrict (Account * ac, stats_limit_cfg * limit)
 {
-  char buffer[_DBGOVERNOR_BUFFER_2048];
   int i;
   User_stats *us;
   //Command cmd;
@@ -210,8 +209,7 @@ account_restrict (Account * ac, stats_limit_cfg * limit)
       trigger_pid = fork ();
       if (trigger_pid < 0)
 	{
-	  WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		     "(%d)Fork error (trigger). Path %s", data_cfg.log_mode,
+	  WRITE_LOG (NULL, 0, "(%d)Fork error (trigger). Path %s", data_cfg.log_mode,
 		     errno, data_cfg.exec_script);
 	}
       else
@@ -221,8 +219,7 @@ account_restrict (Account * ac, stats_limit_cfg * limit)
 	      execl (data_cfg.exec_script, data_cfg.exec_script,
 		     ac->id, period_name, varName, varValue, limValue,
 		     penValue, loadAvg, vmStat, dump, NULL);
-	      WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-			 "(%d)Exec error (trigger). Path %s",
+	      WRITE_LOG (NULL, 0, "(%d)Exec error (trigger). Path %s",
 			 data_cfg.log_mode, errno, data_cfg.exec_script);
 	      exit (0);
 	    }
@@ -272,7 +269,6 @@ destroy_key(gpointer key)
 void
 send_commands (Command * cmd, void *data)
 {
-  char buffer[_DBGOVERNOR_BUFFER_2048];
   struct governor_config data_cfg;
 
   get_config_data (&data_cfg);
@@ -299,8 +295,7 @@ send_commands (Command * cmd, void *data)
 		  {
 		    if (data_cfg.log_mode == DEBUG_MODE)
 		      {
-			WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-				   "Can't add user to BAD list %s",
+			WRITE_LOG (NULL, 0, "Can't add user to BAD list %s",
 				   data_cfg.log_mode, cmd->username);
 		      }
 		  }
@@ -342,8 +337,7 @@ send_commands (Command * cmd, void *data)
 		  {
 		    if (data_cfg.log_mode == DEBUG_MODE)
 		      {
-			WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-				   "Can't delete user form BAD list %s",
+			WRITE_LOG (NULL, 0, "Can't delete user form BAD list %s",
 				   data_cfg.log_mode, cmd->username);
 		      }
 		  }
