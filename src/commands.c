@@ -66,7 +66,7 @@ g_list_free_full_my (GList * list, GDestroyNotify free_func)
   g_list_free (list);
 }
 
-/*Печать дампа параметров в буфер*/
+/*Print params dump to buffer*/
 void
 print_stats_to_buffer (char *buffer, stats_limit * s, int size)
 {
@@ -186,7 +186,7 @@ account_restrict (Account * ac, stats_limit_cfg * limit)
   if (data_cfg.exec_script)
     {
       pid_t trigger_pid;
-      /*Готовим список передаваемых скрипту параметров */
+      /*Preparing the list of params passed to the script*/
       char varValue[_DBGOVERNOR_BUFFER_128];
       char limValue[_DBGOVERNOR_BUFFER_128];
       char penValue[_DBGOVERNOR_BUFFER_128];

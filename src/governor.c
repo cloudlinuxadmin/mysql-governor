@@ -271,9 +271,9 @@ void becameDaemon(int self_supporting) {
 
 int install_signals_handlers(void) {
 	signal(SIGPIPE, SIG_IGN);
-	//Т.к мы можем создавать потомков демона, нужно бы их корректно закрывать
+	//Since we can create childs of the demon, we would need to close them correctly
 	//sigset (SIGCHLD, &whenchildwasdie);
-	//Вариант, отдать чилда процессу init
+	//Option, give the child to the init process
 	signal(SIGCHLD, SIG_IGN);
 	return 0;
 }

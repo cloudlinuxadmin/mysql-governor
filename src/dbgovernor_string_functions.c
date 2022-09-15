@@ -10,7 +10,7 @@
 #include "dbgovernor_string_functions.h"
 
 /*
- * Функция безопасного и быстрого копирования строки
+ * Safe and fast string copy function
  */
 size_t
 strlcpy (char *dst, const char *src, size_t siz)

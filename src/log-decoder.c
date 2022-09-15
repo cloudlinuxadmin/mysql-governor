@@ -20,7 +20,7 @@
 
 extern struct governor_config *cfg;
 
-/*Получить значение лимита, по которому произвелось ограничение*/
+/*Get the value of the limit on which the restriction occurred*/
 long
 getLimitValuePeriod (Account * ac, T_LONG lm)
 {
@@ -39,7 +39,7 @@ getLimitValuePeriod (Account * ac, T_LONG lm)
     };
 }
 
-/*Получить значение параметра по которому произошло ограничение*/
+/*Get the value of the parameter on which the restriction occurred*/
 long long
 getRestrictValue (Account * ac)
 {
@@ -57,7 +57,7 @@ getRestrictValue (Account * ac)
   return -1;
 }
 
-/*Получить значение параметра текущего периода*/
+/*Get the value of the current period parameter*/
 long long
 getCurrentRestrictValue (Account * ac)
 {
@@ -74,7 +74,7 @@ getCurrentRestrictValue (Account * ac)
     }
 }
 
-/*Получить значение параметра короткого периода*/
+/*Get the value of the short period parameter*/
 long long
 getShortRestrictValue (Account * ac)
 {
@@ -91,7 +91,7 @@ getShortRestrictValue (Account * ac)
     }
 }
 
-/*Получить значение параметра среднего периода*/
+/*Get the value of the average period parameter*/
 long long
 getMidRestrictValue (Account * ac)
 {
@@ -108,7 +108,7 @@ getMidRestrictValue (Account * ac)
     }
 }
 
-/*Получить значение параметра длинного периода*/
+/*Get the value of the long period parameter*/
 long long
 getLongRestrictValue (Account * ac)
 {
@@ -125,7 +125,7 @@ getLongRestrictValue (Account * ac)
     }
 }
 
-/*Получить значение лимита по которому прошел рестрикт*/
+/*Get the value of the limit on which the restrict passed*/
 long
 getLimitValue (Account * ac, stats_limit_cfg * lm)
 {
@@ -246,7 +246,7 @@ prepareRestrictDescriptionLimit (char *buffer, Account * ac,
     }
 }
 
-/*Получить соответсвующий периоду список параметров, т.н дамп*/
+/*Get a list of parameters corresponding to the period, the so-called dump*/
 stats_limit *
 getRestrictDump (Account * ac)
 {
