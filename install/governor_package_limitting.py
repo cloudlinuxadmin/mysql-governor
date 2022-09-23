@@ -195,7 +195,7 @@ def get_package_limit(package: str = None, print_to_stdout=False):
             cfg = yaml.load(ymlfile)
     if package:
         try:
-            return cfg.get(package)
+            cfg = cfg.get(package)
         except AttributeError as err:
             print(f'Package name {package} not found: {err}')
     if print_to_stdout and cfg:

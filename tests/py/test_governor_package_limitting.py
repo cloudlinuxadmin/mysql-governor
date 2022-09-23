@@ -105,3 +105,13 @@ def test_get_package_limits(config_file_content, expected_content):
         patcher.fs.create_file(governor_package_limitting.PACKAGE_LIMIT_CONFIG, contents=config_file_content)
         cfg = governor_package_limitting.get_package_limit()
         assert cfg == expected_content
+
+@pytest.mark.parametrize('config_file_content, expected_content', [
+    (config_content, expected_cfg)
+])
+@mock.patch("governor_package_limitting.os.path.exists", mock.MagicMock(return_value=True))
+def test_get_package_limit(config_file_content, expected_content):
+    with Patcher() as patcher:
+        patcher.fs.create_file(governor_package_limitting.PACKAGE_LIMIT_CONFIG, contents=config_file_content)
+        cfg = governor_package_limitting.get_package_limit('package1')
+        assert cfg == expected_content['package1']
