@@ -11,14 +11,30 @@ import argparse
 import os
 import sys
 from utilities import Logger, shadow_tracing
-from clcommon.cpapi import cpinfo
+from clcommon.cpapi import cpinfo, admin_packages
 from typing import Dict, List
 import yaml
 import subprocess
+import json
 
 LOG_FILE_NAME = "/usr/share/lve/dbgovernor/governor_package_limitting.log"
 PACKAGE_LIMIT_CONFIG = '/etc/container/governor_package_limit.yaml'
 DEBUG = False
+
+DEFAULT_PACKAGE_LIMITS = {
+    'cpu': [-1, -1, -1, -1],
+    'read': [-1, -1, -1, -1],
+    'write': [-1, -1, -1, -1],
+}
+
+
+def debug_log(line):
+    """
+    Debug output log
+    """
+    global DEBUG
+    if DEBUG:
+        print(line)
 
 
 def build_parser():
@@ -78,6 +94,14 @@ def build_parser():
     sync._optionals.title = 'Options'
     sync.add_argument('--debug', action='store_true', help='Turn on debug mode')
 
+    ################ SYNC WITH CPANEL ################
+    sync_with_panel = subparser.add_parser('sync-with-panel',
+                                help='Synchronize governor package limits with  Panel',
+                                description='Description: Synchronize governor package limitting with Panel',
+                                usage='governor_package_limitting.py sync-with-panel')
+    sync_with_panel._optionals.title = 'Options'
+    sync_with_panel.add_argument('--debug', action='store_true', help='Turn on debug mode')
+
     return parser
 
 
@@ -122,21 +146,22 @@ def limits_serializer(args: List):
     return __limits
 
 
-def set_package_limits(package: str, cpu: list = None, io_read: List = None, io_write: list = None):
+def set_package_limits(package: str, cpu: list = None, io_read: List = None, io_write: list = None, serialize=True):
     """Setting package limits
     Args:
         package (str): Package name
-        cpu: (list): cpu limits
-        io_read: (list): io read limits
-        io_write: (list): io write limits
+        cpu (list): cpu limits
+        io_read (list): io read limits
+        io_write (list): io write limits
+        serialize (bool): To serialize or not
     Return:
         None
     """
     cfg = {
         package: {
-            'cpu': limits_serializer(cpu),
-            'read': limits_serializer(io_read),
-            'write': limits_serializer(io_write),
+            'cpu': limits_serializer(cpu) if serialize else cpu,
+            'read': limits_serializer(io_read) if serialize else io_read,
+            'write': limits_serializer(io_write) if serialize else io_write,
         }
     }
 
@@ -144,8 +169,7 @@ def set_package_limits(package: str, cpu: list = None, io_read: List = None, io_
         debug_log(f'Creating file {PACKAGE_LIMIT_CONFIG} with content {cfg}')
         with open(PACKAGE_LIMIT_CONFIG, 'w') as ymlfile:
             yaml.dump(cfg, ymlfile)
-        dbctl_sync('set')
-        sys.exit(0)
+        return
 
     config = get_package_limit()
 
@@ -153,12 +177,11 @@ def set_package_limits(package: str, cpu: list = None, io_read: List = None, io_
         config = {}
 
     config[package] = cfg[package]
-    print(f'Setting package limit with config: {config}')
+    debug_log(f'Setting package limit with config: {config}')
 
     with open(PACKAGE_LIMIT_CONFIG, 'w') as ymlfile:
         yaml.dump(config, ymlfile)
-        dbctl_sync('set')
-        sys.exit(0)
+        return
 
 
 def delete_package_limit(package: str):
@@ -175,10 +198,10 @@ def delete_package_limit(package: str):
             if config:
                 yaml.dump(config, ymlfile)
                 debug_log(f'Deleting package {package} from config')
-            dbctl_sync('delete', package)
     except (KeyError, AttributeError) as err:
-        print(f'Package name {package} not found: {err}')
-        sys.exit(1)
+        print(f'Package name {package} not found')
+        debug_log(err)
+        return
 
 
 def get_package_limit(package: str = None, print_to_stdout=False):
@@ -193,17 +216,19 @@ def get_package_limit(package: str = None, print_to_stdout=False):
         debug_log(f'Reading file {PACKAGE_LIMIT_CONFIG}')
         with open(PACKAGE_LIMIT_CONFIG, 'r') as ymlfile:
             cfg = yaml.load(ymlfile)
-    if package:
-        try:
-            cfg = cfg.get(package)
-        except AttributeError as err:
-            print(f'Package name {package} not found: {err}')
+            debug_log(f'config file content is: {cfg}')
+
+    if cfg and package:
+        cfg = cfg.get(package)
+        if cfg:
+            cfg = {package: cfg}
+
     if print_to_stdout and cfg:
-        print(cfg)
+        print(json.dumps(cfg))
     return cfg
 
 
-def run_dbctl_command(users: list, action: str, limits: list = None):
+def run_dbctl_command(users: list, action: str, limits: dict = None):
     """Run dbctl command in os.
     Set or delete limits for all users specified in package
     Args:
@@ -222,15 +247,8 @@ def run_dbctl_command(users: list, action: str, limits: list = None):
             subprocess.run(command, shell=True, text=True)
 
     if action == 'set' and limits and users:
-        try:
-            cpu = ','.join(str(x) for x in limits.get('cpu'))
-            io_read = ','.join(str(x) for x in limits.get('read'))
-            io_write = ','.join(str(x) for x in limits.get('write'))
-        except TypeError as err:
-            print(f'Some limits are not given: {err}')
-            sys.exit(1)
-
         for user in users:
+            cpu, io_read, io_write = prepare_limits(user, package_limit=limits)
             command = f'dbctl set {user} --cpu={cpu} --read={io_read} --write={io_write}'
             debug_log(f'Running command: {command}')
             subprocess.run(command, shell=True, text=True)
@@ -252,30 +270,137 @@ def dbctl_sync(action: str, package: str = None):
         if users_to_apply_package:
             debug_log(f'Deleting package limits for users: {users_to_apply_package}')
             run_dbctl_command(users_to_apply_package, action)
-            sys.exit(0)
+            return
 
     if action == 'set':
         package_limits = get_package_limit()
         for package_name, limits in package_limits.items():
             users_to_apply_package = __cp_packages.get(package_name)
-            if users_to_apply_package:
+            if users_to_apply_package and package_name != 'default':
                 debug_log(f'Setting package limits for users: {users_to_apply_package}')
                 run_dbctl_command(users_to_apply_package, action, limits)
 
+    users_to_apply_default_limits = __cp_packages.get('default')
+    run_dbctl_command(users_to_apply_default_limits, 'delete')
 
-def debug_log(line):
+
+def prepare_limits(user: str, package_limit: Dict) -> List:
+    """Prepare Limits with algorithm
+    Package name is pack1
+    If value in pack1 is -1, look for in default limits. Default limit by default is -1
+    If value in default limit is -1, apply individual limit from user
+    For example:
+    Pack1 Package limit for cpu is: [100, -1, 65, -1]
+    Default Package limit is:       [-1, 90, -1, -1]
+    Individual limit is:            [100, 200, 300 ,400]
+    Result will be:                 [100, 90, 65, 400]
+    Args:
+        user (str): Get user's individual limits from dbctl
+        package_limit: Package limits of cpu, read and write in dict format {'cpu': [1,1,1,1], 'read': [2,2,2,2], 'write': [3,3,3,3]}
+    Returns:
+        After performing logical calculation: ['1,1,1,1'], ['2,2,2,2'], ['3,3,3,3']
     """
-    Debug output log
+    get_individual_limit_command = f'dbctl list | tail -n +2 | grep -i {user} | head -n1'
+    output = subprocess.run(get_individual_limit_command, shell=True, text=True, capture_output=True)
+
+    if not output.stdout:
+        print(f'Couldn\'t  find limits for {user} in dbctl')
+        debug_log(output.stderr)
+        exit(1)
+
+    output = output.stdout.split()
+    debug_log(f'Output of command: {get_individual_limit_command} is: {output}')
+
+    individual_cpu_limit = [int(i) for i in output[1].split('/')]
+    individual_read_limit = [int(i) for i in output[2].split('/')]
+    individual_write_limit = [int(i) for i in output[3].split('/')]
+    debug_log(f'{user}\'s individual limits:')
+    debug_log(f'cpu limits: {individual_cpu_limit}')
+    debug_log(f'read limits: {individual_read_limit}')
+    debug_log(f'write limits: {individual_write_limit}')
+
+    default_cpu_limit = DEFAULT_PACKAGE_LIMITS.get('cpu')
+    default_read_limit = DEFAULT_PACKAGE_LIMITS.get('read')
+    default_write_limit = DEFAULT_PACKAGE_LIMITS.get('write')
+
+    package_cpu_limit = package_limit.get('cpu')
+    package_read_limit = package_limit.get('read')
+    package_write_limit = package_limit.get('write')
+
+    cpu_limit = package_cpu_limit
+    read_limit = package_read_limit
+    write_limit = package_write_limit
+
+    for i in range(4):
+        if cpu_limit[i] < 0:
+            cpu_limit[i] = default_cpu_limit[i]
+            if cpu_limit[i] < 0:
+                cpu_limit[i] = individual_cpu_limit[i]
+
+        if read_limit[i] < 0:
+            read_limit[i] = default_read_limit[i]
+            if read_limit[i] < 0:
+                read_limit[i] = individual_read_limit[i]
+
+        if write_limit[i] < 0:
+            write_limit[i] = default_write_limit[i]
+            if write_limit[i] < 0:
+                write_limit[i] = individual_write_limit[i]
+
+    try:
+        cpu = ','.join(str(x) for x in cpu_limit)
+        io_read = ','.join(str(x) for x in read_limit)
+        io_write = ','.join(str(x) for x in write_limit)
+        debug_log(f'Limits after calculation for {user} is:')
+        debug_log(f'cpu: [{cpu}], read: [{io_read}], write: [{io_write}]')
+        return cpu, io_read, io_write
+    except TypeError as err:
+        print(f'Some limits are not given: {err}')
+        sys.exit(1)
+
+
+def sync_with_panel():
+    # TODO MYSQLG-789
+    """Syncing with panel
+    For now we are just getting package names and applying default values.
+    In future we will get packages with limits and apply it.
     """
-    global DEBUG
-    if DEBUG:
-        print(line)
+    all_packages = admin_packages()
+    for package in all_packages:
+        if not get_package_limit(package):
+            set_package_limits(
+                package,
+                DEFAULT_PACKAGE_LIMITS.get('cpu'),
+                DEFAULT_PACKAGE_LIMITS.get('read'),
+                DEFAULT_PACKAGE_LIMITS.get('write'),
+                serialize=False
+            )
+
+
+def check_and_set_default_value():
+    """Check for default limits are applied or not
+    If default limits are not configured, then apply DEFAULT_PACKAGE_LIMITS [-1, -1, -1, -1] for cpu, read amd write
+    """
+    global DEFAULT_PACKAGE_LIMITS
+
+    __default_limit = get_package_limit('default')
+    if not __default_limit:
+        set_package_limits(
+            'default',
+            DEFAULT_PACKAGE_LIMITS.get('cpu'),
+            DEFAULT_PACKAGE_LIMITS.get('read'),
+            DEFAULT_PACKAGE_LIMITS.get('write'),
+            serialize=False
+        )
+    else:
+        DEFAULT_PACKAGE_LIMITS = __default_limit.get('default')
 
 
 def main(argv):
     """
     Run main actions
     """
+
     sys.stdout = Logger(sys.stdout, LOG_FILE_NAME)
     sys.stderr = Logger(sys.stderr, LOG_FILE_NAME)
     shadow_tracing(True)
@@ -290,14 +415,26 @@ def main(argv):
         global DEBUG
         DEBUG = True
 
+    if not os.path.exists(PACKAGE_LIMIT_CONFIG):
+        debug_log(f'Config file: {PACKAGE_LIMIT_CONFIG} not exists')
+        debug_log(f'Creating config file: {PACKAGE_LIMIT_CONFIG}')
+        with open(PACKAGE_LIMIT_CONFIG, 'w+'):
+            pass
+    debug_log("Checking for default value. If default limits are not configured, then apply default limits [-1]")
+    check_and_set_default_value()
+
     if opts.command == 'set':
         set_package_limits(opts.package, opts.cpu, opts.read, opts.write)
+        dbctl_sync('set')
     elif opts.command == 'get':
         get_package_limit(opts.package, print_to_stdout=True)
     elif opts.command == 'delete':
         delete_package_limit(opts.package)
+        dbctl_sync('delete', opts.package)
     elif opts.command == 'sync':
         dbctl_sync('set')
+    elif opts.command == 'sync-with-panel':
+        sync_with_panel()
     else:
         parser.print_help()
         sys.exit(1)

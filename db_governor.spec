@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   77
+%define g_release   78
 %define g_key_library 10
 
 %if %{undefined _unitdir}
@@ -441,6 +441,9 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Mon Oct 03 2022 Hasan Aliev <haliev@cloudlinux.com>  1.2-78
+- MYSQLG-788: Implement default package limitting logic
+
 * Mon Sep 26 2022 Alexandr Demeshko <ademeshko@cloudlinux.com>, Hasan Aliev <haliev@cloudlinux.com> Nikolay Petukhov <npetukhov@cloudlinux.com> 1.2-77
 - MYSQLG-734: Restrict logging enabled
 - MYSQLG-756: Governor package limits utility added
