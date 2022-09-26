@@ -284,8 +284,7 @@ gpgcheck=1
         # install repo
         exec_command_out('yum localinstall -y --disableexcludes=all {}'.format(repo_file))
 
-    @staticmethod
-    def mysql_service_symlink():
+    def mysql_service_symlink(self):
         """
         Create mysql alias for mysqld service
         """
@@ -293,7 +292,7 @@ gpgcheck=1
         # delete version cache (for web-interface correct version detection)
         try:
             os.unlink('/var/cpanel/mysql_server_version_cache')
-            os.unlink('/var/lib/mysql/mysql_upgrade_info')
+            os.unlink(f'{self.my_cnf_datadir}/mysql_upgrade_info')
         except Exception:
             pass
 

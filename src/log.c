@@ -25,25 +25,7 @@ static char *mode_type_enum_to_str[] = { "TEST_MODE", "PRODUCTION_MODE",
 static FILE *log = NULL, *restrict_log = NULL, *slow_queries_log = NULL;
 
 void print_stats_cfg (FILE * f, stats_limit_cfg * s);
-
-char *
-prepare_output (char *buffer, size_t size, char *fmt, ...)
-{
-  char internal_buf[_DBGOVERNOR_BUFFER_2048];
-  va_list args;
-  if (fmt)
-    {
-      va_start (args, fmt);
-      vsnprintf (internal_buf, size, fmt, args);
-      va_end (args);
-      snprintf (buffer, size, "%s", internal_buf);
-    }
-  else
-    {
-      snprintf (buffer, size, "unknown error");
-    }
-  return buffer;
-}
+void print_stats_easy (FILE * f, stats_limit * s);
 
 // All the functions return 0 on success and errno otherwise
 
@@ -108,15 +90,18 @@ close_slow_queries_log (void)
 }
 
 int
-write_log (const char *error_file, int error_line, const char *error_string,
-	   MODE_TYPE mode)
+write_log (FILE *f, const char *error_file, int error_line, MODE_TYPE mode, Stats *limits, char *fmt, ...)
 {
-  if (log == NULL)
+  if (f == NULL)
     return -1;
+
   char current_date[128];
   time_t rawtime;
   struct tm timeinfo;
   int rc;
+  va_list args;
+  struct governor_config data_cfg;
+  get_config_data (&data_cfg);
 
   time (&rawtime);
   if (!localtime_r (&rawtime, &timeinfo))
@@ -124,15 +109,35 @@ write_log (const char *error_file, int error_line, const char *error_string,
   strftime (current_date, 128, "%c", &timeinfo);
 
   if (mode == DEBUG_MODE)
-    rc = fprintf (log, "[%s] %s:%d %s\n", current_date, error_file,
-		  error_line, error_string);
+    rc = fprintf (f, "[%s] %s:%d ", current_date, error_file, error_line);
   else
-    rc = fprintf (log, "[%s] %s\n", current_date, error_string);
+    rc = fprintf (f, "[%s] ", current_date);
+
+  if (rc < 0)
+    return rc;
+
+  if (fmt)
+    {
+      va_start (args, fmt);
+      rc = vfprintf (f, fmt, args);
+      va_end (args);
+    }
+  else
+    {
+      rc = fprintf (f, "format error");
+    }
 
   if (rc < 0)
     return EIO;
 
-  if (fflush (log))
+  if (limits && (data_cfg.restrict_format > 0))
+    print_stats_easy (f, limits);
+
+  rc = fprintf (f, "\n");
+  if (rc < 0)
+    return EIO;
+
+  if (fflush (f))
     return errno;
 
   return 0;
@@ -184,68 +189,6 @@ print_stats_easy (FILE * f, stats_limit * s)
   print_long (f, s->read);
   fprintf (f, "write ");
   print_long_last (f, s->write);
-}
-
-int
-write_restrict_log (const char *error_string, Stats * limits)
-{
-  if (restrict_log == NULL)
-    return -1;
-
-  char current_date[128];
-  time_t rawtime;
-  struct tm timeinfo;
-  int rc;
-  struct governor_config data_cfg;
-  get_config_data (&data_cfg);
-
-  time (&rawtime);
-  if (!localtime_r (&rawtime, &timeinfo))
-    return EINVAL;
-  strftime (current_date, 128, "%c", &timeinfo);
-
-  rc = fprintf (restrict_log, "[%s] %s  ", current_date, error_string);
-
-  if (rc < 0)
-    return EIO;
-
-  if (limits && (data_cfg.restrict_format > 0))
-    print_stats_easy (restrict_log, limits);
-
-  fprintf (restrict_log, "\n");
-
-  if (fflush (restrict_log))
-    return errno;
-
-  return 0;
-}
-
-int
-write_slow_queries_log (const char *error_string)
-{
-  char current_date[128];
-  time_t rawtime;
-  struct tm timeinfo;
-  int rc;
-  struct governor_config data_cfg;
-  get_config_data (&data_cfg);
-
-  time (&rawtime);
-  if (!localtime_r (&rawtime, &timeinfo))
-    return EINVAL;
-  strftime (current_date, 128, "%c", &timeinfo);
-
-  rc = fprintf (slow_queries_log, "[%s] %s  ", current_date, error_string);
-
-  if (rc < 0)
-    return EIO;
-
-  fprintf (slow_queries_log, "\n");
-
-  if (fflush (slow_queries_log))
-    return errno;
-
-  return 0;
 }
 
 FILE *
@@ -315,21 +258,3 @@ print_config (void *icfg)
     }
 }
 
-int
-write_restrict_log_second_line (const char *error_string, int need_end_line)
-{
-  int rc;
-
-  rc = fprintf (restrict_log, "%s", error_string);
-
-  if (rc < 0)
-    return EIO;
-
-  if (need_end_line)
-    fprintf (restrict_log, "\n");
-
-  if (fflush (restrict_log))
-    return errno;
-
-  return 0;
-}

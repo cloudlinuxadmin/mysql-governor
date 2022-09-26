@@ -20,12 +20,12 @@ long long getCurrentRestrictValue (Account * ac);
 void
 prepareRestrictDescription (char *buffer, Account * ac,
 			    stats_limit_cfg * limit);
-void getPeriodName (char *ch, Account * ac);
+const char * getPeriodName (Account * ac);
 stats_limit *getRestrictDump (Account * ac);
 void
 prepareRestrictDescriptionLimit (char *buffer, Account * ac,
 				 stats_limit_cfg * limit);
-void
-getParamName (char *buffer, Account * ac);
+const char *
+getParamName (Account * ac);
 
 #endif /* LOG_DECODER_H_ */

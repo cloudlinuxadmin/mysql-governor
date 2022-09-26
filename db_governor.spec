@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   76
+%define g_release   77
 %define g_key_library 10
 
 %if %{undefined _unitdir}
@@ -29,6 +29,7 @@ Requires: yum-utils
 Requires: tmpwatch
 Requires: wget
 Requires: libxml2
+Requires: alt-python27-cllib
 Requires(preun): /sbin/chkconfig
 BuildRequires: cmake
 BuildRequires: ncurses-devel
@@ -39,6 +40,7 @@ BuildRequires: alt-python37
 BuildRequires: libxml2-devel
 BuildRequires: pcre-devel
 BuildRequires: patch
+BuildRequires: alt-python27-cllib
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
 BuildRequires: systemd
 BuildRequires: systemd-devel
@@ -157,6 +159,8 @@ install -D -m 755 build_test/lib/libgovernor.so $RPM_BUILD_ROOT%{_libdir}/libgov
 #install utility
 install -D -m 755 install/db-select-mysql $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/db-select-mysql
 install -D -m 755 install/mysqlgovernor.py $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/mysqlgovernor.py
+install -D -m 755 install/governor_package_limitting.py $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/governor_package_limitting.py
+touch $RPM_BUILD_ROOT/etc/container/governor_package_limit.yaml
 
 install -D -m 644 install/cl-mysql.repo.default $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cl-mysql.repo.default
 install -D -m 644 install/utilities.py $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utilities.py
@@ -423,6 +427,7 @@ fi
 %{_libdir}/libgovernor.so.%{version}
 %{_libdir}/libgov_test.so.%{version}
 %config(noreplace) %{_sysconfdir}/container/mysql-governor.xml
+%config(noreplace) %{_sysconfdir}/container/governor_package_limit.yaml
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
 %{_unitdir}/db_governor.service
 %{_unitdir}/var-lve-dbgovernor\x2dshm.mount
@@ -436,6 +441,14 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Mon Sep 26 2022 Alexandr Demeshko <ademeshko@cloudlinux.com>, Hasan Aliev <haliev@cloudlinux.com> Nikolay Petukhov <npetukhov@cloudlinux.com> 1.2-77
+- MYSQLG-734: Restrict logging enabled
+- MYSQLG-756: Governor package limits utility added
+- MYSQLG-757: Custom configuration files restored before starting mariadb service
+- MYSQLG-725: Added governor script processing of real location of mysql socket and data dir
+- MYSQLG-755: mysqlclient18 dependency added for cl-MariaDB106
+- MYSQLG-733: cPanel case for MariaDB 10.7, 10.8, or 10.9 added
+
 * Tue Aug 09 2022 Alexandr Demeshko <ademeshko@cloudlinux.com>, Hasan Aliev <haliev@cloudlinux.com>  1.2-76
 - MYSQLG-726: MariaDB 10.6 support added
 - MYSQLG-723: Optimized package downloading in --delete command

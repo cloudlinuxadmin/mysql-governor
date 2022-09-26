@@ -88,7 +88,7 @@ typedef enum
   NORESTRICT_PARAM = 100,
 } GOVERNORS_FIELD_NAME;
 
-/*Периоды*/
+/*Period types*/
 typedef enum
 {
   NO_PERIOD = 0,
@@ -194,7 +194,7 @@ typedef struct __dbgov_statitrics
   double sum_write;		// in MB/s
   double sum_read;		// in MB/s
 
-  int number_of_iterations;	// число замеров за период
+  int number_of_iterations;	// number of measurements per period
 
   double max_cpu;		// in %
   double max_write;		// in MB/s

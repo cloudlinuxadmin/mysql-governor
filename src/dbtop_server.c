@@ -47,15 +47,13 @@ run_server (void *data)
   int i, s, len;
   struct sockaddr_un saun;
   int ret;
-  char buffer[_DBGOVERNOR_BUFFER_2048];
   struct governor_config data_cfg;
 
   get_config_data (&data_cfg);
 
   if ((s = socket (AF_UNIX, SOCK_STREAM, 0)) < 0)
     {
-      WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		 "Can't create socket(DBTOP)", data_cfg.log_mode);
+      WRITE_LOG (NULL, 0, "Can't create socket(DBTOP)", data_cfg.log_mode);
       close_log ();
       close_restrict_log ();
       exit (EXIT_FAILURE);
@@ -69,8 +67,7 @@ run_server (void *data)
 
   if (bind (s, (struct sockaddr *) &saun, len) < 0)
     {
-      WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		 "Can't server bind(DBTOP)", data_cfg.log_mode);
+      WRITE_LOG (NULL, 0, "Can't server bind(DBTOP)", data_cfg.log_mode);
       close_log ();
       close_restrict_log ();
       close (s);
@@ -79,8 +76,7 @@ run_server (void *data)
 
   if (listen (s, 3) < 0)
     {
-      WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		 "Can't server listen(DBTOP)", data_cfg.log_mode);
+      WRITE_LOG (NULL, 0, "Can't server listen(DBTOP)", data_cfg.log_mode);
       close_log ();
       close_restrict_log ();
       close (s);
@@ -141,7 +137,6 @@ run_dbtop_command (void *data)
 void *handle_client_connect(void *fd)
 {
   int ns = (int) ((intptr_t) fd), result;
-  char buffer[_DBGOVERNOR_BUFFER_2048];
   struct governor_config data_cfg;
 
   get_config_data (&data_cfg);
@@ -170,8 +165,7 @@ void *handle_client_connect(void *fd)
     }
   else
     {
-      WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		 "incorrect connection(DBTOP)", data_cfg.log_mode);
+      WRITE_LOG (NULL, 0, "incorrect connection(DBTOP)", data_cfg.log_mode);
 
       close (ns);
     }
@@ -184,7 +178,6 @@ accept_connections (int s)
   struct sockaddr_un fsaun;
   int fromlen = sizeof (fsaun);
   pthread_t thread;
-  char buffer[_DBGOVERNOR_BUFFER_2048];
   struct governor_config data_cfg;
 
   get_config_data (&data_cfg);
@@ -201,8 +194,7 @@ accept_connections (int s)
 	    }
 	  else
 	    {
-	      WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-			 "Can't server accept(DBTOP)", data_cfg.log_mode);
+	      WRITE_LOG (NULL, 0, "Can't server accept(DBTOP)", data_cfg.log_mode);
 	      close_log ();
 	      close_restrict_log ();
 	      exit (EXIT_FAILURE);
@@ -220,7 +212,6 @@ volatile static int flag_need_to_renew_dbmap = 0;
 void *
 renew_map_on_request (void *data)
 {
-  char buffer[_DBGOVERNOR_BUFFER_2048];
   time_t last_renew = 0;
   flag_need_to_renew_dbmap = 0;
   struct governor_config data_cfg;
@@ -236,8 +227,7 @@ renew_map_on_request (void *data)
 		  		 pid_t renew_pid = fork ();
  	 		     if (renew_pid < 0)
  	 		 	{
- 	 		 	  WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
- 	 		 		     "(%d)Fork error (renew dbmap). Path %s", data_cfg.log_mode,
+ 	 		 	  WRITE_LOG (NULL, 0, "(%d)Fork error (renew dbmap). Path %s", data_cfg.log_mode,
  	 		 		     errno, "dbupdate");
  	 		 	}
  	 		       else
@@ -246,8 +236,7 @@ renew_map_on_request (void *data)
  	 		 	    {
  	 		 	      execl ("/usr/share/lve/dbgovernor/mysqlgovernor.py",
  	 		 	    		  "/usr/share/lve/dbgovernor/mysqlgovernor.py", "--dbupdate", NULL);
- 	 		 	      WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
- 	 		 			 "(%d)Exec error (renew dbmap). Path %s",
+ 	 		 	      WRITE_LOG (NULL, 0, "(%d)Exec error (renew dbmap). Path %s",
  	 		 			 data_cfg.log_mode, errno, "dbupdate");
  	 		 	      exit (0);
  	 		 	    }

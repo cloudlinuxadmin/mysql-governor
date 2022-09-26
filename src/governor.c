@@ -48,10 +48,10 @@
 
 #define BUF_SIZE_III 100
 
-#define MACRO_CHECK_ZERO(x) if (!st->x._current) WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048, "WARNING!!! default " # x "  = 0", get_config_log_mode())
-#define MACRO_CHECK_ZERO_SHORT(x) if (!st->x._short) WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048, "WARNING!!! short default " # x "  = 0", get_config_log_mode())
-#define MACRO_CHECK_ZERO_MID(x) if (!st->x._mid) WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048, "WARNING!!! mid default " # x "  = 0", get_config_log_mode())
-#define MACRO_CHECK_ZERO_LONG(x) if (!st->x._long) WRITE_LOG(NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048, "WARNING!!! long default " # x "  = 0", get_config_log_mode())
+#define MACRO_CHECK_ZERO(x) if (!st->x._current) WRITE_LOG(NULL, 0, "WARNING!!! default " # x "  = 0", get_config_log_mode())
+#define MACRO_CHECK_ZERO_SHORT(x) if (!st->x._short) WRITE_LOG(NULL, 0, "WARNING!!! short default " # x "  = 0", get_config_log_mode())
+#define MACRO_CHECK_ZERO_MID(x) if (!st->x._mid) WRITE_LOG(NULL, 0, "WARNING!!! mid default " # x "  = 0", get_config_log_mode())
+#define MACRO_CHECK_ZERO_LONG(x) if (!st->x._long) WRITE_LOG(NULL, 0, "WARNING!!! long default " # x "  = 0", get_config_log_mode())
 
 /* Lock a file region (private; public interfaces below) */
 
@@ -150,7 +150,6 @@ int createPidFile_III(const char *pidFile_III, int flags_III) {
 }
 
 void becameDaemon(int self_supporting) {
-	char buffer[_DBGOVERNOR_BUFFER_2048];
 	struct governor_config data_cfg;
 
 	get_config_data(&data_cfg);
@@ -175,8 +174,7 @@ void becameDaemon(int self_supporting) {
 #ifndef SYSTEMD_FLAG
 	/* Set session leader */
 	if (setsid() == -1) {
-		WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-				"Can't start setsid", data_cfg.log_mode);
+		WRITE_LOG (NULL, 0, "Can't start setsid", data_cfg.log_mode);
 		close_log();
 		close_restrict_log();
 		close_slow_queries_log();
@@ -190,8 +188,7 @@ void becameDaemon(int self_supporting) {
 	if (self_supporting) {
 		switch (fork()) {
 		case -1:
-			WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-					"Can't start daemon", data_cfg.log_mode)
+			WRITE_LOG (NULL, 0, "Can't start daemon", data_cfg.log_mode)
 			;
 			close_log();
 			close_restrict_log();
@@ -211,8 +208,7 @@ void becameDaemon(int self_supporting) {
 	}
 	umask(0);
 	if ((chdir("/")) < 0) {
-		WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-				"Child chdir error", data_cfg.log_mode);
+		WRITE_LOG (NULL, 0, "Child chdir error", data_cfg.log_mode);
 		close_log();
 		close_restrict_log();
 		close_slow_queries_log();
@@ -223,8 +219,7 @@ void becameDaemon(int self_supporting) {
 	}
 	/* Create pid file of programm */
 	if (createPidFile_III(PID_PATH, 0) == -1) {
-		WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-				"Unable to create PID file", data_cfg.log_mode);
+		WRITE_LOG (NULL, 0, "Unable to create PID file", data_cfg.log_mode);
 		close_log();
 		close_restrict_log();
 		close_slow_queries_log();
@@ -276,15 +271,14 @@ void becameDaemon(int self_supporting) {
 
 int install_signals_handlers(void) {
 	signal(SIGPIPE, SIG_IGN);
-	//Т.к мы можем создавать потомков демона, нужно бы их корректно закрывать
+	//Since we can create childs of the demon, we would need to close them correctly
 	//sigset (SIGCHLD, &whenchildwasdie);
-	//Вариант, отдать чилда процессу init
+	//Option, give the child to the init process
 	signal(SIGCHLD, SIG_IGN);
 	return 0;
 }
 
 void check_for_zero(stats_limit_cfg * st) {
-	char buffer[_DBGOVERNOR_BUFFER_2048];
 	MACRO_CHECK_ZERO (cpu);
 	MACRO_CHECK_ZERO (read);
 	MACRO_CHECK_ZERO (write);
@@ -344,7 +338,6 @@ void initGovernor(void) {
 }
 
 void trackingDaemon(void) {
-	char buffer[_DBGOVERNOR_BUFFER_2048];
 	int status = 0;
 	struct governor_config data_cfg;
 	becameDaemon(0);
@@ -362,8 +355,7 @@ void trackingDaemon(void) {
 		wait(&status);
 
 		get_config_data(&data_cfg);
-		WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-				"Failed governor daemon, restart daemon", data_cfg.log_mode);
+		WRITE_LOG (NULL, 0, "Failed governor daemon, restart daemon", data_cfg.log_mode);
 
 		int max_file_descriptor = sysconf(FOPEN_MAX), file_o;
 		struct stat buf_stat;
@@ -382,7 +374,6 @@ int main(int argc, char *argv[]) {
 	int ret;
 	pthread_t thread, thread_governor, thread_dbtop, thread_prcd,
 			thread_user_map, thread_slow_query, therad_renew_dbusermap;
-	char buffer[_DBGOVERNOR_BUFFER_2048];
 	int only_print = 0;
 
 	struct governor_config data_cfg;
@@ -439,8 +430,7 @@ int main(int argc, char *argv[]) {
 	umask (0);
 	if ((chdir ("/")) < 0)
 	{
-		WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-				"Child chdir error", data_cfg.log_mode);
+		WRITE_LOG (NULL, 0, "Child chdir error", data_cfg.log_mode);
 		close_log ();
 		close_restrict_log ();
 		close_slow_queries_log ();
@@ -453,8 +443,7 @@ int main(int argc, char *argv[]) {
 
 	get_config_data(&data_cfg);
 	if (init_mysql_function() < 0) {
-		WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-				"Can't load mysql functions", data_cfg.log_mode);
+		WRITE_LOG (NULL, 0, "Can't load mysql functions", data_cfg.log_mode);
 		close_log();
 		close_restrict_log();
 		close_slow_queries_log();
@@ -469,8 +458,7 @@ int main(int argc, char *argv[]) {
 				"information_schema", argc, argv, data_cfg.log_mode) < 0) {
 			trying_to_connect++;
 			if (trying_to_connect > 3) {
-				WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-				"Can't connect to mysql. Please check that mysql is running otherwise"
+				WRITE_LOG (NULL, 0, "Can't connect to mysql. Please check that mysql is running otherwise"
 				" check host, login and password in /etc/container/mysql-governor.xml file", data_cfg.log_mode);
 				delete_mysql_function();
 				close_log();
@@ -480,13 +468,11 @@ int main(int argc, char *argv[]) {
 				remove("/usr/share/lve/dbgovernor/governor_connected");
 				exit(EXIT_FAILURE);
 			} else {
-				WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-						"Can't connect to mysql. Try to reconnect",
+				WRITE_LOG (NULL, 0, "Can't connect to mysql. Try to reconnect",
 						data_cfg.log_mode);
 			}
 		} else {
-			WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-					"Governor successfully connected to mysql", data_cfg.log_mode);
+			WRITE_LOG (NULL, 0, "Governor successfully connected to mysql", data_cfg.log_mode);
 			creat("/usr/share/lve/dbgovernor/governor_connected", 0600);
 			break;
 		}
@@ -494,8 +480,7 @@ int main(int argc, char *argv[]) {
 
 	get_config_data(&data_cfg);
 	if (!check_mysql_version(data_cfg.log_mode)) {
-		WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-				"Incorrect mysql version", data_cfg.log_mode);
+		WRITE_LOG (NULL, 0, "Incorrect mysql version", data_cfg.log_mode);
 		db_close();
 		delete_mysql_function();
 		close_log();
@@ -512,10 +497,9 @@ int main(int argc, char *argv[]) {
 	//unfreaze_lve(data_cfg.log_mode);
 	config_add_work_user(get_work_user());
 
-	WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048, "Started",
+	WRITE_LOG (NULL, 0, "Started",
 			data_cfg.log_mode);
-	WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-			"Governor work without LVE (%s)", data_cfg.log_mode,
+	WRITE_LOG (NULL, 0, "Governor work without LVE (%s)", data_cfg.log_mode,
 			(data_cfg.is_gpl ? "yes" : "no"));
 
 	init_tid_table();
@@ -539,14 +523,12 @@ int main(int argc, char *argv[]) {
 
 	if (!data_cfg.is_gpl) {
 		if (init_bad_users_list() < 0) {
-			WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-					"Can't init BAD list, work in monytor only mode",
+			WRITE_LOG (NULL, 0, "Can't init BAD list, work in monytor only mode",
 					data_cfg.log_mode);
 			get_config()->use_lve = 0;
 			governor_enable_reconn(data_cfg.log_mode);
 		} else {
-			WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-					"BAD list init successfully", data_cfg.log_mode);
+			WRITE_LOG (NULL, 0, "BAD list init successfully", data_cfg.log_mode);
 			governor_enable_reconn_lve(data_cfg.log_mode);
 		}
 	} else
@@ -700,7 +682,7 @@ int main(int argc, char *argv[]) {
 	free_accounts_and_users();
 	free_tid_table();
 
-	WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048, "Stopped",
+	WRITE_LOG (NULL, 0, "Stopped",
 			data_cfg.log_mode);
 	db_close();
 	delete_mysql_function();

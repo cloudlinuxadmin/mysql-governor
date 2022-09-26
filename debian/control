@@ -13,7 +13,8 @@ Build-Depends: debhelper-compat (= 12),
                patch,
                libsystemd-dev,
                libmariadb-dev,
-               alt-python37
+               alt-python37,
+               alt-python27-cllib
 Standards-Version: 4.4.1
 Homepage: http://cloudlinux.com
 
@@ -22,6 +23,6 @@ Architecture: any
 Pre-Depends: debconf,
              procps,
              systemd
-Depends: ${shlibs:Depends}, ${misc:Depends}, debconf, alt-python37, libtry-tiny-perl, tmpreaper
+Depends: ${shlibs:Depends}, ${misc:Depends}, debconf, alt-python37, libtry-tiny-perl, tmpreaper, alt-python27-cllib
 Description: DB control utilities
  This package provides dbtop, db_governor utilities.

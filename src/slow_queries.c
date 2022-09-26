@@ -117,8 +117,7 @@ parse_slow_query (void *data)
 #ifdef TEST
 	  //printf( "db_mysql_exec_query ERROR\n" );
 #endif
-	  WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		     "Get show processlist failed", data_cfg.log_mode);
+	  WRITE_LOG (NULL, 0, "Get show processlist failed", data_cfg.log_mode);
 	}
       else
 	{
@@ -185,8 +184,7 @@ parse_slow_query (void *data)
                           Info_[MAX_QUERY_OUTPUT_LEN] = 0;
 			  sprintf (log_buffer, "Query killed - %s : %s",
 				   User, Info_);
-			  WRITE_LOG (NULL, 2, buffer, _DBGOVERNOR_BUFFER_2048,
-				     "%s", data_cfg.log_mode, log_buffer);
+			  WRITE_LOG (NULL, 2, "%s", data_cfg.log_mode, log_buffer);
 			}
 		    }
 

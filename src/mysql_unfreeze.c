@@ -70,7 +70,6 @@ main (int argc, char *argv[])
 	("     show-bad-users-list  :show bad users list (if lve using)\n");
       return 0;
     }
-  char buffer[_DBGOVERNOR_BUFFER_2048];
   if (!config_init (CONFIG_PATH))
     {
       fprintf (stderr, "Unable to read config file. Unfreeze aborted\n");
@@ -90,14 +89,12 @@ main (int argc, char *argv[])
 	  //unfreaze_lve (data_cfg.log_mode);
 	  if (init_bad_users_list_utility () >= 0)
 	    {
-	      WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-			 "Unfreeze completed", data_cfg.log_mode);
+	      WRITE_LOG (NULL, 0, "Unfreeze completed", data_cfg.log_mode);
 	      remove_bad_users_list_utility ();
 	    }
 	  else
 	    {
-	      WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-			 "Can't init BAD users list", data_cfg.log_mode);
+	      WRITE_LOG (NULL, 0, "Can't init BAD users list", data_cfg.log_mode);
 	    }
 	  db_close ();
 	}
@@ -116,8 +113,7 @@ main (int argc, char *argv[])
 	    exit (-1);
 	  //unfreaze_all(data_cfg.log_mode);
 	  //unfreaze_lve (data_cfg.log_mode);
-	  WRITE_LOG (NULL, 0, buffer, _DBGOVERNOR_BUFFER_2048,
-		     "Unfreeze completed", data_cfg.log_mode);
+	  WRITE_LOG (NULL, 0, "Unfreeze completed", data_cfg.log_mode);
 	  db_close ();
 	}
     }
