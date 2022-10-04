@@ -145,3 +145,42 @@ def test_prepare_limits(test_input, expected_limit):
         output_mock.return_value.stdout = dbctl_output
         received_limit = governor_package_limitting.prepare_limits('user1', test_input.get('PACK1'))
         assert received_limit == expected_limit
+
+
+@pytest.mark.parametrize(
+    "test_value, from_format, to_format, exptected_result", [
+        (10, 'mb', 'bb', 10485760),
+        (10, 'mb', 'kb', 10240),
+        (10, 'mb', 'mb', 10),
+        (52428800, 'bb', 'mb', 50),
+        (52428800, 'bb', 'kb', 51200),
+        (52428800, 'bb', 'bb', 52428800),
+        (39936, 'kb', 'mb', 39),
+        (39936, 'kb', 'bb', 40894464)
+    ]
+)
+def test_format_calc(test_value, from_format, to_format, exptected_result):
+    result = governor_package_limitting.format_calc(test_value, from_format, to_format)
+    assert result == exptected_result
+
+
+@pytest.mark.parametrize(
+    "default_config_content, expected_result", [
+        (
+            None,
+            {'cpu': [-1,-1,-1,-1], 'read': [-1,-1,-1,-1], 'write': [-1,-1,-1,-1]}
+        ),
+        (
+            b"{'default': {'cpu': [1,1,1,1], 'read': [2,2,2,2], 'write': [3,3,3,3]}}",
+            {'cpu': [1,1,1,1], 'read': [2,2,2,2], 'write': [3,3,3,3]}
+        ),
+    ]
+)
+def test_check_and_set_default_value(default_config_content, expected_result):
+    with Patcher() as patcher:
+        patcher.fs.create_file(governor_package_limitting.PACKAGE_LIMIT_CONFIG, contents=default_config_content)
+        governor_package_limitting.check_and_set_default_value()
+        assert governor_package_limitting.DEFAULT_PACKAGE_LIMITS == expected_result
+
+
+

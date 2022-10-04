@@ -16,6 +16,7 @@ from typing import Dict, List
 import yaml
 import subprocess
 import json
+from math import ceil
 
 LOG_FILE_NAME = "/usr/share/lve/dbgovernor/governor_package_limitting.log"
 PACKAGE_LIMIT_CONFIG = '/etc/container/governor_package_limit.yaml'
@@ -28,13 +29,13 @@ DEFAULT_PACKAGE_LIMITS = {
 }
 
 
-def debug_log(line):
+def debug_log(line, end='\n'):
     """
     Debug output log
     """
     global DEBUG
     if DEBUG:
-        print(line)
+        print(line, end=end)
 
 
 def build_parser():
@@ -78,11 +79,16 @@ def build_parser():
     get = subparser.add_parser('get',
                                help='Get governor package limits',
                                description='Description: Get governor package limits',
-                               usage='governor_package_limitting.py get [OPTIONS]',)
+                               usage='governor_package_limitting.py get [OPTIONS]',
+                               formatter_class=lambda prog: argparse.RawTextHelpFormatter(prog, width=99999))
     get._optionals.title = 'Options'
     g = get.add_mutually_exclusive_group()
     g.add_argument('--package', help='Get package limits', type=str, )
     g.add_argument('--all', help="Get all package limits", action='store_true')
+
+    get.add_argument('--format', help='Show limits in formats: (KB/s), (BB/s), (MB/s). Default is mb', default='mb',
+                     choices=['bb', 'kb', 'mb'])
+
     get._optionals.title = 'Options'
     get.add_argument('--debug', action='store_true', help='Turn on debug mode')
 
@@ -131,7 +137,7 @@ def limits_serializer(args: List):
     try:
         if args and isinstance(args, list):
             for i in args[0].split(','):
-                __limits.append(int(i))
+                __limits.append(i)
     except Exception as err:
         print(f'Some parameters are incorrect: {err}')
         sys.exit(1)
@@ -157,6 +163,7 @@ def set_package_limits(package: str, cpu: list = None, io_read: List = None, io_
     Return:
         None
     """
+
     cfg = {
         package: {
             'cpu': limits_serializer(cpu) if serialize else cpu,
@@ -164,6 +171,8 @@ def set_package_limits(package: str, cpu: list = None, io_read: List = None, io_
             'write': limits_serializer(io_write) if serialize else io_write,
         }
     }
+
+    cfg = format_converter(cfg)
 
     if not os.path.exists(PACKAGE_LIMIT_CONFIG):
         debug_log(f'Creating file {PACKAGE_LIMIT_CONFIG} with content {cfg}')
@@ -176,9 +185,17 @@ def set_package_limits(package: str, cpu: list = None, io_read: List = None, io_
     if not config:
         config = {}
 
-    config[package] = cfg[package]
+    if config.get(package):
+        for k in list(cfg[package]):
+            if cfg.get(package)[k].count(-1) == 4:
+                del cfg.get(package)[k]
+        config[package] = {**config[package], **cfg[package]}
+    else:
+        config[package] = cfg[package]
+
     debug_log(f'Setting package limit with config: {config}')
 
+    debug_log('\n')
     with open(PACKAGE_LIMIT_CONFIG, 'w') as ymlfile:
         yaml.dump(config, ymlfile)
         return
@@ -204,11 +221,12 @@ def delete_package_limit(package: str):
         return
 
 
-def get_package_limit(package: str = None, print_to_stdout=False):
+def get_package_limit(package: str = None, limit_format: str = 'mb', print_to_stdout=False):
     """Get package limits
     Args:
         package (str): name of package to get
         print_to_stdout (bool): Print to stdout is used for cli.
+        limit_format: Print values in specified format. mb, kb, bb
     Returns:
         Package limit configurations or provided package configuration
     """
@@ -224,7 +242,13 @@ def get_package_limit(package: str = None, print_to_stdout=False):
             cfg = {package: cfg}
 
     if print_to_stdout and cfg:
+        for key, val in cfg.items():
+            for k, v in val.items():
+                for i in range(4):
+                    cfg[key][k][i] = format_calc(v[i], from_format='mb', to_format=limit_format)
         print(json.dumps(cfg))
+
+    debug_log('\n')
     return cfg
 
 
@@ -252,6 +276,7 @@ def run_dbctl_command(users: list, action: str, limits: dict = None):
             command = f'dbctl set {user} --cpu={cpu} --read={io_read} --write={io_write}'
             debug_log(f'Running command: {command}')
             subprocess.run(command, shell=True, text=True)
+    debug_log('\n')
 
 
 def dbctl_sync(action: str, package: str = None):
@@ -284,6 +309,71 @@ def dbctl_sync(action: str, package: str = None):
     run_dbctl_command(users_to_apply_default_limits, 'delete')
 
 
+def format_calc(value: int, from_format: str, to_format: str):
+    """Converting integer between formats mb|kb|bb
+    Args:
+        value (int): Integer value to convert
+        from_format (str): To convert from mb|kb|bb\
+        to_format (str): To convert to mb|kb|bb
+    """
+    if value < 0:
+        return value
+
+    if from_format == 'bb':
+        if to_format == 'kb':
+            value /= 1024
+        elif to_format == 'mb':
+            value = value / 1024 / 1024
+
+    elif from_format == 'kb':
+        if to_format == 'bb':
+            value *= 1024
+        elif to_format == 'mb':
+            value /= 1024
+
+    elif from_format == 'mb':
+        if to_format == 'kb':
+            value *= 1024
+        elif to_format == 'bb':
+            value = value * 1024 * 1024
+
+    value = ceil(value)
+    return value
+
+
+def format_converter(cfg: dict):
+    """Converting bytes to MB
+    Some parameters from user cli can be in bytes, for example [-1, 50, 52428800b, 100]
+    52428800b is 50 MB
+    Args:
+        cfg (dict): {cpu: [x,x,x,x], read: [x,x,x,x], write: [x,x,x,x,]}
+    Returns:
+          cfg (dict)
+    """
+    if not cfg:
+        return
+
+    for key, val in cfg.items():
+        for k, v in val.items():
+            if k != 'cpu':
+                for i in range(4):
+                    if isinstance(v[i], str):
+                        if 'b' in v[i]:
+                            debug_log(f'Converting byte `{v[i]}` to MB')
+                            v[i] = format_calc(
+                                ceil(int(v[i].replace('b', ''))),
+                                from_format='bb', to_format='mb'
+                            )
+                        else:
+                            v[i] = int(v[i])
+            else:
+                for i in range(4):
+                    v[i] = int(v[i])
+
+    debug_log('\n')
+    return cfg
+
+
 def prepare_limits(user: str, package_limit: Dict) -> List:
     """Prepare Limits with algorithm
     Package name is pack1
@@ -314,10 +404,8 @@ def prepare_limits(user: str, package_limit: Dict) -> List:
     individual_cpu_limit = [int(i) for i in output[1].split('/')]
     individual_read_limit = [int(i) for i in output[2].split('/')]
     individual_write_limit = [int(i) for i in output[3].split('/')]
-    debug_log(f'{user}\'s individual limits:')
-    debug_log(f'cpu limits: {individual_cpu_limit}')
-    debug_log(f'read limits: {individual_read_limit}')
-    debug_log(f'write limits: {individual_write_limit}')
+    debug_log(f'{user}\'s individual limits are: ', end='')
+    debug_log(f'cpu: {individual_cpu_limit}, read: {individual_read_limit}, write: {individual_write_limit}')
 
     default_cpu_limit = DEFAULT_PACKAGE_LIMITS.get('cpu')
     default_read_limit = DEFAULT_PACKAGE_LIMITS.get('read')
@@ -346,7 +434,6 @@ def prepare_limits(user: str, package_limit: Dict) -> List:
             write_limit[i] = default_write_limit[i]
             if write_limit[i] < 0:
                 write_limit[i] = individual_write_limit[i]
-
     try:
         cpu = ','.join(str(x) for x in cpu_limit)
         io_read = ','.join(str(x) for x in read_limit)
@@ -417,17 +504,17 @@ def main(argv):
 
     if not os.path.exists(PACKAGE_LIMIT_CONFIG):
         debug_log(f'Config file: {PACKAGE_LIMIT_CONFIG} not exists')
-        debug_log(f'Creating config file: {PACKAGE_LIMIT_CONFIG}')
+        debug_log(f'Creating config file: {PACKAGE_LIMIT_CONFIG}\n')
         with open(PACKAGE_LIMIT_CONFIG, 'w+'):
             pass
-    debug_log("Checking for default value. If default limits are not configured, then apply default limits [-1]")
+    debug_log("Checking for default value. If default limits are not configured, then apply default limits [-1]\n")
     check_and_set_default_value()
 
     if opts.command == 'set':
         set_package_limits(opts.package, opts.cpu, opts.read, opts.write)
         dbctl_sync('set')
     elif opts.command == 'get':
-        get_package_limit(opts.package, print_to_stdout=True)
+        get_package_limit(opts.package, opts.format, print_to_stdout=True)
     elif opts.command == 'delete':
         delete_package_limit(opts.package)
         dbctl_sync('delete', opts.package)
