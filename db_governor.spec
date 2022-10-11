@@ -29,7 +29,7 @@ Requires: yum-utils
 Requires: tmpwatch
 Requires: wget
 Requires: libxml2
-Requires: alt-python27-cllib
+Requires: alt-python27-cllib >= 3.2.34
 Requires(preun): /sbin/chkconfig
 BuildRequires: cmake
 BuildRequires: ncurses-devel
@@ -40,7 +40,7 @@ BuildRequires: alt-python37
 BuildRequires: libxml2-devel
 BuildRequires: pcre-devel
 BuildRequires: patch
-BuildRequires: alt-python27-cllib
+BuildRequires: alt-python27-cllib >= 3.2.34
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
 BuildRequires: systemd
 BuildRequires: systemd-devel
