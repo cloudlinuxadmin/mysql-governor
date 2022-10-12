@@ -48,9 +48,11 @@ def test_update_user_map_exceptions(exception, expected_msg, capfd):
     ('mariadb104', 96),
     ('mariadb105', 96),
     ('mariadb104', 98),  # support for mariadb104 is skipped
-    ('mariadb107', 98),
-    ('mariadb108', 98),
-    ('mariadb109', 98)
+# We still not support MariaDb 10.7, 10.8 and 10.9 and possibly won't do it.
+# So no need to test this now
+#    ('mariadb107', 98),
+#    ('mariadb108', 98),
+#    ('mariadb109', 98)
 ])
 @mock.patch("builtins.open", mock.mock_open(read_data=''))
 def test_for_unsupported_db_version(mocked_content, cpanel_version):
