@@ -23,7 +23,7 @@
 #include "slow_queries.h"
 #include "calc_stats.h"
 
-#define DELTA_TIME 15
+#define DELTA_TIME 1
 #define MAX_QUERY_OUTPUT_LEN 600
 
 extern M_mysql_store_result;
