@@ -3,9 +3,6 @@ from unittest import mock
 from pyfakefs.fake_filesystem_unittest import Patcher
 import governor_package_limitting
 
-package1 = ['package1', ['1,2,3'], None, None]
-expected_cfg = {'package1': {'cpu': [1, 2, 3, -1], 'read': [-1, -1, -1, -1], 'write': [-1, -1, -1, -1]}}
-
 
 @pytest.fixture(scope='session', autouse=True)
 def dbctl_sync_mock():
@@ -14,7 +11,14 @@ def dbctl_sync_mock():
 
 
 @pytest.mark.parametrize("test_input, expected", [
-    (package1, expected_cfg)
+    (
+        ['package1', ['1,2,3'], None, None],
+        {'package1': {'cpu': [1, 2, 3, -1], 'read': [-1, -1, -1, -1], 'write': [-1, -1, -1, -1]}}
+    ),
+    (
+        ['rootруспакет', None, None, None],
+        {'rootруспакет': {'cpu': [-1, -1, -1, -1], 'read': [-1, -1, -1, -1], 'write': [-1, -1, -1, -1]}}
+    )
 ])
 @mock.patch("governor_package_limitting.os.path.exists", mock.MagicMock(return_value=True))
 def test_set_package_limits(test_input, expected):
@@ -24,7 +28,7 @@ def test_set_package_limits(test_input, expected):
             governor_package_limitting.set_package_limits(*test_input)
         except SystemExit as sysexit:
             assert sysexit.code == 0
-        cfg = governor_package_limitting.get_package_limit('package1')
+        cfg = governor_package_limitting.get_package_limit(test_input[0])
         assert cfg == expected
 
 ########################################################################################################################
@@ -168,11 +172,11 @@ def test_format_calc(test_value, from_format, to_format, exptected_result):
     "default_config_content, expected_result", [
         (
             None,
-            {'cpu': [-1,-1,-1,-1], 'read': [-1,-1,-1,-1], 'write': [-1,-1,-1,-1]}
+            {'cpu': [-1, -1, -1, -1], 'read': [-1, -1, -1, -1], 'write': [-1, -1, -1, -1]}
         ),
         (
             b"{'default': {'cpu': [1,1,1,1], 'read': [2,2,2,2], 'write': [3,3,3,3]}}",
-            {'cpu': [1,1,1,1], 'read': [2,2,2,2], 'write': [3,3,3,3]}
+            {'cpu': [1, 1, 1, 1], 'read': [2, 2, 2, 2], 'write': [3, 3, 3, 3]}
         ),
     ]
 )
@@ -181,6 +185,3 @@ def test_check_and_set_default_value(default_config_content, expected_result):
         patcher.fs.create_file(governor_package_limitting.PACKAGE_LIMIT_CONFIG, contents=default_config_content)
         governor_package_limitting.check_and_set_default_value()
         assert governor_package_limitting.DEFAULT_PACKAGE_LIMITS == expected_result
-
-
-

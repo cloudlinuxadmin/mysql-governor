@@ -18,9 +18,9 @@ import subprocess
 import json
 from math import ceil
 
-LOG_FILE_NAME = "/usr/share/lve/dbgovernor/governor_package_limitting.log"
 PACKAGE_LIMIT_CONFIG = '/etc/container/governor_package_limit.yaml'
 DEBUG = False
+ENCODING = 'utf-8'
 
 DEFAULT_PACKAGE_LIMITS = {
     'cpu': [-1, -1, -1, -1],
@@ -176,8 +176,8 @@ def set_package_limits(package: str, cpu: list = None, io_read: List = None, io_
 
     if not os.path.exists(PACKAGE_LIMIT_CONFIG):
         debug_log(f'Creating file {PACKAGE_LIMIT_CONFIG} with content {cfg}')
-        with open(PACKAGE_LIMIT_CONFIG, 'w') as ymlfile:
-            yaml.dump(cfg, ymlfile)
+        with open(PACKAGE_LIMIT_CONFIG, 'w', encoding=ENCODING) as ymlfile:
+            yaml.dump(cfg, ymlfile, allow_unicode=True)
         return
 
     config = get_package_limit()
@@ -196,8 +196,8 @@ def set_package_limits(package: str, cpu: list = None, io_read: List = None, io_
     debug_log(f'Setting package limit with config: {config}')
 
     debug_log('\n')
-    with open(PACKAGE_LIMIT_CONFIG, 'w') as ymlfile:
-        yaml.dump(config, ymlfile)
+    with open(PACKAGE_LIMIT_CONFIG, 'w', encoding=ENCODING) as ymlfile:
+        yaml.dump(config, ymlfile, allow_unicode=True)
         return
 
 
@@ -211,9 +211,9 @@ def delete_package_limit(package: str):
     config = get_package_limit()
     try:
         config.pop(package)
-        with open(PACKAGE_LIMIT_CONFIG, 'w') as ymlfile:
+        with open(PACKAGE_LIMIT_CONFIG, 'w', encoding=ENCODING) as ymlfile:
             if config:
-                yaml.dump(config, ymlfile)
+                yaml.dump(config, ymlfile, allow_unicode=True)
                 debug_log(f'Deleting package {package} from config')
     except (KeyError, AttributeError) as err:
         print(f'Package name {package} not found')
@@ -232,7 +232,7 @@ def get_package_limit(package: str = None, limit_format: str = 'mb', print_to_st
     """
     if os.path.exists(PACKAGE_LIMIT_CONFIG):
         debug_log(f'Reading file {PACKAGE_LIMIT_CONFIG}')
-        with open(PACKAGE_LIMIT_CONFIG, 'r') as ymlfile:
+        with open(PACKAGE_LIMIT_CONFIG, 'r', encoding=ENCODING) as ymlfile:
             cfg = yaml.load(ymlfile)
             debug_log(f'config file content is: {cfg}')
 
@@ -246,7 +246,8 @@ def get_package_limit(package: str = None, limit_format: str = 'mb', print_to_st
             for k, v in val.items():
                 for i in range(4):
                     cfg[key][k][i] = format_calc(v[i], from_format='mb', to_format=limit_format)
-        print(json.dumps(cfg))
+
+        print(json.dumps(cfg, ensure_ascii=False).encode(ENCODING).decode(ENCODING))
 
     debug_log('\n')
     return cfg
@@ -487,9 +488,6 @@ def main(argv):
     """
     Run main actions
     """
-
-    sys.stdout = Logger(sys.stdout, LOG_FILE_NAME)
-    sys.stderr = Logger(sys.stderr, LOG_FILE_NAME)
     shadow_tracing(True)
 
     parser = build_parser()
@@ -505,7 +503,7 @@ def main(argv):
     if not os.path.exists(PACKAGE_LIMIT_CONFIG):
         debug_log(f'Config file: {PACKAGE_LIMIT_CONFIG} not exists')
         debug_log(f'Creating config file: {PACKAGE_LIMIT_CONFIG}\n')
-        with open(PACKAGE_LIMIT_CONFIG, 'w+'):
+        with open(PACKAGE_LIMIT_CONFIG, 'w+', encoding=ENCODING):
             pass
     debug_log("Checking for default value. If default limits are not configured, then apply default limits [-1]\n")
     check_and_set_default_value()

@@ -41,3 +41,5 @@
  var/lve/dbgovernor
  var/lve/dbgovernor-store
  etc/cron.d/lvedbgovernor-utils-cron
+ etc/container/governor_package_limit.yaml
+
