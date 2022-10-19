@@ -237,7 +237,7 @@ def get_package_limit(package: str = None, limit_format: str = 'mb', print_to_st
         debug_log(f'Reading file {PACKAGE_LIMIT_CONFIG}')
         with acquire_lock('/var/run/governor_package_limit'):
             with open(PACKAGE_LIMIT_CONFIG, 'r', encoding=ENCODING) as ymlfile:
-                cfg = yaml.load(ymlfile)
+                cfg = yaml.safe_load(ymlfile)
                 debug_log(f'config file content is: {cfg}')
 
     if cfg and package:

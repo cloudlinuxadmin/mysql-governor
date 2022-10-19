@@ -1,8 +1,10 @@
-governor-mysql (1.2-78) unstable; urgency=medium
+governor-mysql (1.2-78) stable; urgency=medium
 
-  * MYSQLG-788: Implement default package limitting logic
+  * MYSQLG-781: Kept original casting in slow query log
+  * MYSQLG-800: Removed mariadb107 from supported mysql types
+  * MYSQLG-788, MYSQLG-791, MYSQLG-796, MYSQLG-804: Governor package limits enhancements
 
- -- Hasan Aliyev <haliev@cloudlinux.com>  Mon, 03 Oct 2022 13:00:00 +0000
+ -- Nikolay Petukhov <npetukhov@cloudlinux.com>  Wed, 19 Oct 2022 13:00:00 +0000
 
 governor-mysql (1.2-77) stable; urgency=medium
 

@@ -441,8 +441,10 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
-* Mon Oct 03 2022 Hasan Aliev <haliev@cloudlinux.com>  1.2-78
-- MYSQLG-788: Implement default package limitting logic
+* Wed Oct 19 2022 Alexandr Demeshko <ademeshko@cloudlinux.com>, Hasan Aliev <haliev@cloudlinux.com> Nikolay Petukhov <npetukhov@cloudlinux.com> 1.2-78
+- MYSQLG-781: Kept original casting in slow query log
+- MYSQLG-800: Removed mariadb107 from supported mysql types
+- MYSQLG-788, MYSQLG-791, MYSQLG-796, MYSQLG-804: Governor package limits enhancements
 
 * Mon Sep 26 2022 Alexandr Demeshko <ademeshko@cloudlinux.com>, Hasan Aliev <haliev@cloudlinux.com> Nikolay Petukhov <npetukhov@cloudlinux.com> 1.2-77
 - MYSQLG-734: Restrict logging enabled
