@@ -2,12 +2,21 @@ import pytest
 from unittest import mock
 from pyfakefs.fake_filesystem_unittest import Patcher
 import governor_package_limitting
+import subprocess
+import utilities
+import yaml
 
 
 @pytest.fixture(scope='session', autouse=True)
 def dbctl_sync_mock():
     with mock.patch('governor_package_limitting.dbctl_sync') as _fixture:
         yield _fixture
+
+@pytest.fixture
+def fs():
+    with Patcher() as patcher:
+        patcher.fs.create_dir('/var/run')
+        yield patcher.fs
 
 
 @pytest.mark.parametrize("test_input, expected", [
@@ -21,15 +30,16 @@ def dbctl_sync_mock():
     )
 ])
 @mock.patch("governor_package_limitting.os.path.exists", mock.MagicMock(return_value=True))
-def test_set_package_limits(test_input, expected):
-    with Patcher() as patcher:
-        patcher.fs.create_file(governor_package_limitting.PACKAGE_LIMIT_CONFIG)
-        try:
-            governor_package_limitting.set_package_limits(*test_input)
-        except SystemExit as sysexit:
-            assert sysexit.code == 0
-        cfg = governor_package_limitting.get_package_limit(test_input[0])
-        assert cfg == expected
+def test_set_package_limits(test_input, expected, fs):
+    fs.create_file(governor_package_limitting.PACKAGE_LIMIT_CONFIG)
+
+    try:
+        governor_package_limitting.set_package_limits(*test_input)
+    except SystemExit as sysexit:
+        assert sysexit.code == 0
+    cfg = governor_package_limitting.get_package_limit(test_input[0])
+    assert cfg == expected
+
 
 ########################################################################################################################
 
@@ -54,25 +64,21 @@ expected_cfg = {
 }
 
 
-########################################################################################################################
-
-
 @pytest.mark.parametrize("config_file_content, expected", [
     (config_content, expected_cfg),
 ])
 @mock.patch("governor_package_limitting.os.path.exists", mock.MagicMock(return_value=True))
-def test_delete_package_limits(config_file_content, expected):
-    with Patcher() as patcher:
-        patcher.fs.create_file(
-            governor_package_limitting.PACKAGE_LIMIT_CONFIG,
-            contents=config_file_content
-        )
-        governor_package_limitting.delete_package_limit('package1')
-        cfg = governor_package_limitting.get_package_limit()
-        assert cfg == expected
+def test_delete_package_limits(config_file_content, expected, fs):
+    fs.create_file(
+        governor_package_limitting.PACKAGE_LIMIT_CONFIG,
+        contents=config_file_content
+    )
+    governor_package_limitting.delete_package_limit('package1')
+    cfg = governor_package_limitting.get_package_limit()
+    assert cfg == expected
 
 
-########################################################################################################################
+# ########################################################################################################################
 
 
 config_content = """
@@ -104,24 +110,22 @@ expected_cfg = {
     (config_content, expected_cfg)
 ])
 @mock.patch("governor_package_limitting.os.path.exists", mock.MagicMock(return_value=True))
-def test_get_package_limits(config_file_content, expected_content):
-    with Patcher() as patcher:
-        patcher.fs.create_file(governor_package_limitting.PACKAGE_LIMIT_CONFIG, contents=config_file_content)
-        cfg = governor_package_limitting.get_package_limit()
-        assert cfg == expected_content
+def test_get_package_limits(config_file_content, expected_content, fs):
+    fs.create_file(governor_package_limitting.PACKAGE_LIMIT_CONFIG, contents=config_file_content)
+    cfg = governor_package_limitting.get_package_limit()
+    assert cfg == expected_content
 
 
 @pytest.mark.parametrize('config_file_content, expected_content', [
     (config_content, expected_cfg)
 ])
 @mock.patch("governor_package_limitting.os.path.exists", mock.MagicMock(return_value=True))
-def test_get_package_limit(config_file_content, expected_content):
-    with Patcher() as patcher:
-        patcher.fs.create_file(governor_package_limitting.PACKAGE_LIMIT_CONFIG, contents=config_file_content)
-        cfg = governor_package_limitting.get_package_limit('package1')
-        assert cfg == {'package1': expected_content['package1']}
+def test_get_package_limit(config_file_content, expected_content, fs):
+    fs.create_file(governor_package_limitting.PACKAGE_LIMIT_CONFIG, contents=config_file_content)
+    cfg = governor_package_limitting.get_package_limit('package1')
+    assert cfg == {'package1': expected_content['package1']}
 
-########################################################################################################################
+#########################################################################################################################
 
 
 dbctl_output = 'user1    100/100/100/100      200/200/200/200       300/300/300/300   \n'
@@ -180,8 +184,7 @@ def test_format_calc(test_value, from_format, to_format, exptected_result):
         ),
     ]
 )
-def test_check_and_set_default_value(default_config_content, expected_result):
-    with Patcher() as patcher:
-        patcher.fs.create_file(governor_package_limitting.PACKAGE_LIMIT_CONFIG, contents=default_config_content)
-        governor_package_limitting.check_and_set_default_value()
-        assert governor_package_limitting.DEFAULT_PACKAGE_LIMITS == expected_result
+def test_check_and_set_default_value(default_config_content, expected_result, fs):
+    fs.create_file(governor_package_limitting.PACKAGE_LIMIT_CONFIG, contents=default_config_content)
+    governor_package_limitting.check_and_set_default_value()
+    assert governor_package_limitting.DEFAULT_PACKAGE_LIMITS == expected_result

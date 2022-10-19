@@ -10,7 +10,7 @@
 import argparse
 import os
 import sys
-from utilities import Logger, shadow_tracing
+from utilities import Logger, shadow_tracing, acquire_lock
 from clcommon.cpapi import cpinfo, admin_packages
 from typing import Dict, List
 import yaml
@@ -176,8 +176,9 @@ def set_package_limits(package: str, cpu: list = None, io_read: List = None, io_
 
     if not os.path.exists(PACKAGE_LIMIT_CONFIG):
         debug_log(f'Creating file {PACKAGE_LIMIT_CONFIG} with content {cfg}')
-        with open(PACKAGE_LIMIT_CONFIG, 'w', encoding=ENCODING) as ymlfile:
-            yaml.dump(cfg, ymlfile, allow_unicode=True)
+        with acquire_lock('/var/run/governor_package_limit'):
+            with open(PACKAGE_LIMIT_CONFIG, 'w', encoding=ENCODING) as ymlfile:
+                yaml.dump(cfg, ymlfile, allow_unicode=True)
         return
 
     config = get_package_limit()
@@ -196,9 +197,10 @@ def set_package_limits(package: str, cpu: list = None, io_read: List = None, io_
     debug_log(f'Setting package limit with config: {config}')
 
     debug_log('\n')
-    with open(PACKAGE_LIMIT_CONFIG, 'w', encoding=ENCODING) as ymlfile:
-        yaml.dump(config, ymlfile, allow_unicode=True)
-        return
+    with acquire_lock('/var/run/governor_package_limit'):
+        with open(PACKAGE_LIMIT_CONFIG, 'w', encoding=ENCODING) as ymlfile:
+            yaml.dump(config, ymlfile, allow_unicode=True)
+    return
 
 
 def delete_package_limit(package: str):
@@ -211,10 +213,11 @@ def delete_package_limit(package: str):
     config = get_package_limit()
     try:
         config.pop(package)
-        with open(PACKAGE_LIMIT_CONFIG, 'w', encoding=ENCODING) as ymlfile:
-            if config:
-                yaml.dump(config, ymlfile, allow_unicode=True)
-                debug_log(f'Deleting package {package} from config')
+        with acquire_lock('/var/run/governor_package_limit'):
+            with open(PACKAGE_LIMIT_CONFIG, 'w', encoding=ENCODING) as ymlfile:
+                if config:
+                    yaml.dump(config, ymlfile, allow_unicode=True)
+                    debug_log(f'Deleting package {package} from config')
     except (KeyError, AttributeError) as err:
         print(f'Package name {package} not found')
         debug_log(err)
@@ -232,9 +235,10 @@ def get_package_limit(package: str = None, limit_format: str = 'mb', print_to_st
     """
     if os.path.exists(PACKAGE_LIMIT_CONFIG):
         debug_log(f'Reading file {PACKAGE_LIMIT_CONFIG}')
-        with open(PACKAGE_LIMIT_CONFIG, 'r', encoding=ENCODING) as ymlfile:
-            cfg = yaml.load(ymlfile)
-            debug_log(f'config file content is: {cfg}')
+        with acquire_lock('/var/run/governor_package_limit'):
+            with open(PACKAGE_LIMIT_CONFIG, 'r', encoding=ENCODING) as ymlfile:
+                cfg = yaml.load(ymlfile)
+                debug_log(f'config file content is: {cfg}')
 
     if cfg and package:
         cfg = cfg.get(package)
