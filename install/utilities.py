@@ -25,6 +25,9 @@ from glob import glob
 from io import StringIO
 import xml.etree.ElementTree as ET
 from contextlib import contextmanager
+from typing import Optional
+import fcntl
+
 
 __all__ = [
     "mysql_version", "clean_whitespaces", "is_package_installed",
@@ -1483,7 +1486,6 @@ def disable_ubuntu_repos():
     With context manager move all *.list files to *.list.bak except cloudlinux.list
     At the end return back to original
     """
-    import shutil
 
     # List of source files that will be disabled/enabled
     repo_files = ['/etc/apt/sources.list']
@@ -1502,3 +1504,64 @@ def disable_ubuntu_repos():
         for list_file in repo_files:
             if 'cloudlinux.list' not in list_file:
                 shutil.move(list_file + '.bak', list_file)
+
+
+class LockFailedException(Exception):
+    """
+    Exception when failed to take lock
+    """
+    pass
+
+
+def lock_file(path: str, attempts: Optional[int]):
+    """
+    Try to take lock on file with specified number of attempts.
+    """
+    lock_type = fcntl.LOCK_EX
+    if attempts is not None:
+        # avoid blocking on lock
+        lock_type |= fcntl.LOCK_NB
+    try:
+        lock_fd = open(path, "a+")
+        for _ in range(attempts or 1):  # if attempts is None do 1 attempt
+            try:
+                fcntl.flock(lock_fd.fileno(), lock_type)
+                break
+            except OSError:
+                time.sleep(0.3)
+        else:
+            raise LockFailedException(
+                "Another utility instance is already running. "
+                "Try again later or contact system administrator "
+                "in case if issue persists.")
+    except IOError:
+        raise LockFailedException("IO error happened while getting lock.")
+    return lock_fd
+
+
+@contextmanager
+def acquire_lock(resource_path: str, attempts: Optional[int] = None):
+    """
+    Lock a file, than do something.
+    Make specified number of attempts to acquire the lock,
+    if attempts is None, wait until the lock is released.
+    Usage:
+    with acquire_lock(path, attempts=1):
+       ... do something with files ...
+    """
+    lock_fd = lock_file(resource_path + '.lock', attempts)
+    yield
+    release_lock(lock_fd)
+
+
+def release_lock(descriptor):
+    """
+    Releases lock file
+    """
+    try:
+        # lock released explicitly
+        fcntl.flock(descriptor.fileno(), fcntl.LOCK_UN)
+    except IOError:
+        # we ignore this cause process will be closed soon anyway
+        pass
+    descriptor.close()
