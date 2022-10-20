@@ -471,7 +471,11 @@ gpgcheck=1
         # According to July 2022 CPanel Letter, they will not be supporting MariaDB 10.7, 10.8, or 10.9
         # since they will now be reaching end-of-life sometime in 2023.
         # So we will need to add this to unsupported logic MYSQLG-730
-        UNSUPPORTED_MARIADB_VERSIONS = ['mariadb107', 'mariadb108', 'mariadb109']
+        #
+        # We also still don't support MariaDB 10.7, 10.8 and 10.9  and possibly won't do it.
+        # So they are absent in mysql version list, and we have not check for them
+        #UNSUPPORTED_MARIADB_VERSIONS = ['mariadb107', 'mariadb108', 'mariadb109']
+        UNSUPPORTED_MARIADB_VERSIONS = [ ]
 
         super().unsupported_db_version(force)
         version = InstallManager._get_result_mysql_version(self)

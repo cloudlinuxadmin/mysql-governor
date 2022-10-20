@@ -90,10 +90,12 @@ parse_slow_query (void *data)
   unsigned long *lengths;
   unsigned long counts;
 
-  char f_str[] = "SELECT\0";
+  char f_str[] = "SELECT";
+  const size_t f_str_sz = sizeof(f_str); 
   char Id[_DBGOVERNOR_BUFFER_2048];
   char Time[_DBGOVERNOR_BUFFER_2048];
   char Info[_DBGOVERNOR_BUFFER_2048];
+  char InfoUp[f_str_sz];
   char User[USERNAMEMAXLEN];
   char State[_DBGOVERNOR_BUFFER_256];
 
@@ -159,10 +161,12 @@ parse_slow_query (void *data)
 		  db_mysql_get_string (buffer, row[7], lengths[7],
 				       _DBGOVERNOR_BUFFER_8192);
 		  strncpy (Info, buffer, _DBGOVERNOR_BUFFER_2048 - 1);
-		  upper (Info);
+		  strncpy (InfoUp, Info, f_str_sz);
+		  InfoUp[f_str_sz - 1] = '\0';
+		  upper (InfoUp);
 		  long slow_time = is_user_ignored (User);
 		  if (slow_time > 0 &&
-		      strncmp (f_str, Info, strlen (f_str)) == 0
+		      strncmp (f_str, InfoUp, f_str_sz - 1) == 0
 		      /*&& is_request_in_state(State) */ )
 		    {
 #ifdef TEST

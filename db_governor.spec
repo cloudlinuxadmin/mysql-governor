@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   77
+%define g_release   78
 %define g_key_library 10
 
 %if %{undefined _unitdir}
@@ -29,7 +29,7 @@ Requires: yum-utils
 Requires: tmpwatch
 Requires: wget
 Requires: libxml2
-Requires: alt-python27-cllib
+Requires: alt-python27-cllib >= 3.2.34
 Requires(preun): /sbin/chkconfig
 BuildRequires: cmake
 BuildRequires: ncurses-devel
@@ -40,7 +40,7 @@ BuildRequires: alt-python37
 BuildRequires: libxml2-devel
 BuildRequires: pcre-devel
 BuildRequires: patch
-BuildRequires: alt-python27-cllib
+BuildRequires: alt-python27-cllib >= 3.2.34
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
 BuildRequires: systemd
 BuildRequires: systemd-devel
@@ -441,6 +441,11 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Wed Oct 19 2022 Alexandr Demeshko <ademeshko@cloudlinux.com>, Hasan Aliev <haliev@cloudlinux.com> Nikolay Petukhov <npetukhov@cloudlinux.com> 1.2-78
+- MYSQLG-781: Kept original casting in slow query log
+- MYSQLG-800: Removed mariadb107 from supported mysql types
+- MYSQLG-788, MYSQLG-791, MYSQLG-796, MYSQLG-804: Governor package limits enhancements
+
 * Mon Sep 26 2022 Alexandr Demeshko <ademeshko@cloudlinux.com>, Hasan Aliev <haliev@cloudlinux.com> Nikolay Petukhov <npetukhov@cloudlinux.com> 1.2-77
 - MYSQLG-734: Restrict logging enabled
 - MYSQLG-756: Governor package limits utility added
