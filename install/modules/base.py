@@ -32,7 +32,7 @@ from utilities import get_cl_num, exec_command, exec_command_out, new_lve_ctl, \
     correct_remove_notowned_mysql_service_names_not_symlynks_cl7, get_mysql_log_file, \
     check_mysqld_is_alive, makedir_recursive, patch_governor_config, bcolors, force_update_cagefs, \
     show_new_packages_info, wizard_install_confirm, rewrite_file, cl8_module_enable, debug_log, \
-    read_config_file, mycnf_writable, IS_UBUNTU, install_deb_packages, get_mysql_cnf_value
+    read_config_file, mycnf_writable, IS_UBUNTU, install_deb_packages, get_mysql_cnf_value, get_section_from_all_cnfs
 
 
 class InstallManager:
@@ -125,17 +125,10 @@ class InstallManager:
 
         # In case of custom database my.cnf file can be located in some nonstandard path.
         # That's why we try to get it from os environ
-        self.my_cnf_path = os.environ.get('MY_CNF_PATH') if os.environ.get('MY_CNF_PATH') else '/etc/my.cnf'
-
-        # Take datadir of mysql dynamically from cnf file
-        # Someone can change /var/lib/mysql to other directory
-        __my_cnf_datadir = get_mysql_cnf_value('mysqld', 'datadir', self.my_cnf_path)
-
-        if __my_cnf_datadir is None or __my_cnf_datadir == '':
-            self.my_cnf_datadir = '/var/lib/mysql'
-        else:
-            self.my_cnf_datadir = __my_cnf_datadir
-
+        self.my_cnf_path = '/etc/my.cnf'
+        self.VAR_LIB_MYSQL = '/var/lib/mysql'
+        self.my_cnf_datadir = get_section_from_all_cnfs('datadir')
+        print('Database datadir: ', self.my_cnf_datadir)
 
     @staticmethod
     def my_cnf_manager(action, old_path=None):
@@ -190,7 +183,6 @@ class InstallManager:
         """
         Fix nonexistent paths to log-error and pid-file
         """
-        self.my_cnf_manager('backup')
         track = {
             'files': ('log-error', ),
             'paths': ('pid-file', )
@@ -198,7 +190,7 @@ class InstallManager:
         default_log = f'{self.my_cnf_datadir}/mysqld.error.log'
         default_pid = f'{self.my_cnf_datadir}/mysqld.pid'
 
-        conf = read_config_file('/etc/my.cnf.govprev')
+        conf = read_config_file('/etc/my.cnf')
         # try to find non-existent paths, defined in /etc/my.cnf
         for s in conf.sections():
             for opt, val in conf.items(s):
@@ -221,7 +213,7 @@ class InstallManager:
                 conf.add_section('mysqld')
             conf.set('mysqld', 'default-authentication-plugin', 'mysql_native_password')
 
-        if mycnf_writable():
+        if mycnf_writable() and conf.sections():
             with open('/etc/my.cnf', 'w') as configfile:
                 conf.write(configfile)
 
@@ -294,8 +286,7 @@ class InstallManager:
         correct_remove_notowned_mysql_service_names_cl7()
         correct_remove_notowned_mysql_service_names_not_symlynks_cl7()
 
-        # restore my.cnf, because removing of packages
-        # renames /etc/my.cnf to /etc/my.cnf.rpmsave
+        # restore my.cnf, because before removing packages, we make backup of /etc/my.cnf and  /etc/my.cnf.d/* to *.govprev extension
         # if os.path.exists("/etc/my.cnf.govprev"):
         #     shutil.copy2("/etc/my.cnf.govprev", "/etc/my.cnf")
         self.my_cnf_manager('restore_rpmsave')
@@ -325,6 +316,7 @@ class InstallManager:
         # if not os.path.exists("/etc/my.cnf"):
         #     touch("/etc/my.cnf")
         self.my_cnf_manager('touch')
+
         # check if log MySQL's log file exists and correct perms
         # in other case MySQL will not starts
         log_file = get_mysql_log_file()
@@ -351,6 +343,10 @@ class InstallManager:
         if version.startswith("percona") \
                 and self.cl_version >= 7:
             self._enable_percona()
+
+        if not os.path.exists(self.VAR_LIB_MYSQL):
+            os.makedirs(self.VAR_LIB_MYSQL)
+            shutil.chown(self.VAR_LIB_MYSQL, user='mysql', group='mysql')
 
         self._mysqlservice("restart")
 
