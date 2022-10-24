@@ -8,6 +8,7 @@
 #
 
 import argparse
+from distutils.log import debug
 import os
 import sys
 from utilities import Logger, shadow_tracing, acquire_lock
@@ -19,13 +20,14 @@ import json
 from math import ceil
 
 PACKAGE_LIMIT_CONFIG = '/etc/container/governor_package_limit.yaml'
+LOCK_FILE = '/var/run/governor_package_limit'
 DEBUG = False
 ENCODING = 'utf-8'
 
 DEFAULT_PACKAGE_LIMITS = {
-    'cpu': [-1, -1, -1, -1],
-    'read': [-1, -1, -1, -1],
-    'write': [-1, -1, -1, -1],
+    'cpu': [0, 0, 0, 0],
+    'read': [0, 0, 0, 0],
+    'write': [0, 0, 0, 0],
 }
 
 
@@ -100,14 +102,6 @@ def build_parser():
     sync._optionals.title = 'Options'
     sync.add_argument('--debug', action='store_true', help='Turn on debug mode')
 
-    ################ SYNC WITH CPANEL ################
-    sync_with_panel = subparser.add_parser('sync-with-panel',
-                                help='Synchronize governor package limits with  Panel',
-                                description='Description: Synchronize governor package limitting with Panel',
-                                usage='governor_package_limitting.py sync-with-panel')
-    sync_with_panel._optionals.title = 'Options'
-    sync_with_panel.add_argument('--debug', action='store_true', help='Turn on debug mode')
-
     return parser
 
 
@@ -128,10 +122,8 @@ def cp_packages() -> Dict[str, list]:
 
 
 def limits_serializer(args: List):
-    """Serialize cli arguments
-    From cli cpu read write options we receive as list['int']
-    For example: ['1,2,3,4']
-    Serialize will convert to the following: [1,2,3,4] or return None
+    """Convert user input list of string to list of int
+    For example: ['1,2,3,4'] to -> [1,2,3,4]
     """
     __limits = []
     try:
@@ -148,8 +140,48 @@ def limits_serializer(args: List):
 
     if len(__limits) < 4:
         while len(__limits) < 4:
-            __limits.append(-1)
+            __limits.append(0)
     return __limits
+
+
+def write_config_to_yml_file(cfg: dict):
+    with acquire_lock(LOCK_FILE):
+        with open(PACKAGE_LIMIT_CONFIG, 'w', encoding=ENCODING) as ymlfile:
+            yaml.dump(cfg, ymlfile, allow_unicode=True)
+
+
+def read_config_file():
+    with acquire_lock(LOCK_FILE):
+        with open(PACKAGE_LIMIT_CONFIG, 'r', encoding=ENCODING) as ymlfile:
+            cfg = yaml.safe_load(ymlfile)
+    return cfg if cfg else {}
+
+
+def get_package_from_config_dict(package: str, cfg: dict):
+    """Get package from cfg dictionary if exists"""
+    cfg = cfg.get(package)
+    if cfg:
+        cfg = {package: cfg}
+    return cfg
+
+
+def print_config_in_json_format(cfg: dict, size_format):
+    for key, val in cfg.items():
+        for k, v in val.items():
+            for i in range(4):
+                cfg[key][k][i] = byte_size_convertor(v[i], from_format='mb', to_format=size_format)
+
+    print(json.dumps(cfg, ensure_ascii=False).encode(ENCODING).decode(ENCODING))
+
+
+def check_if_values_are_not_less_than_zero(cfg):
+    for k, v in cfg.items():
+        for i in v:
+            if i < 0:
+                print(f'Value for {k} must be >= 0')
+                debug_log(f'Incorrect parameters for {k}')
+                debug_log(f'Applied config is {cfg}')
+                sys.exit(1)
 
 
 def set_package_limits(package: str, cpu: list = None, io_read: List = None, io_write: list = None, serialize=True):
@@ -172,36 +204,24 @@ def set_package_limits(package: str, cpu: list = None, io_read: List = None, io_
         }
     }
 
-    cfg = format_converter(cfg)
-
-    if not os.path.exists(PACKAGE_LIMIT_CONFIG):
-        debug_log(f'Creating file {PACKAGE_LIMIT_CONFIG} with content {cfg}')
-        with acquire_lock('/var/run/governor_package_limit'):
-            with open(PACKAGE_LIMIT_CONFIG, 'w', encoding=ENCODING) as ymlfile:
-                yaml.dump(cfg, ymlfile, allow_unicode=True)
-        return
+    convert_io_rw_to_mb_if_bytes_provided(cfg[package])
+    check_if_values_are_not_less_than_zero(cfg[package])    
 
     config = get_package_limit()
 
-    if not config:
-        config = {}
-
     if config.get(package):
-        for k in list(cfg[package]):
-            if cfg.get(package)[k].count(-1) == 4:
-                del cfg.get(package)[k]
-        config[package] = {**config[package], **cfg[package]}
+        if cpu:
+            config[package]['cpu'] = cfg[package]['cpu']
+        if io_read:
+            config[package]['read'] = cfg[package]['read']
+        if io_write:
+            config[package]['write'] = cfg[package]['write']
     else:
         config[package] = cfg[package]
 
-    debug_log(f'Setting package limit with config: {config}')
-
-    debug_log('\n')
-    with acquire_lock('/var/run/governor_package_limit'):
-        with open(PACKAGE_LIMIT_CONFIG, 'w', encoding=ENCODING) as ymlfile:
-            yaml.dump(config, ymlfile, allow_unicode=True)
+    debug_log(f'Setting package limit with config: {config}\n')
+    write_config_to_yml_file(config)
     return
-
 
 def delete_package_limit(package: str):
     """Delete package limits
@@ -213,47 +233,32 @@ def delete_package_limit(package: str):
     config = get_package_limit()
     try:
         config.pop(package)
-        with acquire_lock('/var/run/governor_package_limit'):
-            with open(PACKAGE_LIMIT_CONFIG, 'w', encoding=ENCODING) as ymlfile:
-                if config:
-                    yaml.dump(config, ymlfile, allow_unicode=True)
-                    debug_log(f'Deleting package {package} from config')
+        write_config_to_yml_file(config)
+        debug_log(f'Deleting package {package} from config')
     except (KeyError, AttributeError) as err:
         print(f'Package name {package} not found')
         debug_log(err)
         return
 
 
-def get_package_limit(package: str = None, limit_format: str = 'mb', print_to_stdout=False):
+
+def get_package_limit(package: str = None, size_format: str = 'mb', print_to_stdout=False):
     """Get package limits
     Args:
         package (str): name of package to get
         print_to_stdout (bool): Print to stdout is used for cli.
-        limit_format: Print values in specified format. mb, kb, bb
+        size_format: Print values in specified format. mb, kb, bb
     Returns:
         Package limit configurations or provided package configuration
     """
-    if os.path.exists(PACKAGE_LIMIT_CONFIG):
-        debug_log(f'Reading file {PACKAGE_LIMIT_CONFIG}')
-        with acquire_lock('/var/run/governor_package_limit'):
-            with open(PACKAGE_LIMIT_CONFIG, 'r', encoding=ENCODING) as ymlfile:
-                cfg = yaml.safe_load(ymlfile)
-                debug_log(f'config file content is: {cfg}')
-
-    if cfg and package:
-        cfg = cfg.get(package)
-        if cfg:
-            cfg = {package: cfg}
+    cfg = read_config_file()
+    
+    if package:
+        cfg = get_package_from_config_dict(package, cfg)
 
     if print_to_stdout and cfg:
-        for key, val in cfg.items():
-            for k, v in val.items():
-                for i in range(4):
-                    cfg[key][k][i] = format_calc(v[i], from_format='mb', to_format=limit_format)
+        print_config_in_json_format(cfg, size_format)
 
-        print(json.dumps(cfg, ensure_ascii=False).encode(ENCODING).decode(ENCODING))
-
-    debug_log('\n')
     return cfg
 
 
@@ -293,6 +298,7 @@ def dbctl_sync(action: str, package: str = None):
     if not action:
         print("Action not specified")
         sys.exit(1)
+    debug_log("Syncing with dbctl")
     __cp_packages = cp_packages()
 
     if action == 'delete' and package:
@@ -314,11 +320,11 @@ def dbctl_sync(action: str, package: str = None):
     run_dbctl_command(users_to_apply_default_limits, 'delete')
 
 
-def format_calc(value: int, from_format: str, to_format: str):
+def byte_size_convertor(value: int, from_format: str, to_format: str):
     """Converting integer between formats mb|kb|bb
     Args:
         value (int): Integer value to convert
-        from_format (str): To convert from mb|kb|bb\
+        from_format (str): To convert from mb|kb|bb
         to_format (str): To convert to mb|kb|bb
     """
     if value < 0:
@@ -346,34 +352,30 @@ def format_calc(value: int, from_format: str, to_format: str):
     return value
 
 
-def format_converter(cfg: dict):
+def convert_io_rw_to_mb_if_bytes_provided(cfg: dict):
     """Converting bytes to MB
-    Some parameters from user cli can be in bytes, for example [-1, 50, 52428800b, 100]
+    Some parameters from user cli can be in bytes, for example [0, 50, 52428800b, 100]
     52428800b is 50 MB
     Args:
         cfg (dict): {cpu: [x,x,x,x], read: [x,x,x,x], write: [x,x,x,x,]}
     Returns:
           cfg (dict)
     """
-    if not cfg:
-        return
-
-    for key, val in cfg.items():
-        for k, v in val.items():
-            if k != 'cpu':
-                for i in range(4):
-                    if isinstance(v[i], str):
-                        if 'b' in v[i]:
-                            debug_log(f'Converting byte `{v[i]}` to MB')
-                            v[i] = format_calc(
-                                ceil(int(v[i].replace('b', ''))),
-                                from_format='bb', to_format='mb'
-                            )
-                        else:
-                            v[i] = int(v[i])
-            else:
-                for i in range(4):
-                    v[i] = int(v[i])
+    for k, v in cfg.items():
+        if k != 'cpu':
+            for i in range(4):
+                if isinstance(v[i], str):
+                    if 'b' in v[i]:
+                        debug_log(f'Converting byte `{v[i]}` to MB')
+                        v[i] = byte_size_convertor(
+                            ceil(int(v[i].replace('b', ''))),
+                            from_format='bb', to_format='mb'
+                        )
+                    else:
+                        v[i] = int(v[i])
+        else:
+            for i in range(4):
+                v[i] = int(v[i])
 
     debug_log('\n')
     return cfg
@@ -382,11 +384,11 @@ def format_converter(cfg: dict):
 def prepare_limits(user: str, package_limit: Dict) -> List:
     """Prepare Limits with algorithm
     Package name is pack1
-    If value in pack1 is -1, look for in default limits. Default limit by default is -1
-    If value in default limit is -1, apply individual limit from user
+    If value in pack1 is <= 0, look for in default limits. Default limit by default is 0
+    If value in default limit is <= 0, apply individual limit from user
     For example:
-    Pack1 Package limit for cpu is: [100, -1, 65, -1]
-    Default Package limit is:       [-1, 90, -1, -1]
+    Pack1 Package limit for cpu is: [100, 0, 65, 0]
+    Default Package limit is:       [0, 90, 0, 0]
     Individual limit is:            [100, 200, 300 ,400]
     Result will be:                 [100, 90, 65, 400]
     Args:
@@ -425,19 +427,19 @@ def prepare_limits(user: str, package_limit: Dict) -> List:
     write_limit = package_write_limit
 
     for i in range(4):
-        if cpu_limit[i] < 0:
+        if cpu_limit[i] < 1:
             cpu_limit[i] = default_cpu_limit[i]
-            if cpu_limit[i] < 0:
+            if cpu_limit[i] < 1:
                 cpu_limit[i] = individual_cpu_limit[i]
 
-        if read_limit[i] < 0:
+        if read_limit[i] < 1:
             read_limit[i] = default_read_limit[i]
-            if read_limit[i] < 0:
+            if read_limit[i] < 1:
                 read_limit[i] = individual_read_limit[i]
 
-        if write_limit[i] < 0:
+        if write_limit[i] < 1:
             write_limit[i] = default_write_limit[i]
-            if write_limit[i] < 0:
+            if write_limit[i] < 1:
                 write_limit[i] = individual_write_limit[i]
     try:
         cpu = ','.join(str(x) for x in cpu_limit)
@@ -461,22 +463,20 @@ def sync_with_panel():
     for package in all_packages:
         if not get_package_limit(package):
             set_package_limits(
-                package,
-                DEFAULT_PACKAGE_LIMITS.get('cpu'),
-                DEFAULT_PACKAGE_LIMITS.get('read'),
-                DEFAULT_PACKAGE_LIMITS.get('write'),
-                serialize=False
+                package=package
             )
 
 
 def check_and_set_default_value():
     """Check for default limits are applied or not
-    If default limits are not configured, then apply DEFAULT_PACKAGE_LIMITS [-1, -1, -1, -1] for cpu, read amd write
+    If default limits are not configured, then apply DEFAULT_PACKAGE_LIMITS [0, 0, 0, 0] for cpu, read amd write
     """
+    debug_log("Checking for default value. If default limits are not configured, then apply default limits [0]\n")
     global DEFAULT_PACKAGE_LIMITS
 
     __default_limit = get_package_limit('default')
     if not __default_limit:
+        debug_log(f'Setting DEFAULT 0 for cpu, read and write')
         set_package_limits(
             'default',
             DEFAULT_PACKAGE_LIMITS.get('cpu'),
@@ -486,6 +486,22 @@ def check_and_set_default_value():
         )
     else:
         DEFAULT_PACKAGE_LIMITS = __default_limit.get('default')
+    debug_log(f'Default Package Limits are: {DEFAULT_PACKAGE_LIMITS}\n')
+
+
+
+def create_package_config_file_if_not_exists():
+     if not os.path.exists(PACKAGE_LIMIT_CONFIG):
+        debug_log(f'Config file: {PACKAGE_LIMIT_CONFIG} not exists')
+        debug_log(f'Creating config file: {PACKAGE_LIMIT_CONFIG}\n')
+        with open(PACKAGE_LIMIT_CONFIG, 'w+', encoding=ENCODING):
+            pass
+
+
+def turn_on_debug_if_user_enabled_debug_mode(opts):
+    if opts.debug:
+        global DEBUG
+        DEBUG = True
 
 
 def main(argv):
@@ -500,30 +516,22 @@ def main(argv):
         sys.exit(1)
 
     opts = parser.parse_args(argv)
-    if opts.debug:
-        global DEBUG
-        DEBUG = True
 
-    if not os.path.exists(PACKAGE_LIMIT_CONFIG):
-        debug_log(f'Config file: {PACKAGE_LIMIT_CONFIG} not exists')
-        debug_log(f'Creating config file: {PACKAGE_LIMIT_CONFIG}\n')
-        with open(PACKAGE_LIMIT_CONFIG, 'w+', encoding=ENCODING):
-            pass
-    debug_log("Checking for default value. If default limits are not configured, then apply default limits [-1]\n")
+    turn_on_debug_if_user_enabled_debug_mode(opts)
+    create_package_config_file_if_not_exists()
     check_and_set_default_value()
 
     if opts.command == 'set':
         set_package_limits(opts.package, opts.cpu, opts.read, opts.write)
         dbctl_sync('set')
     elif opts.command == 'get':
+        sync_with_panel()
         get_package_limit(opts.package, opts.format, print_to_stdout=True)
     elif opts.command == 'delete':
         delete_package_limit(opts.package)
         dbctl_sync('delete', opts.package)
     elif opts.command == 'sync':
         dbctl_sync('set')
-    elif opts.command == 'sync-with-panel':
-        sync_with_panel()
     else:
         parser.print_help()
         sys.exit(1)
