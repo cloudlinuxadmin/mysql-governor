@@ -379,6 +379,7 @@ config_init(const char *path) {
 	cfg->use_lve = 0;
 	cfg->all_lve = 0;
 	cfg->separate_lve = 0;
+	cfg->precision = 0;
 	if (tmp_xml != NULL) {
 		ptr = getElemAttr(tmp_xml, "use");
 		if (ptr) {
@@ -394,6 +395,12 @@ config_init(const char *path) {
 				cfg->all_lve = 1;
 				cfg->separate_lve = 1;
 			}
+		}
+		releaseElemValue(ptr);
+		ptr = getElemAttr(tmp_xml, "precision");
+		if (ptr) {
+			if (!strcasecmp(ptr, "On"))
+				cfg->precision = 1;
 		}
 		releaseElemValue(ptr);
 	}
@@ -765,8 +772,8 @@ void print_config_full(void) {
 	if (cfg->use_lve && !cfg->all_lve && cfg->separate_lve) {
 		snprintf(buffer, 511, "AbUsers");
 	}
-	printf("LVE %s, USE_LVE %d, ALL_LVE %d, SEP_LVE %d\n", buffer, cfg->use_lve,
-			cfg->all_lve, cfg->separate_lve);
+	printf("LVE %s, USE_LVE %d, ALL_LVE %d, SEP_LVE %d PRECISION %d\n", buffer, cfg->use_lve,
+			cfg->all_lve, cfg->separate_lve, cfg->precision);
 	printf("LOG %s, MODE %s\n", cfg->log ? cfg->log : "NULL",
 			mode_type_enum_to_str(cfg->log_mode, buffer, 511));
 	printf("RESTRICT_LEVEL_1 %d\n", cfg->level1);

@@ -24,6 +24,7 @@
 
 #include "tid_table.h"
 #include "dbgovernor_string_functions.h"
+#include "calc_stats.h"
 
 #define SEC2NANO 1000000000
 
@@ -224,6 +225,109 @@ add_new_tid_data2 (pid_t tid, tid_table * tbl)
   pthread_mutex_unlock (&mtx_tid);
 }
 
+void
+add_new_begin_tid_data (client_data * tbl, int fd)
+{
+  pthread_mutex_lock (&mtx_tid);
+  tid_table *item = g_hash_table_lookup (threads_list,
+					 GINT_TO_POINTER (tbl->tid));
+
+  //thread already registered
+  if (item)
+  {
+    //This thread was used by another user
+    if (strncmp(tbl->username, item->username, USERNAMEMAXLEN))
+	{
+#ifdef TEST
+      printf("!!! Thread changed user TIDs:%d/%d cnt:%d Usernames '%s'->'%s'\n",
+			  tbl->tid, item->tid, item->cnt, item->username, tbl->username);
+#endif
+	  double cpu = item->cpu_end;
+	  //use rusage
+	  if ((-1 != item->stime_begin.tv_sec) && (-1 != item->utime_begin.tv_sec))
+	  {
+		  cpu = calc_cpu_from_rusage(item);
+		  item->cpu = 0;
+	  }
+	  clac_stats_difference_inner_add_to_counters (cpu, item->read_end, item->write_end, item);
+      g_hash_table_remove (threads_list, GINT_TO_POINTER (tbl->tid));
+    }
+	//update begin info
+	else
+    {
+	  item->type = tbl->type;
+      pthread_mutex_unlock (&mtx_tid);
+	  return;
+    }
+  }
+
+  //new thread
+  tid_table *new_data = malloc (sizeof (tid_table));
+  if (!new_data) {
+    pthread_mutex_unlock (&mtx_tid);
+	return;
+  }
+
+  memset (new_data->username, 0, USERNAMEMAXLEN * sizeof (char));
+  strlcpy (new_data->username, tbl->username, USERNAMEMAXLEN);
+  new_data->fd = fd;
+  new_data->cpu = tbl->cpu;
+  new_data->read = tbl->read;
+  new_data->write = tbl->write;
+  new_data->pid = tbl->pid;
+  new_data->update_time = tbl->update_time;
+  new_data->naoseconds = tbl->naoseconds;
+
+  //conditional precision
+  new_data->type = tbl->type;
+  new_data->cnt = 0;
+  new_data->tid = tbl->tid;
+  new_data->cpu_end = tbl->cpu;
+  new_data->read_end = tbl->read;
+  new_data->write_end = tbl->write;
+  new_data->update_time_end = tbl->update_time;
+  new_data->nanoseconds_end = tbl->naoseconds;
+  new_data->utime_begin = tbl->utime;
+  new_data->stime_begin = tbl->stime;
+  new_data->utime_end = tbl->utime;
+  new_data->stime_end = tbl->stime;
+
+#ifdef TEST
+  //printf("save %d time %f\n", tbl->tid, tbl->update_time + (double) tbl->naoseconds / (double) SEC2NANO);
+#endif
+  g_hash_table_insert (threads_list, GINT_TO_POINTER (tbl->tid),
+		  new_data);
+
+  pthread_mutex_unlock (&mtx_tid);
+}
+
+#define LOAD_NEW_END_TID_STATS(x) (tbl->x<new_data->x ## _end)?new_data->x ## _end:tbl->x;
+void
+add_new_end_tid_data (client_data * tbl)
+{
+  pthread_mutex_lock (&mtx_tid);
+  tid_table *item = g_hash_table_lookup (threads_list,
+					 GINT_TO_POINTER (tbl->tid));
+  if (!item) {
+
+	  pthread_mutex_unlock (&mtx_tid);
+	  return;
+  }
+
+  tid_table *new_data = item;
+  new_data->type = tbl->type;
+  new_data->cnt++;
+  new_data->cpu_end = LOAD_NEW_END_TID_STATS (cpu);
+  new_data->read_end = LOAD_NEW_END_TID_STATS (read);
+  new_data->write_end = LOAD_NEW_END_TID_STATS (write);
+  new_data->update_time_end = tbl->update_time;
+  new_data->nanoseconds_end = tbl->naoseconds;
+  new_data->utime_end = tbl->utime;
+  new_data->stime_end = tbl->stime;
+
+  pthread_mutex_unlock (&mtx_tid);
+}
+
 tid_table *
 get_tid_data (pid_t tid, tid_table * buf)
 {
@@ -281,13 +385,13 @@ proceed_tid_data (GHFunc func, gpointer user_data)
 }
 
 void
-increment_counters (char *username, long long cpu, long long read,
+increment_counters (char *username, double cpu, long long read,
 		    long long write, double tm)
 {
   Stat_counters *item = g_hash_table_lookup (user_counters_list, username);
   if (item)
     {
-      item->s.cpu += (double) cpu;
+      item->s.cpu += cpu;
       item->s.read += read;
       item->s.write += write;
 #ifdef TEST
