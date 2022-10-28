@@ -44,7 +44,7 @@ __all__ = [
     "disable_and_remove_service",
     "disable_and_remove_service_if_notsymlynk", "check_mysqld_is_alive",
     "get_mysql_log_file", "get_mysql_cnf_value", "makedir_recursive", "is_ubuntu",
-    "download_apt_packages", "install_deb_packages", "Logger"
+    "download_apt_packages", "install_deb_packages", "Logger", "get_section_from_all_cnfs"
 ]
 
 RPM_TEMP_PATH = "/usr/share/lve/dbgovernor/tmp/governor-tmp"
@@ -1121,7 +1121,10 @@ def read_config_file(cnf_file):
     Returns: <configparser.RawConfigParser> object or raises occurred exception
     """
     conf = configparser.RawConfigParser(allow_no_value=True, strict=False)
-    conf.read(cnf_file)
+    try:
+        conf.read(cnf_file)
+    except configparser.Error:
+        pass
     return conf
 
 
@@ -1565,3 +1568,16 @@ def release_lock(descriptor):
         # we ignore this cause process will be closed soon anyway
         pass
     descriptor.close()
+
+
+def get_section_from_all_cnfs(section: str):
+    command = 'find /etc -name "*.cnf"'
+    result = subprocess.run(command, shell=True, text=True, capture_output=True).stdout
+    if result:
+        for cnf_file in result.split('\n'):
+            conf = read_config_file(cnf_file)
+            for s in conf.sections():
+                for opt, val in conf.items(s):
+                    if opt == section:
+                        return val
+    return '/var/lib/mysql'
