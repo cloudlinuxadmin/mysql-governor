@@ -76,8 +76,8 @@ main (int argc, char *argv[])
       fflush (stderr);
       exit (-1);
     }
-  init_mysql_function ();
   open_log (data_cfg.log);
+  init_mysql_function ();
   if (!data_cfg.is_gpl && data_cfg.use_lve && (cmd != 1))
     {
       if (cmd == 0)
