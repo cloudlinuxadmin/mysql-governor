@@ -441,10 +441,14 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
-* Wed Oct 19 2022 Alexandr Demeshko <ademeshko@cloudlinux.com>, Hasan Aliev <haliev@cloudlinux.com> Nikolay Petukhov <npetukhov@cloudlinux.com> 1.2-78
+* Fri Nov 04 2022 Alexandr Demeshko <ademeshko@cloudlinux.com>, Hasan Aliev <haliev@cloudlinux.com>, Nikolay Petukhov <npetukhov@cloudlinux.com>, Sergey Kozhekin <skozhekin@cloudlinux.com>  1.2-79
 - MYSQLG-781: Kept original casting in slow query log
 - MYSQLG-800: Removed mariadb107 from supported mysql types
 - MYSQLG-788, MYSQLG-791, MYSQLG-796, MYSQLG-804, MYSQLG-806: Governor package limits enhancements
+- MYSQLG-765: Fix for config file sections absence
+- MYSQLG-816: Fix governor limits on reseller packages
+- MYSQLG-778: CL9 related enhancements
+- MYSQLG-818: Governor script always consider --yes command line argument
 
 * Mon Sep 26 2022 Alexandr Demeshko <ademeshko@cloudlinux.com>, Hasan Aliev <haliev@cloudlinux.com> Nikolay Petukhov <npetukhov@cloudlinux.com> 1.2-77
 - MYSQLG-734: Restrict logging enabled
