@@ -78,13 +78,14 @@ if ((error = dlerror()) != NULL) {\
 int
 init_mysql_function (void)
 {
+    int i;
     char *error;
     const char *mysqlclient_lib = NULL;
     struct governor_config data_cfg;
 
     if (!lib_handle)
     {
-        for (int i = 0; i < sizeof mysqlclient_libs / sizeof mysqlclient_libs[0]; ++i)
+        for (i = 0; i < sizeof mysqlclient_libs / sizeof mysqlclient_libs[0]; ++i)
         {
             mysqlclient_lib = mysqlclient_libs[i];
             lib_handle = dlopen(mysqlclient_lib, RTLD_LAZY);
