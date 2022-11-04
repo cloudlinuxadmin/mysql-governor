@@ -12,7 +12,7 @@ from distutils.log import debug
 import os
 import sys
 from utilities import Logger, shadow_tracing, acquire_lock
-from clcommon.cpapi import cpinfo, admin_packages
+from clcommon.cpapi import cpinfo, admin_packages, resellers_packages
 from typing import Dict, List
 import yaml
 import subprocess
@@ -111,13 +111,25 @@ def cp_packages() -> Dict[str, list]:
     Returns:
         (dict): package_name and contained users list
     """
+    def update_list_in_a_dict_item(package: str, user: str) -> None:
+        """
+        Updates a list of users who use the package
+        """
+        if users_and_packages.get(package):
+            users_and_packages[package].append(user)
+        else:
+            users_and_packages[package] = [user]
+
     __cpinfo = cpinfo()
     users_and_packages = {}
+    # user's packages
     for i in __cpinfo:
-        if users_and_packages.get(i[1]):
-            users_and_packages[i[1]].append(i[0])
-        else:
-            users_and_packages[i[1]] = [i[0]]
+        update_list_in_a_dict_item(i[1], i[0])
+    # receller's packages
+    for usr, pkgs in resellers_packages().items():
+        for pkg in pkgs:
+            update_list_in_a_dict_item(pkg, usr)
+
     return users_and_packages
 
 
@@ -205,7 +217,7 @@ def set_package_limits(package: str, cpu: list = None, io_read: List = None, io_
     }
 
     convert_io_rw_to_mb_if_bytes_provided(cfg[package])
-    check_if_values_are_not_less_than_zero(cfg[package])    
+    check_if_values_are_not_less_than_zero(cfg[package])
 
     config = get_package_limit()
 
@@ -252,7 +264,7 @@ def get_package_limit(package: str = None, size_format: str = 'mb', print_to_std
         Package limit configurations or provided package configuration
     """
     cfg = read_config_file()
-    
+
     if package:
         cfg = get_package_from_config_dict(package, cfg)
 
@@ -282,10 +294,14 @@ def run_dbctl_command(users: list, action: str, limits: dict = None):
 
     if action == 'set' and limits and users:
         for user in users:
-            cpu, io_read, io_write = prepare_limits(user, package_limit=limits)
-            command = f'dbctl set {user} --cpu={cpu} --read={io_read} --write={io_write}'
-            debug_log(f'Running command: {command}')
-            subprocess.run(command, shell=True, text=True)
+            # Returns an empty list when user is absent in dbctl
+            # so we need to skip all dbctl actions
+            prepare_limits_out = prepare_limits(user, package_limit=limits)
+            if prepare_limits_out:
+                cpu, io_read, io_write = prepare_limits_out
+                command = f'dbctl set {user} --cpu={cpu} --read={io_read} --write={io_write}'
+                debug_log(f'Running command: {command}')
+                subprocess.run(command, shell=True, text=True)
     debug_log('\n')
 
 
@@ -401,9 +417,9 @@ def prepare_limits(user: str, package_limit: Dict) -> List:
     output = subprocess.run(get_individual_limit_command, shell=True, text=True, capture_output=True)
 
     if not output.stdout:
-        print(f'Couldn\'t  find limits for {user} in dbctl')
+        debug_log(f'Couldn\'t  find limits for {user} in dbctl')
         debug_log(output.stderr)
-        exit(1)
+        return []
 
     output = output.stdout.split()
     debug_log(f'Output of command: {get_individual_limit_command} is: {output}')
@@ -453,14 +469,26 @@ def prepare_limits(user: str, package_limit: Dict) -> List:
         sys.exit(1)
 
 
+def get_all_packages():
+    """
+    Gets all packages: admin packages and resellers packages either.
+    """
+    all_packages = admin_packages()
+    for i in resellers_packages().values():
+        for n in i:
+            if n not in all_packages:
+                all_packages.append(n)
+
+    return all_packages
+
+
 def sync_with_panel():
     # TODO MYSQLG-789
     """Syncing with panel
     For now we are just getting package names and applying default values.
     In future we will get packages with limits and apply it.
     """
-    all_packages = admin_packages()
-    for package in all_packages:
+    for package in get_all_packages():
         if not get_package_limit(package):
             set_package_limits(
                 package=package
