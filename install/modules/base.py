@@ -855,13 +855,20 @@ for native procedure restoring of MySQL packages"""))
             # Install mysqlclient18 for all versions of mysql, even for 5.5 and 5.6
             # because from now it contains also libmariadb support needed
             # for some packages like net-snmp-agent-libs on CL8
-            packages += ["mysqlclient16", "mysqlclient15", "mysqlclient18"]
+            if self.cl_version < 9:
+                packages += ["mysqlclient16", "mysqlclient15", "mysqlclient18"]
+            else:
+                packages += ['mysqlclient18']
+
             if sql_version in ["mysql57", "mysql80"]:
                 packages += ["numactl-devel%s" % arch, "numactl%s" % arch]
         elif sql_version.startswith("mariadb"):
-            packages += ["mysqlclient16", "mysqlclient15"]
+            if self.cl_version < 9:
+                packages += ["mysqlclient16", "mysqlclient15"]
+            else:
+                packages += ['mysqlclient18']
             if sql_version in ["mariadb55", "mariadb100", "mariadb101", "mariadb102", "mariadb103"] \
-                    and get_cl_num() == 8:
+                    and get_cl_num() >= 8:
                 # net-snmp-agent-libs on CL8 requires libmariadb.so.3() and libmariadb.so.3(libmysqlclient_18)
                 # Old versions of MariaDB up to 10.1 do not contain libmariadb at all.
                 # So we need to install mysqlclient18-compat for mariadb55, mariadb100 and mariadb101

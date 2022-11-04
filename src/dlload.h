@@ -10,17 +10,6 @@
 #ifndef DLLOAD_H_
 #define DLLOAD_H_
 
-#define LOAD_FUNCTION(x) _##x = dlsym(lib_handle, #x); \
-                if ((error = dlerror()) != NULL) {\
-                        delete_mysql_function();\
-                        return -1;\
-                }
-
-#define LOAD_FUNCTION_SKIP(x) _##x = dlsym(lib_handle, #x); \
-                if ((error = dlerror()) != NULL) {\
-                        _##x = NULL; \
-                }
-
 #define M_mysql_store_result void * (*_mysql_store_result)(void *)
 #define M_mysql_num_rows unsigned long long (*_mysql_num_rows)(void *)
 #define M_mysql_free_result void (*_mysql_free_result)(void *)
@@ -46,6 +35,7 @@
 #define M_mysql_ping int (*_mysql_ping)(void *mysql)
 
 int init_mysql_function (void);
+
 void delete_mysql_function (void);
 
 #endif /* DLLOAD_H_ */

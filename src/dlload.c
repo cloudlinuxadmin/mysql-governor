@@ -10,6 +10,9 @@
 #include <dlfcn.h>
 #include "dlload.h"
 
+#include "governor_config.h"
+#include "log.h"
+
 M_mysql_store_result = NULL;
 M_mysql_num_rows = NULL;
 M_mysql_free_result = NULL;
@@ -30,65 +33,6 @@ static void *lib_handle = NULL;
 
 //Load mysql fucntions
 
-// -1 - error
-//  0 - OK
-int
-init_mysql_function (void)
-{
-  char *error;
-
-  if (lib_handle == NULL)
-    {
-      lib_handle = dlopen ("libmysqlclient.so.21", RTLD_LAZY);
-      if (!lib_handle)
-	{
-          lib_handle = dlopen ("libmysqlclient_r.so.18", RTLD_LAZY);
-          if (!lib_handle)
-	    {
-	      lib_handle = dlopen ("libmysqlclient_r.so.16", RTLD_LAZY);
-	      if (!lib_handle)
-	        {
-	          lib_handle = dlopen ("libmysqlclient_r.so.15", RTLD_LAZY);
-	          if (!lib_handle)
-		    {
-		      lib_handle = dlopen ("libmysqlclient_r.so", RTLD_LAZY);
-		      if (!lib_handle)
-		        {
-		          lib_handle = dlopen ("libmysqlclient.so", RTLD_LAZY);
-		          if (!lib_handle)
-			    {
-			      lib_handle = dlopen ("libperconaserverclient.so.18", RTLD_LAZY);
-			      if (!lib_handle)
-			      {
-				    return -1;
-			      }
-			    }
-		        }
-		    }
-	        }
-	    }
-	}
-
-      LOAD_FUNCTION (mysql_store_result);
-      LOAD_FUNCTION (mysql_num_rows);
-      LOAD_FUNCTION (mysql_free_result);
-      LOAD_FUNCTION (mysql_fetch_lengths);
-      LOAD_FUNCTION (mysql_fetch_row);
-      LOAD_FUNCTION_SKIP (my_init);
-      LOAD_FUNCTION_SKIP (load_defaults);
-      LOAD_FUNCTION (mysql_init);
-      LOAD_FUNCTION (mysql_real_connect);
-      LOAD_FUNCTION (mysql_options);
-      LOAD_FUNCTION (mysql_query);
-      LOAD_FUNCTION (mysql_close);
-      LOAD_FUNCTION (mysql_error);
-      LOAD_FUNCTION (mysql_real_escape_string);
-      LOAD_FUNCTION (mysql_ping);
-
-    }
-  return 0;
-}
-
 void
 delete_mysql_function (void)
 {
@@ -98,3 +42,80 @@ delete_mysql_function (void)
       lib_handle = NULL;
     }
 }
+
+static const char *mysqlclient_libs[] =
+{
+    "libmysqlclient.so.21",
+    "libmysqlclient_r.so.18",
+    "libmysqlclient_r.so.16",
+    "libmysqlclient_r.so.15",
+    "libmysqlclient_r.so",
+    "libmysqlclient.so",
+    "libmysqlclient.so.18",
+    "libperconaserverclient.so.18"
+};
+
+
+#define LOAD_FUNCTION_SKIP(x) do { \
+_##x = dlsym(lib_handle, #x);\
+if ((error = dlerror()) != NULL) {\
+                        _##x = NULL; }\
+} while(0)
+
+#define LOAD_FUNCTION_LOGGED(x) do {\
+_##x = dlsym(lib_handle, #x);\
+if ((error = dlerror()) != NULL) {\
+    get_config_data(&data_cfg);\
+    WRITE_LOG (NULL, 0, "cannot find (%s) sym in (%s) library: %s",\
+               data_cfg.log_mode, #x, mysqlclient_lib, error);\
+    delete_mysql_function();\
+    return -1; }\
+} while(0)
+
+
+// -1 - error
+//  0 - OK
+int
+init_mysql_function (void)
+{
+    char *error;
+    const char *mysqlclient_lib = NULL;
+    struct governor_config data_cfg;
+
+    if (!lib_handle)
+    {
+        for (int i = 0; i < sizeof mysqlclient_libs / sizeof mysqlclient_libs[0]; ++i)
+        {
+            mysqlclient_lib = mysqlclient_libs[i];
+            lib_handle = dlopen(mysqlclient_lib, RTLD_LAZY);
+            if (lib_handle)
+                break;
+        }
+    }
+
+    if (!lib_handle)
+    {
+        get_config_data(&data_cfg);
+        WRITE_LOG (NULL, 0, "cannot find any mysqlclient library", data_cfg.log_mode);
+        return -1;
+    }
+    //assert(mysqlclient_lib != NULL);
+
+    LOAD_FUNCTION_LOGGED (mysql_store_result);
+    LOAD_FUNCTION_LOGGED (mysql_num_rows);
+    LOAD_FUNCTION_LOGGED (mysql_free_result);
+    LOAD_FUNCTION_LOGGED (mysql_fetch_lengths);
+    LOAD_FUNCTION_LOGGED (mysql_fetch_row);
+    LOAD_FUNCTION_SKIP (my_init);
+    LOAD_FUNCTION_SKIP (load_defaults);
+    LOAD_FUNCTION_LOGGED (mysql_init);
+    LOAD_FUNCTION_LOGGED (mysql_real_connect);
+    LOAD_FUNCTION_LOGGED (mysql_options);
+    LOAD_FUNCTION_LOGGED (mysql_query);
+    LOAD_FUNCTION_LOGGED (mysql_close);
+    LOAD_FUNCTION_LOGGED (mysql_error);
+    LOAD_FUNCTION_LOGGED (mysql_real_escape_string);
+    LOAD_FUNCTION_LOGGED (mysql_ping);
+    return 0;
+}
+

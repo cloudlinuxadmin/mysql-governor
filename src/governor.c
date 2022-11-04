@@ -188,8 +188,7 @@ void becameDaemon(int self_supporting) {
 	if (self_supporting) {
 		switch (fork()) {
 		case -1:
-			WRITE_LOG (NULL, 0, "Can't start daemon", data_cfg.log_mode)
-			;
+			WRITE_LOG (NULL, 0, "Can't start daemon", data_cfg.log_mode);
 			close_log();
 			close_restrict_log();
 			close_slow_queries_log();

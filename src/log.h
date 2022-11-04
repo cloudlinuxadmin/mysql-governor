@@ -12,6 +12,8 @@
 
 #include "data.h"
 
+#include <stdio.h>
+
 // All the functions return 0 on success and errno otherwise
 
 int open_log (const char *log_file);
@@ -22,12 +24,14 @@ FILE *get_log (void);
 FILE *get_restrict_log (void);
 FILE *get_slow_queries_log (void);
 
-#define WRITE_LOG(stats, type, fmt, mode, ...) if (type==0) \
+#define WRITE_LOG(stats, type, fmt, mode, ...) do { \
+if (type==0) \
 	write_log(get_log(), __FILE__, __LINE__, mode, stats, fmt, ##__VA_ARGS__); \
 else if (type==1) \
 	write_log(get_restrict_log(), __FILE__, __LINE__, mode, stats, fmt, ##__VA_ARGS__); \
 else if (type==2)  \
-	write_log(get_slow_queries_log(), __FILE__, __LINE__, mode, stats, fmt, ##__VA_ARGS__);
+	write_log(get_slow_queries_log(), __FILE__, __LINE__, mode, stats, fmt, ##__VA_ARGS__); \
+} while(0)
 
 //WRITE_LOG(NULL, 0, cfg->mode, "test %s", "Hello"); write to error_log
 //WRITE_LOG(stat1, 1, cfg->mode, "test %s", "Hello"); write to restrict log
