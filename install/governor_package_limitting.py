@@ -180,8 +180,11 @@ def get_package_from_config_dict(package: str, cfg: dict):
 def print_config_in_json_format(cfg: dict, size_format):
     for key, val in cfg.items():
         for k, v in val.items():
-            for i in range(4):
-                cfg[key][k][i] = byte_size_convertor(v[i], from_format='mb', to_format=size_format)
+            if k != 'cpu':
+                for i in range(4):
+                    cfg[key][k][i] = byte_size_convertor(
+                        v[i], from_format='bb', to_format=size_format
+                    )
 
     print(json.dumps(cfg, ensure_ascii=False).encode(ENCODING).decode(ENCODING))
 
@@ -216,7 +219,7 @@ def set_package_limits(package: str, cpu: list = None, io_read: List = None, io_
         }
     }
 
-    convert_io_rw_to_mb_if_bytes_provided(cfg[package])
+    convert_io_rw_to_bb(cfg[package])
     check_if_values_are_not_less_than_zero(cfg[package])
 
     config = get_package_limit()
@@ -368,10 +371,12 @@ def byte_size_convertor(value: int, from_format: str, to_format: str):
     return value
 
 
-def convert_io_rw_to_mb_if_bytes_provided(cfg: dict):
-    """Converting bytes to MB
-    Some parameters from user cli can be in bytes, for example [0, 50, 52428800b, 100]
-    52428800b is 50 MB
+def convert_io_rw_to_bb(cfg: dict):
+    """Converting MB or KB to bytes
+    Parameters from user cli can be bytes, MB or KB.
+    Symbol 'b' - bytes, symbol 'k' - kilobytes,
+    symbol 'm' or no symbols - megabytes
+    [1, 50m, 52428800b, 100k]
     Args:
         cfg (dict): {cpu: [x,x,x,x], read: [x,x,x,x], write: [x,x,x,x,]}
     Returns:
@@ -382,13 +387,25 @@ def convert_io_rw_to_mb_if_bytes_provided(cfg: dict):
             for i in range(4):
                 if isinstance(v[i], str):
                     if 'b' in v[i]:
-                        debug_log(f'Converting byte `{v[i]}` to MB')
+                        v[i] = int(v[i].replace('b', ''))
+                    elif 'k' in v[i]:
+                        debug_log(f'Converting kilobytes `{v[i]}` to bytes')
                         v[i] = byte_size_convertor(
-                            ceil(int(v[i].replace('b', ''))),
-                            from_format='bb', to_format='mb'
+                            ceil(int(v[i].replace('k', ''))),
+                            from_format='kb', to_format='bb'
+                        )
+                    elif 'm' in v[i]:
+                        debug_log(f'Converting megabytes `{v[i]}` to bytes')
+                        v[i] = byte_size_convertor(
+                            ceil(int(v[i].replace('m', ''))),
+                            from_format='mb', to_format='bb'
                         )
                     else:
-                        v[i] = int(v[i])
+                        debug_log(f'Converting megabytes `{v[i]}` to bytes')
+                        v[i] = byte_size_convertor(
+                            ceil(int(v[i])),
+                            from_format='mb', to_format='bb'
+                        )
         else:
             for i in range(4):
                 v[i] = int(v[i])
@@ -413,7 +430,7 @@ def prepare_limits(user: str, package_limit: Dict) -> List:
     Returns:
         After performing logical calculation: ['1,1,1,1'], ['2,2,2,2'], ['3,3,3,3']
     """
-    get_individual_limit_command = f'dbctl list | tail -n +2 | grep -i {user} | head -n1'
+    get_individual_limit_command = f'dbctl list --bb | tail -n +2 | grep -i {user} | head -n1'
     output = subprocess.run(get_individual_limit_command, shell=True, text=True, capture_output=True)
 
     if not output.stdout:
@@ -458,9 +475,10 @@ def prepare_limits(user: str, package_limit: Dict) -> List:
             if write_limit[i] < 1:
                 write_limit[i] = individual_write_limit[i]
     try:
+        # with 'b' symbol to set bytes using 'dbctl' tool
         cpu = ','.join(str(x) for x in cpu_limit)
-        io_read = ','.join(str(x) for x in read_limit)
-        io_write = ','.join(str(x) for x in write_limit)
+        io_read = ','.join(str(x) + 'b' for x in read_limit)
+        io_write = ','.join(str(x) + 'b' for x in write_limit)
         debug_log(f'Limits after calculation for {user} is:')
         debug_log(f'cpu: [{cpu}], read: [{io_read}], write: [{io_write}]')
         return cpu, io_read, io_write
