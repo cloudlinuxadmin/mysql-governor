@@ -220,12 +220,12 @@ GetDefault(GPtrArray * tags, int flag) {
 	if (!found_tag_->limit_attr)
 		return "Error\n";
 
-	return GetDefaultForUsers(tags, NULL, NULL, NULL, flag);
+	return GetDefaultForUsers(tags, NULL, NULL, NULL, flag, 0);
 }
 
 char *
 GetDefaultForUsers(GPtrArray * tags, DbCtlLimitAttr * cpu_def,
-		DbCtlLimitAttr * read_def, DbCtlLimitAttr * write_def, int flag) {
+		DbCtlLimitAttr * read_def, DbCtlLimitAttr * write_def, int flag, int raw) {
 	char mb_buffer[SIZEOF_OUTPUT_BUFFER] = { 0 };
 	int i = 0, cnt_line = 1;
 
@@ -244,127 +244,115 @@ GetDefaultForUsers(GPtrArray * tags, DbCtlLimitAttr * cpu_def,
 
 		if (strcmp(mode, "ignore") != 0) {
 			int
-					cpu_curr = atoi(
-							GetLimitAttr(found_tag_->limit_attr, "cpu",
-									"current")),
-					cpu_short =
-							atoi(
-									GetLimitAttr(found_tag_->limit_attr, "cpu",
-											"short")),
-					cpu_mid = atoi(
-							GetLimitAttr(found_tag_->limit_attr, "cpu", "mid")),
-					cpu_long =
-							atoi(
-									GetLimitAttr(found_tag_->limit_attr, "cpu",
-											"long"));
-
-			long long read_curr_real_size = atoll(
-					GetLimitAttr(found_tag_->limit_attr, "read", "current")),
-					read_short_real_size = atoll(
-							GetLimitAttr(found_tag_->limit_attr, "read",
-									"short")), read_mid_real_size =
-							atoll(
-									GetLimitAttr(found_tag_->limit_attr,
-											"read", "mid")),
-					read_long_real_size =
-							atoll(
-									GetLimitAttr(found_tag_->limit_attr,
-											"read", "long"));
-
-			long long write_curr_real_size = atoll(
-					GetLimitAttr(found_tag_->limit_attr, "write", "current")),
-					write_short_real_size = atoll(
-							GetLimitAttr(found_tag_->limit_attr, "write",
-									"short")), write_mid_real_size =
-							atoll(
-									GetLimitAttr(found_tag_->limit_attr,
-											"write", "mid")),
-					write_long_real_size = atoll(
-							GetLimitAttr(found_tag_->limit_attr, "write",
-									"long"));
+			cpu_curr = atoi(GetLimitAttr(found_tag_->limit_attr, "cpu", "current")),
+			cpu_short = atoi(GetLimitAttr(found_tag_->limit_attr, "cpu","short")),
+			cpu_mid = atoi(GetLimitAttr(found_tag_->limit_attr, "cpu", "mid")),
+			cpu_long = atoi(GetLimitAttr(found_tag_->limit_attr, "cpu", "long"));
 
 			long long
-					read_curr =
-							atoll(
-									get_mb_str(
-											GetLimitAttr(
-													found_tag_->limit_attr,
-													"read", "current"),
-											mb_buffer, flag)),
-					read_short = atoll(
-							get_mb_str(
-									GetLimitAttr(found_tag_->limit_attr,
-											"read", "short"), mb_buffer, flag)),
-					read_mid = atoll(
-							get_mb_str(
-									GetLimitAttr(found_tag_->limit_attr,
-											"read", "mid"), mb_buffer, flag)),
-					read_long = atoll(
-							get_mb_str(
-									GetLimitAttr(found_tag_->limit_attr,
-											"read", "long"), mb_buffer, flag));
+			read_curr_real_size = atoll(GetLimitAttr(found_tag_->limit_attr, "read", "current")),
+			read_short_real_size = atoll(GetLimitAttr(found_tag_->limit_attr, "read", "short")),
+			read_mid_real_size = atoll(GetLimitAttr(found_tag_->limit_attr, "read", "mid")),
+			read_long_real_size = atoll(GetLimitAttr(found_tag_->limit_attr, "read", "long"));
 
-			long long write_curr = atoll(
-					get_mb_str(
-							GetLimitAttr(found_tag_->limit_attr, "write",
-									"current"), mb_buffer, flag)),
-					write_short =
-							atoll(
-									get_mb_str(
-											GetLimitAttr(
-													found_tag_->limit_attr,
-													"write", "short"),
-											mb_buffer, flag)), write_mid =
-							atoll(
-									get_mb_str(
-											GetLimitAttr(
-													found_tag_->limit_attr,
-													"write", "mid"), mb_buffer,
-											flag)), write_long = atoll(
-							get_mb_str(
-									GetLimitAttr(found_tag_->limit_attr,
-											"write", "long"), mb_buffer, flag));
+			long long
+			write_curr_real_size = atoll(GetLimitAttr(found_tag_->limit_attr, "write", "current")),
+			write_short_real_size = atoll(GetLimitAttr(found_tag_->limit_attr, "write", "short")),
+			write_mid_real_size = atoll(GetLimitAttr(found_tag_->limit_attr, "write", "mid")),
+			write_long_real_size = atoll(GetLimitAttr(found_tag_->limit_attr, "write", "long"));
 
-			if (cpu_def) {
-				if (cpu_curr == 0)
-					cpu_curr = atoi(cpu_def->l_current);
-				if (cpu_short == 0)
-					cpu_short = atoi(cpu_def->l_short);
-				if (cpu_mid == 0)
-					cpu_mid = atoi(cpu_def->l_mid);
-				if (cpu_long == 0)
-					cpu_long = atoi(cpu_def->l_long);
+			long long
+			read_curr = atoll(get_mb_str(GetLimitAttr(found_tag_->limit_attr, "read", "current"), mb_buffer, flag)),
+			read_short = atoll(get_mb_str(GetLimitAttr(found_tag_->limit_attr, "read", "short"), mb_buffer, flag)),
+			read_mid = atoll(get_mb_str(GetLimitAttr(found_tag_->limit_attr, "read", "mid"), mb_buffer, flag)),
+			read_long = atoll(get_mb_str(GetLimitAttr(found_tag_->limit_attr, "read", "long"), mb_buffer, flag));
+
+			long long
+			write_curr = atoll(get_mb_str(GetLimitAttr(found_tag_->limit_attr, "write", "current"), mb_buffer, flag)),
+			write_short = atoll(get_mb_str(GetLimitAttr(found_tag_->limit_attr, "write", "short"), mb_buffer, flag)),
+			write_mid = atoll(get_mb_str(GetLimitAttr(found_tag_->limit_attr, "write", "mid"), mb_buffer, flag)),
+			write_long = atoll(get_mb_str(GetLimitAttr(found_tag_->limit_attr, "write", "long"), mb_buffer, flag));
+
+			/* In raw mode do not substitite absent limits with default, just return -1 */
+			if (raw) {
+				if (cpu_def) {
+					if (cpu_curr == 0)
+						cpu_curr = -1;
+					if (cpu_short == 0)
+						cpu_short = -1;
+					if (cpu_mid == 0)
+						cpu_mid = -1;
+					if (cpu_long == 0)
+						cpu_long = -1;
+				}
+
+				if (read_def) {
+					if (read_curr == 0)
+						read_curr = -1;
+					if (read_short == 0)
+						read_short = -1;
+					if (read_mid == 0)
+						read_mid = -1;
+					if (read_long == 0)
+						read_long = -1;
+				}
+
+				if (write_def) {
+					if (write_curr == 0)
+						write_curr = -1;
+					if (write_short == 0)
+						write_short = -1;
+					if (write_mid == 0)
+						write_mid = -1;
+					if (write_long == 0)
+						write_long = -1;
+				}
+
+			} // end of if (raw)
+			else {
+				if (cpu_def) {
+					if (cpu_curr == 0)
+						cpu_curr = atoi(cpu_def->l_current);
+					if (cpu_short == 0)
+						cpu_short = atoi(cpu_def->l_short);
+					if (cpu_mid == 0)
+						cpu_mid = atoi(cpu_def->l_mid);
+					if (cpu_long == 0)
+						cpu_long = atoi(cpu_def->l_long);
+				}
+
+				if (read_def) {
+					if (read_curr == 0 && read_curr_real_size <= 0 && read_curr_real_size!=-1)
+						read_curr = atoll(
+								get_mb_str(read_def->l_current, mb_buffer, flag));
+					if (read_short == 0 && read_short_real_size <= 0 && read_short_real_size!=-1)
+						read_short = atoll(
+								get_mb_str(read_def->l_short, mb_buffer, flag));
+					if (read_mid == 0 && read_mid_real_size <= 0 && read_mid_real_size!=-1)
+						read_mid = atoll(
+								get_mb_str(read_def->l_mid, mb_buffer, flag));
+					if (read_long == 0 && read_long_real_size <= 0 && read_long_real_size!=-1)
+						read_long = atoll(
+								get_mb_str(read_def->l_long, mb_buffer, flag));
+				}
+
+				if (write_def) {
+					if (write_curr == 0 && write_curr_real_size <= 0 && write_curr_real_size!=-1)
+						write_curr = atoll(
+								get_mb_str(write_def->l_current, mb_buffer, flag));
+					if (write_short == 0 && write_short_real_size <= 0 && write_short_real_size!=-1)
+						write_short = atoll(
+								get_mb_str(write_def->l_short, mb_buffer, flag));
+					if (write_mid == 0 && write_mid_real_size <= 0 && write_mid_real_size!=-1)
+						write_mid = atoll(
+								get_mb_str(write_def->l_mid, mb_buffer, flag));
+					if (write_long == 0 && write_long_real_size <= 0 && write_long_real_size!=-1)
+						write_long = atoll(
+								get_mb_str(write_def->l_long, mb_buffer, flag));
 			}
 
-			if (read_def) {
-				if (read_curr == 0 && read_curr_real_size <= 0 && read_curr_real_size!=-1)
-					read_curr = atoll(
-							get_mb_str(read_def->l_current, mb_buffer, flag));
-				if (read_short == 0 && read_short_real_size <= 0 && read_short_real_size!=-1)
-					read_short = atoll(
-							get_mb_str(read_def->l_short, mb_buffer, flag));
-				if (read_mid == 0 && read_mid_real_size <= 0 && read_mid_real_size!=-1)
-					read_mid = atoll(
-							get_mb_str(read_def->l_mid, mb_buffer, flag));
-				if (read_long == 0 && read_long_real_size <= 0 && read_long_real_size!=-1)
-					read_long = atoll(
-							get_mb_str(read_def->l_long, mb_buffer, flag));
-			}
+			} // end of else of if (raw)
 
-			if (write_def) {
-				if (write_curr == 0 && write_curr_real_size <= 0 && write_curr_real_size!=-1)
-					write_curr = atoll(
-							get_mb_str(write_def->l_current, mb_buffer, flag));
-				if (write_short == 0 && write_short_real_size <= 0 && write_short_real_size!=-1)
-					write_short = atoll(
-							get_mb_str(write_def->l_short, mb_buffer, flag));
-				if (write_mid == 0 && write_mid_real_size <= 0 && write_mid_real_size!=-1)
-					write_mid = atoll(
-							get_mb_str(write_def->l_mid, mb_buffer, flag));
-				if (write_long == 0 && write_long_real_size <= 0 && write_long_real_size!=-1)
-					write_long = atoll(
-							get_mb_str(write_def->l_long, mb_buffer, flag));
-			}
 
 			if (name == NULL)
 				name = GetUserMysqlName(found_tag_->attr);

@@ -51,7 +51,7 @@ char *GetLimitAttr (GPtrArray * limit_attr, char *name_limit,
 char *GetDefault (GPtrArray * tags, int flag);
 char *GetDefaultForUsers (GPtrArray * tags, DbCtlLimitAttr * cpu_def,
 			  DbCtlLimitAttr * read_def,
-			  DbCtlLimitAttr * write_def, int flag);
+			  DbCtlLimitAttr * write_def, int flag, int raw);
 xml_data *ParseXmlCfg (char *file_name);
 
 //---------------------------------------------------
