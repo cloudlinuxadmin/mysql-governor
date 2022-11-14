@@ -1,0 +1,161 @@
+#!/opt/alt/python37/bin/python3
+# coding:utf-8
+
+# Copyright © Cloud Linux GmbH & Cloud Linux Software, Inc 2010-2019 All Rights Reserved
+#
+# Licensed under CLOUD LINUX LICENSE AGREEMENT
+# http://cloudlinux.com/docs/LICENSE.TXT
+#
+
+import os
+import sys
+import subprocess
+import json
+
+
+DBCTL_BIN = '/usr/share/lve/dbgovernor/utils/dbctl_orig'
+
+
+def _add_flags_column(orig_out, flags_dict):
+    dbctl_lines = orig_out.split('\n')[:-1]
+    max_col_len = 19
+    for i, row in enumerate(dbctl_lines):
+        row_data = row.split()
+        if i == 0:
+            row_data.append('marks')
+            row_data[0] = ' ' + row_data[0]
+        else:
+            user = row_data[0]
+            if user in flags_dict:
+                row_data.append(flags_dict[user]['cpu']+flags_dict[user]['io'])
+            else:
+                # suppose that user doesn't have individual limits
+                # if its name not present in governor_package_limitting output
+                row_data.append('--')
+            if len(row_data[2]) > max_col_len:
+                max_col_len = len(row_data[2])
+        dbctl_lines[i] = '\t'.join(row_data)
+    return '\n'.join(dbctl_lines).expandtabs(max_col_len+1)
+
+
+def _process_call_error(call_err):
+    print(call_err.stdout)
+    if call_err.stderr is not None:
+        print(call_err.stderr)
+    print(f'Error: command \'{" ".join(call_err.cmd)}\' exit code = {call_err.returncode}')
+    return call_err.returncode
+
+
+def list_marked():
+    """
+    Adds column with marks denoting individual/package limits for db cpu and io usage. Example of output:
+     user               cpu(%)              read(MB/s)          write(MB/s)         marks
+    default             400/380/350/300     953/791/724/562     953/791/724/562     --
+    limited             40/380/350/300      953/791/724/562     953/791/724/5       ++
+
+    first '+' sign means at least one of the cpu limits for this user is different from its package limits
+    second '+' sign means at least one of the read or write limits for this user is different from its package limits
+    """
+    try:
+        get_flags_cmd = ['/usr/share/lve/dbgovernor/governor_package_limitting.py', 'get_individual']
+        flags_json = subprocess.check_output(get_flags_cmd, text=True)
+        flags_json = json.loads(flags_json)
+        dbctl_out = subprocess.check_output([DBCTL_BIN, 'list'] + sys.argv[2:], text=True)
+    except subprocess.CalledProcessError as call_err:
+        return _process_call_error(call_err)
+    except json.JSONDecodeError as json_err:
+        print(f'Error: command \'{" ".join(get_flags_cmd)}\' returned not valid json:\n{json_err.doc}')
+        return 1
+    usernames_flags = {'default': {'cpu': '-', 'io': '-'}}
+    for username in flags_json.keys():
+        usernames_flags[username] = {}
+        usernames_flags[username]['cpu'] = '+' if any(flags_json[username]['cpu']) else '-'
+        usernames_flags[username]['io'] = '+' if any(flags_json[username]['read'] + flags_json[username]['write']) else '-'
+    dbctl_out_processed = _add_flags_column(dbctl_out, usernames_flags)
+    print(dbctl_out_processed)
+    return 0
+
+
+def _align_flags_with_dbctl_arg(values, flags):
+    for i, lim in enumerate(values.split(',')):
+        if lim != '0':
+            flags[i] = True
+        else:
+            flags[i] = False
+
+
+def _bool_to_str_list(input_list):
+    return list(map(lambda v: str(v).lower(), input_list))
+
+
+def set_with_packages():
+    """
+    1. Calls 'governor_package_limitting.py set_individual' to update governor_package_limit.json with
+    info about what limits are individual (i.e. not from package) for given user
+    2. Then calls 'dbctl_orig set' to actually change limits for the user
+    """
+    # delegate handling of incorrect arguments and default limits to dbctl_orig
+    if len(sys.argv) < 3 or sys.argv[2] == 'default':
+        try:
+            subprocess.check_call([DBCTL_BIN] + sys.argv[1:])
+            subprocess.check_call(['/usr/share/lve/dbgovernor/governor_package_limitting.py', 'sync'])
+        except subprocess.CalledProcessError as call_err:
+            return _process_call_error(call_err)
+        return 0
+    else:
+        username = sys.argv[2]
+        try:
+            get_flags_cmd = ['/usr/share/lve/dbgovernor/governor_package_limitting.py', 'get_individual', f'--user={username}']
+            flags_json = subprocess.check_output(get_flags_cmd, text=True)
+            flags_json = json.loads(flags_json)
+        except subprocess.CalledProcessError as call_err:
+            return _process_call_error(call_err)
+        except json.JSONDecodeError as json_err:
+            print(f'Error: command \'{" ".join(get_flags_cmd)}\' returned not valid json:\n{json_err.doc}')
+            return 1
+
+        # expecting that get_individual returns json for any existing user, even if governor_package_limit.json doesn't have records about it
+        cpu_flags = flags_json[username]['cpu']
+        read_flags = flags_json[username]['read']
+        write_flags = flags_json[username]['write']
+        for arg in sys.argv[3:]:
+            if arg.startswith('--cpu'):
+                _align_flags_with_dbctl_arg(arg[6:], cpu_flags)
+            if arg.startswith('--read'):
+                _align_flags_with_dbctl_arg(arg[7:], read_flags)
+            if arg.startswith('--write'):
+                _align_flags_with_dbctl_arg(arg[8:], write_flags)
+        cpu_flags = _bool_to_str_list(cpu_flags)
+        read_flags = _bool_to_str_list(read_flags)
+        write_flags = _bool_to_str_list(write_flags)
+        set_individual_cmd = ['/usr/share/lve/dbgovernor/governor_package_limitting.py', 'set_individual', f'--user={username}'
+            ,f'--cpu={",".join(cpu_flags)}', f'--read={",".join(read_flags)}', f'--write={",".join(write_flags)}']
+        try:
+            subprocess.check_call(set_individual_cmd)
+            subprocess.check_call([DBCTL_BIN] + sys.argv[1:])
+        except subprocess.CalledProcessError as call_err:
+            return _process_call_error(call_err)
+        return 0
+
+
+if __name__ == '__main__':
+    if len(sys.argv) == 1:
+        print('usage: dbctl command [parameter] [options]')
+        sys.exit(1)
+    if not os.path.exists(DBCTL_BIN):
+        print(f'Error: {DBCTL_BIN}: No such file or directory\nPackage governor-mysql seems to be corrupted')
+        sys.exit(1)
+
+    exit_code = 0
+    if sys.argv[1] == '--help':
+        dbctl_help = subprocess.check_output([DBCTL_BIN, '--help'], text=True).split('\n')
+        dbctl_help.insert(5, 'list-marked              list users, their limits and custom limit marks (cpu/io, + if at least one of the limits in group differ from package limits)')
+        print('\n'.join(dbctl_help))
+    elif sys.argv[1] == 'set':
+        exit_code = set_with_packages()
+    elif sys.argv[1] == 'list-marked':
+        exit_code = list_marked()
+    else:
+        process = subprocess.Popen([DBCTL_BIN] + sys.argv[1:])
+        exit_code = process.wait()
+    sys.exit(exit_code)

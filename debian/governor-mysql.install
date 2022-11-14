@@ -1,5 +1,6 @@
  usr/sbin/db_governor
  usr/sbin/dbctl
+ usr/share/lve/dbgovernor/utils/dbctl_orig
  usr/sbin/dbtop
  usr/sbin/mysql_unfreeze
  usr/lib/libgovernor.so

@@ -148,7 +148,8 @@ install -D -m 755 script/db_governor $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/
 install -D -m 755 build_clean/bin/db_governor $RPM_BUILD_ROOT%{_sbindir}/
 install -D -m 755 build_clean/bin/dbtop $RPM_BUILD_ROOT%{_sbindir}/
 install -D -m 755 build_clean/bin/mysql_unfreeze $RPM_BUILD_ROOT%{_sbindir}/
-install -D -m 755 build_clean/bin/dbctl $RPM_BUILD_ROOT%{_sbindir}/
+install -D -m 755 build_clean/bin/dbctl $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/dbctl_orig
+install -D -m 755 install/dbctl $RPM_BUILD_ROOT%{_sbindir}/dbctl
 install -D -m 600 db-governor.xml $RPM_BUILD_ROOT%{_sysconfdir}/container/mysql-governor.xml
 install -D -m 664 governor_package_limit.json $RPM_BUILD_ROOT%{_sysconfdir}/container/governor_package_limit.json
 install -D -m 755 build_clean/lib/libgovernor.so $RPM_BUILD_ROOT%{_libdir}/libgovernor.so.%{version}
