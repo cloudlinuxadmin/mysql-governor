@@ -9,6 +9,6 @@
 #ifndef VERSION_H_
 #define VERSION_H_
 
-#define GOVERNOR_CUR_VER "1.2-79"
+#define GOVERNOR_CUR_VER "1.2-80"
 
 #endif /* VERSION_H_ */

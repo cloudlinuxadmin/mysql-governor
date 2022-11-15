@@ -1,2 +1,2 @@
-/etc/container/governor_package_limit.yaml
+/etc/container/governor_package_limit.json
 /usr/share/lve/dbgovernor/governor_package_limitting.log

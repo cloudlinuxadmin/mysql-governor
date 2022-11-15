@@ -49,6 +49,7 @@ typedef enum dbctl_keyword_enum
 	LIST_RESTRICTED_SHM_KWE,
 	DBUPDATE_KWE,
 	LIST_RAW_KWE,
+	LIST_JSON_KWE,
 	ERROR_KWE = -1
 } dbctl_keyword_t;
 
@@ -67,6 +68,7 @@ static const char UNRESTRICT_ALL_KW[] = "unrestrict-all";
 static const char LIST_RESTRICTED_SHM_KW[] = "list-restricted-shm";
 static const char DBUPDATE_KW[] = "dbupdate";
 static const char LIST_RAW_KW[] = "list-raw";
+static const char LIST_JSON_KW[] = "list-json";
 
 static dbctl_keyword_t
 parse_comm (int argc, char **argv);
@@ -374,6 +376,17 @@ GetCmd (int argc, char **argv)
 	return 2;
     break;
 
+    case LIST_JSON_KWE:
+      if (argc == 3)
+	{
+	  if (!strcmp(argv[2], "--bb")) kb_flag = 2;
+	  if (!strcmp(argv[2], "--kb")) kb_flag = 1;
+	  if (!strcmp(argv[2], "--mb")) kb_flag = 3;
+	}
+      if (!list_all_json(kb_flag) != 0)
+	return 2;
+    break;
+
     case LIST_RESTRICTED_KWE:
       if (!list_restricted ())
 	return 2;
@@ -444,6 +457,7 @@ static const parse_info_t parse_info[] =
 	// 2 or 3 args
 	PARSE_INFO_ENTRY(LIST, -1, -1, 3),
 	PARSE_INFO_ENTRY(LIST_RAW, -1, -1, 3),
+	PARSE_INFO_ENTRY(LIST_JSON, -1, -1, 3),
 
 	// 2 args exact
 	PARSE_INFO_ENTRY(LIST_RESTRICTED, -1, -1, 2),
