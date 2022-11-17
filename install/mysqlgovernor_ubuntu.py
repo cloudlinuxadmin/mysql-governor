@@ -142,7 +142,7 @@ def main(argv):
                 print(bcolors.ok("Installation of mysql for db_governor completed"))
 
             # if sql server failed to start ask user to restore old packages
-            elif opts.wizard or query_yes_no(
+            elif opts.wizard or opts.yes or query_yes_no(
                     "Installation failed. Restore previous version?"):
                 print(bcolors.fail(
                     "Installation of mysql for db_governor failed. Restore previous mysql version..."))
