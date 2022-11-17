@@ -24,7 +24,7 @@ package1:
   write: [0, 0, 0, 0]
 package2:
   cpu: [15, 10, 7, 5]
-  read: [1, 2, 3, 4]
+  read: [1048576, 2097152, 3145728, 4194304]
   write: [0, 0, 0, 0]
 """
 
@@ -54,8 +54,8 @@ def test_set_package_limits(test_input, expected, fs):
 
 @pytest.mark.parametrize('test_input, expected_content', [
     (
-        ['package1', None, ['50, 50, 50, 50'], None],
-        {'package1': {'cpu': [150, 100, 70, 50], 'read': [50, 50, 50, 50], 'write': [0, 0, 0, 0]}}
+        ['package1', None, ['50, 51200k, 52428800b, 50m'], None],
+        {'package1': {'cpu': [150, 100, 70, 50], 'read': [52428800, 52428800, 52428800, 52428800], 'write': [0, 0, 0, 0]}}
     )
 ])
 @mock.patch("governor_package_limitting.os.path.exists", mock.MagicMock(return_value=True))
@@ -71,7 +71,7 @@ def test_update_package_limit(test_input, expected_content, fs):
 expected_cfg = {
     'package2': {
         'cpu': [15, 10, 7, 5],
-        'read': [1, 2, 3, 4],
+        'read': [1048576, 2097152, 3145728, 4194304],
         'write': [0, 0, 0, 0]
     }
 }
@@ -102,7 +102,7 @@ expected_cfg = {
     },
     'package2': {
         'cpu': [15, 10, 7, 5],
-        'read': [1, 2, 3, 4],
+        'read': [1048576, 2097152, 3145728, 4194304],
         'write': [0, 0, 0, 0]
     }
 }
@@ -130,23 +130,23 @@ def test_get_package_limit(config_file_content, expected_content, fs):
 #########################################################################################################################
 
 
-dbctl_output = 'user1    100/100/100/100      200/200/200/200       300/300/300/300   \n'
+dbctl_output = 'user1    100/100/100/100      209715200/209715200/209715200/209715200       314572800/314572800/314572800/314572800   \n'
 
 
 @pytest.mark.parametrize("test_input, expected_limit", [
     (
         {
-            'DEFAULT': {'cpu': [0, 150, 320, 0], 'read': [0, 20, 30, 40], 'write': [200, 200, 200, 200]},
-            'PACK1': {'cpu': [111, 294, 0, 0], 'read': [0, 258, 0, 900], 'write': [100, 100, 100, 100]}
+            'DEFAULT': {'cpu': [0, 150, 320, 0], 'read': [0, 20971520, 31457280, 41943040], 'write': [209715200, 209715200, 209715200, 209715200]},
+            'PACK1': {'cpu': [111, 294, 0, 0], 'read': [0, 270532608, 0, 943718400], 'write': [104857600, 104857600, 104857600, 104857600]}
          },
-        ('111,294,320,100', '200,258,30,900', '100,100,100,100')
+        ('111,294,320,100', '209715200b,270532608b,31457280b,943718400b', '104857600b,104857600b,104857600b,104857600b')
     ),
     (
         {
-            'DEFAULT': {'cpu': [927, 927, 927, 927], 'read': [927, 0, 927, 927], 'write': [0, 927, 927, 927]},
-            'PACK1': {'cpu': [0, 0, 0, 0], 'read': [0, 0, 0, 0], 'write': [0, 0, 0, 100]}
+            'DEFAULT': {'cpu': [927, 927, 927, 927], 'read': [972029952, 0, 972029952, 972029952], 'write': [0, 972029952, 972029952, 972029952]},
+            'PACK1': {'cpu': [0, 0, 0, 0], 'read': [0, 0, 0, 0], 'write': [0, 0, 0, 104857600]}
         },
-        ('927,927,927,927', '927,200,927,927', '300,927,927,100')
+        ('927,927,927,927', '972029952b,209715200b,972029952b,972029952b', '314572800b,972029952b,972029952b,104857600b')
     ),
 ])
 def test_prepare_limits(test_input, expected_limit):
@@ -220,13 +220,13 @@ def test_limits_serializer_with_exception(test_input, expected_raise):
 @pytest.mark.parametrize(
     'test_input, exptected_result', [
         (
-            {'cpu': [10, 10, 10, 10], 'read': ['10485760b', '10485760b', '10485760b', '10485760b'], 'write': [20, 20, 20, 20]},
-            {'cpu': [10, 10, 10, 10], 'read': [10, 10, 10, 10], 'write': [20, 20, 20, 20]}
+            {'cpu': [10, 10, 10, 10], 'read': ['10485760b', '10240k', '10m', '10'], 'write': [20971520, 20971520, 20971520, 20971520]},
+            {'cpu': [10, 10, 10, 10], 'read': [10485760, 10485760, 10485760, 10485760], 'write': [20971520, 20971520, 20971520, 20971520]}
         ),
     ]
 )
 def test_convert_io_rw_to_mb_if_bytes_provided(test_input, exptected_result):
-    result = governor_package_limitting.convert_io_rw_to_mb_if_bytes_provided(test_input)
+    result = governor_package_limitting.convert_io_rw_to_bb(test_input)
     assert result == exptected_result
 
 ########################################################################################################################
@@ -235,12 +235,12 @@ def test_convert_io_rw_to_mb_if_bytes_provided(test_input, exptected_result):
 @pytest.mark.parametrize(
     'default_content, exptected_result', [
         (
-            config_content, 
+            config_content,
              {
                 'c_package1': {'cpu': [0, 0, 0, 0], 'read': [0, 0, 0, 0], 'write': [0, 0, 0, 0]},
                 'c_package2': {'cpu': [0, 0, 0, 0], 'read': [0, 0, 0, 0], 'write': [0, 0, 0, 0]}, 
                 'package1': {'cpu': [150, 100, 70, 50], 'read': [0, 0, 0, 0], 'write': [0, 0, 0, 0]},
-                'package2': {'cpu': [15, 10, 7, 5], 'read': [1, 2, 3, 4], 'write': [0, 0, 0, 0]}
+                'package2': {'cpu': [15, 10, 7, 5], 'read': [1048576, 2097152, 3145728, 4194304], 'write': [0, 0, 0, 0]}
                 }
         ),
     ]
