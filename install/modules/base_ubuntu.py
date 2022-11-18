@@ -41,6 +41,7 @@ class UbuntuInstallManager(InstallManager):
     IS_UBUNTU = is_ubuntu()
 
     def __init__(self, cp_name):
+        super().__init__(cp_name)
         self.cl_version = 8
         self.new_version_of_db = self._get_new_version()
         self.cp_name = cp_name
