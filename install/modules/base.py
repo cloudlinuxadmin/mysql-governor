@@ -128,7 +128,6 @@ class InstallManager:
         self.my_cnf_path = '/etc/my.cnf'
         self.VAR_LIB_MYSQL = '/var/lib/mysql'
         self.my_cnf_datadir = get_section_from_all_cnfs('datadir')
-        print('Database datadir: ', self.my_cnf_datadir)
 
     @staticmethod
     def my_cnf_manager(action, old_path=None):

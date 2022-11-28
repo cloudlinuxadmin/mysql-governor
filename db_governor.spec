@@ -441,7 +441,10 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
-* Fri Nov 04 2022 Alexandr Demeshko <ademeshko@cloudlinux.com>, Hasan Aliev <haliev@cloudlinux.com>, Nikolay Petukhov <npetukhov@cloudlinux.com>, Sergey Kozhekin <skozhekin@cloudlinux.com>  1.2-79
+* Mon Nov 28 2022 Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-79
+- MYSQL-841: Removed debug message from dbupdate command output
+
+* Fri Nov 04 2022 Alexandr Demeshko <ademeshko@cloudlinux.com>, Hasan Aliev <haliev@cloudlinux.com>, Nikolay Petukhov <npetukhov@cloudlinux.com>, Sergey Kozhekin <skozhekin@cloudlinux.com>  1.2-78
 - MYSQLG-781: Kept original casting in slow query log
 - MYSQLG-800: Removed mariadb107 from supported mysql types
 - MYSQLG-788, MYSQLG-791, MYSQLG-796, MYSQLG-804, MYSQLG-806: Governor package limits enhancements

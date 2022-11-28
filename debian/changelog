@@ -1,5 +1,11 @@
 governor-mysql (1.2-79) stable; urgency=medium
 
+  * MYSQL-841: Removed debug message from dbupdate command output
+
+ -- Aleksandr Demeshko <ademeshko@cloudlinux.com>  Mon, 28 Nov 2022 14:00:00 +0000
+
+governor-mysql (1.2-78) stable; urgency=medium
+
   * MYSQLG-781: Kept original casting in slow query log
   * MYSQLG-800: Removed mariadb107 from supported mysql types
   * MYSQLG-788, MYSQLG-791, MYSQLG-796, MYSQLG-804, MYSQLG-806: Governor package limits enhancements
