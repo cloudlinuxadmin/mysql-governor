@@ -1,6 +1,7 @@
 governor-mysql (1.2-80) stable; urgency=medium
 
   * MYSQLG-832: Implementation of individual limits logics in Governor Package limits
+  * LU-3586: implement dbctl wrapper
 
  -- Sergey Kozhekin <skozhekin@cloudlinux.com>  Wed, 30 Nov 2022 14:00:00 +0000
 

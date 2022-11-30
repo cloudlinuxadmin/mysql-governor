@@ -450,6 +450,10 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Wed Nov 30 2022 Sergey Kozhekin <skozhekin@cloudlinux.com>, Aleksey Petryankin <apetryankin@cloudlinux.com>, Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-80
+- LU-3586: implement dbctl wrapper
+- MYSQLG-832: Implementation of individual limits logics in Governor Package limits
+
 * Mon Nov 28 2022 Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-79
 - MYSQL-841: Removed debug message from dbupdate command output
 
