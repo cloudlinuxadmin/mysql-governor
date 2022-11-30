@@ -1,0 +1,5 @@
+#!/bin/bash
+
+/usr/share/lve/dbgovernor/utils/dbgovernor_map
+/usr/sbin/dbctl dbupdate
+/usr/bin/systemctl restart db_governor

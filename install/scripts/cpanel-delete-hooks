@@ -20,14 +20,21 @@ deleteAllInclude "$mysqluserkill" "mysqluserkill" "/#dbgovernor/d"
 ####################################################
 
 hook_manager="/usr/local/cpanel/bin/manage_hooks"
-map_hook="/usr/share/lve/dbgovernor/utils/dbgovernor_map"
+old_map_hook="/usr/share/lve/dbgovernor/utils/dbgovernor_map"
+map_hook="/usr/share/lve/dbgovernor/scripts/map_hook"
 mysql_hook="/usr/share/lve/dbgovernor/scripts/mysql_hook"
-"$hook_manager" del script "$map_hook" --category=Whostmgr --event=Accounts::Create --stage=post --manual 1
-"$hook_manager" del script "$map_hook" --category=Whostmgr --event=Accounts::Modify --stage=post --manual 1
-"$hook_manager" del script "$map_hook" --category=Whostmgr --event=Accounts::Remove --stage=post --manual 1
 
-"$hook_manager" del script "$mysql_hook" --category=Cpanel --event=UAPI::Mysql::create_user --stage=post --manual 1
-"$hook_manager" del script "$mysql_hook" --category=Cpanel --event=UAPI::Mysql::rename_user --stage=post --manual 1
-"$hook_manager" del script "$mysql_hook" --category=Cpanel --event=UAPI::Mysql::delete_user --stage=post --manual 1
+# Try to delete hooks from previous version of governor
+"$hook_manager" del script "$old_map_hook" --category=Whostmgr --event=Accounts::Create --stage=post --manual 1 2>&1 >/dev/null
+"$hook_manager" del script "$old_map_hook" --category=Whostmgr --event=Accounts::Modify --stage=post --manual 1 2>&1 >/dev/null
+"$hook_manager" del script "$old_map_hook" --category=Whostmgr --event=Accounts::Remove --stage=post --manual 1 2>&1 >/dev/null
+
+"$hook_manager" del script "$map_hook" --category=Whostmgr --event=Accounts::Create --stage=post --escalateprivs --manual 1
+"$hook_manager" del script "$map_hook" --category=Whostmgr --event=Accounts::Modify --stage=post --escalateprivs --manual 1
+"$hook_manager" del script "$map_hook" --category=Whostmgr --event=Accounts::Remove --stage=post --escalateprivs --manual 1
+
+"$hook_manager" del script "$mysql_hook" --category=Cpanel --event=UAPI::Mysql::create_user --stage=post --escalateprivs --manual 1
+"$hook_manager" del script "$mysql_hook" --category=Cpanel --event=UAPI::Mysql::rename_user --stage=post --escalateprivs --manual 1
+"$hook_manager" del script "$mysql_hook" --category=Cpanel --event=UAPI::Mysql::delete_user --stage=post --escalateprivs --manual 1
 
 echo

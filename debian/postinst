@@ -118,6 +118,11 @@ fi
 /bin/systemctl enable var-lve-dbgovernor\\x2dshm.mount >/dev/null 2>&1 || :
 /bin/systemctl restart db_governor.service >/dev/null 2>&1 || :
 
+if [ ! -e /usr/share/lve/dbgovernor/vectors_are_already_present ]; then
+    /usr/share/lve/dbgovernor/creates_individual_limits_vector_list.py
+    touch /usr/share/lve/dbgovernor/vectors_are_already_present
+fi
+
 echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
 echo "!!!Before making any changing with database make sure that you have reserve copy of users data!!!"
 echo "Instruction: how to create whole database backup - http://docs.cloudlinux.com/index.html?backing_up_mysql.html"

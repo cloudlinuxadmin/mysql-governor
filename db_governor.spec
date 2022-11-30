@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   79
+%define g_release   80
 %define g_key_library 10
 
 %if %{undefined _unitdir}
@@ -148,9 +148,11 @@ install -D -m 755 script/db_governor $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/
 install -D -m 755 build_clean/bin/db_governor $RPM_BUILD_ROOT%{_sbindir}/
 install -D -m 755 build_clean/bin/dbtop $RPM_BUILD_ROOT%{_sbindir}/
 install -D -m 755 build_clean/bin/mysql_unfreeze $RPM_BUILD_ROOT%{_sbindir}/
-install -D -m 755 build_clean/bin/dbctl $RPM_BUILD_ROOT%{_sbindir}/
+install -D -m 755 build_clean/bin/dbctl $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/dbctl_orig
+install -D -m 755 install/dbctl $RPM_BUILD_ROOT%{_sbindir}/dbctl
 install -D -m 600 db-governor.xml $RPM_BUILD_ROOT%{_sysconfdir}/container/mysql-governor.xml
-install -D -m 755 build_clean/lib/libgovernor.so $RPM_BUILD_ROOT%{_libdir}/libgovernor.so.%{version} 
+install -D -m 664 governor_package_limit.json $RPM_BUILD_ROOT%{_sysconfdir}/container/governor_package_limit.json
+install -D -m 755 build_clean/lib/libgovernor.so $RPM_BUILD_ROOT%{_libdir}/libgovernor.so.%{version}
 ln -fs libgovernor.so.%{version} $RPM_BUILD_ROOT%{_libdir}/libgovernor.so
 
 install -D -m 755 build_test/bin/db_governor $RPM_BUILD_ROOT%{_sbindir}/db_governor_test
@@ -160,7 +162,7 @@ install -D -m 755 build_test/lib/libgovernor.so $RPM_BUILD_ROOT%{_libdir}/libgov
 install -D -m 755 install/db-select-mysql $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/db-select-mysql
 install -D -m 755 install/mysqlgovernor.py $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/mysqlgovernor.py
 install -D -m 755 install/governor_package_limitting.py $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/governor_package_limitting.py
-touch $RPM_BUILD_ROOT/etc/container/governor_package_limit.yaml
+install -D -m 755 install/creates_individual_limits_vector_list.py $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/creates_individual_limits_vector_list.py
 
 install -D -m 644 install/cl-mysql.repo.default $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cl-mysql.repo.default
 install -D -m 644 install/utilities.py $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utilities.py
@@ -184,7 +186,8 @@ install -D -m 755 install/scripts/dbgovernor_map_plesk.py $RPM_BUILD_ROOT/usr/sh
 install -D -m 755 install/scripts/detect-cpanel-mysql-version.pm $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/detect-cpanel-mysql-version.pm
 install -D -m 755 install/scripts/cpanel-mysql-url-detect.pm $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/cpanel-mysql-url-detect.pm
 install -D -m 755 install/scripts/set_cpanel_mysql_version.pm $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/set_cpanel_mysql_version.pm
-install -D -m 755 install/scripts/mysql_hook $RPM_BUILD_ROOT//usr/share/lve/dbgovernor/scripts/mysql_hook
+install -D -m 755 install/scripts/mysql_hook $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/mysql_hook
+install -D -m 755 install/scripts/map_hook $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/map_hook
 
 install -D -m 644 logrotate/mysql-governor $RPM_BUILD_ROOT/etc/logrotate.d/mysql-governor
 install -D -m 644 install/utils/cloudlinux.versions $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/cloudlinux.versions
@@ -324,6 +327,7 @@ fi
 %endif
 
 %posttrans
+
 /sbin/ldconfig
 rm -rf /%{_libdir}/liblve.so.1
 ln -s /%{_libdir}/liblve.so.0.9.0 /%{_libdir}/liblve.so.1
@@ -396,6 +400,11 @@ fi
 /etc/init.d/db_governor restart
 %endif
 
+if [ ! -e /usr/share/lve/dbgovernor/vectors_are_already_present ]; then
+    /usr/share/lve/dbgovernor/creates_individual_limits_vector_list.py
+    touch /usr/share/lve/dbgovernor/vectors_are_already_present
+fi
+
 echo "Run script: /usr/share/lve/dbgovernor/mysqlgovernor.py --install"
 echo "!!!Before making any changing with database make sure that you have reserve copy of users data!!!"
 echo "Instruction: how to create whole database backup - http://docs.cloudlinux.com/index.html?backing_up_mysql.html"
@@ -427,7 +436,7 @@ fi
 %{_libdir}/libgovernor.so.%{version}
 %{_libdir}/libgov_test.so.%{version}
 %config(noreplace) %{_sysconfdir}/container/mysql-governor.xml
-%config(noreplace) %{_sysconfdir}/container/governor_package_limit.yaml
+%config(noreplace) %{_sysconfdir}/container/governor_package_limit.json
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
 %{_unitdir}/db_governor.service
 %{_unitdir}/var-lve-dbgovernor\x2dshm.mount
@@ -441,6 +450,10 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Wed Nov 30 2022 Sergey Kozhekin <skozhekin@cloudlinux.com>, Aleksey Petryankin <apetryankin@cloudlinux.com>, Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-80
+- LU-3586: implement dbctl wrapper
+- MYSQLG-832: Implementation of individual limits logics in Governor Package limits
+
 * Mon Nov 28 2022 Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-79
 - MYSQL-841: Removed debug message from dbupdate command output
 

@@ -11,6 +11,7 @@
 #define __DBCTL_LIST__
 
 int list_all (int flag, int non_priv, int raw);
+int list_all_json (int flag);
 int list_restricted (void);
 void show_uids (void);
 void list_restricted_shm (void);

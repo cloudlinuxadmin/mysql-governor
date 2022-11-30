@@ -1,11 +1,13 @@
  usr/sbin/db_governor
  usr/sbin/dbctl
+ usr/share/lve/dbgovernor/utils/dbctl_orig
  usr/sbin/dbtop
  usr/sbin/mysql_unfreeze
  usr/lib/libgovernor.so
  usr/lib/systemd/system/db_governor.service
  usr/lib/systemd/system/var-lve-dbgovernor\\x2dshm.mount
  etc/container/mysql-governor.xml
+ etc/container/governor_package_limit.json
  usr/share/lve/dbgovernor/db-select-mysql
  usr/share/lve/dbgovernor/mysqlgovernor.py
  usr/share/lve/dbgovernor/cl-mysql.repo.default
@@ -31,6 +33,7 @@
  usr/share/lve/dbgovernor/scripts/cpanel-mysql-url-detect.pm
  usr/share/lve/dbgovernor/scripts/set_cpanel_mysql_version.pm
  usr/share/lve/dbgovernor/scripts/mysql_hook
+ usr/share/lve/dbgovernor/scripts/map_hook
  etc/logrotate.d/mysql-governor
  usr/share/lve/dbgovernor/utils/cloudlinux.versions
  usr/share/lve/dbgovernor/utils/db_governor
@@ -41,6 +44,5 @@
  var/lve/dbgovernor
  var/lve/dbgovernor-store
  etc/cron.d/lvedbgovernor-utils-cron
- etc/container/governor_package_limit.yaml
  usr/share/lve/dbgovernor/governor_package_limitting.py
-
+ usr/share/lve/dbgovernor/creates_individual_limits_vector_list.py

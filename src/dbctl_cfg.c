@@ -215,17 +215,109 @@ gint ComparePrintByName(gpointer a, gpointer b) {
 }
 
 char *
-GetDefault(GPtrArray * tags, int flag) {
+GetLimitsForDefault(GPtrArray * tags, int flag, int json) {
 	DbCtlFoundTag *found_tag_ = g_ptr_array_index (tags, 0);
 	if (!found_tag_->limit_attr)
 		return "Error\n";
 
-	return GetDefaultForUsers(tags, NULL, NULL, NULL, flag, 0);
+	return GetLimitsForUsers(tags, NULL, NULL, NULL, flag, 0, json);
+}
+
+static void PrepareLimitsForJson(DbCtlPrintList *print_list_t, int flag, const char *name,
+					int cpu_curr, int cpu_short, int cpu_mid, int cpu_long,
+					long long read_curr, long long read_short, long long read_mid, long long read_long,
+					long long write_curr, long long write_short, long long write_mid, long long write_long )
+{
+	print_list_t->name = g_strdup_printf("%s", name);
+	print_list_t->data = g_strdup_printf(
+		"\"%s\": { \"%s\": %d, \"%s\": %d, \"%s\": %d, \"%s\": %d }, "
+		"\"%s\": { \"%s\": %lli, \"%s\": %lli, \"%s\": %lli, \"%s\": %lli }, "
+		"\"%s\": { \"%s\": %lli, \"%s\": %lli, \"%s\": %lli, \"%s\": %lli }",
+		"cpu", "current", cpu_curr, "short", cpu_short, "mid", cpu_mid, "long", cpu_long,
+		"read", "current", read_curr, "short", read_short, "mid", read_mid, "long", read_long,
+		"write", "current", write_curr, "short", write_short, "mid", write_mid, "long", write_long);
+}
+
+static void PrepareLimitsForOutput(DbCtlPrintList *print_list_t, int flag, const char *name,
+					int cpu_curr, int cpu_short, int cpu_mid, int cpu_long,
+					long long read_curr, long long read_short, long long read_mid, long long read_long,
+					long long write_curr, long long write_short, long long write_mid, long long write_long )
+{
+	if (flag) {
+		gchar *tmp_param[8] = { 0 };
+		tmp_param[0] = g_strdup_printf("%i", read_curr);
+		tmp_param[1] = g_strdup_printf("%i", read_short);
+		tmp_param[2] = g_strdup_printf("%i", read_mid);
+		tmp_param[3] = g_strdup_printf("%i", read_long);
+		tmp_param[4] = g_strdup_printf("%i", write_curr);
+		tmp_param[5] = g_strdup_printf("%i", write_short);
+		tmp_param[6] = g_strdup_printf("%i", write_mid);
+		tmp_param[7] = g_strdup_printf("%i", write_long);
+		print_list_t->name = g_strdup_printf("%s", name);
+		print_list_t->data = g_strdup_printf(
+				"\t%d/%d/%d/%d\t%s/%s/%s/%s\t%s/%s/%s/%s", cpu_curr,
+				cpu_short, cpu_mid, cpu_long,
+				(read_curr < 1 && flag != 2 && read_curr!=-1) ? "<1" : tmp_param[0],
+				(read_short < 1 && flag != 2 && read_short!=-1) ? "<1" : tmp_param[1],
+				(read_mid < 1 && flag != 2 && read_mid!=-1) ? "<1" : tmp_param[2],
+				(read_long < 1 && flag != 2 && read_long!=-1) ? "<1" : tmp_param[3],
+				(write_curr < 1 && flag != 2 && write_curr!=-1) ? "<1" : tmp_param[4],
+				(write_short < 1 && flag != 2 && write_short!=-1) ? "<1" : tmp_param[5],
+				(write_mid < 1 && flag != 2 && write_mid!=-1) ? "<1" : tmp_param[6],
+				(write_long < 1 && flag != 2 && write_long!=-1) ? "<1" : tmp_param[7]);
+		g_free(tmp_param[0]);
+		g_free(tmp_param[1]);
+		g_free(tmp_param[2]);
+		g_free(tmp_param[3]);
+		g_free(tmp_param[4]);
+		g_free(tmp_param[5]);
+		g_free(tmp_param[6]);
+		g_free(tmp_param[7]);
+	} else {
+		char *buffer_cpu = (char *) alloca (25 * sizeof (char));
+		char *buffer_read = (char *) alloca (29 * sizeof (char));
+		char *buffer_write = (char *) alloca (29 * sizeof (char));
+
+		snprintf(buffer_cpu, 24, "%d/%d/%d/%d", cpu_curr, //cpu
+				cpu_short, cpu_mid, cpu_long);
+		gchar *tmp_param[4] = { 0 };
+		tmp_param[0] = g_strdup_printf("%i", read_curr);
+		tmp_param[1] = g_strdup_printf("%i", read_short);
+		tmp_param[2] = g_strdup_printf("%i", read_mid);
+		tmp_param[3] = g_strdup_printf("%i", read_long);
+		snprintf(buffer_read, 28, "%s/%s/%s/%s",
+				(read_curr < 1 && read_curr!=-1) ? "<1" : tmp_param[0],
+				(read_short < 1 && read_short!=-1) ? "<1" : tmp_param[1],
+				(read_mid < 1 && read_mid!=-1) ? "<1" : tmp_param[2],
+				(read_long < 1 && read_long!=-1) ? "<1" : tmp_param[3]);
+		g_free(tmp_param[0]);
+		g_free(tmp_param[1]);
+		g_free(tmp_param[2]);
+		g_free(tmp_param[3]);
+		tmp_param[0] = g_strdup_printf("%i", write_curr);
+		tmp_param[1] = g_strdup_printf("%i", write_short);
+		tmp_param[2] = g_strdup_printf("%i", write_mid);
+		tmp_param[3] = g_strdup_printf("%i", write_long);
+
+		snprintf(buffer_write, 28, "%s/%s/%s/%s",
+				(write_curr < 1 && write_curr!=-1) ? "<1" : tmp_param[0],
+				(write_short < 1 && write_short!=-1) ? "<1" : tmp_param[1],
+				(write_mid < 1 && write_mid!=-1) ? "<1" : tmp_param[2],
+				(write_long < 1 && write_long!=-1) ? "<1" : tmp_param[3]);
+		g_free(tmp_param[0]);
+		g_free(tmp_param[1]);
+		g_free(tmp_param[2]);
+		g_free(tmp_param[3]);
+
+		print_list_t->name = g_strdup_printf("%-16s", name);
+		print_list_t->data = g_strdup_printf("  %-25s  %-29s     %-29s", buffer_cpu, buffer_read, buffer_write);
+	}
 }
 
 char *
-GetDefaultForUsers(GPtrArray * tags, DbCtlLimitAttr * cpu_def,
-		DbCtlLimitAttr * read_def, DbCtlLimitAttr * write_def, int flag, int raw) {
+GetLimitsForUsers(GPtrArray * tags, DbCtlLimitAttr * cpu_def,
+			DbCtlLimitAttr * read_def, DbCtlLimitAttr * write_def,
+			int flag, int raw, int json) {
 	char mb_buffer[SIZEOF_OUTPUT_BUFFER] = { 0 };
 	int i = 0, cnt_line = 1;
 
@@ -357,83 +449,20 @@ GetDefaultForUsers(GPtrArray * tags, DbCtlLimitAttr * cpu_def,
 			if (name == NULL)
 				name = GetUserMysqlName(found_tag_->attr);
 
-			if (flag) {
-				gchar *tmp_param[8] = { 0 };
-				tmp_param[0] = g_strdup_printf("%i", read_curr);
-				tmp_param[1] = g_strdup_printf("%i", read_short);
-				tmp_param[2] = g_strdup_printf("%i", read_mid);
-				tmp_param[3] = g_strdup_printf("%i", read_long);
-				tmp_param[4] = g_strdup_printf("%i", write_curr);
-				tmp_param[5] = g_strdup_printf("%i", write_short);
-				tmp_param[6] = g_strdup_printf("%i", write_mid);
-				tmp_param[7] = g_strdup_printf("%i", write_long);
-				print_list_t = (DbCtlPrintList *) g_malloc(
-						sizeof(DbCtlPrintList));
-				print_list_t->name = g_strdup_printf("%s", name);
-				print_list_t->data = g_strdup_printf(
-						"\t%d/%d/%d/%d\t%s/%s/%s/%s\t%s/%s/%s/%s", cpu_curr,
-						cpu_short, cpu_mid, cpu_long,
-						(read_curr < 1 && flag != 2 && read_curr!=-1) ? "<1" : tmp_param[0],
-						(read_short < 1 && flag != 2 && read_short!=-1) ? "<1" : tmp_param[1],
-						(read_mid < 1 && flag != 2 && read_mid!=-1) ? "<1" : tmp_param[2],
-						(read_long < 1 && flag != 2 && read_long!=-1) ? "<1" : tmp_param[3],
-						(write_curr < 1 && flag != 2 && write_curr!=-1) ? "<1" : tmp_param[4],
-						(write_short < 1 && flag != 2 && write_short!=-1) ? "<1" : tmp_param[5],
-						(write_mid < 1 && flag != 2 && write_mid!=-1) ? "<1" : tmp_param[6],
-						(write_long < 1 && flag != 2 && write_long!=-1) ? "<1" : tmp_param[7]);
-				g_free(tmp_param[0]);
-				g_free(tmp_param[1]);
-				g_free(tmp_param[2]);
-				g_free(tmp_param[3]);
-				g_free(tmp_param[4]);
-				g_free(tmp_param[5]);
-				g_free(tmp_param[6]);
-				g_free(tmp_param[7]);
-			} else {
-
-				print_list_t = (DbCtlPrintList *) g_malloc(
-						sizeof(DbCtlPrintList));
-				print_list_t->name = (char *) g_malloc(16 * sizeof(char));
-				print_list_t->data = (char *) g_malloc(90 * sizeof(char));
-
-				char *buffer_cpu = (char *) alloca (25 * sizeof (char));
-				char *buffer_read = (char *) alloca (29 * sizeof (char));
-				char *buffer_write = (char *) alloca (29 * sizeof (char));
-
-				snprintf(buffer_cpu, 24, "%d/%d/%d/%d", cpu_curr, //cpu
-						cpu_short, cpu_mid, cpu_long);
-				gchar *tmp_param[4] = { 0 };
-				tmp_param[0] = g_strdup_printf("%i", read_curr);
-				tmp_param[1] = g_strdup_printf("%i", read_short);
-				tmp_param[2] = g_strdup_printf("%i", read_mid);
-				tmp_param[3] = g_strdup_printf("%i", read_long);
-				snprintf(buffer_read, 28, "%s/%s/%s/%s",
-						(read_curr < 1 && read_curr!=-1) ? "<1" : tmp_param[0],
-						(read_short < 1 && read_short!=-1) ? "<1" : tmp_param[1],
-						(read_mid < 1 && read_mid!=-1) ? "<1" : tmp_param[2],
-						(read_long < 1 && read_long!=-1) ? "<1" : tmp_param[3]);
-				g_free(tmp_param[0]);
-				g_free(tmp_param[1]);
-				g_free(tmp_param[2]);
-				g_free(tmp_param[3]);
-				tmp_param[0] = g_strdup_printf("%i", write_curr);
-				tmp_param[1] = g_strdup_printf("%i", write_short);
-				tmp_param[2] = g_strdup_printf("%i", write_mid);
-				tmp_param[3] = g_strdup_printf("%i", write_long);
-
-				snprintf(buffer_write, 28, "%s/%s/%s/%s",
-						(write_curr < 1 && write_curr!=-1) ? "<1" : tmp_param[0],
-						(write_short < 1 && write_short!=-1) ? "<1" : tmp_param[1],
-						(write_mid < 1 && write_mid!=-1) ? "<1" : tmp_param[2],
-						(write_long < 1 && write_long!=-1) ? "<1" : tmp_param[3]);
-				g_free(tmp_param[0]);
-				g_free(tmp_param[1]);
-				g_free(tmp_param[2]);
-				g_free(tmp_param[3]);
-
-				snprintf(print_list_t->name, 15, "%-16s", name);
-				snprintf(print_list_t->data, 89, "  %-25s  %-29s     %-29s",
-						buffer_cpu, buffer_read, buffer_write);
+			print_list_t = (DbCtlPrintList *) g_malloc(sizeof(DbCtlPrintList));
+			if (json)
+			{
+				PrepareLimitsForJson(print_list_t, flag, name,
+					cpu_curr, cpu_short, cpu_mid, cpu_long,
+					read_curr, read_short, read_mid, read_long,
+					write_curr, write_short, write_mid, write_long );
+			}
+			else
+			{
+				PrepareLimitsForOutput(print_list_t, flag, name,
+					cpu_curr, cpu_short, cpu_mid, cpu_long,
+					read_curr, read_short, read_mid, read_long,
+					write_curr, write_short, write_mid, write_long );
 			}
 			arr_print_list = g_list_append(arr_print_list, print_list_t);
 		}
@@ -442,10 +471,16 @@ GetDefaultForUsers(GPtrArray * tags, DbCtlLimitAttr * cpu_def,
 	arr_print_list = g_list_sort(arr_print_list,
 			(GCompareFunc) ComparePrintByName);
 	GList *print_list_l = NULL;
-	for (print_list_l = g_list_first(arr_print_list); print_list_l != NULL; print_list_l
-			= g_list_next (print_list_l)) {
+	for (print_list_l = g_list_first(arr_print_list); print_list_l != NULL; print_list_l = g_list_next (print_list_l)) {
 		DbCtlPrintList *print_list_l_ = (DbCtlPrintList *) print_list_l->data;
-		printf("%s%s\n", print_list_l_->name, print_list_l_->data);
+		if (json)
+		{
+			printf("%s\"%s\": { %s }", cpu_def?", ":"", print_list_l_->name, print_list_l_->data);
+		}
+		else
+		{
+			printf("%s%s\n", print_list_l_->name, print_list_l_->data);
+		}
 		g_free(print_list_l_->name);
 		g_free(print_list_l_->data);
 		g_free(print_list_l_);

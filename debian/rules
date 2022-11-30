@@ -28,7 +28,6 @@ override_dh_auto_install:
 	mkdir -p $(CURDIR)/debian/tmp/usr/lib/
 	install -m 755 $(CURDIR)/debian/governor-mysql/usr/bin/db_governor $(CURDIR)/debian/tmp/usr/sbin/db_governor
 	install -m 755 $(CURDIR)/debian/governor-mysql/usr/bin/dbtop $(CURDIR)/debian/tmp/usr/sbin/dbtop
-	install -m 755 $(CURDIR)/debian/governor-mysql/usr/bin/dbctl $(CURDIR)/debian/tmp/usr/sbin/dbctl
 	install -m 755 $(CURDIR)/debian/governor-mysql/usr/bin/mysql_unfreeze $(CURDIR)/debian/tmp/usr/sbin/mysql_unfreeze
 	install -m 755 $(CURDIR)/debian/governor-mysql/usr/lib/libgovernor.so $(CURDIR)/debian/tmp/usr/lib/libgovernor.so
 
@@ -47,7 +46,7 @@ override_dh_auto_install:
 	install -m 644 $(CURDIR)/db_governor_ubuntu.service $(CURDIR)/debian/tmp/usr/lib/systemd/system/db_governor.service
 	install -m 644 $(CURDIR)/var-lve-dbgovernor\\x2dshm.mount $(CURDIR)/debian/tmp/usr/lib/systemd/system/
 	install -D -m 600 $(CURDIR)/db-governor.xml $(CURDIR)/debian/tmp/etc/container/mysql-governor.xml
-	touch $(CURDIR)/debian/tmp/etc/container/governor_package_limit.yaml
+	install -D -m 664 $(CURDIR)/governor_package_limit.json $(CURDIR)/debian/tmp/etc/container/governor_package_limit.json
 
 # db_governor_test is still not built
 #	install -D -m 755 build_test/bin/db_governor $(CURDIR)/debian/tmp/usr/bin/db_governor_test
@@ -56,6 +55,7 @@ override_dh_auto_install:
 	install -D -m 755 $(CURDIR)/install/db-select-mysql $(CURDIR)/debian/tmp/usr/share/lve/dbgovernor/db-select-mysql
 	install -D -m 755 $(CURDIR)/install/mysqlgovernor_ubuntu.py $(CURDIR)/debian/tmp/usr/share/lve/dbgovernor/mysqlgovernor.py
 	install -D -m 755 $(CURDIR)/install/governor_package_limitting.py $(CURDIR)/debian/tmp/usr/share/lve/dbgovernor/governor_package_limitting.py
+	install -D -m 755 $(CURDIR)/install/creates_individual_limits_vector_list.py $(CURDIR)/debian/tmp/usr/share/lve/dbgovernor/creates_individual_limits_vector_list.py
 	install -D -m 644 $(CURDIR)/install/cl-mysql.repo.default $(CURDIR)/debian/tmp/usr/share/lve/dbgovernor/cl-mysql.repo.default
 	install -D -m 644 $(CURDIR)/install/utilities.py $(CURDIR)/debian/tmp/usr/share/lve/dbgovernor/utilities.py
 	install -D -m 644 $(CURDIR)/install/modules/__init__.py $(CURDIR)/debian/tmp/usr/share/lve/dbgovernor/modules/__init__.py
@@ -78,13 +78,16 @@ override_dh_auto_install:
 	install -D -m 755 $(CURDIR)/install/scripts/detect-cpanel-mysql-version.pm $(CURDIR)/debian/tmp/usr/share/lve/dbgovernor/scripts/detect-cpanel-mysql-version.pm
 	install -D -m 755 $(CURDIR)/install/scripts/cpanel-mysql-url-detect.pm $(CURDIR)/debian/tmp/usr/share/lve/dbgovernor/scripts/cpanel-mysql-url-detect.pm
 	install -D -m 755 $(CURDIR)/install/scripts/set_cpanel_mysql_version.pm $(CURDIR)/debian/tmp/usr/share/lve/dbgovernor/scripts/set_cpanel_mysql_version.pm
-	install -D -m 755 $(CURDIR)/install/scripts/mysql_hook $(CURDIR)/debian/tmp//usr/share/lve/dbgovernor/scripts/mysql_hook
+	install -D -m 755 $(CURDIR)/install/scripts/mysql_hook $(CURDIR)/debian/tmp/usr/share/lve/dbgovernor/scripts/mysql_hook
+	install -D -m 755 $(CURDIR)/install/scripts/map_hook $(CURDIR)/debian/tmp/usr/share/lve/dbgovernor/scripts/map_hook
 	install -D -m 644 $(CURDIR)/logrotate/mysql-governor $(CURDIR)/debian/tmp/etc/logrotate.d/mysql-governor
 	install -D -m 644 $(CURDIR)/install/utils/cloudlinux.versions $(CURDIR)/debian/tmp/usr/share/lve/dbgovernor/utils/cloudlinux.versions
 	install -D -m 644 $(CURDIR)/install/utils/dbgovernor $(CURDIR)/debian/tmp/usr/share/lve/dbgovernor/utils/db_governor
 	install -D -m 600 $(CURDIR)/install/list_problem_files.txt $(CURDIR)/debian/tmp/usr/share/lve/dbgovernor/
 	install -D -m 755 $(CURDIR)/install/utils/mysql_export $(CURDIR)/debian/tmp/usr/share/lve/dbgovernor/utils/mysql_export
+	install -D -m 755 $(CURDIR)/debian/governor-mysql/usr/bin/dbctl $(CURDIR)/debian/tmp/usr/share/lve/dbgovernor/utils/dbctl_orig
 	install -D -m 755 $(CURDIR)/install/cpanel/upgrade-mysql-disabler.sh $(CURDIR)/debian/tmp/usr/share/lve/dbgovernor/cpanel/upgrade-mysql-disabler.sh
+	install -m 755 $(CURDIR)/install/dbctl $(CURDIR)/debian/tmp/usr/sbin/dbctl
 	mkdir -p $(CURDIR)/debian/tmp/etc/cron.d/
 	install -D -m 644 $(CURDIR)/debian/source/lvedbgovernor-utils-cron $(CURDIR)/debian/tmp/etc/cron.d/
 	echo "CloudLinux" > $(CURDIR)/debian/tmp/usr/share/lve/dbgovernor/tmp/INFO
