@@ -94,6 +94,10 @@ def build_parser():
                         help="fix adduser and deluser hooks for cPanel",
                         dest="fix_cpanel_hooks", action="store_true",
                         default=False)
+    parser.add_argument("--update-cpanel-hooks",
+                        help="update adduser and deluser hooks for cPanel",
+                        dest="update_cpanel_hooks", action="store_true",
+                        default=False)
     parser.add_argument("--force",
                         help="Force prohibited update, for example, upgrade from MySQL 8.0 to MariaDB 10.x",
                         dest="force", action="store_true", default=False)
@@ -248,6 +252,8 @@ def main(argv):
         manager.update_user_map_file()
     elif opts.fix_cpanel_hooks:
         manager.install_mysql_beta_testing_hooks()
+    elif opts.update_cpanel_hooks:
+        manager.update_mysql_hooks()
     elif opts.install_from_history:
         manager.install_from_history(opts.install_from_history)
     elif opts.show_previous_packages:

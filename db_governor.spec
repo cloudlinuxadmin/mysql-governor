@@ -392,6 +392,8 @@ if [ -e /usr/share/lve/dbgovernor/mysqlgovernor.py ]; then
     fi
 fi
 
+/usr/share/lve/dbgovernor/mysqlgovernor.py --update-cpanel-hooks
+
 %if 0%{?rhel} >= 7
 /bin/systemctl daemon-reload >/dev/null 2>&1 || :
 /bin/systemctl enable var-lve-dbgovernor\\x2dshm.mount >/dev/null 2>&1 || :

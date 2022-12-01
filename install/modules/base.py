@@ -614,6 +614,12 @@ class InstallManager:
         # self.set_fs_suid_dumpable()
         print("No need in fix")
 
+    def update_mysql_hooks(self):
+        """
+        cPanel specific action
+        """
+        print("No need in update")
+
     def fix_mysqld_service(self):
         """
         DA specific action
