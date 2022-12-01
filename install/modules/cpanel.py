@@ -75,6 +75,13 @@ class cPanelManager(InstallManager):
         self.set_fs_suid_dumpable()
         self._script("cpanel-install-hooks")
 
+    def update_mysql_hooks(self):
+        """
+        Update mysql hooks
+        """
+        self._script("cpanel-delete-hooks")
+        self._script("cpanel-install-hooks")
+
     def _delete(self, installed_packages):
         """
         Remove installed packages
