@@ -71,9 +71,17 @@ def build_parser():
                         help="install MySQL beta for governor or update beta "
                              "if exists newer beta version",
                         dest="install_beta", action="store_true", default=False)
+    parser.add_argument("--fix-cpanel-hooks",
+                        help="fix adduser and deluser hooks for cPanel",
+                        dest="fix_cpanel_hooks", action="store_true",
+                        default=False)
     parser.add_argument("--update-cpanel-hooks",
                         help="update adduser and deluser hooks for cPanel",
                         dest="update_cpanel_hooks", action="store_true",
+                        default=False)
+    parser.add_argument("--fix-mysqld-service",
+                        help="Restore mysqld.service for DirectAdmin",
+                        dest="fix_mysqld_service", action="store_true",
                         default=False)
     parser.add_argument("--force",
                         help="Force prohibited update, for example, upgrade from MySQL 8.0 to MariaDB 10.x",
@@ -90,6 +98,14 @@ def build_parser():
                         dest="delete", action="store_true", default=False)
     parser.add_argument("-t", "--dbupdate", help="update UserMap file",
                         dest="dbupdate", action="store_true", default=False)
+    parser.add_argument("--update-config-auth",
+                        help="Update user login and password in config file",
+                        dest="update_config", action="store_true",
+                        default=False)
+    parser.add_argument("--fix-config",
+                        help="Fix unescaped xml and wrong limits in config file",
+                        dest="fix_govervor_config", action="store_true",
+                        default=False)
     return parser
 
 
