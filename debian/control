@@ -23,6 +23,6 @@ Architecture: any
 Pre-Depends: debconf,
              procps,
              systemd
-Depends: ${shlibs:Depends}, ${misc:Depends}, debconf, alt-python37, libtry-tiny-perl, tmpreaper, alt-python27-cllib
+Depends: ${shlibs:Depends}, ${misc:Depends}, debconf, alt-python37, libtry-tiny-perl, tmpreaper, alt-python27-cllib, lve-utils
 Description: DB control utilities
  This package provides dbtop, db_governor utilities.

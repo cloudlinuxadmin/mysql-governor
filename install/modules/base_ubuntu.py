@@ -47,12 +47,29 @@ class UbuntuInstallManager(InstallManager):
         self.cp_name = cp_name
         self.panel_manager = InstallManager.factory(cp_name)
 
+    def install_mysql_beta_testing_hooks(self):
+        """
+        cPanel specific action
+        """
+        self.panel_manager.install_mysql_beta_testing_hooks()
+
+    def update_mysql_hooks(self):
+        """
+        cPanel specific action
+        """
+        self.panel_manager.update_mysql_hooks()
+
+    def fix_mysqld_service(self):
+        """
+        DA specific action
+        """
+        self.panel_manager.fix_mysqld_service()
+
     def check_and_install_needed_packages(self):
         """Install packages needed if not installed
         This function is used to install some dependencies before governor install new download packages
         Some packages needs to be installed before
         """
-        
         if 'mysql' in self.new_version_of_db or self.new_version_of_db == 'auto':
             needed_packages = ['mysql-common', 'mariadb-common']
         elif 'mariadb' in self.new_version_of_db:
