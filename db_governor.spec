@@ -15,7 +15,7 @@ Name: governor-mysql
 Version: %{g_version}
 Release: %{g_release}%{?dist}.cloudlinux
 Summary: DB control utilities
-License: CloudLinux Commercial License
+License: GPLv2
 URL: http://cloudlinux.com
 Group: System Environment/Base
 Source0: %{name}-%{version}.tar.bz2
