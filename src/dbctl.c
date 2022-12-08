@@ -37,6 +37,7 @@ typedef enum dbctl_keyword_enum
 	HELP_KWE,
 	VERSION_KWE,
 	LVE_MODE_KWE,
+	LVE_ACCURACY_KWE,
 	SET_KWE,
 	RESTRICT_KWE,
 	IGNORE_KWE,
@@ -56,6 +57,7 @@ typedef enum dbctl_keyword_enum
 static const char HELP_KW[] = "--help";
 static const char VERSION_KW[] = "--version";
 static const char LVE_MODE_KW[] = "--lve-mode";
+static const char LVE_ACCURACY_KW[] = "--lve-improved-accuracy";
 static const char SET_KW[] = "set";
 static const char RESTRICT_KW[] = "restrict";
 static const char IGNORE_KW[] = "ignore";
@@ -113,6 +115,7 @@ help (void)
   printf ("%-27s             put user's queries into LVE for that user\n", "");
   printf ("%-27s 'all' - user's queries always run inside LVE for that user - deprecated\n", "");
   printf ("%-27s 'single|on' - single LVE for all abusers. 'on' - deprecated\n", "");
+  printf ("%-24s set lve improved accuracy algorithm 'off|on'\n", LVE_ACCURACY_KW);
 
   printf ("\nparameter:\n");
   printf ("%-24s set default parameter\n", "default");
@@ -144,7 +147,8 @@ GetOptList (int argc, char **argv, int *ret)
     {"slow", required_argument, NULL, 's'},
     {"level", required_argument, NULL, 'l'},
     {"lve-mode", required_argument, NULL, 100},
-    {"help", no_argument, &helpflag, 1},
+    {"lve-improved-accuracy", required_argument, NULL, 101},
+	{"help", no_argument, &helpflag, 1},
     {"version", no_argument, &verflag, 1},
     {"kb", no_argument, &kb_flag, 1},
     {"bb", no_argument, &kb_flag, 2},
@@ -202,6 +206,7 @@ GetOptList (int argc, char **argv, int *ret)
 	  }
 	  break;
 	case 100:
+	case 101:
 	  {
 	    Options *_opts;
 	    _opts = malloc (sizeof (Options));
@@ -282,6 +287,14 @@ GetCmd (int argc, char **argv)
       {
         GList *list = (GList *) GetOptList (argc, argv, &ret);
         if (!setLveMode ((char *) GetVal (100, list)))
+	  return 2;
+      }
+    break;
+
+	case LVE_ACCURACY_KWE:
+      {
+        GList *list = (GList *) GetOptList (argc, argv, &ret);
+        if (!setLveAccuracy ((char *) GetVal (101, list)))
 	  return 2;
       }
     break;
@@ -441,6 +454,7 @@ static const parse_info_t parse_info[] =
 	PARSE_INFO_ENTRY(HELP, -1, -1, -1),
 	PARSE_INFO_ENTRY(VERSION, -1, -1, -1),
 	{ LVE_MODE_KWE, LVE_MODE_KW, sizeof LVE_MODE_KW - 1, -1, -1, -1 },
+	{ LVE_ACCURACY_KWE, LVE_ACCURACY_KW, sizeof LVE_ACCURACY_KW - 1, -1, -1, -1 },
 
 	// min 3 args for user, min 4 args for default
 	PARSE_INFO_ENTRY(SET, 3, 4, -1),
