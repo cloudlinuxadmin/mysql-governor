@@ -452,7 +452,9 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
-* Thu Dec 08 2022 Nikolay Petukhov <npetukhov@cloudlinux.com> 1.2-81
+* Thu Dec 15 2022 Nikolay Petukhov <npetukhov@cloudlinux.com>, Sergey Kozhekin <skozhekin@cloudlinux.com>, Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-81
+- MYSQLG-843: Improper CL comercial license changed to GPL-2
+- MYSQLG-840: Adding and updating unit tests for Governor Package Limiting
 - MYSQLG-812: Implemented advanced resource consumption calculation technique
 
 * Wed Nov 30 2022 Sergey Kozhekin <skozhekin@cloudlinux.com>, Aleksey Petryankin <apetryankin@cloudlinux.com>, Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-80

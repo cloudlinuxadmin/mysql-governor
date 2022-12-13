@@ -1,3 +1,11 @@
+governor-mysql (1.2-81) stable; urgency=medium
+
+  * MYSQLG-843: Improper CL comercial license changed to GPL-2
+  * MYSQLG-840: Adding and updating unit tests for Governor Package Limiting
+  * MYSQLG-812: Implemented advanced resource consumption calculation technique
+
+ -- Nikolay Petukhov <npetukhov@cloudlinux.com>  Thu, 15 Dec 2022 14:00:00 +0000
+
 governor-mysql (1.2-80) stable; urgency=medium
 
   * MYSQLG-832: Implementation of individual limits logics in Governor Package limits
