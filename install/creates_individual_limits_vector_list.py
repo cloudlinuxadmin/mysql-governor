@@ -10,10 +10,35 @@
 import subprocess
 from collections import namedtuple
 
-from governor_package_limitting import (
-    getting_individual_limits_vector, fill_gpl_json)
+from governor_package_limitting import fill_gpl_json
 
 Userlimits = namedtuple("Userlimits", "cpu read write")
+
+
+def getting_individual_limits_vector(individual_limits):
+    """
+    Gets a dictionary with real limits of users.
+    Returns a vector of 'true/false' values
+    instead of real values
+    where 'true' is an individual limit
+    and 'false' is a package limit.
+    Args: limits dictionary with users and their real limits values
+    Returns: limits dictionary with users and their true/false meaning
+    """
+    final_dict = dict()
+    def get_vector(limit_values, username):
+        limits_dict = dict()
+        final_dict.update({username: limits_dict})
+        for limits_list, _key in ((limit_values.cpu, 'cpu'),
+                                  (limit_values.read, 'read'),
+                                  (limit_values.write, 'write')):
+            limit_list = list()
+            limits_dict.update({_key: limit_list})
+            _ = [limit_list.append(int(_value) > 0) for _value in limits_list]
+
+    _ = [get_vector(limit, user) for user, limit in individual_limits.items()]
+
+    return final_dict
 
 
 def getting_whole_dbctl_list():

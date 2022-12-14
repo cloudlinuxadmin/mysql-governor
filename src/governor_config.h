@@ -50,6 +50,7 @@ struct governor_config
   char *slow_queries_log;
   char *debug_user;
   int save_statistic_uid;
+  int improved_accuracy;
 };
 
 stats_limit_cfg *config_get_account_limit (const char *account_id,

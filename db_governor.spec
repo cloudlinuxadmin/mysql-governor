@@ -1,6 +1,6 @@
 %define g_version   1.2
-%define g_release   80
-%define g_key_library 10
+%define g_release   81
+%define g_key_library 11
 
 %if %{undefined _unitdir}
 %define _unitdir /usr/lib/systemd/system
@@ -15,7 +15,7 @@ Name: governor-mysql
 Version: %{g_version}
 Release: %{g_release}%{?dist}.cloudlinux
 Summary: DB control utilities
-License: CloudLinux Commercial License
+License: GPLv2
 URL: http://cloudlinux.com
 Group: System Environment/Base
 Source0: %{name}-%{version}.tar.bz2
@@ -452,6 +452,11 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Thu Dec 15 2022 Nikolay Petukhov <npetukhov@cloudlinux.com>, Sergey Kozhekin <skozhekin@cloudlinux.com>, Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-81
+- MYSQLG-843: Improper CL comercial license changed to GPL-2
+- MYSQLG-840: Adding and updating unit tests for Governor Package Limiting
+- MYSQLG-812: Implemented advanced resource consumption calculation technique
+
 * Wed Nov 30 2022 Sergey Kozhekin <skozhekin@cloudlinux.com>, Aleksey Petryankin <apetryankin@cloudlinux.com>, Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-80
 - LU-3586: implement dbctl wrapper
 - MYSQLG-832: Implementation of individual limits logics in Governor Package limits

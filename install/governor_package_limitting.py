@@ -290,8 +290,9 @@ def check_if_values_are_not_less_than_zero(cfg):
                 sys.exit(1)
 
 
-def fill_gpl_json(package: str, cpu: list = None, io_read: List = None,
-                  io_write: list = None, serialize=True, set_vector: bool = False):
+def fill_gpl_json(package: str, cpu: list = None, io_read: list = None,
+                  io_write: list = None, serialize: bool = True,
+                  set_vector: bool = False) -> None:
     """
     Setting 'package limits' or 'individual limits' to
     the governor_package_limit.json
@@ -770,7 +771,7 @@ def get_dbctl_limits(user: str = 'default', format: str = 'bb') -> Tuple:
     return individual_cpu_limit, individual_read_limit, individual_write_limit
 
 
-def get_the_limits_set(limits_set: list):
+def get_the_limits_set(limits_set: list) -> Tuple:
     """
     Here we have twelve values:
     -> four per cpu
@@ -785,7 +786,7 @@ def get_the_limits_set(limits_set: list):
     return cpu, read, write
 
 
-def set_default_limit(package_limit):
+def set_default_limit(package_limit: dict) -> Tuple:
     """
     Defines the limits (cpu, read, write). Uses package limits or
     default limits depending on values. If package value is greater
@@ -796,25 +797,19 @@ def set_default_limit(package_limit):
     package_write_limit = package_limit.get('write')
 
     all_limits = list()
-    for tuple_of_limits_lists in (
-        (package_cpu_limit, [0] * 4),
-        (package_read_limit, [0] * 4),
-        (package_write_limit, [0] * 4)
-    ):
-        for n in zip(tuple_of_limits_lists[0], tuple_of_limits_lists[1]):
-            # where n -> values of package limit and default limit respectively
-            if n[0] > 0:
-                # set package limit
-                all_limits.append(n[0])
-            else:
-                # set default limit
-                all_limits.append(n[1])
+    for tuple_of_limits_lists in (package_cpu_limit,
+                                  package_read_limit,
+                                  package_write_limit):
+        for n in tuple_of_limits_lists:
+            # values of package limit and default limit (0) respectively
+            all_limits.append(n) if n > 0 else all_limits.append(0)
 
     return get_the_limits_set(all_limits)
 
 
 def ensures_the_individual_limits_still_set(
-    vector: Dict, default_or_package_limit: Tuple, individual_limits):
+    vector: dict, default_or_package_limit: tuple,
+    individual_limits: tuple) -> Tuple:
     """
     Sets the individual limit instead of <package limit/default limit>
     if vector value is <True> for the certain limit.
@@ -844,6 +839,7 @@ def ensures_the_individual_limits_still_set(
             # If vector is False
             else:
                 all_limits.append(n[2])
+
     return get_the_limits_set(all_limits)
 
 
@@ -907,32 +903,6 @@ def turn_on_debug_if_user_enabled_debug_mode(opts):
     if opts.debug:
         global DEBUG
         DEBUG = True
-
-
-def getting_individual_limits_vector(individual_limits):
-    """
-    Gets a dictionary with real limits of users.
-    Returns a vector of 'true/false' values
-    instead of real values
-    where 'true' is an individual limit
-    and 'false' is a package limit.
-    Args: limits dictionary with users and their real limits values
-    Returns: limits dictionary with users and their true/false meaning
-    """
-    final_dict = dict()
-    def get_vector(limit_values, username):
-        limits_dict = dict()
-        final_dict.update({username: limits_dict})
-        for limits_list, _key in ((limit_values.cpu, 'cpu'),
-                                  (limit_values.read, 'read'),
-                                  (limit_values.write, 'write')):
-            limit_list = list()
-            limits_dict.update({_key: limit_list})
-            _ = [limit_list.append(int(_value) > 0) for _value in limits_list]
-
-    _ = [get_vector(limit, user) for user, limit in individual_limits.items()]
-
-    return final_dict
 
 
 def ensure_json_presence():
