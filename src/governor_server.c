@@ -234,7 +234,6 @@ get_data_from_client (void *data)
   sa.sa_handler = term_handler;
   sigaction (SIGTERM, &sa, 0);
   sigaction (SIGKILL, &sa, 0);
-  int sync = 1;
 
   for (;;)
     {
@@ -462,17 +461,8 @@ get_data_from_client (void *data)
 		    }
 		  continue;
 		}
-	      else if (message.magic != CD_MAGIC)
+	      else
 		{
-	      if (sync)
-	        WRITE_LOG (NULL, 0, "Governor library version mismatch detected - stat processing stopped. Try to restart mysqld service", data_cfg.log_mode);
-	      sync = 0;
-		}
-	      else if (message.magic == CD_MAGIC)
-		{
-	      if (!sync)
-	        WRITE_LOG (NULL, 0, "Governor library version mismatch fixed - stat processing restored", data_cfg.log_mode);
-	      sync = 1;
 		  if (data_cfg.restrict_format >= 4)
 		    {
 		      WRITE_LOG (NULL,
@@ -488,8 +478,6 @@ get_data_from_client (void *data)
 #endif
 		  if (message.type == 0)
 		    {
-		    if (!data_cfg.improved_accuracy)
-		    {
 		      tid_table tbl_buff;
 		      memset (&tbl_buff, 0, sizeof (tid_table));
 		      tid_table *tbl = get_tid_data (message.tid, &tbl_buff);
@@ -504,12 +492,7 @@ get_data_from_client (void *data)
 		         } */
 		      add_new_tid_data (&message, (fds + i)->fd);
 		    }
-		    else
-		      add_new_begin_tid_data (&message, (fds + i)->fd);
-		    }
 		  else
-		    {
-		    if (!data_cfg.improved_accuracy)
 		    {
 		      tid_table tbl_buff;
 		      memset (&tbl_buff, 0, sizeof (tid_table));
@@ -522,9 +505,6 @@ get_data_from_client (void *data)
 			  //add_new_stats(tbl->username, &st, get_current_tick());
 			  remove_tid_data (message.tid);
 			}
-		    }
-		    else
-		      add_new_end_tid_data (&message);
 		    }
 		}
 	      continue;
@@ -561,28 +541,7 @@ chek_user_perf (gpointer key, tid_table * item, gpointer user_data)
 		 kkey, item->username, item->cpu, item->write, item->read,
 		 old_tm);
     }
-
-  if (data_cfg.improved_accuracy)
-  {
-	  //thread have end info
-	  if (item->type == 1)
-	  {
-		  double cpu = item->cpu_end;
-		  //use rusage
-		  if ((-1 != item->stime_begin.tv_sec) && (-1 != item->utime_begin.tv_sec))
-		  {
-			  cpu = calc_cpu_from_rusage(item);
-			  item->cpu = 0;
-		  }
-		  clac_stats_difference_inner_add_to_counters (cpu, item->read_end, item->write_end, item);
-
-		  //remove tid from threads list
-		  add_tid_to_bad_list (kkey);
-		  return;
-	  }
-  }
-
-  if (data_cfg.improved_accuracy || (new_tm - old_tm) > 1.0)
+  if ((new_tm - old_tm) > 1.0)
     {
       dbgov_proc_time item1;
       dbgov_iostat item2;
@@ -626,9 +585,6 @@ chek_user_perf (gpointer key, tid_table * item, gpointer user_data)
       item->update_time = cur_tm.tv_sec;
       //coverity[missing_lock]
       item->naoseconds = cur_tm.tv_nsec;
-      //mark begin info as invalid
-      item->utime_begin.tv_sec = -1;
-      item->stime_begin.tv_sec = -1;
 
 
       //add_new_tid_data2(*kkey, item);

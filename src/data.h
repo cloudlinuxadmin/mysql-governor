@@ -13,7 +13,6 @@
 /* true and false values including*/
 #include <stdbool.h>
 #include <time.h>
-#include <sys/time.h>
 
 /* Max user length in MySQL */
 #define USERNAMEMAXLEN 16*4
@@ -131,10 +130,8 @@ typedef struct user_statistics_struct
 typedef Stats stats_limit;
 typedef Stats_cfg stats_limit_cfg;
 
-#define CD_MAGIC 0xDEADBEEF
 typedef struct _client_data
 {
-  int magic;
   int type;
   pid_t tid;
   pid_t pid;
@@ -144,8 +141,6 @@ typedef struct _client_data
   long long read;
   time_t update_time;
   long naoseconds;
-  struct timeval utime;
-  struct timeval stime;
 } client_data;
 
 typedef struct restrict_info_struct

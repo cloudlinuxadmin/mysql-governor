@@ -569,32 +569,3 @@ int setLveMode(char *mode) {
 
 	return 1;
 }
-
-int setLveAccuracy(char *mode) {
-	char xml_parse_error[MAX_XML_PATH] = { 0 };
-	xml_data *cfg = parseConfigData((char *) CONFIG_PATH, xml_parse_error,
-			MAX_XML_PATH - 1);
-	if (cfg == NULL) {
-		fprintf(stderr, "Error reading config file %s\n", xml_parse_error);
-		return 0;
-	}
-	if (mode == NULL || (strcmp(mode, "off") && strcmp(mode, "on"))) {
-		releaseConfigData(cfg);
-		fprintf(stderr, "Incorrect value mode\n");
-		return 0;
-	}
-
-	void * child = SearchTagByName(cfg, "lve", NULL);
-
-	if (child == NULL)
-		child = setNode(cfg, NULL, "lve", NULL);
-
-	setAttr(child, "improved_accuracy", mode);
-
-	rewrite_cfg(cfg);
-	releaseConfigData(cfg);
-	reread_cfg_cmd();
-
-	return 1;
-}
-

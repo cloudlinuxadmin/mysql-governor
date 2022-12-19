@@ -11,8 +11,6 @@
 #undef pthread_mutex_lock
 #undef pthread_mutex_unlock
 
-#define _GNU_SOURCE
-
 #include <stdio.h>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -29,7 +27,6 @@
 #include <unistd.h>
 #include <time.h>
 #include <poll.h>
-#include <sys/resource.h>
 
 #include "data.h"
 
@@ -320,9 +317,6 @@ send_info (char *username, int type)
 
   get_proc_time (&item1, current_pid, current_tid);
   get_io_stat (&item2, current_pid, current_tid);
-  struct rusage usage;
-  if (-1 == getrusage(RUSAGE_THREAD, &usage))
-    memset(&usage, 0, sizeof(usage));
 
 #ifdef TEST
   //printf("Prepare info PID %d TID %d CPU %lld R+W %lld\n", current_pid, current_tid, item1.stime + item1.utime, item2.read_bytes+item2.write_bytes);
@@ -332,7 +326,6 @@ send_info (char *username, int type)
   clock_gettime (CLOCK_REALTIME, &tim);
 
   client_data snd;
-  snd.magic = CD_MAGIC;
   snd.type = type;
   strlcpy (snd.username, username, sizeof (snd.username));
   snd.pid = current_pid;
@@ -342,8 +335,6 @@ send_info (char *username, int type)
   snd.cpu = item1.stime + item1.utime;
   snd.update_time = tim.tv_sec;
   snd.naoseconds = tim.tv_nsec;
-  snd.utime = usage.ru_utime;
-  snd.stime = usage.ru_stime;
 
   if (try_lock (&mtx_write))
     return -1;

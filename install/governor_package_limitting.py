@@ -927,7 +927,7 @@ def main(argv):
     """
     Run main actions
     """
-    shadow_tracing(True)
+    shadow_tracing(False)
 
     parser = build_parser()
     if not argv:
