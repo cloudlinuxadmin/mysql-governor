@@ -1,6 +1,6 @@
 %define g_version   1.2
-%define g_release   81
-%define g_key_library 11
+%define g_release   82
+%define g_key_library 10
 
 %if %{undefined _unitdir}
 %define _unitdir /usr/lib/systemd/system
@@ -452,6 +452,10 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Mon Dec 19 2022 Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-82
+- MYSQLG-850: Stopped debug output of package limite utility
+- Reverted MYSQLG-812
+
 * Thu Dec 15 2022 Nikolay Petukhov <npetukhov@cloudlinux.com>, Sergey Kozhekin <skozhekin@cloudlinux.com>, Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-81
 - MYSQLG-843: Improper CL comercial license changed to GPL-2
 - MYSQLG-840: Adding and updating unit tests for Governor Package Limiting
