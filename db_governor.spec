@@ -453,7 +453,7 @@ fi
 
 %changelog
 * Thu Dec 20 2022 Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-82
-- MYSQLG-842: 
+- MYSQLG-842: moved mysqld restart to %post scriptlet
 
 * Thu Dec 15 2022 Nikolay Petukhov <npetukhov@cloudlinux.com>, Sergey Kozhekin <skozhekin@cloudlinux.com>, Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-81
 - MYSQLG-843: Improper CL comercial license changed to GPL-2
