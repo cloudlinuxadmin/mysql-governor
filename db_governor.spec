@@ -460,7 +460,7 @@ fi
 - MYSQLG-840: Adding and updating unit tests for Governor Package Limiting
 - MYSQLG-812: Implemented advanced resource consumption calculation technique
 
-* Mon Dec 19 2022 Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-80.1
+* Wed Dec 14 2022 Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-80.1
 - MYSQLG-850: Stopped debug output of package limits utility
 
 * Wed Nov 30 2022 Sergey Kozhekin <skozhekin@cloudlinux.com>, Aleksey Petryankin <apetryankin@cloudlinux.com>, Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-80
