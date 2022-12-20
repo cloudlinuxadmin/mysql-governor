@@ -1417,12 +1417,12 @@ def install_deb_packages(deb_dir: str, installer=None):
                 list_for_install.append(found_package)
 
         command = f'apt-get -y install {" ".join(list_for_install)} ' \
-                  f'-o Dir::Cache={cache_path}'
+                  f'-o Dir::Cache={cache_path} -o Dpkg::Options::=--force-confnew'
         exec_command_out(command)
 
         if is_server_found:
             command = f'apt-get -y install {" ".join(is_server_found)} ' \
-                      f'-o Dir::Cache={cache_path}'
+                      f'-o Dir::Cache={cache_path} -o Dpkg::Options::=--force-confnew'
             exec_command_out(command)
 
     return True

@@ -533,7 +533,7 @@ gpgcheck=1
         except FileNotFoundError:
             print(f'{mysql_list} not exists. Already deleted')
 
-        exec_command_out('apt-get update')
+        exec_command_out('apt-get update -o Dpkg::Options::=--force-confnew')
 
         exec_command_out('apt remove mysql-community-server -y')
         exec_command_out('apt remove mysql-client -y')

@@ -18,7 +18,20 @@ typedef struct _sock_data
   int status;
 } sock_data;
 
+/*
+    return 0 on success
+    return 0 on first unsuccesful connect
+    return <0 on not-first unsuccessful connects
+*/
 int connect_to_server (void);
+
+/*
+    return 0 on success
+    return 1 on first unsuccesful connect
+    return <0 on not-first unsuccessful connects
+*/
+int connect_to_server_ex (void);
+
 int send_info_begin (char *username);
 int send_info_end (char *username);
 int close_sock (void);

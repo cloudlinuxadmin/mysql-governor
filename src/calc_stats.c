@@ -1160,6 +1160,21 @@ clac_stats_difference_inner_from_counter (long long cpu, long long read,
     }
 }
 
+double calc_cpu_from_rusage(tid_table * item)
+{
+	double cpu = 0;
+	int sys_us = (item->stime_end.tv_sec * 1000000 + item->stime_end.tv_usec) - (item->stime_begin.tv_sec * 1000000 + item->stime_begin.tv_usec);
+	int user_us = (item->utime_end.tv_sec * 1000000 + item->utime_end.tv_usec) - (item->utime_begin.tv_sec * 1000000 + item->utime_begin.tv_usec);
+	int cpu_us = sys_us + user_us;
+	int hz = sysconf (_SC_CLK_TCK);
+	cpu = cpu_us/(1000000.0/hz);
+#ifdef TEST
+	//printf("calc %s c:%ld(%f), r:%ld, w:%ld\n", item->username, item->cpu_end - item->cpu, cpu, item->read_end - item->read, item->write_end - item->write);
+#endif
+
+	return cpu;
+}
+
 void
 clac_stats_difference_add_to_counters (client_data * new, tid_table * old)
 {
@@ -1168,7 +1183,7 @@ clac_stats_difference_add_to_counters (client_data * new, tid_table * old)
 }
 
 void
-clac_stats_difference_inner_add_to_counters (long long cpu, long long read,
+clac_stats_difference_inner_add_to_counters (double cpu, long long read,
 					     long long write, tid_table * old)
 {
   pthread_mutex_lock (&mtx_counters);
@@ -1178,11 +1193,11 @@ clac_stats_difference_inner_add_to_counters (long long cpu, long long read,
     / (double) SEC2NANO;
   double new_tm = cur_tm.tv_sec + (double) cur_tm.tv_nsec / (double) SEC2NANO;
 #ifdef TEST
-  //printf("add_to-counters %s - dt - %f c %ld, w %ld, r %ld, old c %ld, w %ld, r %ld\n", old->username, new_tm - old_tm, cpu, read, write, old->cpu, old->write, old->read);
+  //printf("add_to-counters %s - dt - %f c %f, w %ld, r %ld, old c %ld, w %ld, r %ld\n", old->username, new_tm - old_tm, cpu, read, write, old->cpu, old->write, old->read);
 #endif
   if (new_tm > old_tm)
     {
-      long long tmp_cpu = 0;
+      double tmp_cpu = 0;
       long long tmp_read = 0;
       long long tmp_write = 0;
       if (cpu >= old->cpu)
@@ -1193,8 +1208,8 @@ clac_stats_difference_inner_add_to_counters (long long cpu, long long read,
 	tmp_write = write - old->write;
       if ((new_tm - old_tm) > 1.0)
 	increment_counters (old->username,
-			    (long long) floor ((double) tmp_cpu /
-					       (new_tm - old_tm)),
+			    tmp_cpu /
+					       (new_tm - old_tm),
 			    (long long) floor ((double) tmp_read /
 					       (new_tm - old_tm)),
 			    (long long) floor ((double) tmp_write /
