@@ -11,6 +11,8 @@
 #undef pthread_mutex_lock
 #undef pthread_mutex_unlock
 
+#define _GNU_SOURCE
+
 #include <stdio.h>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -27,6 +29,7 @@
 #include <unistd.h>
 #include <time.h>
 #include <poll.h>
+#include <sys/resource.h>
 
 #include "data.h"
 
@@ -293,6 +296,8 @@ connect_to_server_in ()
   return 0;
 }
 
+static int not_first_connect = 0;
+
 int
 connect_to_server ()
 {
@@ -300,7 +305,37 @@ connect_to_server ()
   pthread_mutex_lock (&mtx_write);
   ret = connect_to_server_in ();
   pthread_mutex_unlock (&mtx_write);
-  return ret;
+  if (!ret) return ret;
+
+  // special processing for the first unsuccesful connect
+  if (not_first_connect)
+  {
+    return ret;
+  } else
+  {
+    not_first_connect = 1;
+    return 0;
+  }
+}
+
+int
+connect_to_server_ex ()
+{
+  int ret = 0;
+  pthread_mutex_lock (&mtx_write);
+  ret = connect_to_server_in ();
+  pthread_mutex_unlock (&mtx_write);
+  if (!ret) return ret;
+
+  // special processing for the first unsuccesful connect
+  if (not_first_connect)
+  {
+    return ret;
+  } else
+  {
+    not_first_connect = 1;
+    return 1;
+  }
 }
 
 int
@@ -317,6 +352,9 @@ send_info (char *username, int type)
 
   get_proc_time (&item1, current_pid, current_tid);
   get_io_stat (&item2, current_pid, current_tid);
+  struct rusage usage;
+  if (-1 == getrusage(RUSAGE_THREAD, &usage))
+    memset(&usage, 0, sizeof(usage));
 
 #ifdef TEST
   //printf("Prepare info PID %d TID %d CPU %lld R+W %lld\n", current_pid, current_tid, item1.stime + item1.utime, item2.read_bytes+item2.write_bytes);
@@ -326,6 +364,7 @@ send_info (char *username, int type)
   clock_gettime (CLOCK_REALTIME, &tim);
 
   client_data snd;
+  snd.magic = CD_MAGIC;
   snd.type = type;
   strlcpy (snd.username, username, sizeof (snd.username));
   snd.pid = current_pid;
@@ -335,6 +374,8 @@ send_info (char *username, int type)
   snd.cpu = item1.stime + item1.utime;
   snd.update_time = tim.tv_sec;
   snd.naoseconds = tim.tv_nsec;
+  snd.utime = usage.ru_utime;
+  snd.stime = usage.ru_stime;
 
   if (try_lock (&mtx_write))
     return -1;
@@ -417,7 +458,7 @@ int (*lve_exit) (void *, uint32_t *) = NULL;
 int (*lve_enter_pid) (void *, uint32_t, pid_t) = NULL;
 int (*is_in_lve) (void *) = NULL;
 
-// XXX temporary, to debug governor_init_lve faile on Ubuntu
+// to debug governor_init_lve fails
 static void log_init_lve_error(const char *buf)
 {
 	FILE *fptr = fopen("/var/log/mysql/init_lve.log", "a+");
