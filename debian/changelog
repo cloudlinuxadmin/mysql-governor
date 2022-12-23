@@ -1,3 +1,9 @@
+governor-mysql (1.2-83) stable; urgency=medium
+
+  * MYSQLG-849: Avoided killing slow queries in removing tmp table state
+
+ -- Aleksandr Demeshko <ademeshko@cloudlinux.com>  Fri, 23 Dec 2022 14:00:00 +0000
+
 governor-mysql (1.2-82) stable; urgency=medium
 
   * MYSQLG-848: moved mysqld restart to %post scriptlet

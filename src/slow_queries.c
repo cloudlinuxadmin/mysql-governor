@@ -42,38 +42,42 @@ extern M_mysql_error;
 extern M_mysql_real_escape_string;
 extern M_mysql_ping;
 
-char *state_to_kill[] = {
+/* 
+  MYSQLG-849 - it seems that MySQL contains a bug, and killed QUERY request in this state can stuck for days 
+  That's why we exclude this state from state_to_kill and include it into state_to_no_kill
+*/
+static const char *state_to_kill[] = {
   "Copying to tmp table",
   "Copying to group table",
   "Copying to tmp table on disk",
-  "removing tmp table",
+/*  "removing tmp table", */
   "Sending data",
   "Sorting for group",
   "Sorting for order",
   NULL
 };
 
-void
-upper (char *s)
+static const char *state_to_no_kill[] = {
+  "removing tmp table",
+  NULL
+};
+
+static int
+is_request_in_state_to_kill (char *s)
 {
-  int i = 0;
-  for (i = 0; s[i] != '\0'; i++)
-    s[i] = toupper (s[i]);
+    int i;
+    for (i=0; state_to_kill[i] != NULL; ++i)
+        if (!strncmp (s, state_to_kill[i], _DBGOVERNOR_BUFFER_256)) return 1;
+    return 0;
 }
 
-int
-is_request_in_state (char *s)
+static int
+is_request_in_state_to_no_kill (char *s)
 {
-  int i = 0;
-  while (state_to_kill[i])
-    {
-      if (!strncmp (s, state_to_kill[i], _DBGOVERNOR_BUFFER_256))
-	{
-	  return 1;
-	}
-      i++;
-    }
-  return 0;
+    int i;
+    for (i=0; state_to_no_kill[i] != NULL; ++i)
+        if (!strncmp (s, state_to_no_kill[i], _DBGOVERNOR_BUFFER_256)) return 1;
+    return 0;
 }
 
 void *
@@ -90,12 +94,11 @@ parse_slow_query (void *data)
   unsigned long *lengths;
   unsigned long counts;
 
-  char f_str[] = "SELECT";
-  const size_t f_str_sz = sizeof(f_str); 
+  const char f_str[] = "SELECT";
+  const size_t f_str_sz = sizeof(f_str);
   char Id[_DBGOVERNOR_BUFFER_2048];
   char Time[_DBGOVERNOR_BUFFER_2048];
   char Info[_DBGOVERNOR_BUFFER_2048];
-  char InfoUp[f_str_sz];
   char User[USERNAMEMAXLEN];
   char State[_DBGOVERNOR_BUFFER_256];
 
@@ -161,13 +164,12 @@ parse_slow_query (void *data)
 		  db_mysql_get_string (buffer, row[7], lengths[7],
 				       _DBGOVERNOR_BUFFER_8192);
 		  strncpy (Info, buffer, _DBGOVERNOR_BUFFER_2048 - 1);
-		  strncpy (InfoUp, Info, f_str_sz);
-		  InfoUp[f_str_sz - 1] = '\0';
-		  upper (InfoUp);
 		  long slow_time = is_user_ignored (User);
 		  if (slow_time > 0 &&
-		      strncmp (f_str, InfoUp, f_str_sz - 1) == 0
-		      /*&& is_request_in_state(State) */ )
+		      strncasecmp (f_str, Info, f_str_sz - 1) == 0
+		      /*&& is_request_in_state_to_kill(State) */
+		      && ! is_request_in_state_to_no_kill(State)
+		  )
 		    {
 #ifdef TEST
 /*
@@ -186,7 +188,7 @@ parse_slow_query (void *data)
 			  char Info_[_DBGOVERNOR_BUFFER_2048];
 			  strncpy (Info_, Info, MAX_QUERY_OUTPUT_LEN);
                           Info_[MAX_QUERY_OUTPUT_LEN] = 0;
-			  sprintf (log_buffer, "Query killed - %s : %s",
+			  snprintf (log_buffer, sizeof log_buffer, "Query killed - %s : %s",
 				   User, Info_);
 			  WRITE_LOG (NULL, 2, "%s", data_cfg.log_mode, log_buffer);
 			}

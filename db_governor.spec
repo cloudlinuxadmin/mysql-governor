@@ -1,6 +1,6 @@
 %define g_version   1.2
-%define g_release   82
-%define g_key_library 10
+%define g_release   83
+%define g_key_library 11
 
 %if %{undefined _unitdir}
 %define _unitdir /usr/lib/systemd/system
@@ -452,6 +452,9 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Fri Dec 23 2022 Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-83
+- MYSQLG-849: Avoided killing slow queries in removing tmp table state
+
 * Thu Dec 20 2022 Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-82
 - MYSQLG-842: moved mysqld restart to %post scriptlet
 
