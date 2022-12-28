@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   83
+%define g_release   83.1
 %define g_key_library 11
 
 %if %{undefined _unitdir}
@@ -299,44 +299,6 @@ if [ $1 -gt 0 ]; then
     [ -e /dev/shm/governor_bad_users_list ] && rm /dev/shm/governor_bad_users_list 2>&1 >/dev/null || :
 fi
 
-%preun
-%if 0%{?rhel} >= 7
-if [ $1 -eq 0 ]; then
-    # Package removal, not upgrade
-    systemctl --no-reload disable db_governor.service >/dev/null 2>&1 || :
-    systemctl stop db_governor.service >/dev/null 2>&1 || :
-fi
-%else
-if [ $1 -eq 0 ]; then
-    /sbin/service db_governor stop > /dev/null 2>&1
-    /sbin/chkconfig --del db_governor
-fi
-%endif
-if [ $1 -eq 1 -o $1 -eq 0 ] ; then
- if [ -e /var/run/mysql-governor-config.xml ]; then
-    rm -f /var/run/mysql-governor-config.xml
- fi
-fi
-
-%postun
-%if 0%{?rhel} >= 7
-if [ $1 -eq 0 ]; then
-    # Package removal, not upgrade
-    systemctl daemon-reload >/dev/null 2>&1 || :
-fi
-%endif
-
-%posttrans
-
-/sbin/ldconfig
-rm -rf /%{_libdir}/liblve.so.1
-ln -s /%{_libdir}/liblve.so.0.9.0 /%{_libdir}/liblve.so.1
-/sbin/ldconfig
-
-if [ -e /usr/share/lve/dbgovernor/mysqlgovernor.py ]; then
-    /usr/share/lve/dbgovernor/mysqlgovernor.py --correct-cloud-version
-fi
-
 #check if in signal file saved U, than need to start mysql
 gKEY=`echo -n "%{g_key_library}"`
 if [ -e "/etc/container/dbgovernor-libcheck" ]; then
@@ -382,6 +344,45 @@ if [ -e "/etc/container/dbgovernor-libcheck" ]; then
             echo "$gKEY" > /etc/container/dbgovernor-libcheck
         fi
 fi
+
+%preun
+%if 0%{?rhel} >= 7
+if [ $1 -eq 0 ]; then
+    # Package removal, not upgrade
+    systemctl --no-reload disable db_governor.service >/dev/null 2>&1 || :
+    systemctl stop db_governor.service >/dev/null 2>&1 || :
+fi
+%else
+if [ $1 -eq 0 ]; then
+    /sbin/service db_governor stop > /dev/null 2>&1
+    /sbin/chkconfig --del db_governor
+fi
+%endif
+if [ $1 -eq 1 -o $1 -eq 0 ] ; then
+ if [ -e /var/run/mysql-governor-config.xml ]; then
+    rm -f /var/run/mysql-governor-config.xml
+ fi
+fi
+
+%postun
+%if 0%{?rhel} >= 7
+if [ $1 -eq 0 ]; then
+    # Package removal, not upgrade
+    systemctl daemon-reload >/dev/null 2>&1 || :
+fi
+%endif
+
+%posttrans
+
+/sbin/ldconfig
+rm -rf /%{_libdir}/liblve.so.1
+ln -s /%{_libdir}/liblve.so.0.9.0 /%{_libdir}/liblve.so.1
+/sbin/ldconfig
+
+if [ -e /usr/share/lve/dbgovernor/mysqlgovernor.py ]; then
+    /usr/share/lve/dbgovernor/mysqlgovernor.py --correct-cloud-version
+fi
+
 
 /sbin/ldconfig
 
@@ -452,10 +453,8 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
-* Fri Dec 23 2022 Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-83
+* Wed Dec 28 2022 Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-83.1
 - MYSQLG-849: Avoided killing slow queries in removing tmp table state
-
-* Thu Dec 20 2022 Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-82
 - MYSQLG-842: moved mysqld restart to %post scriptlet
 
 * Thu Dec 15 2022 Nikolay Petukhov <npetukhov@cloudlinux.com>, Sergey Kozhekin <skozhekin@cloudlinux.com>, Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-81
