@@ -14,7 +14,10 @@ Build-Depends: debhelper-compat (= 12),
                libsystemd-dev,
                libmariadb-dev,
                alt-python37,
-               alt-python27-cllib
+               alt-python27-cllib,
+               gawk,
+               sed,
+               coreutils
 Standards-Version: 4.4.1
 Homepage: http://cloudlinux.com
 

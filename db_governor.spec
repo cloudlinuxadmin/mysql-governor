@@ -82,7 +82,7 @@ This package provides dbtop, db_governor utilities.
 %build
 export PYTHONINTERPRETER=%{__python}
 
-echo -e "#ifndef VERSION_H_\n#define VERSION_H_\n#define GOVERNOR_CUR_VER \"%{g_version}-%{g_release}\"\n#endif\n" > src/version.h
+echo -e "#ifndef VERSION_H_\n#define VERSION_H_\n#define GOVERNOR_CUR_VER \"%{g_version}-%{g_release}\"\n#define GOVERNOR_OS_CL%{?rhel} 1\n#endif\n" > src/version.h
 
 mkdir build_clean
 pushd build_clean

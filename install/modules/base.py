@@ -62,8 +62,6 @@ class InstallManager:
         "mariadb104": "mariadb-10.4",
         "mariadb105": "mariadb-10.5",
         "mariadb106": "mariadb-10.6",
-# We still don't support MariaDB 10.7, 10.8 and 10.9 and possibly won't do it.
-#        "mariadb107": "mariadb-10.7",
         "percona56": "percona-5.6"
     }
     MODULE_STREAMS = {
@@ -79,8 +77,6 @@ class InstallManager:
         "mariadb104": "mariadb:cl-MariaDB104",
         "mariadb105": "mariadb:cl-MariaDB105",
         "mariadb106": "mariadb:cl-MariaDB106",
-# We still don't support MariaDB 10.7, 10.8 and 10.9 and possibly won't do it.
-#        "mariadb107": "mariadb:cl-MariaDB107",
         "percona56": "percona:cl-Percona56",
         "auto": "mysql:8.0"
     }
@@ -883,6 +879,8 @@ for native procedure restoring of MySQL packages"""))
                 packages += ["mysqlclient18-compat"]
             elif sql_version == "mariadb106":
                 packages += ["mysqlclient18"]
+            if self.cl_version >= 9 and sql_version == "mariadb104":
+                packages += ["mysqlclient18-compat"]
         elif sql_version.startswith("percona"):
             packages += ["mysqlclient18", "mysqlclient16", "mysqlclient15"]
 
