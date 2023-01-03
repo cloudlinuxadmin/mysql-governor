@@ -27,16 +27,15 @@ pthread_rwlock_t rwlock = PTHREAD_RWLOCK_INITIALIZER;
 
 struct governor_config *cfg = NULL;
 
-static int _set_val(T_LONG * limit, const char *ptr, const char *name,
-		long *value) {
-	if (strcmp(ptr, name) == 0) {
+static void _set_val(T_LONG * limit, long *value) {
+	if (value[0] > 0 || value[0] == -1)
 		limit->_current = value[0];
+	if (value[1] > 0 || value[1] == -1)
 		limit->_short = value[1];
+	if (value[2] > 0 || value[2] == -1)
 		limit->_mid = value[2];
+	if (value[3] > 0 || value[3] == -1)
 		limit->_long = value[3];
-		return 1;
-	}
-	return 0;
 }
 
 static MODE_TYPE mode_type_str_to_enum(const char *mode_str) {
@@ -224,37 +223,41 @@ static void set_stats_limit(void *inner_xml, stats_limit_cfg * st,
 	const char *ptr = getElemAttr(inner_xml, "name");
 	const char *ptr_periods = NULL;
 	long value[4];
-	const char *val_ptr = getElemAttr(inner_xml, "current");
-	if (val_ptr == NULL) {
+
+	ptr_periods = getElemAttr(inner_xml, "current");
+	value[0] = (ptr_periods == NULL) ? (-1) : atof(ptr_periods);
+	if (ptr_periods == NULL) {
 		releaseElemValue(ptr);
 		releaseConfigData(xml);
 		fprintf(stderr, "Error: attribute 'current' is absent\n");
 		exit(-1);
 	}
+	releaseElemValue(ptr_periods);
 
-	if (strcmp(ptr, "slow") == 0) {
-		value[0] = parse_period(val_ptr);
-		value[1] = -1;
-		value[2] = -1;
-		value[3] = -1;
-	} else {
-		value[0] = atof(val_ptr);
-		ptr_periods = getElemAttr(inner_xml, "short");
-		value[1] = (ptr_periods == NULL) ? (-1) : atof(ptr_periods);
-		releaseElemValue(ptr_periods);
-		ptr_periods = getElemAttr(inner_xml, "mid");
-		value[2] = (ptr_periods == NULL) ? (-1) : atof(ptr_periods);
-		releaseElemValue(ptr_periods);
-		ptr_periods = getElemAttr(inner_xml, "long");
-		value[3] = (ptr_periods == NULL) ? (-1) : atof(ptr_periods);
-		releaseElemValue(ptr_periods);
-	}
-	_set_val(&st->cpu, ptr, "cpu", value) || _set_val(&st->write, ptr, "write",
-			value) || _set_val(&st->read, ptr, "read", value) || _set_val(
-			&st->slow, ptr, "slow", value) || fprintf(stderr,
-			"Unknown limit setting: %s\n", ptr);
+	ptr_periods = getElemAttr(inner_xml, "short");
+	value[1] = (ptr_periods == NULL) ? (-1) : atof(ptr_periods);
+	releaseElemValue(ptr_periods);
+
+	ptr_periods = getElemAttr(inner_xml, "mid");
+	value[2] = (ptr_periods == NULL) ? (-1) : atof(ptr_periods);
+	releaseElemValue(ptr_periods);
+
+	ptr_periods = getElemAttr(inner_xml, "long");
+	value[3] = (ptr_periods == NULL) ? (-1) : atof(ptr_periods);
+	releaseElemValue(ptr_periods);
+
+	if (strcmp(ptr, "slow") == 0)
+		_set_val(&st->slow, value);
+	else if (strcmp(ptr, "cpu") == 0)
+		_set_val(&st->cpu, value);
+	else if (strcmp(ptr, "read") == 0)
+		_set_val(&st->read, value);
+	else if (strcmp(ptr, "write") == 0)
+		_set_val(&st->write, value);
+	else
+		fprintf(stderr, "Unknown limit setting: %s\n", ptr);
+
 	releaseElemValue(ptr);
-	releaseElemValue(val_ptr);
 }
 
 static int check_liblve(void) {
@@ -610,6 +613,8 @@ config_init(const char *path) {
 		exit(-1);
 	}
 
+	//clear default limits
+	memset(&cfg->default_limit, 0, sizeof(cfg->default_limit));
 	cfg->default_limit.mode = RESTRICT_MODE;
 
 	for (tmp_xml_limit = getNextChild(tmp_xml, "limit", NULL); tmp_xml_limit; tmp_xml_limit
