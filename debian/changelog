@@ -1,4 +1,10 @@
-governor-mysql (1.2-83) stable; urgency=medium
+governor-mysql (1.2-84) stable; urgency=medium
+
+  * MYSQLG-858: fixed wrong restrictions of users with default limits
+
+ -- Nikolay Petukhov <npetukhov@cloudlinux.com>  Wed, 04 Jan 2023 11:00:00 +0000
+
+governor-mysql (1.2-83.1) stable; urgency=medium
 
   * MYSQLG-849: Avoided killing slow queries in removing tmp table state
 

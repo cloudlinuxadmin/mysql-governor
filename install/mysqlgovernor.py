@@ -17,7 +17,7 @@ import os
 from modules import InstallManager, Storage
 from utilities import exec_command, bcolors, query_yes_no, \
     correct_mysqld_service_for_cl7, set_debug, shadow_tracing, set_path_environ, \
-    check_mysqld_is_alive, fix_broken_governor_xml_config, get_status_info
+    check_mysqld_is_alive, fix_broken_governor_xml_config, get_status_info, get_cl_num
 
 LOG_FILE_NAME = "/usr/share/lve/dbgovernor/governor_install.log"
 
@@ -60,17 +60,29 @@ def build_parser():
                                                  "utility:")
     parser.add_argument("--verbose", help="switch verbose level on",
                         dest="verbose", action="store_true", default=False)
-    parser.add_argument("--mysql-version",
-                        help="select MySQL version for db-governor. "
-                             "Available mysql types: auto, mysql51, "
-                             "mysql55, mysql56, mysql57, mysql80, mariadb55, "
-                             "mariadb100, mariadb101, mariadb102, mariadb103, mariadb104, mariadb105, mariadb106, "
-                             "percona56",
-                        dest="mysql_version", required=False,
-                        choices=['auto', 'mysql51', 'mysql55', 'mysql56',
-                                 'mysql57', 'mysql80', 'mariadb55',
-                                 'mariadb100', 'mariadb101', 'mariadb102',
-                                 'mariadb103', 'mariadb104', 'mariadb105', 'mariadb106', 'percona56'])
+    if get_cl_num() >= 9:
+        parser.add_argument("--mysql-version",
+                            help="select MySQL version for db-governor. "
+                                 "Available mysql types: auto, "
+                                 "mysql57, mysql80,  "
+                                 "mariadb100, mariadb101, mariadb102, mariadb103, mariadb104, mariadb105, mariadb106",
+                            dest="mysql_version", required=False,
+                            choices=['auto',
+                                     'mysql57', 'mysql80',
+                                     'mariadb100', 'mariadb101', 'mariadb102',
+                                     'mariadb103', 'mariadb104', 'mariadb105', 'mariadb106'])
+    else:
+        parser.add_argument("--mysql-version",
+                            help="select MySQL version for db-governor. "
+                                 "Available mysql types: auto, mysql51, "
+                                 "mysql55, mysql56, mysql57, mysql80, mariadb55, "
+                                 "mariadb100, mariadb101, mariadb102, mariadb103, mariadb104, mariadb105, mariadb106, "
+                                 "percona56",
+                            dest="mysql_version", required=False,
+                            choices=['auto', 'mysql51', 'mysql55', 'mysql56',
+                                     'mysql57', 'mysql80', 'mariadb55',
+                                     'mariadb100', 'mariadb101', 'mariadb102',
+                                     'mariadb103', 'mariadb104', 'mariadb105', 'mariadb106', 'percona56'])
     parser.add_argument("-i", "--install", help="install MySQL for db-governor",
                         dest="install", action="store_true", default=False)
     parser.add_argument("-d", "--delete", help="delete MySQL for db-governor",
@@ -178,7 +190,7 @@ def main(argv):
     set_path_environ()
     sys.stdout = Logger(sys.stdout, LOG_FILE_NAME)
     sys.stderr = Logger(sys.stderr, LOG_FILE_NAME)
-    shadow_tracing(True)
+    shadow_tracing(False)
     time_now = datetime.datetime.now()
     sys.stdout.write_extended(
         "\n####################################################Install process begin %s#####################################################\n" % time_now.strftime(

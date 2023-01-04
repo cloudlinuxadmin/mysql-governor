@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   83.1
+%define g_release   84
 %define g_key_library 11
 
 %if %{undefined _unitdir}
@@ -82,7 +82,7 @@ This package provides dbtop, db_governor utilities.
 %build
 export PYTHONINTERPRETER=%{__python}
 
-echo -e "#ifndef VERSION_H_\n#define VERSION_H_\n#define GOVERNOR_CUR_VER \"%{g_version}-%{g_release}\"\n#endif\n" > src/version.h
+echo -e "#ifndef VERSION_H_\n#define VERSION_H_\n#define GOVERNOR_CUR_VER \"%{g_version}-%{g_release}\"\n#define GOVERNOR_OS_CL%{?rhel} 1\n#endif\n" > src/version.h
 
 mkdir build_clean
 pushd build_clean
@@ -453,6 +453,9 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Wed Jan 04 2023 Nikolay Petukhov <npetukhov@cloudlinux.com>, Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-84
+- MYSQLG-858: fixed wrong restrictions of users with default limits
+
 * Wed Dec 28 2022 Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-83.1
 - MYSQLG-849: Avoided killing slow queries in removing tmp table state
 - MYSQLG-842: moved mysqld restart to %post scriptlet

@@ -116,7 +116,7 @@ def main(argv):
     set_path_environ()
     sys.stdout = Logger(sys.stdout, LOG_FILE_NAME)
     sys.stderr = Logger(sys.stderr, LOG_FILE_NAME)
-    shadow_tracing(True)
+    shadow_tracing(False)
     time_now = datetime.datetime.now()
     sys.stdout.write_extended(
         "\n####################################################Install process begin %s#####################################################\n" % time_now.strftime(
