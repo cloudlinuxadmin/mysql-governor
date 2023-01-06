@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   84
+%define g_release   85
 %define g_key_library 11
 
 %if %{undefined _unitdir}
@@ -453,6 +453,9 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Fri Jan 06 2023 Nikolay Petukhov <npetukhov@cloudlinux.com> 1.2-85
+- MYSQLG-854: Fixed error that caused to restart db_governor
+
 * Wed Jan 04 2023 Nikolay Petukhov <npetukhov@cloudlinux.com>, Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-84
 - MYSQLG-858: fixed wrong restrictions of users with default limits
 

@@ -1,3 +1,9 @@
+governor-mysql (1.2-85) stable; urgency=medium
+
+  * MYSQLG-854: Fixed error that caused to restart db_governor
+
+ -- Nikolay Petukhov <npetukhov@cloudlinux.com>  Fri, 06 Jan 2023 11:00:00 +0000
+
 governor-mysql (1.2-84) stable; urgency=medium
 
   * MYSQLG-858: fixed wrong restrictions of users with default limits

@@ -292,7 +292,10 @@ run_dbctl_command (void *data)
       if (!data_cfg.is_gpl)
 	{
 	  if (data_cfg.all_lve || !data_cfg.use_lve)
-	    return NULL;	//lve use=all or off
+	    {
+	      close(ns);
+	      return NULL;	//lve use=all or off
+	    }
 	  lock_acc ();
 	  g_hash_table_foreach ((GHashTable *) get_accounts (),
 				(GHFunc) dbctl_unrestrict_set, &command);
@@ -304,7 +307,10 @@ run_dbctl_command (void *data)
       if (!data_cfg.is_gpl)
 	{
 	  if (data_cfg.all_lve || !data_cfg.use_lve)
-	    return NULL;	//lve use=all or off
+	    {
+	      close(ns);
+	      return NULL;	//lve use=all or off
+	    }
 	  lock_acc ();
 	  g_hash_table_foreach ((GHashTable *) get_accounts (),
 				(GHFunc) dbctl_unrestrict_all_set, NULL);

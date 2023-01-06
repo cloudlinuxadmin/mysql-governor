@@ -17,4 +17,6 @@ size_t fread_wrapper (void *__restrict __ptr, size_t __size, size_t __n,
 size_t fwrite_wrapper (__const void *__restrict __ptr, size_t __size,
 		       size_t __n, FILE * __restrict __s);
 
+int inputAvailable (FILE * fp, unsigned int timeout);
+
 #endif /* WRAPPERS_H_ */
