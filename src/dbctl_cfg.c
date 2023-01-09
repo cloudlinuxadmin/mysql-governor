@@ -522,7 +522,8 @@ void *SearchTagByName(xml_data *cfg, char *name_tag, char *name) {
 }
 
 void rewrite_cfg(xml_data *xml) {
-	saveXML(xml, CONFIG_PATH);
+	if (saveXML(xml, CONFIG_PATH) < 0)
+		fprintf(stderr, "Can't save config file %s\n", CONFIG_PATH);
 }
 
 #include <time.h>

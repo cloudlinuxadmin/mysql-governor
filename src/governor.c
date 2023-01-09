@@ -266,6 +266,10 @@ void becameDaemon(int self_supporting) {
 	close(STDIN_FILENO);
 	close(STDOUT_FILENO);
 	close(STDERR_FILENO);
+
+	open("/dev/null", O_RDONLY);
+	open("/dev/null", O_RDWR);
+	open("/dev/null", O_RDWR);
 }
 
 int install_signals_handlers(void) {

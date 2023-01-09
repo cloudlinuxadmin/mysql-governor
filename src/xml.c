@@ -13,14 +13,19 @@
 
 #include <libxml/parser.h>
 #include <libxml/tree.h>
+#include <sys/file.h>
+#include <unistd.h>
+#include <errno.h>
 
 #include "xml.h"
+#include "data.h"
+#define CONFIG_LOCK_PATH "/etc/container/mysql-governor.xml.lock"
 
 /*
  * Parse file with path
  * if error occurs, the error message saves in error buffer with length maxErrDesct and returns NULL
  */
-xml_data *parseConfigData(const char *path, char *error, int maxErrDescr) {
+static xml_data *parseConfigData_orig(const char *path, char *error, int maxErrDescr) {
 	if (path) {
 		xml_data *xml = calloc(1, sizeof(xml_data));
 		if (xml) {
@@ -47,6 +52,50 @@ xml_data *parseConfigData(const char *path, char *error, int maxErrDescr) {
 		snprintf(error, maxErrDescr, "Path to config file shouldn't be empty");
 	}
 	return NULL;
+}
+
+static int config_lock(int ro)
+{
+	int fd = open(CONFIG_LOCK_PATH, O_CREAT | O_RDONLY, 00400);
+
+	if (fd < 0)
+		return -1;
+
+	if (flock(fd, ro ? LOCK_SH : LOCK_EX) < 0) {
+
+		close(fd);
+		return -2;
+	}
+
+	return fd;
+}
+
+static void config_unlock(int fd)
+{
+	if (fd < 0)
+		return;
+
+	flock(fd, LOCK_UN);
+	close(fd);
+}
+
+xml_data *parseConfigData(const char *path, char *error, int maxErrDescr)
+{
+	xml_data * xml = NULL;
+
+	int fd = config_lock(1);
+	if (fd < 0) {
+
+		if (error)
+			snprintf(error, maxErrDescr, "Can't lock config, fd:%d errno:%d", fd, errno);
+		return NULL;
+	}
+
+	xml = parseConfigData_orig(path, error, maxErrDescr);
+
+	config_unlock(fd);
+
+	return xml;
 }
 
 /*
@@ -259,7 +308,17 @@ void *setAttr(void *node, const char *attrName, const char *value) {
  */
 int saveXML(xml_data * data, char *path) {
 	if (data && data->doc) {
-		return xmlSaveFormatFile((path?path:data->path), (xmlDocPtr) data->doc, 1);
+		int ret;
+
+		int fd = config_lock(0);
+		if (fd < 0)
+			return -1;
+
+		ret = xmlSaveFormatFile((path?path:data->path), (xmlDocPtr) data->doc, 1);
+
+		config_unlock(fd);
+
+		return ret;
 	}
 	return -1;
 }
