@@ -113,7 +113,6 @@ run_dbtop_command (void *data)
     {
       fflush (out);
       fclose (out);
-      close (ns);
       return NULL;
     }
   resp = fread_wrapper (&get_response, sizeof (int), 1, out);
@@ -121,7 +120,6 @@ run_dbtop_command (void *data)
     {
       fflush (out);
       fclose (out);
-      close (ns);
       return NULL;
     }
   g_hash_table_foreach ((GHashTable *) get_accounts (), (GHFunc) send_account,
@@ -130,7 +128,6 @@ run_dbtop_command (void *data)
   fwrite_wrapper (&new_record, sizeof (int), 1, out);
   fflush (out);
   fclose (out);
-  close (ns);
   return NULL;
 }
 
@@ -292,7 +289,10 @@ run_dbctl_command (void *data)
       if (!data_cfg.is_gpl)
 	{
 	  if (data_cfg.all_lve || !data_cfg.use_lve)
-	    return NULL;	//lve use=all or off
+	    {
+	      close(ns);
+	      return NULL;	//lve use=all or off
+	    }
 	  lock_acc ();
 	  g_hash_table_foreach ((GHashTable *) get_accounts (),
 				(GHFunc) dbctl_unrestrict_set, &command);
@@ -304,7 +304,10 @@ run_dbctl_command (void *data)
       if (!data_cfg.is_gpl)
 	{
 	  if (data_cfg.all_lve || !data_cfg.use_lve)
-	    return NULL;	//lve use=all or off
+	    {
+	      close(ns);
+	      return NULL;	//lve use=all or off
+	    }
 	  lock_acc ();
 	  g_hash_table_foreach ((GHashTable *) get_accounts (),
 				(GHFunc) dbctl_unrestrict_all_set, NULL);
@@ -315,7 +318,12 @@ run_dbctl_command (void *data)
     {
       FILE *out;
       out = fdopen ((int) ns, "w+");
-      int new_record = 1, get_response;
+      if (!out)
+	  {
+	    close (ns);
+	    return NULL;
+	  }
+	  int new_record = 1, get_response;
 
       while (!feof (out))
 	{
@@ -334,6 +342,7 @@ run_dbctl_command (void *data)
 	  new_record = 1;
 	}
       fclose (out);
+	  ns = -1;
     }
   else if (command.command == DBUSER_MAP_CMD)
   {
@@ -376,7 +385,6 @@ run_writer (void *data)
       new_record = 1;
     }
   fclose (out);
-  close (ns);
   return NULL;
 }
 

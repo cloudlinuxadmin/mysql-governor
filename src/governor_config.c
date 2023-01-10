@@ -683,7 +683,7 @@ int save_duplicate_config(xml_data *xml) {
 	}
 
 	if (saveXML(xml, DUPLICATE_CONFIG_PATH) < 0) {
-		fprintf(stderr, "Error reading config file %s\n", DUPLICATE_CONFIG_PATH);
+		fprintf(stderr, "Error saveXML(%p) duplicate config file %s\n", xml, DUPLICATE_CONFIG_PATH);
 		return 1;
 	}
 	return 0;

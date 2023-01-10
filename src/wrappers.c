@@ -17,11 +17,11 @@
 #include "wrappers.h"
 
 int
-inputAvailable (FILE * fp)
+inputAvailable (FILE * fp, unsigned int timeout)
 {
   struct timeval tv;
   fd_set fds;
-  tv.tv_sec = GOVERNOR_READ_TIMEOUT;
+  tv.tv_sec = timeout ? timeout : GOVERNOR_READ_TIMEOUT;
   tv.tv_usec = 0;
   FD_ZERO (&fds);
   FD_SET (fileno (fp), &fds);

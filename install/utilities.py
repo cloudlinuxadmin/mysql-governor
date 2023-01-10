@@ -1516,11 +1516,11 @@ class LockFailedException(Exception):
     pass
 
 
-def lock_file(path: str, attempts: Optional[int]):
+def lock_file(path: str, exclusive: bool = False, attempts: Optional[int] = None):
     """
     Try to take lock on file with specified number of attempts.
     """
-    lock_type = fcntl.LOCK_EX
+    lock_type = fcntl.LOCK_EX if exclusive else fcntl.LOCK_SH
     if attempts is not None:
         # avoid blocking on lock
         lock_type |= fcntl.LOCK_NB
@@ -1543,7 +1543,7 @@ def lock_file(path: str, attempts: Optional[int]):
 
 
 @contextmanager
-def acquire_lock(resource_path: str, attempts: Optional[int] = None):
+def acquire_lock(resource_path: str, exclusive: bool = False, attempts: Optional[int] = None):
     """
     Lock a file, than do something.
     Make specified number of attempts to acquire the lock,
@@ -1552,7 +1552,7 @@ def acquire_lock(resource_path: str, attempts: Optional[int] = None):
     with acquire_lock(path, attempts=1):
        ... do something with files ...
     """
-    lock_fd = lock_file(resource_path + '.lock', attempts)
+    lock_fd = lock_file(resource_path + '.lock', exclusive, attempts)
     yield
     release_lock(lock_fd)
 

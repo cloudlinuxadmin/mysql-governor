@@ -19,11 +19,12 @@ from typing import Dict, List, Tuple
 import subprocess
 import json
 
-from utilities import Logger, shadow_tracing, acquire_lock
+from utilities import Logger, shadow_tracing, acquire_lock, LockFailedException
 
 DBCTL_BIN = '/usr/share/lve/dbgovernor/utils/dbctl_orig'
 PACKAGE_LIMIT_CONFIG = '/etc/container/governor_package_limit.json'
 LOCK_FILE = '/var/run/governor_package_limit'
+DBCTL_SYNC_LOCK_FILE = '/var/run/governor_package_sync'
 DEBUG = False
 ENCODING = 'utf-8'
 
@@ -142,6 +143,7 @@ def build_parser():
         usage='governor_package_limitting.py sync'
     )
     sync._optionals.title = 'Options'
+    sync.add_argument('--package', help='Package name', type=str, required=False)
     sync.add_argument('--debug', action='store_true', help='Turn on debug mode')
 
     return parser
@@ -216,13 +218,13 @@ def limits_serializer(args: List, set_vector=False):
 
 
 def write_config_to_json_file(cfg: dict):
-    with acquire_lock(LOCK_FILE):
+    with acquire_lock(LOCK_FILE, exclusive=True):
         with open(PACKAGE_LIMIT_CONFIG, 'w', encoding=ENCODING) as jsonfile:
             json.dump(cfg, jsonfile)
 
 
 def read_config_file():
-    with acquire_lock(LOCK_FILE):
+    with acquire_lock(LOCK_FILE, exclusive=True):
         with open(PACKAGE_LIMIT_CONFIG, 'r', encoding=ENCODING) as jsonfile:
             cfg = json.load(jsonfile)
     return cfg if cfg else {}
@@ -580,7 +582,7 @@ def dbctl_sync(action: str, package: str = None):
             return
 
     if action == 'set':
-        _package_limits = get_package_limit()
+        _package_limits = get_package_limit(package)
         package_limits = _package_limits['package_limits']
         for package_name, limits in package_limits.items():
             users_to_apply_package = __cp_packages.get(package_name)
@@ -950,7 +952,13 @@ def main(argv):
         delete_package_limit(opts.package)
         dbctl_sync('delete', opts.package)
     elif opts.command == 'sync':
-        dbctl_sync('set')
+        # to avoid excessive calls of sync command just ignore too frequent calls
+        try:
+            with acquire_lock(DBCTL_SYNC_LOCK_FILE, exclusive=True, attempts=1):
+                dbctl_sync('set', opts.package)
+        except LockFailedException as err:
+            debug_log(f'Excessive sync call ignored')
+            pass
     elif opts.command == 'get_individual':
         get_individual(opts.user, print_to_stdout=True)
     elif opts.command == 'set_individual':
