@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   85
+%define g_release   86
 %define g_key_library 11
 
 %if %{undefined _unitdir}
@@ -453,6 +453,9 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Tue Jan 17 2023 Sergey Kozhekin <skozhekin@cloudlinux.com> 1.2-86
+- MYSQLG-861: Governor package utility is handling case with wrong json config
+
 * Tue Jan 10 2023 Nikolay Petukhov <npetukhov@cloudlinux.com>, Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-85
 - MYSQLG-854: Fixed error that caused to restart db_governor
 - MYSQLG-854 Added locking for configuration file

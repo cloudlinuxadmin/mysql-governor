@@ -20,6 +20,7 @@ def fs():
         yield patcher.fs
 
 empty_config = {"package_limits": {}, "individual_limits": {}}
+broken_config = {}
 
 config_content = {
     "package_limits": {
@@ -140,7 +141,8 @@ def test_delete_package_limits(config_file_content, expected, fs):
 
 
 @pytest.mark.parametrize('config_file_content, expected_content', [
-    (config_content, config_content)
+    (config_content, config_content),
+    (broken_config, empty_config)
 ])
 @mock.patch("governor_package_limitting.os.path.exists",
             mock.MagicMock(return_value=True))
@@ -148,6 +150,7 @@ def test_get_package_limits(config_file_content, expected_content, fs):
     fs.create_file(governor_package_limitting.PACKAGE_LIMIT_CONFIG,
                    contents=json.dumps(config_file_content)
     )
+    governor_package_limitting.ensure_json_presence()
     cfg = governor_package_limitting.get_package_limit()
     assert cfg == expected_content
 

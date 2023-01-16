@@ -226,7 +226,10 @@ def write_config_to_json_file(cfg: dict):
 def read_config_file():
     with acquire_lock(LOCK_FILE, exclusive=True):
         with open(PACKAGE_LIMIT_CONFIG, 'r', encoding=ENCODING) as jsonfile:
-            cfg = json.load(jsonfile)
+            try:
+                cfg = json.load(jsonfile)
+            except json.JSONDecodeError:
+                return {}
     return cfg if cfg else {}
 
 
