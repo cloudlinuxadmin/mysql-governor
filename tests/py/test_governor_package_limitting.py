@@ -20,7 +20,7 @@ def fs():
         yield patcher.fs
 
 empty_config = {"package_limits": {}, "individual_limits": {}}
-broken_config = {}
+broken_config = ""
 
 config_content = {
     "package_limits": {
