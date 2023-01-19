@@ -7,47 +7,64 @@
  * Author: Alexey Berezhok <alexey.berezhok@cloudlinux.com>
  */
 
-#ifndef GOVERNOR_WRITE_DATA_H_
-#define GOVERNOR_WRITE_DATA_H_
+#ifndef LIBGOVERNOR_H
+#define LIBGOVERNOR_H
 
 #include <stdint.h>
+#include <pthread.h>
 
-typedef struct _sock_data
-{
-  int socket;
-  int status;
-} sock_data;
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /*
     return 0 on success
     return 0 on first unsuccesful connect
     return <0 on not-first unsuccessful connects
 */
-int connect_to_server (void);
+int connect_to_server (void) __attribute__ ((weak));
 
 /*
     return 0 on success
     return 1 on first unsuccesful connect
     return <0 on not-first unsuccessful connects
 */
-int connect_to_server_ex (void);
+int connect_to_server_ex (void) __attribute__ ((weak));
 
-int send_info_begin (char *username);
-int send_info_end (char *username);
-int close_sock (void);
-sock_data *get_sock (void);
+int send_info_begin (char *username) __attribute__ ((weak));
+int send_info_end (char *username) __attribute__ ((weak));
+int close_sock (void) __attribute__ ((weak));
 
-void *governor_load_lve_library (void);
-int governor_init_lve (void);
-void governor_destroy_lve (void);
-int governor_enter_lve (uint32_t * cookie, char *username);
-void governor_lve_exit (uint32_t * cookie);
-int governor_enter_lve_light (uint32_t * cookie);
-void governor_lve_exit_null (void);
-int governor_lve_enter_pid (pid_t pid);
-int governor_lve_enter_pid_user (pid_t pid, char *username);
-int governor_is_in_lve (void);
-int governor_init_users_list (void);
+int governor_load_lve_library (void) __attribute__ ((weak));
 
+int governor_init_lve (void) __attribute__ ((weak));
 
-#endif /* GOVERNOR_WRITE_DATA_H_ */
+void governor_destroy (void) __attribute__ ((weak));
+
+int governor_put_in_lve(char *user) __attribute__ ((weak));
+
+void governor_lve_thr_exit(void) __attribute__ ((weak));
+
+void governor_reserve_slot(void) __attribute__ ((weak));
+
+void governor_release_slot(void) __attribute__ ((weak));
+
+void governor_critical_section_begin(void)  __attribute__ ((weak));
+
+void governor_critical_section_end(void)  __attribute__ ((weak));
+
+//for backward compatible, linked and called
+void governor_destroy_lve(void);
+int governor_enter_lve(uint32_t *, char *);
+void governor_lve_exit(uint32_t *);
+int governor_enter_lve_light(uint32_t *);
+//for backward compatible, linked and not called
+void governor_lve_exit_null();
+int governor_lve_enter_pid(pid_t);
+int governor_is_in_lve();
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

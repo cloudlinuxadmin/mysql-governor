@@ -18,17 +18,11 @@ INCLUDE_DIRECTORIES(${GLIB2_INCLUDE_DIRS})
 INCLUDE_DIRECTORIES(${LIBXML2_INCLUDE_DIR})
 #LINK_LIBRARIES(${GLIB2_LIBRARIES} ${MYSQL_CLIENT_LIBS})
 #INCLUDE_DIRECTORIES(${GLIB2_INCLUDE_DIRS})
-LINK_LIBRARIES(${GLIB2_LIBRARIES})
-LINK_LIBRARIES(${LIBXML2_LIBRARIES})
-LINK_LIBRARIES(pthread)
-LINK_LIBRARIES(m)
-LINK_LIBRARIES(rt)
-LINK_LIBRARIES(dl)
-LINK_LIBRARIES(ncurses)
+SET(LIBS ${GLIB2_LIBRARIES} ${LIBXML2_LIBRARIES} pthread m rt dl ncurses)
 
 IF (${SYSTEMD_FLAG})
     add_definitions(-DSYSTEMD_FLAG=1)
-    LINK_LIBRARIES(systemd)
+	SET(LIBS ${LIBS} systemd)
 ENDIF(${SYSTEMD_FLAG})
 
 IF (${TEST})
@@ -54,7 +48,6 @@ SET(db_governor_SRC ${SRC}/governor.c
                     ${SRC}/dlload.c
                     ${SRC}/calc_stats.c
                     ${SRC}/governor_server.c
-                    ${SRC}/governor_write_data.c
                     ${SRC}/parce_proc_fs.c
                     ${SRC}/tick_generator.c 
                     ${SRC}/tid_table.c
@@ -68,11 +61,6 @@ SET(db_governor_SRC ${SRC}/governor.c
                     ${SRC}/slow_queries.c
 )
 SET(dbtop_SRC ${SRC}/dbtop.c ${SRC}/dbgovernor_string_functions.c ${SRC}/wrappers.c)
-SET(governor_lib_src ${SRC}/dbgovernor_string_functions.c 
-                    ${SRC}/governor_write_data.c
-                    ${SRC}/parce_proc_fs.c
-                    ${SRC}/shared_memory.c             
-)
 SET(mysql_unfreeze_SRC ${SRC}/mysql_unfreeze.c 
 						${SRC}/wrappers.c ${SRC}/mysql_connector_common.c 
 						${SRC}/dbgovernor_string_functions.c 
@@ -117,18 +105,25 @@ SET(dbctl_SRC ${SRC}/dbctl.c
                     ${SRC}/mysql_connector_common.c
 					${config_SRC}
                     )
-SET(governor_lib_src ${SRC}/dbgovernor_string_functions.c 
+SET(governor_lib_src ${SRC}/dbgovernor_string_functions.c
                     ${SRC}/governor_write_data.c
                     ${SRC}/parce_proc_fs.c
-                    ${SRC}/shared_memory.c             
+                    ${SRC}/shared_memory.c
 )
 SET_SOURCE_FILES_PROPERTIES(${db_governor_SRC} ${dbtop_SRC} ${governor_lib_src} ${mysql_unfreeze_SRC} ${dbctl_SRC} PROPERTIES COMPILE_FLAGS "-DOK -ggdb -fstack-protector-all")
 
 ADD_EXECUTABLE(db_governor ${db_governor_SRC})
+TARGET_LINK_LIBRARIES(db_governor ${LIBS})
 ADD_EXECUTABLE(dbtop ${dbtop_SRC})
+TARGET_LINK_LIBRARIES(dbtop ${LIBS})
 ADD_EXECUTABLE(mysql_unfreeze ${mysql_unfreeze_SRC})
-ADD_LIBRARY(governor SHARED ${governor_lib_src})
+TARGET_LINK_LIBRARIES(mysql_unfreeze ${LIBS})
 ADD_EXECUTABLE(dbctl ${dbctl_SRC})
+TARGET_LINK_LIBRARIES(dbctl ${LIBS})
+
+ADD_LIBRARY(governor SHARED ${governor_lib_src})
+TARGET_COMPILE_DEFINITIONS(governor PRIVATE LIBGOVERNOR=1)
+TARGET_LINK_LIBRARIES(governor pthread rt dl -Wl,-init,init_libgovernor -Wl,-fini,fini_libgovernor)
 
 INSTALL(TARGETS db_governor dbtop mysql_unfreeze dbctl
   DESTINATION bin

@@ -258,6 +258,7 @@ int is_user_in_list(const char *username) {
 	return 0;
 }
 
+#ifndef LIBGOVERNOR
 int add_user_to_list(const char *username, int is_all) {
 	if (!bad_list || (bad_list == MAP_FAILED))
 		return -1;
@@ -281,6 +282,7 @@ int add_user_to_list(const char *username, int is_all) {
 	}
 	return 0;
 }
+#endif
 
 int delete_user_from_list(char *username) {
 	if (!bad_list || (bad_list == MAP_FAILED))

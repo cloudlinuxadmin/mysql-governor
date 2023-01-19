@@ -30,6 +30,8 @@
 #include <time.h>
 #include <poll.h>
 #include <sys/resource.h>
+#include <inttypes.h>
+#include <search.h>
 
 #include "data.h"
 
@@ -41,6 +43,12 @@
 #define SEC2NANO 1000000000
 
 pthread_mutex_t mtx_write = PTHREAD_MUTEX_INITIALIZER;
+
+typedef struct _sock_data
+{
+  int socket;
+  int status;
+} sock_data;
 sock_data sd = { -1, 0 };
 
 static int
@@ -92,11 +100,12 @@ try_lock (pthread_mutex_t * mtx)
 
 static int close_sock_in ();
 
-pid_t
-gettid (void)
+#ifndef GETTID
+pid_t gettid(void)
 {
-  return syscall (__NR_gettid);
+	return syscall(__NR_gettid);
 }
+#endif
 
 static int
 connection_with_timeout_poll (int sk, struct sockaddr_un *sa, socklen_t len,
@@ -440,22 +449,87 @@ close_sock ()
   return rc;
 }
 
-sock_data *
-get_sock ()
+typedef int (*pthread_mutex_func_t)(pthread_mutex_t *);
+
+pthread_mutex_func_t orig_pthread_mutex_lock_ptr = NULL;
+pthread_mutex_func_t orig_pthread_mutex_trylock_ptr = NULL;
+pthread_mutex_func_t orig_pthread_mutex_unlock_ptr = NULL;
+
+void init_libgovernor(void)
 {
-  return &sd;
+	orig_pthread_mutex_lock_ptr = (pthread_mutex_func_t)(intptr_t)dlsym(RTLD_NEXT, "pthread_mutex_lock");
+	if (NULL == orig_pthread_mutex_lock_ptr)
+		fprintf(stderr, "%s dlerror:%s\n", __func__, dlerror());
+	orig_pthread_mutex_trylock_ptr = (pthread_mutex_func_t)(intptr_t)dlsym(RTLD_NEXT, "pthread_mutex_trylock");
+	if (NULL == orig_pthread_mutex_trylock_ptr)
+		fprintf(stderr, "%s dlerror:%s\n", __func__, dlerror());
+	orig_pthread_mutex_unlock_ptr = (pthread_mutex_func_t)(intptr_t)dlsym(RTLD_NEXT, "pthread_mutex_unlock");
+	if (NULL == orig_pthread_mutex_unlock_ptr)
+		fprintf(stderr, "%s dlerror:%s\n", __func__, dlerror());
+
+	fprintf(stderr, "%s lock:%p trylock:%p unlock:%p\n",
+			__func__, (void*)(intptr_t)orig_pthread_mutex_lock_ptr, (void*)(intptr_t)orig_pthread_mutex_trylock_ptr, (void*)(intptr_t)orig_pthread_mutex_unlock_ptr);
 }
 
-//LVE functions
+static int orig_pthread_mutex_lock(pthread_mutex_t *mutex)
+{
+	if (orig_pthread_mutex_lock_ptr == NULL)
+		init_libgovernor();
 
-void *lve_library_handle = NULL;
-void *lve = NULL;
+	if (orig_pthread_mutex_lock_ptr == NULL) {
+
+		fprintf(stderr, "%s(%p) mutex:%p\n", __func__, orig_pthread_mutex_lock_ptr, (void *)mutex);
+		return EINVAL;
+	}
+	else
+		return (*orig_pthread_mutex_lock_ptr)(mutex);
+}
+
+static int orig_pthread_mutex_trylock(pthread_mutex_t *mutex)
+{
+	if (orig_pthread_mutex_trylock_ptr == NULL)
+		init_libgovernor();
+
+	if (orig_pthread_mutex_trylock_ptr == NULL) {
+
+		fprintf(stderr, "%s(%p) mutex:%p\n", __func__, orig_pthread_mutex_trylock_ptr, (void *)mutex);
+		return EINVAL;
+	}
+	else
+		return (*orig_pthread_mutex_trylock_ptr)(mutex);
+}
+
+static int orig_pthread_mutex_unlock(pthread_mutex_t *mutex)
+{
+	if (orig_pthread_mutex_unlock_ptr == NULL)
+		init_libgovernor();
+
+	if (orig_pthread_mutex_unlock_ptr == NULL) {
+
+		fprintf(stderr, "%s(%p) mutex:%p\n", __func__, orig_pthread_mutex_unlock_ptr, (void *)mutex);
+		return EINVAL;
+	}
+	else
+		return (*orig_pthread_mutex_unlock_ptr)(mutex);
+}
+
+static unsigned int lock_cnt = 0;
+static unsigned int unlock_cnt = 0;
+static unsigned int trylock_cnt = 0;
+
+void fini_libgovernor(void)
+{
+	fprintf(stderr, "%s lock:%u unlock:%u trylock:%u\n",
+			__func__, lock_cnt, unlock_cnt, trylock_cnt);
+}
+
+static void *lve_library_handle = NULL;
+static void *lve = NULL;
 
 void *(*init_lve) (void *, void *) = NULL;
 int (*destroy_lve) (void *) = NULL;
 int (*lve_enter_flags) (void *, uint32_t, uint32_t *, int) = NULL;
 int (*lve_exit) (void *, uint32_t *) = NULL;
-int (*lve_enter_pid) (void *, uint32_t, pid_t) = NULL;
 int (*is_in_lve) (void *) = NULL;
 
 // to debug governor_init_lve fails
@@ -469,119 +543,90 @@ static void log_init_lve_error(const char *buf)
 	}
 }
 
-
-void *
-governor_load_lve_library ()
+int governor_load_lve_library ()
 {
-  char errbuf[256];
-  lve_library_handle = NULL;
+	char errbuf[256];
+	lve_library_handle = NULL;
 
-  char *error_dl = NULL;
-  lve_library_handle = dlopen ("liblve.so.0", RTLD_LAZY);
-  if (!lve_library_handle)
-  {
-	snprintf(errbuf, sizeof errbuf, "governor_load_lve_library: dlopen(liblve.so.0) failed; errno %d\n", errno);
-	log_init_lve_error(errbuf);
-  }
-
-  if (lve_library_handle)
-    {
-      while (1)
+	char *error_dl = NULL;
+	lve_library_handle = dlopen ("liblve.so.0", RTLD_LAZY);
+	if (!lve_library_handle)
 	{
-	  init_lve = (void *(*)(void *, void *)) dlsym (lve_library_handle,
-							"init_lve");
-	  if ((error_dl = dlerror ()) != NULL)
-	    {
-		snprintf(errbuf, sizeof errbuf, "governor_load_lve_library: ERROR dlerror after dlsym(init_lve) ret (%s); init_lve(%p) errno %d\n", error_dl, init_lve, errno);
+		snprintf(errbuf, sizeof errbuf, "governor_load_lve_library: dlopen(liblve.so.0) failed; errno %d\n", errno);
 		log_init_lve_error(errbuf);
-	      init_lve = NULL;
-	      destroy_lve = NULL;
-	      lve_enter_flags = NULL;
-	      lve_exit = NULL;
-	      lve_enter_pid = NULL;
-	      is_in_lve = NULL;
-	      break;
-	    }
-	  destroy_lve = (int (*)(void *)) dlsym (lve_library_handle,
-						 "destroy_lve");
-	  if ((error_dl = dlerror ()) != NULL)
-	    {
-		snprintf(errbuf, sizeof errbuf, "governor_load_lve_library: ERROR dlerror after dlsym(destroy_lve) ret (%s); destroy_lve(%p) errno %d\n", error_dl, destroy_lve, errno);
-	      init_lve = NULL;
-	      destroy_lve = NULL;
-	      lve_enter_flags = NULL;
-	      lve_exit = NULL;
-	      lve_enter_pid = NULL;
-	      is_in_lve = NULL;
-	      break;
-	    }
-	  lve_enter_flags
-	    =
-	    (int (*)(void *, uint32_t, uint32_t *, int))
-	    dlsym (lve_library_handle, "lve_enter_flags");
-	  if ((error_dl = dlerror ()) != NULL)
-	    {
-		snprintf(errbuf, sizeof errbuf, "governor_load_lve_library: ERROR dlerror after dlsym(lve_enter_flags) ret (%s); lve_enter_flags(%p) errno %d\n", error_dl, lve_enter_flags, errno);
-	      init_lve = NULL;
-	      destroy_lve = NULL;
-	      lve_enter_flags = NULL;
-	      lve_exit = NULL;
-	      lve_enter_pid = NULL;
-	      is_in_lve = NULL;
-	      break;
-	    }
-	  lve_exit = (int (*)(void *, uint32_t *)) dlsym (lve_library_handle,
-							  "lve_exit");
-	  if ((error_dl = dlerror ()) != NULL)
-	    {
-		snprintf(errbuf, sizeof errbuf, "governor_load_lve_library: ERROR dlerror after dlsym(lve_exit) ret (%s); lve_exit(%p) errno %d\n", error_dl, lve_exit, errno);
-	      init_lve = NULL;
-	      destroy_lve = NULL;
-	      lve_enter_flags = NULL;
-	      lve_exit = NULL;
-	      lve_enter_pid = NULL;
-	      is_in_lve = NULL;
-	      break;
-	    }
-	  lve_enter_pid =
-	    (int (*)(void *, uint32_t, pid_t)) dlsym (lve_library_handle,
-						      "lve_enter_pid");
-	  if ((error_dl = dlerror ()) != NULL)
-	    {
-		snprintf(errbuf, sizeof errbuf, "governor_load_lve_library: ERROR dlerror after dlsym(lve_enter_pid) ret (%s); lve_enter_pid(%p) errno %d\n", error_dl, lve_enter_pid, errno);
-	      init_lve = NULL;
-	      destroy_lve = NULL;
-	      lve_enter_flags = NULL;
-	      lve_exit = NULL;
-	      lve_enter_pid = NULL;
-	      is_in_lve = NULL;
-	      break;
-	    }
-	  is_in_lve = (int (*)(void *)) dlsym (lve_library_handle,
-					       "is_in_lve");
-	  if ((error_dl = dlerror ()) != NULL)
-	    {
-		snprintf(errbuf, sizeof errbuf, "governor_load_lve_library: WARN dlerror after dlsym(is_in_lve) ret (%s); is_in_lve(%p) errno %d\n", error_dl, is_in_lve, errno);
-	      is_in_lve = NULL;
-	      break;
-	    }
-	  break;
 	}
 
-    }
-  else
-    {
-      return NULL;
-    }
-  if (!lve_exit)
-    return NULL;
-  return lve_library_handle;
+	if (!lve_library_handle)
+		return 0;
+
+	while (1)
+	{
+		init_lve = (void *(*)(void *, void *)) dlsym(lve_library_handle, "init_lve");
+		if ((error_dl = dlerror ()) != NULL)
+		{
+			snprintf(errbuf, sizeof errbuf, "governor_load_lve_library: ERROR dlerror after dlsym(init_lve) ret (%s); init_lve(%p) errno %d\n", error_dl, init_lve, errno);
+			log_init_lve_error(errbuf);
+			init_lve = NULL;
+			destroy_lve = NULL;
+			lve_enter_flags = NULL;
+			lve_exit = NULL;
+			is_in_lve = NULL;
+			break;
+		}
+
+		destroy_lve = (int (*)(void *)) dlsym(lve_library_handle, "destroy_lve");
+		if ((error_dl = dlerror ()) != NULL)
+		{
+			snprintf(errbuf, sizeof errbuf, "governor_load_lve_library: ERROR dlerror after dlsym(destroy_lve) ret (%s); destroy_lve(%p) errno %d\n", error_dl, destroy_lve, errno);
+			init_lve = NULL;
+			destroy_lve = NULL;
+			lve_enter_flags = NULL;
+			lve_exit = NULL;
+			is_in_lve = NULL;
+			break;
+		}
+
+		lve_enter_flags = (int (*)(void *, uint32_t, uint32_t *, int)) dlsym(lve_library_handle, "lve_enter_flags");
+		if ((error_dl = dlerror ()) != NULL)
+		{
+			snprintf(errbuf, sizeof errbuf, "governor_load_lve_library: ERROR dlerror after dlsym(lve_enter_flags) ret (%s); lve_enter_flags(%p) errno %d\n", error_dl, lve_enter_flags, errno);
+			init_lve = NULL;
+			destroy_lve = NULL;
+			lve_enter_flags = NULL;
+			lve_exit = NULL;
+			is_in_lve = NULL;
+			break;
+		}
+
+		lve_exit = (int (*)(void *, uint32_t *)) dlsym(lve_library_handle, "lve_exit");
+		if ((error_dl = dlerror ()) != NULL)
+		{
+			snprintf(errbuf, sizeof errbuf, "governor_load_lve_library: ERROR dlerror after dlsym(lve_exit) ret (%s); lve_exit(%p) errno %d\n", error_dl, lve_exit, errno);
+			init_lve = NULL;
+			destroy_lve = NULL;
+			lve_enter_flags = NULL;
+			lve_exit = NULL;
+			is_in_lve = NULL;
+			break;
+		}
+
+		is_in_lve = (int (*)(void *)) dlsym(lve_library_handle, "is_in_lve");
+		if ((error_dl = dlerror ()) != NULL)
+		{
+			snprintf(errbuf, sizeof errbuf, "governor_load_lve_library: WARN dlerror after dlsym(is_in_lve) ret (%s); is_in_lve(%p) errno %d\n", error_dl, is_in_lve, errno);
+			is_in_lve = NULL;
+			break;
+		}
+		break;
+	}
+
+	if (!lve_exit)
+		return 0;
+
+	return (lve_library_handle != NULL) ? 1 : 0;
 }
 
-
-
-int
-governor_init_lve ()
+int governor_init_lve(void)
 {
 	if (init_lve)
 	{
@@ -605,136 +650,372 @@ governor_init_lve ()
 	{
 		return -1;
 	}
-	governor_init_users_list ();
+
+	init_bad_users_list_client ();
+
 	return 0;
 }
 
-int
-governor_init_users_list ()
+void governor_destroy_lve(void)
 {
-  init_bad_users_list_client ();
-  return 0;
-}
+	if (destroy_lve && lve)
+	{
+		destroy_lve (lve);
+	}
 
-void
-governor_destroy_lve ()
-{
-  if (destroy_lve && lve)
-    {
-      destroy_lve (lve);
-    }
-  if (lve_library_handle)
-    {
-      dlclose (lve_library_handle);
-    }
-  remove_bad_users_list_client ();
+	if (lve_library_handle)
+	{
+		dlclose (lve_library_handle);
+	}
+
+	remove_bad_users_list_client ();
 }
 
 __thread uint32_t lve_uid = 0;
 
-int
-governor_enter_lve (uint32_t * cookie, char *username)
+static const int lve_flags = ((1 << 0) | (1 << 2) | (1 << 3) | (1 << 4)); //LVE_NO_MAXENTER|LVE_SILENCE|LVE_NO_UBC|LVE_NO_KILLABLE
+
+int governor_enter_lve(uint32_t * cookie, char *username)
 {
-  lve_uid = 0;
-  int container_lve = is_user_in_bad_list_cleint_persistent (username);
-  print_message_log("GOVERNOR: governor_enter_lve user %s uid %d", username, container_lve);
-  if (container_lve && lve_enter_flags && lve)
-    {
-      errno = 0;
-      int rc = lve_enter_flags (lve, container_lve, cookie, ((int) ((1 << 0) | (1 << 2) | (1 << 3) | (1 << 4))));	//LVE_NO_MAXENTER|LVE_SILENCE|LVE_NO_UBC|LVE_NO_KILLABLE
-      int keep_errno = errno;
-      print_message_log("GOVERNOR: governor_enter_lve user %s uid %d errno %d rc %d", username, container_lve, keep_errno, rc);
-      if (rc)
+	lve_uid = 0;
+	int container_lve = is_user_in_bad_list_cleint_persistent (username);
+	print_message_log("GOVERNOR: governor_enter_lve user %s uid %d", username, container_lve);
+	if (container_lve && lve_enter_flags && lve)
 	{
-	  if (keep_errno == EPERM)
-	    {			//if already inside LVE
-	      //lve_exit(lve, cookie);
-	      //return -1;
-	      return 0;
-	    }
+		errno = 0;
+		int rc = lve_enter_flags(lve, container_lve, cookie, lve_flags);
+		int keep_errno = errno;
+		print_message_log("GOVERNOR: governor_enter_lve user %s uid %d errno %d rc %d", username, container_lve, keep_errno, rc);
+		if (rc)
+		{
+			if (keep_errno == EPERM)
+			{			//if already inside LVE
+						//lve_exit(lve, cookie);
+						//return -1;
+				return 0;
+			}
 
-	  return -1;
+			return -1;
+		}
+		lve_uid = container_lve;
+		return 0;
 	}
-      lve_uid = container_lve;
-      return 0;
-    }
-  return 1;
+
+	return 1;
 }
 
-int
-governor_enter_lve_light (uint32_t * cookie)
+int governor_enter_lve_light(uint32_t * cookie)
 {
-  if (lve_enter_flags && lve && lve_uid)
-    {
-      errno = 0;
-      int rc = lve_enter_flags (lve, lve_uid, cookie, ((int) ((1 << 0) | (1 << 2) | (1 << 3) | (1 << 4))));	//LVE_NO_MAXENTER|LVE_SILENCE|LVE_NO_UBC|LVE_NO_KILLABLE
-      int keep_errno = errno;
-      print_message_log("GOVERNOR: governor_enter_lve_light uid %d errno %d rc %d", lve_uid, keep_errno, rc);
-      if (rc)
+	if (lve_enter_flags && lve && lve_uid)
 	{
-	  if (keep_errno == EPERM)
-	    {			//if already inside LVE
-	      //lve_exit(lve, cookie);
-	      //return -1;
-	      return 0;
-	    }
+		errno = 0;
+		int rc = lve_enter_flags(lve, lve_uid, cookie, lve_flags);
+		int keep_errno = errno;
+		print_message_log("GOVERNOR: governor_enter_lve_light uid %d errno %d rc %d", lve_uid, keep_errno, rc);
+		if (rc)
+		{
+			if (keep_errno == EPERM)
+			{			//if already inside LVE
+						//lve_exit(lve, cookie);
+						//return -1;
+				return 0;
+			}
 
-	  return -1;
+			return -1;
+		}
+		return 0;
 	}
-      return 0;
-    }
-  return 1;
+
+	return 1;
 }
 
-void
-governor_lve_exit (uint32_t * cookie)
+void governor_lve_exit(uint32_t * cookie)
 {
-  if (lve_exit && lve) {
-    print_message_log("GOVERNOR: governor_lve_exit uid %d", lve_uid);
-    lve_exit (lve, cookie);
-  }
+	if (lve_exit && lve) {
+		print_message_log("GOVERNOR: governor_lve_exit uid %d", lve_uid);
+		lve_exit(lve, cookie);
+	}
 }
 
-void
-governor_lve_exit_null ()
+//Thread dependent variable for thread cookie storage needs for governor_enter_lve, governor_lve_exit
+__thread uint32_t lve_cookie = 0;
+
+typedef struct __mysql_mutex
 {
-  uint32_t lcookie = 0;
-  if (lve_exit)
-    lve_exit (NULL, &lcookie);
+	pid_t key; //thread_id
+	int is_in_lve; //
+	int is_in_mutex; //mutex_lock count
+	int put_in_lve; //
+	int critical;
+	int was_in_lve; //
+} mysql_mutex;
+
+static int mysql_mutex_cmp(const void *a, const void *b)
+{
+	mysql_mutex *pa = (mysql_mutex *)a;
+	mysql_mutex *pb = (mysql_mutex *)b;
+
+	if (pa->key < pb->key)
+		return -1;
+
+	if (pa->key > pb->key)
+		return 1;
+
+	return 0;
 }
 
-int
-governor_lve_enter_pid (pid_t pid)
+__thread mysql_mutex *mysql_mutex_ptr = 0;
+
+static void * gv_hash = NULL;
+
+static pthread_mutex_t gv_hash_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+static int governor_add_mysql_thread_info(void)
 {
-  if (lve_enter_pid)
-    {
-      if (lve_enter_pid (lve, BAD_LVE, pid))
+	mysql_mutex *mm = NULL;
+	mysql_mutex key;
+	void * ptr;
+
+	orig_pthread_mutex_lock(&gv_hash_mutex);
+	key.key = gettid();
+	ptr = tfind(&key, &gv_hash, mysql_mutex_cmp);
+	if (ptr != NULL)
+	{
+		mm = *(mysql_mutex **)ptr;
+		orig_pthread_mutex_unlock(&gv_hash_mutex);
+		mysql_mutex_ptr = mm;
+		return 0;
+	}
+
+	mm = (mysql_mutex *) calloc(1, sizeof(mysql_mutex));
+	if (mm == NULL)
+	{
+		orig_pthread_mutex_unlock(&gv_hash_mutex);
+		return -1;
+	}
+	mm->key = key.key;
+
+	if (!tsearch(mm, &gv_hash, mysql_mutex_cmp))
+	{
+		free(mm);
+		orig_pthread_mutex_unlock(&gv_hash_mutex);
+		return -1;
+	}
+
+	orig_pthread_mutex_unlock(&gv_hash_mutex);
+	mysql_mutex_ptr = mm;
+
+	return 0;
+}
+
+static void governor_remove_mysql_thread_info(void)
+{
+	orig_pthread_mutex_lock(&gv_hash_mutex);
+	if (gv_hash)
+	{
+		mysql_mutex *mm = NULL;
+		mysql_mutex key;
+		void * ptr;
+
+		key.key = gettid();
+		ptr = tfind(&key, &gv_hash, mysql_mutex_cmp);
+		if (ptr != NULL) {
+
+			mm = *(mysql_mutex **)ptr;
+			tdelete(&key, &gv_hash, mysql_mutex_cmp);
+			free(mm);
+		}
+	}
+	orig_pthread_mutex_unlock(&gv_hash_mutex);
+	mysql_mutex_ptr = NULL;
+}
+
+static void governor_destroy_mysql_thread_info(void)
+{
+	if (gv_hash) {
+		orig_pthread_mutex_lock(&gv_hash_mutex);
+		tdestroy(gv_hash, free);
+		gv_hash = NULL;
+		orig_pthread_mutex_unlock(&gv_hash_mutex);
+	}
+}
+
+__attribute__((noinline)) int governor_put_in_lve(char *user)
+{
+	if (governor_add_mysql_thread_info() < 0)
+		return -1;
+
+	if (mysql_mutex_ptr) {
+		if (!governor_enter_lve(&lve_cookie, user)) {
+			mysql_mutex_ptr->is_in_lve = 1;
+		}
+		mysql_mutex_ptr->is_in_mutex = 0;
+	}
+
+	return 0;
+}
+
+__attribute__((noinline)) void governor_lve_thr_exit(void)
+{
+	if (mysql_mutex_ptr && mysql_mutex_ptr->is_in_lve == 1) {
+		governor_lve_exit(&lve_cookie);
+		mysql_mutex_ptr->is_in_lve = 0;
+	}
+	governor_remove_mysql_thread_info();
+}
+
+__attribute__((noinline)) int pthread_mutex_lock(pthread_mutex_t *mp)
+{
+	//printf("%s mutex:%p\n", __func__, (void *)mp);
+	lock_cnt++;
+	if (mysql_mutex_ptr) {
+		if (mysql_mutex_ptr->is_in_lve == 1)
+		{
+			if (!mysql_mutex_ptr->critical)
+				governor_lve_exit(&lve_cookie);
+			mysql_mutex_ptr->is_in_lve = 2;
+		}
+		else if (mysql_mutex_ptr->is_in_lve > 1)
+		{
+			mysql_mutex_ptr->is_in_lve++;
+		}
+		mysql_mutex_ptr->is_in_mutex++;
+	}
+
+	return orig_pthread_mutex_lock(mp);
+}
+
+__attribute__((noinline)) int pthread_mutex_unlock(pthread_mutex_t *mutex)
+{
+	//printf("%s mutex:%p\n", __func__, (void *)mutex);
+	unlock_cnt++;
+	int ret = orig_pthread_mutex_unlock(mutex);
+
+	if (mysql_mutex_ptr) {
+		if (mysql_mutex_ptr->is_in_lve == 2) {
+			if(mysql_mutex_ptr->critical) {
+				mysql_mutex_ptr->is_in_lve = 1;
+			} else if (!governor_enter_lve_light(&lve_cookie)) {
+				mysql_mutex_ptr->is_in_lve = 1;
+			}
+		} else if (mysql_mutex_ptr->is_in_lve > 2) {
+			mysql_mutex_ptr->is_in_lve--;
+		}
+		mysql_mutex_ptr->is_in_mutex--;
+	}
+
+	return ret;
+}
+
+__attribute__((noinline)) int pthread_mutex_trylock(pthread_mutex_t *mutex)
+{
+	//printf("%s mutex:%p\n", __func__, (void *)mutex);
+	trylock_cnt++;
+	int ret = 0;
+	if (mysql_mutex_ptr) {
+		if (mysql_mutex_ptr->is_in_lve == 1) {
+			if(!mysql_mutex_ptr->critical)
+				governor_lve_exit(&lve_cookie);
+		}
+	}
+
+	ret = orig_pthread_mutex_trylock(mutex);
+
+	if (mysql_mutex_ptr) {
+		if (ret != EBUSY){
+			if (mysql_mutex_ptr->is_in_lve == 1) {
+				mysql_mutex_ptr->is_in_lve = 2;
+			} else if (mysql_mutex_ptr->is_in_lve > 1) {
+				mysql_mutex_ptr->is_in_lve++;
+			}
+			mysql_mutex_ptr->is_in_mutex++;
+		} else {
+			if (mysql_mutex_ptr->is_in_lve == 1){
+				if(mysql_mutex_ptr->critical){
+					mysql_mutex_ptr->is_in_lve = 1;
+				} else if (!governor_enter_lve_light(&lve_cookie)) {
+					mysql_mutex_ptr->is_in_lve = 1;
+				} else {
+					mysql_mutex_ptr->is_in_lve = 0;
+				}
+			}
+		}
+	}
+
+	return ret;
+}
+
+__attribute__((noinline)) void governor_reserve_slot(void)
+{
+	if (mysql_mutex_ptr) {
+		if (mysql_mutex_ptr->is_in_lve == 1) {
+			if (!mysql_mutex_ptr->critical)
+				governor_lve_exit(&lve_cookie);
+			mysql_mutex_ptr->is_in_lve = 2;
+		} else if (mysql_mutex_ptr->is_in_lve > 1) {
+			mysql_mutex_ptr->is_in_lve++;
+		}
+		mysql_mutex_ptr->is_in_mutex++;
+	}
+}
+
+__attribute__((noinline)) void governor_release_slot(void)
+{
+	if (mysql_mutex_ptr) {
+		if (mysql_mutex_ptr->is_in_lve == 2) {
+			if (mysql_mutex_ptr->critical) {
+				mysql_mutex_ptr->is_in_lve = 1;
+			} else if (!governor_enter_lve_light(&lve_cookie)) {
+				mysql_mutex_ptr->is_in_lve = 1;
+			}
+		} else if (mysql_mutex_ptr->is_in_lve > 2) {
+			mysql_mutex_ptr->is_in_lve--;
+		}
+		mysql_mutex_ptr->is_in_mutex--;
+	}
+}
+
+__attribute__((noinline)) void governor_critical_section_begin(void)
+{
+	if (mysql_mutex_ptr) {
+		if (!mysql_mutex_ptr->critical)
+			mysql_mutex_ptr->was_in_lve = mysql_mutex_ptr->is_in_lve;
+		mysql_mutex_ptr->critical++;
+	}
+}
+
+__attribute__((noinline)) void governor_critical_section_end(void)
+{
+	if (mysql_mutex_ptr) {
+		mysql_mutex_ptr->critical--;
+		if (mysql_mutex_ptr->critical < 0)
+			mysql_mutex_ptr->critical = 0;
+		if (!mysql_mutex_ptr->critical && (mysql_mutex_ptr->was_in_lve > 1) && (mysql_mutex_ptr->is_in_lve == 1)) {
+			if (!governor_enter_lve_light(&lve_cookie)) {
+				mysql_mutex_ptr->is_in_lve = 1;
+			}
+		}
+	}
+}
+
+void governor_destroy(void)
+{
+	governor_destroy_mysql_thread_info();
+	governor_destroy_lve();
+	close_sock();
+}
+
+void governor_lve_exit_null(void)
+{
+}
+
+int governor_lve_enter_pid(pid_t pid)
+{
+	return 0;
+}
+
+int governor_is_in_lve()
+{
 	return -1;
-    }
-  return 0;
 }
 
-int
-governor_lve_enter_pid_user (pid_t pid, char *username)
-{
-  if (lve_enter_pid && username)
-    {
-      int container_lve = is_user_in_bad_list_cleint_persistent (username);
-      if (container_lve)
-	{
-	  if (lve_enter_pid (lve, container_lve, pid))
-	    return -1;
-	}
-    }
-  return 0;
-}
-
-int
-governor_is_in_lve ()
-{
-  if (is_in_lve && lve)
-    {
-      return is_in_lve (lve);
-    }
-  return -1;
-}
