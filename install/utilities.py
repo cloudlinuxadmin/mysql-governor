@@ -714,7 +714,7 @@ def read_file(path):
     read file content
     """
     with open(path, "r") as f:
-        return f.read()
+        return f.read().strip()
 
 
 def rewrite_file(f, content):
