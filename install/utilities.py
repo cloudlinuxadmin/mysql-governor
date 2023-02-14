@@ -1581,3 +1581,30 @@ def get_section_from_all_cnfs(section: str):
                     if opt == section:
                         return val
     return '/var/lib/mysql'
+
+
+def dbgovernor_status() -> bool:
+    """
+    Check governor-mysql service status
+    """
+    dbctllist = subprocess.run(
+        '/sbin/service db_governor status',
+        shell=True, text=True, capture_output=True)
+
+    return dbctllist.returncode == 0
+
+
+def wait_for_governormysql_service_status(number_of_attempts: int = 5) -> bool:
+    """
+    Waiting until the governor-mysql service becomes active
+    """
+    while number_of_attempts > 0:
+        number_of_attempts -= 1
+        _status = dbgovernor_status()
+        if not _status:
+            print('Waiting until the governor-mysql service becomes active...')
+            time.sleep(10)
+        else:
+            return _status
+
+    return _status

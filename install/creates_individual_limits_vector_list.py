@@ -5,12 +5,13 @@
 #
 # Licensed under CLOUD LINUX LICENSE AGREEMENT
 # http://cloudlinux.com/docs/LICENSE.TXT
-#
 
+import time
 import subprocess
 from collections import namedtuple
 
 from governor_package_limitting import fill_gpl_json
+from utilities import wait_for_governormysql_service_status
 
 Userlimits = namedtuple("Userlimits", "cpu read write")
 
@@ -47,31 +48,52 @@ def getting_whole_dbctl_list():
     (except default limits of course)
     Dictionary -> { Username:  namedtuple(cpu, read, write)}
     """
-    dbctllist = subprocess.run(
-        '/usr/share/lve/dbgovernor/utils/dbctl_orig list-raw --bb | /usr/bin/tail -n +2',
-        shell=True, text=True, capture_output=True
-    )
-
     dbctllimits = dict()
-    for limit_line in dbctllist.stdout.split('\n'):
-        if limit_line and limit_line.split()[0] != 'default':
-            limit_line = limit_line.split()
-            dbctllimits.update(
-                {limit_line[0]: Userlimits(
-                    limit_line[1].split('/'),
-                    limit_line[2].split('/'),
-                    limit_line[3].split('/')
-                    )
-                }
-            )
+    dbctlorig_listraw = get_dbctlorig_listraw()
+    if dbctlorig_listraw:
+        for limit_line in dbctlorig_listraw:
+            if (limit_line and limit_line.split()[0] != 'default'
+                and limit_line.split()[0] != 'user'):
+                limit_line = limit_line.split()
+                dbctllimits.update(
+                    {limit_line[0]: Userlimits(
+                        limit_line[1].split('/'),
+                        limit_line[2].split('/'),
+                        limit_line[3].split('/')
+                        )
+                    }
+                )
 
     return dbctllimits
+
+
+def get_dbctlorig_listraw(attempts=3):
+    """
+    Waiting for results from the utility
+    """
+    command_ = '/usr/share/lve/dbgovernor/utils/dbctl_orig list-raw --bb'
+    while attempts > 0:
+        attempts -= 1
+        dbctllist = subprocess.run(
+            command_, shell=True, text=True, capture_output=True
+        )
+        if dbctllist.returncode == 0:
+            return dbctllist.stdout.split('\n')
+        time.sleep(5)
+    print('Individual limits vector list will not be added!')
+    print(dbctllist.stdout)
 
 
 def fill_the_individual_limits():
     """
     Writes the individual limits vector to the governor_package_limit.json
     """
+    msg = "The db_governor service is inactive, individual limits vector list will not be added!"
+    governormysql_status = wait_for_governormysql_service_status()
+    if not governormysql_status:
+        print(msg)
+        return
+
     _vector = getting_individual_limits_vector(getting_whole_dbctl_list())
     for user, limitsdict in _vector.items():
         fill_gpl_json(

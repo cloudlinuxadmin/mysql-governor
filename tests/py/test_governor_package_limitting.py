@@ -522,20 +522,24 @@ cfg_expected = {
     'package_limits': {}
 }
 
-dbctl_orig_list_raw = "default\t400/380/350/300\t1000000000/830000000/760000000/590000000\t1000000000/830000000/760000000/590000000\n\
-user1\t0/0/-1/-1\t-1/0/232783872/116391936\t209715200/-1/0/104857600\n\
-user2\t100/50/40/10\t465567744/349175808/232783872/116391936\t209715200/146800640/125829120/104857600\n\
-user3\t-1/-1/-1/0\t-1/-1/-1/0\t-1/0/0/0\n"
-
+dbctl_orig_list_raw = [
+    ' user\tcpu(%)\tread( B/s)\twrite( B/s)',
+    'default\t400/380/350/300\t1000000000/830000000/760000000/590000000\t1000000000/830000000/760000000/590000000',
+    'user1\t0/0/-1/-1\t-1/0/232783872/116391936\t209715200/-1/0/104857600',
+    'user2\t100/50/40/10\t465567744/349175808/232783872/116391936\t209715200/146800640/125829120/104857600',
+    'user3\t-1/-1/-1/0\t-1/-1/-1/0\t-1/0/0/0',
+    '']
+@mock.patch("creates_individual_limits_vector_list.wait_for_governormysql_service_status",
+            mock.MagicMock(return_value=True))
+@mock.patch("creates_individual_limits_vector_list.get_dbctlorig_listraw",
+            mock.MagicMock(return_value=dbctl_orig_list_raw))
 def test_creates_individual_limits_vector_list(fs):
     fs.create_file(governor_package_limitting.PACKAGE_LIMIT_CONFIG,
                    contents=json.dumps(empty_config)
     )
     cfg_empty = governor_package_limitting.get_package_limit()
-    with mock.patch("creates_individual_limits_vector_list.subprocess.run") as output_mock:
-        output_mock.return_value.stdout = dbctl_orig_list_raw
-        creates_individual_limits_vector_list.fill_the_individual_limits()
-        vector_list_out = governor_package_limitting.get_package_limit()
+    creates_individual_limits_vector_list.fill_the_individual_limits()
+    vector_list_out = governor_package_limitting.get_package_limit()
 
     assert cfg_empty == empty_config
     assert cfg_expected == vector_list_out
