@@ -2,22 +2,19 @@ import json
 import pytest
 from unittest import mock
 from pyfakefs.fake_filesystem_unittest import Patcher
-import governor_package_limitting
-import creates_individual_limits_vector_list
 import subprocess
 import yaml
 
+import governor_package_limitting
+import creates_individual_limits_vector_list
 
-#@pytest.fixture(scope='session', autouse=True)
-#def dbctl_sync_mock():
-#    with mock.patch('governor_package_limitting.dbctl_sync') as _fixture:
-#        yield _fixture
 
 @pytest.fixture
 def fs():
     with Patcher() as patcher:
         patcher.fs.create_dir('/var/run')
         yield patcher.fs
+
 
 empty_config = {"package_limits": {}, "individual_limits": {}}
 broken_config = ""
@@ -458,6 +455,19 @@ def test_get_dbctl_limits():
         output_mock.return_value.stdout = json.dumps(dbctl_listjson_output)
         out = governor_package_limitting.get_dbctl_limits()
         assert out == limits_out
+
+
+@mock.patch("governor_package_limitting.trying_to_get_user_in_dbctl_list",
+            mock.MagicMock(return_value=False))
+def test_broken_dbctl_limits():
+    with mock.patch("governor_package_limitting.subprocess.run") as output_mock:
+        output_mock.return_value.stdout = "some non json data"
+        res = False
+        try:
+            governor_package_limitting.get_dbctl_limits()
+        except SystemExit:
+            res = True
+        assert res
 
 
 @pytest.mark.parametrize("vector, default_or_package_limit, individual_limits, res",

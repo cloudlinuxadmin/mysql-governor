@@ -18,8 +18,10 @@ from clcommon.cpapi import cpinfo, admin_packages, resellers_packages
 from typing import Dict, List, Tuple
 import subprocess
 import json
+import logging
 
 from utilities import Logger, shadow_tracing, acquire_lock, LockFailedException
+
 
 DBCTL_BIN = '/usr/share/lve/dbgovernor/utils/dbctl_orig'
 PACKAGE_LIMIT_CONFIG = '/etc/container/governor_package_limit.json'
@@ -27,6 +29,15 @@ LOCK_FILE = '/var/run/governor_package_limit'
 DBCTL_SYNC_LOCK_FILE = '/var/run/governor_package_sync'
 DEBUG = False
 ENCODING = 'utf-8'
+
+
+def add_logs():
+    """
+    Messages related to governor_package_limitting
+    """
+    logging.basicConfig(
+        filename="/usr/share/lve/dbgovernor/governor_package_limitting.log",
+        format="%(asctime)s %(levelname)s %(message)s", level=logging.INFO)
 
 
 def debug_log(line, end='\n'):
@@ -759,7 +770,13 @@ def get_dbctl_limits(user: str = 'default', format: str = 'bb') -> Tuple:
         output = subprocess.run(dbctl_limits, shell=True,
                                 text=True, capture_output=True)
         _data = output.stdout
-        data = json.loads(_data)
+        try:
+            data = json.loads(_data)
+        except json.JSONDecodeError:
+            logging.debug(f"<{DBCTL_BIN} list-json --{format}> returns non json data!")
+            logging.debug(f"stdout -> {output.stdout}")
+            logging.debug(f"stderr -> {output.stderr}")
+            sys.exit(1)
         return data
 
     individual_limits = trying_to_get_user_in_dbctl_list(
@@ -965,6 +982,7 @@ def main(argv):
 
     turn_on_debug_if_user_enabled_debug_mode(opts)
     ensure_json_presence()
+    add_logs()
 
     if opts.command == 'set':
         fill_gpl_json(opts.package, opts.cpu, opts.read, opts.write)
