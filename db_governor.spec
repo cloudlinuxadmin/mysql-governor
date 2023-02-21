@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   86
+%define g_release   87
 %define g_key_library 11
 
 %if %{undefined _unitdir}
@@ -453,6 +453,12 @@ fi
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
 %changelog
+* Tue Feb 21 2023 Sergey Kozhekin <skozhekin@cloudlinux.com> 1.2-87
+- MYSQLG-817: Implement ability to sync one user or one package in /usr/share/lve/dbgovernor/governor_package_limitting.py script
+- MYSQLG-873: Fix governor mysql password issue on plesk
+- MYSQLG-869: Added governor-mysql service status check when adding individual limit vectors after the first install.
+- MYSQLG-882: try/except block has been added for all operations with json in governor-package-limits
+
 * Tue Jan 17 2023 Sergey Kozhekin <skozhekin@cloudlinux.com> 1.2-86
 - MYSQLG-861: Governor package utility is handling case with wrong json config
 
