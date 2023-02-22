@@ -18,8 +18,10 @@ from clcommon.cpapi import cpinfo, admin_packages, resellers_packages
 from typing import Dict, List, Tuple
 import subprocess
 import json
+import logging
 
 from utilities import Logger, shadow_tracing, acquire_lock, LockFailedException
+
 
 DBCTL_BIN = '/usr/share/lve/dbgovernor/utils/dbctl_orig'
 PACKAGE_LIMIT_CONFIG = '/etc/container/governor_package_limit.json'
@@ -27,6 +29,15 @@ LOCK_FILE = '/var/run/governor_package_limit'
 DBCTL_SYNC_LOCK_FILE = '/var/run/governor_package_sync'
 DEBUG = False
 ENCODING = 'utf-8'
+
+
+def add_logs():
+    """
+    Messages related to governor_package_limitting
+    """
+    logging.basicConfig(
+        filename="/usr/share/lve/dbgovernor/governor_package_limitting.log",
+        format="%(asctime)s %(levelname)s %(message)s", level=logging.INFO)
 
 
 def debug_log(line, end='\n'):
@@ -144,6 +155,7 @@ def build_parser():
     )
     sync._optionals.title = 'Options'
     sync.add_argument('--package', help='Package name', type=str, required=False)
+    sync.add_argument('--user', help='User name', type=str, required=False)
     sync.add_argument('--debug', action='store_true', help='Turn on debug mode')
 
     return parser
@@ -565,11 +577,15 @@ def run_dbctl_command(users: list, action: str, limits: dict = None):
                 subprocess.run(command, shell=True, text=True)
 
 
-def dbctl_sync(action: str, package: str = None):
+def dbctl_sync(action: str, package: str = None, user: str = None):
     """Sync package configuration with dbgovernor
     Args:
         action (str): Set or Delete
         package (str): Package name is used with action delete.
+                       We can also synchronise for a specific
+                       package only with action 'set'
+        package (str): User name is used with action 'set'
+                       to synchronise for a specific user only
     """
     if not action:
         print("Action not specified")
@@ -586,12 +602,29 @@ def dbctl_sync(action: str, package: str = None):
 
     if action == 'set':
         _package_limits = get_package_limit(package)
-        package_limits = _package_limits['package_limits']
+        # Use a specific package (including all users of these package)
+        # if package for sync is specified
+        # Use all packages otherwise
+        package_limits = _package_limits if package else _package_limits['package_limits']
+
+        # To avoid traceback if incorrect package name has been set
+        if not package_limits:
+            return
+
         for package_name, limits in package_limits.items():
             users_to_apply_package = __cp_packages.get(package_name)
             if users_to_apply_package:
-                debug_log(f'Setting package limits for users: {users_to_apply_package}')
-                run_dbctl_command(users_to_apply_package, action, limits)
+                if not user:
+                    # Sets package limits for all package's users
+                    debug_log(f'Setting package limits for users: {users_to_apply_package}')
+                    run_dbctl_command(users_to_apply_package, action, limits)
+                    continue
+                if user in users_to_apply_package:
+                    # Sets package limits only for a specific user
+                    # if user for sync is specified
+                    debug_log(f'Setting package limits for user: {user}')
+                    run_dbctl_command([user], action, limits)
+                    return
 
 
 def byte_size_convertor(value: int, from_format: str, to_format: str):
@@ -737,7 +770,13 @@ def get_dbctl_limits(user: str = 'default', format: str = 'bb') -> Tuple:
         output = subprocess.run(dbctl_limits, shell=True,
                                 text=True, capture_output=True)
         _data = output.stdout
-        data = json.loads(_data)
+        try:
+            data = json.loads(_data)
+        except json.JSONDecodeError:
+            logging.debug(f"<{DBCTL_BIN} list-json --{format}> returns non json data!")
+            logging.debug(f"stdout -> {output.stdout}")
+            logging.debug(f"stderr -> {output.stderr}")
+            sys.exit(1)
         return data
 
     individual_limits = trying_to_get_user_in_dbctl_list(
@@ -943,6 +982,7 @@ def main(argv):
 
     turn_on_debug_if_user_enabled_debug_mode(opts)
     ensure_json_presence()
+    add_logs()
 
     if opts.command == 'set':
         fill_gpl_json(opts.package, opts.cpu, opts.read, opts.write)
@@ -958,7 +998,7 @@ def main(argv):
         # to avoid excessive calls of sync command just ignore too frequent calls
         try:
             with acquire_lock(DBCTL_SYNC_LOCK_FILE, exclusive=True, attempts=1):
-                dbctl_sync('set', opts.package)
+                dbctl_sync('set', opts.package, opts.user)
         except LockFailedException as err:
             debug_log(f'Excessive sync call ignored')
             pass

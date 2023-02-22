@@ -2,16 +2,12 @@ import json
 import pytest
 from unittest import mock
 from pyfakefs.fake_filesystem_unittest import Patcher
-import governor_package_limitting
-import creates_individual_limits_vector_list
 import subprocess
 import yaml
 
+import governor_package_limitting
+import creates_individual_limits_vector_list
 
-@pytest.fixture(scope='session', autouse=True)
-def dbctl_sync_mock():
-    with mock.patch('governor_package_limitting.dbctl_sync') as _fixture:
-        yield _fixture
 
 @pytest.fixture
 def fs():
@@ -19,8 +15,35 @@ def fs():
         patcher.fs.create_dir('/var/run')
         yield patcher.fs
 
+
 empty_config = {"package_limits": {}, "individual_limits": {}}
-broken_config = {}
+broken_config = ""
+
+cp_packages_mock = {'default': ['user0', 'user10', 'user11', 'user12', 'user13',
+                                'user14', 'user15', 'user16', 'user17', 'user18',
+                                'user19', 'user20', 'user21', 'user22', 'user3',
+                                'user4', 'user5', 'user6', 'user7', 'user8', 'user9'],
+                    'pack_1': ['user1'],
+                    'pack_2': ['user2']
+                   }
+
+get_package_limit_mock_full = {'package_limits': {'pack_1': {'cpu': [0, 0, 0, 0],
+                                                             'read': [0, 0, 0, 0],
+                                                             'write': [0, 0, 0, 0]},
+                                                  'pack_2': {'cpu': [0, 0, 0, 0],
+                                                             'read': [0, 0, 0, 0],
+                                                             'write': [0, 0, 0, 0]},
+                                                  'default': {'cpu': [0, 0, 0, 0],
+                                                              'read': [0, 0, 0, 0],
+                                                              'write': [0, 0, 0, 0]}},
+                               'individual_limits': {}
+                              }
+
+get_package_limit_mock_pack_1_only = {'pack_1': {'cpu': [0, 0, 0, 0],
+                                                 'read': [0, 0, 0, 0],
+                                                 'write': [0, 0, 0, 0]
+                                                }
+                                     }
 
 config_content = {
     "package_limits": {
@@ -434,6 +457,19 @@ def test_get_dbctl_limits():
         assert out == limits_out
 
 
+@mock.patch("governor_package_limitting.trying_to_get_user_in_dbctl_list",
+            mock.MagicMock(return_value=False))
+def test_broken_dbctl_limits():
+    with mock.patch("governor_package_limitting.subprocess.run") as output_mock:
+        output_mock.return_value.stdout = "some non json data"
+        res = False
+        try:
+            governor_package_limitting.get_dbctl_limits()
+        except SystemExit:
+            res = True
+        assert res
+
+
 @pytest.mark.parametrize("vector, default_or_package_limit, individual_limits, res",
     [({'user1': {"cpu": [True] * 4, "read": [True] * 4, "write": [True] * 4}},
       ((400, 300, 200, 100), (500, 400, 300, 200), (550, 440, 330, 220)),
@@ -496,20 +532,105 @@ cfg_expected = {
     'package_limits': {}
 }
 
-dbctl_orig_list_raw = "default\t400/380/350/300\t1000000000/830000000/760000000/590000000\t1000000000/830000000/760000000/590000000\n\
-user1\t0/0/-1/-1\t-1/0/232783872/116391936\t209715200/-1/0/104857600\n\
-user2\t100/50/40/10\t465567744/349175808/232783872/116391936\t209715200/146800640/125829120/104857600\n\
-user3\t-1/-1/-1/0\t-1/-1/-1/0\t-1/0/0/0\n"
-
+dbctl_orig_list_raw = [
+    ' user\tcpu(%)\tread( B/s)\twrite( B/s)',
+    'default\t400/380/350/300\t1000000000/830000000/760000000/590000000\t1000000000/830000000/760000000/590000000',
+    'user1\t0/0/-1/-1\t-1/0/232783872/116391936\t209715200/-1/0/104857600',
+    'user2\t100/50/40/10\t465567744/349175808/232783872/116391936\t209715200/146800640/125829120/104857600',
+    'user3\t-1/-1/-1/0\t-1/-1/-1/0\t-1/0/0/0',
+    '']
+@mock.patch("creates_individual_limits_vector_list.wait_for_governormysql_service_status",
+            mock.MagicMock(return_value=True))
+@mock.patch("creates_individual_limits_vector_list.get_dbctlorig_listraw",
+            mock.MagicMock(return_value=dbctl_orig_list_raw))
 def test_creates_individual_limits_vector_list(fs):
     fs.create_file(governor_package_limitting.PACKAGE_LIMIT_CONFIG,
                    contents=json.dumps(empty_config)
     )
     cfg_empty = governor_package_limitting.get_package_limit()
-    with mock.patch("creates_individual_limits_vector_list.subprocess.run") as output_mock:
-        output_mock.return_value.stdout = dbctl_orig_list_raw
-        creates_individual_limits_vector_list.fill_the_individual_limits()
-        vector_list_out = governor_package_limitting.get_package_limit()
+    creates_individual_limits_vector_list.fill_the_individual_limits()
+    vector_list_out = governor_package_limitting.get_package_limit()
 
     assert cfg_empty == empty_config
     assert cfg_expected == vector_list_out
+
+
+#########################################dbctl_sync########################################################################
+
+
+run_dbctl_command_mock_3 = mock.MagicMock()
+@mock.patch("governor_package_limitting.cp_packages",
+            mock.MagicMock(return_value=cp_packages_mock))
+@mock.patch("governor_package_limitting.get_package_limit",
+            mock.MagicMock(return_value=get_package_limit_mock_full))
+@mock.patch("governor_package_limitting.run_dbctl_command",
+            run_dbctl_command_mock_3)
+def test_dbctl_sync___action__set():
+    governor_package_limitting.dbctl_sync(action='set')
+    assert run_dbctl_command_mock_3.call_count == 3
+
+run_dbctl_command_mock_1_1 = mock.MagicMock()
+@mock.patch("governor_package_limitting.cp_packages",
+            mock.MagicMock(return_value=cp_packages_mock))
+@mock.patch("governor_package_limitting.get_package_limit",
+            mock.MagicMock(return_value=get_package_limit_mock_pack_1_only))
+@mock.patch("governor_package_limitting.run_dbctl_command",
+            run_dbctl_command_mock_1_1)
+def test_dbctl_sync___package_opt_action__set():
+    governor_package_limitting.dbctl_sync(action='set', package='pack_1')
+    assert run_dbctl_command_mock_1_1.call_count == 1
+
+run_dbctl_command_mock_1_2 = mock.MagicMock()
+@mock.patch("governor_package_limitting.cp_packages",
+            mock.MagicMock(return_value=cp_packages_mock))
+@mock.patch("governor_package_limitting.get_package_limit",
+            mock.MagicMock(return_value=get_package_limit_mock_full))
+@mock.patch("governor_package_limitting.run_dbctl_command",
+            run_dbctl_command_mock_1_2)
+def test_dbctl_sync___user_opt_action__set():
+    governor_package_limitting.dbctl_sync(action='set', user='user10')
+    assert run_dbctl_command_mock_1_2.call_count == 1
+
+run_dbctl_command_mock_1_3 = mock.MagicMock()
+@mock.patch("governor_package_limitting.cp_packages",
+            mock.MagicMock(return_value=cp_packages_mock))
+@mock.patch("governor_package_limitting.get_package_limit",
+            mock.MagicMock(return_value=get_package_limit_mock_pack_1_only))
+@mock.patch("governor_package_limitting.run_dbctl_command",
+            run_dbctl_command_mock_1_3)
+def test_dbctl_sync___user_and_package_opt_action__set():
+    governor_package_limitting.dbctl_sync(action='set', package='pack_1', user='user1')
+    assert run_dbctl_command_mock_1_3.call_count == 1
+
+run_dbctl_command_mock_1_4 = mock.MagicMock()
+@mock.patch("governor_package_limitting.cp_packages",
+            mock.MagicMock(return_value=cp_packages_mock))
+@mock.patch("governor_package_limitting.get_package_limit",
+            mock.MagicMock(return_value=get_package_limit_mock_pack_1_only))
+@mock.patch("governor_package_limitting.run_dbctl_command",
+            run_dbctl_command_mock_1_4)
+def test_dbctl_sync___user_is_not_contained_in_the_package():
+    governor_package_limitting.dbctl_sync(action='set', package='pack_1', user='user2')
+    assert run_dbctl_command_mock_1_4.call_count == 0
+
+run_dbctl_command_mock_1_5 = mock.MagicMock()
+@mock.patch("governor_package_limitting.cp_packages",
+            mock.MagicMock(return_value=cp_packages_mock))
+@mock.patch("governor_package_limitting.get_package_limit",
+            mock.MagicMock(return_value=None))
+@mock.patch("governor_package_limitting.run_dbctl_command",
+            run_dbctl_command_mock_1_5)
+def test_dbctl_sync___nonexistent_package__set():
+    governor_package_limitting.dbctl_sync(action='set', package='pack_111')
+    assert run_dbctl_command_mock_1_5.call_count == 0
+
+run_dbctl_command_mock_1_6 = mock.MagicMock()
+@mock.patch("governor_package_limitting.cp_packages",
+            mock.MagicMock(return_value=cp_packages_mock))
+@mock.patch("governor_package_limitting.get_package_limit",
+            mock.MagicMock(return_value=get_package_limit_mock_full))
+@mock.patch("governor_package_limitting.run_dbctl_command",
+            run_dbctl_command_mock_1_6)
+def test_dbctl_sync___nonexistent_user__set():
+    governor_package_limitting.dbctl_sync(action='set', user='user100')
+    assert run_dbctl_command_mock_1_6.call_count == 0
