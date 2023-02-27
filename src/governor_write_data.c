@@ -637,11 +637,13 @@ governor_enter_lve (uint32_t * cookie, char *username)
 {
   lve_uid = 0;
   int container_lve = is_user_in_bad_list_cleint_persistent (username);
+  print_message_log("GOVERNOR: governor_enter_lve user %s uid %d", username, container_lve);
   if (container_lve && lve_enter_flags && lve)
     {
       errno = 0;
       int rc = lve_enter_flags (lve, container_lve, cookie, ((int) ((1 << 0) | (1 << 2) | (1 << 3) | (1 << 4))));	//LVE_NO_MAXENTER|LVE_SILENCE|LVE_NO_UBC|LVE_NO_KILLABLE
       int keep_errno = errno;
+      print_message_log("GOVERNOR: governor_enter_lve user %s uid %d errno %d rc %d", username, container_lve, keep_errno, rc);
       if (rc)
 	{
 	  if (keep_errno == EPERM)
@@ -667,6 +669,7 @@ governor_enter_lve_light (uint32_t * cookie)
       errno = 0;
       int rc = lve_enter_flags (lve, lve_uid, cookie, ((int) ((1 << 0) | (1 << 2) | (1 << 3) | (1 << 4))));	//LVE_NO_MAXENTER|LVE_SILENCE|LVE_NO_UBC|LVE_NO_KILLABLE
       int keep_errno = errno;
+      print_message_log("GOVERNOR: governor_enter_lve_light uid %d errno %d rc %d", lve_uid, keep_errno, rc);
       if (rc)
 	{
 	  if (keep_errno == EPERM)
@@ -686,8 +689,10 @@ governor_enter_lve_light (uint32_t * cookie)
 void
 governor_lve_exit (uint32_t * cookie)
 {
-  if (lve_exit && lve)
+  if (lve_exit && lve) {
+    print_message_log("GOVERNOR: governor_lve_exit uid %d", lve_uid);
     lve_exit (lve, cookie);
+  }
 }
 
 void

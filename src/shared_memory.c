@@ -24,6 +24,11 @@
 #include "shared_memory.h"
 #include "dbuser_map.h"
 
+#ifdef TEST
+#include <sys/syscall.h>
+#include <stdarg.h>
+#endif
+
 #define MAX_ITEMS_IN_TABLE 100000
 
 #define SHARED_MEMORY_NAME_PRIVATE "/var/lve/dbgovernor-shm/governor_bad_users_list"
@@ -508,14 +513,22 @@ int remove_bad_users_list_client(void) {
 }
 
 int32_t is_user_in_bad_list_cleint_persistent(char *username) {
+	print_message_log("GOVERNOR: is_user_in_bad_list_cleint_persistent user %s", username);
 	int32_t fnd = 0;
 
+	print_message_log("GOVERNOR: is_user_in_bad_list_cleint_persistent user %s map %p=%d",
+				username, bad_list_clents_global, bad_list_clents_global != MAP_FAILED);
 	if (bad_list_clents_global && (bad_list_clents_global != MAP_FAILED)) {
+		print_message_log("GOVERNOR: is_user_in_bad_list_cleint_persistent user %s numbers %d",
+                                       username, bad_list_clents_global->numbers);
 		int trys = 1;
 		while (trys) {
 			if (sem_trywait(&bad_list_clents_global->sem) == 0) {
 				long index = 0;
 				for (index = 0; index < bad_list_clents_global->numbers; index++) {
+					print_message_log("GOVERNOR: is_user_in_bad_list_cleint_persistent user %s user at index %d - %s, uid %d",
+						username, index, bad_list_clents_global->items[index].username,
+						bad_list_clents_global->items[index].uid);
 					if (!strncmp(
 							bad_list_clents_global->items[index].username,
 							username, USERNAMEMAXLEN)) {
@@ -573,3 +586,33 @@ void printf_bad_list_cleint_persistent(void) {
 
 	return;
 }
+
+#ifdef TEST
+#ifndef GETTID
+pid_t gettid_p(void) {return syscall(__NR_gettid);}
+#endif
+
+void _print_message_log(char *format, ...)
+{
+	char data[8192];
+	FILE *fp = fopen("/var/log/dbgovernor-debug.log","a");
+	if(fp){
+
+		char dt[20]; // space enough for DD/MM/YYYY HH:MM:SS and terminator
+		struct tm tm;
+		time_t current_time;
+
+		current_time = time(NULL);
+		tm = *localtime(&current_time); // convert time_t to struct tm
+		strftime(dt, sizeof dt, "%d/%m/%Y %H:%M:%S", &tm); // format
+
+		va_list ptr;
+		va_start(ptr, format);
+		vsprintf(data, format, ptr);
+		va_end(ptr);
+		fprintf(fp, "%s: TID %d %s\n", dt, gettid_p(), data);
+		fclose(fp);
+	}
+}
+#endif
+

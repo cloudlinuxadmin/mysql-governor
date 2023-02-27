@@ -100,13 +100,12 @@ autoconf
 make
 popd
 
-patch -p1 < log.patch
 mkdir build_test
 pushd build_test
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
-cmake .. -DSYSTEMD_FLAG:BOOL=1
+cmake .. -DSYSTEMD_FLAG:BOOL=1 -DTEST:BOOL=1
 %else
-cmake ..
+cmake .. -DTEST:BOOL=1
 %endif
 make
 popd
