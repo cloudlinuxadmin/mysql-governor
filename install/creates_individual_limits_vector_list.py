@@ -97,7 +97,7 @@ def fill_the_individual_limits():
     _vector = getting_individual_limits_vector(getting_whole_dbctl_list())
     for user, limitsdict in _vector.items():
         fill_gpl_json(
-            package=user, cpu=limitsdict['cpu'],
+            entity_name=user, cpu=limitsdict['cpu'],
             io_read=limitsdict['read'], io_write=limitsdict['write'],
             serialize=False, set_vector=True
         )
