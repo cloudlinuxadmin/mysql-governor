@@ -1,10 +1,11 @@
 %define g_version   1.2
-%define g_release   87
-%define g_key_library 11
+%define g_release   88
+%define g_key_library 12
 
 %if %{undefined _unitdir}
 %define _unitdir /usr/lib/systemd/system
 %endif
+%define _altunitdir /etc/systemd/system
 
 %define pypath /opt/alt/python37/bin
 %define __python %{pypath}/python3
@@ -75,6 +76,14 @@ Requires(postun): initscripts
 %description
 This package provides dbtop, db_governor utilities.
 
+%package devel
+Summary: Development header files for db_governor client applications
+Group: System Environment/Base
+
+%description devel
+This package contains the development header files necessary
+to develop db_governor client applications.
+
 %prep
 
 %setup -q
@@ -87,7 +96,7 @@ echo -e "#ifndef VERSION_H_\n#define VERSION_H_\n#define GOVERNOR_CUR_VER \"%{g_
 mkdir build_clean
 pushd build_clean
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
-cmake .. -DSYSTEMD_FLAG:BOOL=1
+cmake .. -DSYSTEMD_FLAG:BOOL=1 -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON
 %else
 cmake ..
 %endif
@@ -100,13 +109,12 @@ autoconf
 make
 popd
 
-patch -p1 < log.patch
 mkdir build_test
 pushd build_test
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
-cmake .. -DSYSTEMD_FLAG:BOOL=1
+cmake .. -DSYSTEMD_FLAG:BOOL=1 -DTEST:BOOL=1
 %else
-cmake ..
+cmake .. -DTEST:BOOL=1
 %endif
 make
 popd
@@ -140,6 +148,14 @@ mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/history
 mkdir -p ${RPM_BUILD_ROOT}%{_unitdir}
 install -m 644 db_governor.service ${RPM_BUILD_ROOT}%{_unitdir}/
 install -m 644 var-lve-dbgovernor\\x2dshm.mount ${RPM_BUILD_ROOT}%{_unitdir}/
+mkdir -p ${RPM_BUILD_ROOT}%{_altunitdir}/mariadb.service.d
+mkdir -p ${RPM_BUILD_ROOT}%{_altunitdir}/mysql.service.d
+mkdir -p ${RPM_BUILD_ROOT}%{_altunitdir}/mysqld.service.d
+install -m 644 install/systemd/governor.conf ${RPM_BUILD_ROOT}%{_altunitdir}/mariadb.service.d/
+install -m 644 install/systemd/governor.conf ${RPM_BUILD_ROOT}%{_altunitdir}/mysql.service.d/
+install -m 644 install/systemd/governor.conf ${RPM_BUILD_ROOT}%{_altunitdir}/mysqld.service.d/
+install -m 755 install/systemd/governor.sh ${RPM_BUILD_ROOT}/usr/share/lve/dbgovernor/
+install -m 644 install/systemd/governor.env ${RPM_BUILD_ROOT}/usr/share/lve/dbgovernor/
 %else
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/
 install -D -m 755 script/db_governor $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/
@@ -205,6 +221,9 @@ install -D -m 644 cron/lvedbgovernor-utils-cron $RPM_BUILD_ROOT%{_sysconfdir}/cr
 
 touch $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/tmp/INFO
 echo "CloudLinux" > $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/tmp/INFO
+
+mkdir -p $RPM_BUILD_ROOT%{_includedir}/
+install -D -m 644 src/governor_write_data.h $RPM_BUILD_ROOT%{_includedir}/libgovernor.h
 
 %check
 ls -l /usr/bin/mysql
@@ -443,6 +462,11 @@ fi
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
 %{_unitdir}/db_governor.service
 %{_unitdir}/var-lve-dbgovernor\x2dshm.mount
+%{_altunitdir}/mariadb.service.d/governor.conf
+%{_altunitdir}/mysql.service.d/governor.conf
+%{_altunitdir}/mysqld.service.d/governor.conf
+/usr/share/lve/dbgovernor/governor.sh
+%config(noreplace) /usr/share/lve/dbgovernor/governor.env
 %else
 %{_sysconfdir}/rc.d/init.d/*
 %endif
@@ -452,7 +476,13 @@ fi
 /var/lve/dbgovernor-store
 %dir %attr(0700, -, -) /usr/share/lve/dbgovernor/storage
 
+%files devel
+%{_includedir}/libgovernor.h
+
 %changelog
+* Thu Mar 16 2023 Nikolay Petukhov <npetukhov@cloudlinux.com> 1.2-88
+- MYSQLG-853: Moving part of the LVE patch functionality to a shared library
+
 * Tue Feb 21 2023 Sergey Kozhekin <skozhekin@cloudlinux.com> 1.2-87
 - MYSQLG-817: Implement ability to sync one user or one package in /usr/share/lve/dbgovernor/governor_package_limitting.py script
 - MYSQLG-873: Fix governor mysql password issue on plesk

@@ -36,5 +36,11 @@ int init_bad_users_list_utility (void);
 int remove_bad_users_list_utility (void);
 int init_bad_users_list_if_not_exitst (void);
 void printf_bad_list_cleint_persistent (void);
+#ifdef TEST
+void _print_message_log(char *format, ...);
+#define print_message_log(format, mode, ...) do { _print_message_log(format, ##__VA_ARGS__); } while(0)
+#else
+#define print_message_log(format, mode, ...) do { } while(0)
+#endif
 
 #endif /* SHARED_MEMORY_H_ */

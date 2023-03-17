@@ -1,5 +1,19 @@
 #!/bin/bash
 
+export LD_PRELOAD=
+ARCH=`getconf LONG_BIT`
+LIBDIR=/usr/lib
+if [ "$ARCH" == "64" ]; then
+    LIBDIR=/usr/lib64
+fi
+
+FILE=$LIBDIR/libgovernor_stubs.so
+if [ -f "$FILE" ]; then
+    export LD_PRELOAD=$LIBDIR/libgovernor.so
+else
+    export LD_PRELOAD=
+fi
+
 cpu_limit=
 io_limit=
 

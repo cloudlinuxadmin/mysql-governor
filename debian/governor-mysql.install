@@ -46,3 +46,8 @@
  etc/cron.d/lvedbgovernor-utils-cron
  usr/share/lve/dbgovernor/governor_package_limitting.py
  usr/share/lve/dbgovernor/creates_individual_limits_vector_list.py
+ etc/systemd/system/mariadb.service.d/governor.conf
+ etc/systemd/system/mysql.service.d/governor.conf
+ etc/systemd/system/mysqld.service.d/governor.conf
+ usr/share/lve/dbgovernor/governor.sh
+ usr/share/lve/dbgovernor/governor.env
