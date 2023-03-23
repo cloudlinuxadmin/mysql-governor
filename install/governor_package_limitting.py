@@ -701,53 +701,48 @@ def convert_io_rw_to_bb(cfg: dict):
     return cfg
 
 
-def trying_to_get_user_in_dbctl_list(individual_limits, user):
+def trying_to_get_user_in_dbctl_list(user: str, format: str) -> Dict:
     """
-    A new user appears in the dbctl list some time later,
-    not immediately. If the user is a system user, but
-    not present in the dbctl list yet - we can reboot
-    the db_governor service to add the user to
-    the dbctl list immediately.
-    Arts:
-        user -> system user for which we perform actions
-        individual_limits -> a dictionary with data contains dbctl limits
+    Extract user limits from dbctl list output
+    Make additional attempt in case of fail and fallback to default limits
+    Args:
+        user -> web panel user for which we perform actions
+        format -> formats that we use in dbctl (bb, kb, mb)
     Returns:
         specific user limits (cpu, read, write)
     """
-    if user != 'default':
-        try:
-            usr_info = pwd.getpwnam(user).pw_name
-        except KeyError:
-            print(f'The <{user}> user does not exist in the system.')
-            sys.exit(1)
 
-    data = individual_limits.get(user)
-
+    data = _get_dbctl_list_json(format).get(user)
+    # make one more attempt in case of new user that wasn't added to dbctl list yet
     if not data:
+        default_limits = {
+            "cpu": {"current": 0, "short": 0, "mid": 0, "long": 0},
+            "read": {"current": 0, "short": 0, "mid": 0, "long": 0},
+            "write": {"current": 0, "short": 0, "mid": 0, "long": 0}
+        }
+        # restart db_governor service to add the user to the dbctl list immediately
         os.system('/usr/share/lve/dbgovernor/mysqlgovernor.py --dbupdate')
         time.sleep(1)
         os.system('service db_governor restart &> /dev/null')
         time.sleep(1)
-        return None
-
+        # if user limits still unavailable - just return a structure with zero values
+        data = _get_dbctl_list_json(format).get(user) or default_limits
     return data
 
 
-def return_data(individual_limits, user):
-    """
-    If user's limits data still unavailable - just returns
-    a structure with zero values. Use case is the next:
-    we have a package but the users are not added yet ->
-    we should set the new package or default limits
-    and ignore individual limits
-    """
-    empty = {"cpu": {"current": 0, "short": 0, "mid": 0, "long": 0},
-             "read": {"current": 0, "short": 0, "mid": 0, "long": 0},
-             "write": {"current": 0, "short": 0, "mid": 0, "long": 0}
-            }
-    data = individual_limits.get(user)
-
-    return data or empty
+def _get_dbctl_list_json(format: str) -> Dict:
+    dbctl_limits = f'{DBCTL_BIN} list-json --{format}'
+    output = subprocess.run(dbctl_limits, shell=True,
+                            text=True, capture_output=True)
+    _data = output.stdout
+    try:
+        data = json.loads(_data)
+    except json.JSONDecodeError:
+        logging.debug(f"<{DBCTL_BIN} list-json --{format}> returns non json data!")
+        logging.debug(f"stdout -> {output.stdout}")
+        logging.debug(f"stderr -> {output.stderr}")
+        sys.exit(1)
+    return data
 
 
 def get_dbctl_limits(user: str = 'default', format: str = 'bb') -> Tuple:
@@ -765,28 +760,7 @@ def get_dbctl_limits(user: str = 'default', format: str = 'bb') -> Tuple:
     Returns: a tuple of lists ([cpu],[read],[write]),
              or blank tuple if user has not been found
     """
-    def request_data_from_dbctl():
-        dbctl_limits = f'{DBCTL_BIN} list-json --{format}'
-        output = subprocess.run(dbctl_limits, shell=True,
-                                text=True, capture_output=True)
-        _data = output.stdout
-        try:
-            data = json.loads(_data)
-        except json.JSONDecodeError:
-            logging.debug(f"<{DBCTL_BIN} list-json --{format}> returns non json data!")
-            logging.debug(f"stdout -> {output.stdout}")
-            logging.debug(f"stderr -> {output.stderr}")
-            sys.exit(1)
-        return data
-
-    individual_limits = trying_to_get_user_in_dbctl_list(
-        request_data_from_dbctl(), user
-    )
-
-    if not individual_limits:
-        individual_limits = return_data(
-            request_data_from_dbctl(), user
-        )
+    individual_limits = trying_to_get_user_in_dbctl_list(user, format)
 
     individual_cpu_limit = (
         individual_limits['cpu']['current'],

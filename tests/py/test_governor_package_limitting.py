@@ -457,8 +457,6 @@ def test_get_dbctl_limits():
         assert out == limits_out
 
 
-@mock.patch("governor_package_limitting.trying_to_get_user_in_dbctl_list",
-            mock.MagicMock(return_value=False))
 def test_broken_dbctl_limits():
     with mock.patch("governor_package_limitting.subprocess.run") as output_mock:
         output_mock.return_value.stdout = "some non json data"
