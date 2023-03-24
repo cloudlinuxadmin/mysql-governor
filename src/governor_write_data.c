@@ -466,9 +466,6 @@ void init_libgovernor(void)
 	orig_pthread_mutex_unlock_ptr = (pthread_mutex_func_t)(intptr_t)dlsym(RTLD_NEXT, "pthread_mutex_unlock");
 	if (NULL == orig_pthread_mutex_unlock_ptr)
 		fprintf(stderr, "%s dlerror:%s\n", __func__, dlerror());
-
-	fprintf(stderr, "%s lock:%p trylock:%p unlock:%p\n",
-			__func__, (void*)(intptr_t)orig_pthread_mutex_lock_ptr, (void*)(intptr_t)orig_pthread_mutex_trylock_ptr, (void*)(intptr_t)orig_pthread_mutex_unlock_ptr);
 }
 
 static int orig_pthread_mutex_lock(pthread_mutex_t *mutex)
@@ -519,8 +516,6 @@ static unsigned int trylock_cnt = 0;
 
 void fini_libgovernor(void)
 {
-	fprintf(stderr, "%s lock:%u unlock:%u trylock:%u\n",
-			__func__, lock_cnt, unlock_cnt, trylock_cnt);
 }
 
 static void *lve_library_handle = NULL;

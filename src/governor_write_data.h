@@ -22,36 +22,36 @@ extern "C" {
     return 0 on first unsuccesful connect
     return <0 on not-first unsuccessful connects
 */
-int connect_to_server (void) __attribute__ ((weak));
+int connect_to_server(void);
 
 /*
     return 0 on success
     return 1 on first unsuccesful connect
     return <0 on not-first unsuccessful connects
 */
-int connect_to_server_ex (void) __attribute__ ((weak));
+int connect_to_server_ex(void);
 
-int send_info_begin (char *username) __attribute__ ((weak));
-int send_info_end (char *username) __attribute__ ((weak));
-int close_sock (void) __attribute__ ((weak));
+int send_info_begin(char *username);
+int send_info_end(char *username);
+int close_sock(void);
 
-int governor_load_lve_library (void) __attribute__ ((weak));
+int governor_load_lve_library(void);
 
-int governor_init_lve (void) __attribute__ ((weak));
+int governor_init_lve(void);
 
-void governor_destroy (void) __attribute__ ((weak));
+void governor_destroy(void);
 
-int governor_put_in_lve(char *user) __attribute__ ((weak));
+int governor_put_in_lve(char *user);
 
-void governor_lve_thr_exit(void) __attribute__ ((weak));
+void governor_lve_thr_exit(void);
 
-void governor_reserve_slot(void) __attribute__ ((weak));
+void governor_reserve_slot(void);
 
-void governor_release_slot(void) __attribute__ ((weak));
+void governor_release_slot(void);
 
-void governor_critical_section_begin(void)  __attribute__ ((weak));
+void governor_critical_section_begin(void);
 
-void governor_critical_section_end(void)  __attribute__ ((weak));
+void governor_critical_section_end(void);
 
 //for backward compatible, linked and called
 void governor_destroy_lve(void);
