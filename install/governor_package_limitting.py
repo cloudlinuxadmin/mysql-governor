@@ -14,15 +14,16 @@ from distutils.log import debug
 import os
 import sys
 from os.path import exists
-from clcommon.cpapi import cpinfo, admin_packages, resellers_packages
+from clcommon.cpapi import cpinfo, admin_packages, resellers_packages, cpusers, getCPName
 from typing import Dict, List, Tuple
 import subprocess
 import json
 import logging
 
-from utilities import Logger, shadow_tracing, acquire_lock, LockFailedException
+from utilities import acquire_lock, LockFailedException
 
 
+CURRENT_PROGRAM_NAME = os.path.basename(sys.argv[0])
 DBCTL_BIN = '/usr/share/lve/dbgovernor/utils/dbctl_orig'
 PACKAGE_LIMIT_CONFIG = '/etc/container/governor_package_limit.json'
 LOCK_FILE = '/var/run/governor_package_limit'
@@ -31,13 +32,27 @@ DEBUG = False
 ENCODING = 'utf-8'
 
 
-def add_logs():
+def init_logging():
     """
     Messages related to governor_package_limitting
     """
     logging.basicConfig(
-        filename="/usr/share/lve/dbgovernor/governor_package_limitting.log",
-        format="%(asctime)s %(levelname)s %(message)s", level=logging.INFO)
+        stream = sys.stderr,
+        format=f"{CURRENT_PROGRAM_NAME} %(levelname)s: %(message)s",
+        level=logging.ERROR
+    )
+
+
+def _process_call_error(call_err):
+    if isinstance(call_err.cmd, list):
+        cmd_str = " ".join(call_err.cmd)
+    else:
+        cmd_str = call_err.cmd
+    logging.error(f'command \'{cmd_str}\' exit code = {call_err.returncode}')
+    logging.info('stdout:\n' + str(call_err.stdout))
+    if call_err.stderr is not None:
+        logging.info('stderr:\n' + str(call_err.stderr))
+    return call_err.returncode
 
 
 def debug_log(line, end='\n'):
@@ -207,15 +222,15 @@ def limits_serializer(args: List, set_vector=False):
                 else:
                     __limits.append(i)
     except Exception as err:
-        print(f'Some parameters are incorrect: {err}')
+        logging.error(f'Some parameters are incorrect: {err}')
         sys.exit(1)
 
     if len(__limits) > 4:
-        print(f'Some parameters are incorrect. Provided options is more than 4')
+        logging.error(f'Some parameters are incorrect. Provided options is more than 4')
         sys.exit(1)
 
     if __limits and set_vector and len(__limits) != 4:
-        print(f'Some parameters are incorrect. Provided options must be equal 4 when you set the vector!')
+        logging.error(f'Some parameters are incorrect. Provided options must be equal 4 when you set the vector!')
         sys.exit(1)
 
     if not __limits and set_vector:
@@ -307,14 +322,14 @@ def check_if_values_are_not_less_than_zero(cfg):
                 sys.exit(1)
 
 
-def fill_gpl_json(package: str, cpu: list = None, io_read: list = None,
+def fill_gpl_json(entity_name: str, cpu: list = None, io_read: list = None,
                   io_write: list = None, serialize: bool = True,
                   set_vector: bool = False) -> None:
     """
     Setting 'package limits' or 'individual limits' to
     the governor_package_limit.json
     Args:
-        package (str): Package name
+        entity_name (str): Package or user name
         cpu (list): cpu limits
         io_read (list): io read limits
         io_write (list): io write limits
@@ -323,8 +338,17 @@ def fill_gpl_json(package: str, cpu: list = None, io_read: list = None,
     Return:
         None
     """
+    # check package existence
+    if not set_vector and entity_name not in get_all_packages():
+        logging.error(f'Package name {entity_name} not found in {getCPName()} packages')
+        sys.exit(1)
+    # check user existence
+    if set_vector and entity_name not in cpusers():
+        logging.error(f'User {entity_name} not found in {getCPName()} users')
+        sys.exit(1)
+
     cfg = {
-        package: {
+        entity_name: {
             'cpu': limits_serializer(cpu, set_vector) if serialize else cpu,
             'read': limits_serializer(io_read, set_vector) if serialize else io_read,
             'write': limits_serializer(io_write, set_vector) if serialize else io_write,
@@ -332,22 +356,22 @@ def fill_gpl_json(package: str, cpu: list = None, io_read: list = None,
     }
 
     if not set_vector:
-        convert_io_rw_to_bb(cfg[package])
-        check_if_values_are_not_less_than_zero(cfg[package])
+        convert_io_rw_to_bb(cfg[entity_name])
+        check_if_values_are_not_less_than_zero(cfg[entity_name])
         section = 'package_limits'
     else:
         section = 'individual_limits'
 
     config = get_package_limit()
-    if config[section].get(package):
+    if config[section].get(entity_name):
         if cpu:
-            config[section][package]['cpu'] = cfg[package]['cpu']
+            config[section][entity_name]['cpu'] = cfg[entity_name]['cpu']
         if io_read:
-            config[section][package]['read'] = cfg[package]['read']
+            config[section][entity_name]['read'] = cfg[entity_name]['read']
         if io_write:
-            config[section][package]['write'] = cfg[package]['write']
+            config[section][entity_name]['write'] = cfg[entity_name]['write']
     else:
-        config[section][package] = cfg[package]
+        config[section][entity_name] = cfg[entity_name]
 
     debug_log(f'Setting package limit with config: {config}\n')
     write_config_to_json_file(config)
@@ -383,8 +407,9 @@ def delete_package_limit(package: str):
         write_config_to_json_file(config)
         debug_log(f'Deleting package {package} from config')
     except (KeyError, AttributeError) as err:
-        print(f'Package name {package} not found')
+        logging.error(f'Package name {package} not found')
         debug_log(err)
+        sys.exit(1)
         return
 
 
@@ -404,8 +429,9 @@ def reset_individual(username: str, certain_limits: str = None):
             write_config_to_json_file(config)
             debug_log(f'Deleting vector {username} from config')
         except (KeyError, AttributeError) as err:
-            print(help_msg)
+            logging.error(help_msg)
             debug_log(err)
+            sys.exit(1)
             return
 
     if not certain_limits or certain_limits.lower() == 'all':
@@ -469,7 +495,10 @@ def return_the_individual_limits_to_dbctl(_user: str, limits: list,
             return
 
     dbctlset = f'{DBCTL_BIN} set {_user} {_limit}'
-    subprocess.run(dbctlset, shell=True, text=True)
+    try:
+        subprocess.run(dbctlset, shell=True, text=True, check=True, capture_output=True)
+    except subprocess.CalledProcessError as call_err:
+        return _process_call_error(call_err)
 
 
 def reset_a_certain_limit(username: str, limits: list):
@@ -544,8 +573,8 @@ def get_individual(username: str = None, print_to_stdout=False):
     return cfg
 
 
-def run_dbctl_command(users: list, action: str, limits: dict = None):
-    """Run dbctl command in os.
+def run_dbctl_command(users: list, action: str, limits: dict = None) -> int:
+    """Run dbctl command in os, return exit code
     Set or delete limits for all users specified in package
     Args:
         users (list): List of users to apply configuration
@@ -553,14 +582,19 @@ def run_dbctl_command(users: list, action: str, limits: dict = None):
         limits (dict): cpu, read, write in format [int]
     """
     if action == 'set' and not limits:
-        print("Limits has not been set")
+        logging.error("Limits for dbctl have not been set")
         sys.exit(1)
 
     if action == 'delete' and users:
         for user in users:
             command = f'{DBCTL_BIN} delete {user}'
             debug_log(f'Running command: {command}')
-            subprocess.run(command, shell=True, text=True)
+            try:
+                command_result = subprocess.run(command, shell=True, text=True, check=True, capture_output=True)
+                return command_result.returncode
+            except subprocess.CalledProcessError as call_err:
+                # we shouldn't do exit here because this function is called in loop in dbctl_sync
+                return _process_call_error(call_err)
 
     if action == 'set' and limits and users:
         for user in users:
@@ -574,7 +608,12 @@ def run_dbctl_command(users: list, action: str, limits: dict = None):
                 cpu, io_read, io_write = prepare_limits_out
                 command = f'{DBCTL_BIN} set {user} --cpu={cpu} --read={io_read} --write={io_write}'
                 debug_log(f'Running command: {command}')
-                subprocess.run(command, shell=True, text=True)
+                try:
+                    command_result = subprocess.run(command, shell=True, text=True, check=True, capture_output=True)
+                    return command_result.returncode
+                except subprocess.CalledProcessError as call_err:
+                    # we shouldn't do exit here because this function is called in loop in dbctl_sync
+                    return _process_call_error(call_err)
 
 
 def dbctl_sync(action: str, package: str = None, user: str = None):
@@ -588,8 +627,10 @@ def dbctl_sync(action: str, package: str = None, user: str = None):
                        to synchronise for a specific user only
     """
     if not action:
-        print("Action not specified")
+        logging.error("sync action not specified")
         sys.exit(1)
+
+    exit_code = 0
     debug_log("Syncing with dbctl")
     __cp_packages = cp_packages()
 
@@ -597,8 +638,8 @@ def dbctl_sync(action: str, package: str = None, user: str = None):
         users_to_apply_package = __cp_packages.get(package)
         if users_to_apply_package:
             debug_log(f'Deleting package limits for users: {users_to_apply_package}')
-            run_dbctl_command(users_to_apply_package, action)
-            return
+            exit_code += run_dbctl_command(users_to_apply_package, action)
+        sys.exit(exit_code)
 
     if action == 'set':
         _package_limits = get_package_limit(package)
@@ -609,6 +650,7 @@ def dbctl_sync(action: str, package: str = None, user: str = None):
 
         # To avoid traceback if incorrect package name has been set
         if not package_limits:
+            logging.warning(f'package limits for \'{package}\' are empty, probably incorrect package name')
             return
 
         for package_name, limits in package_limits.items():
@@ -617,14 +659,14 @@ def dbctl_sync(action: str, package: str = None, user: str = None):
                 if not user:
                     # Sets package limits for all package's users
                     debug_log(f'Setting package limits for users: {users_to_apply_package}')
-                    run_dbctl_command(users_to_apply_package, action, limits)
+                    exit_code += run_dbctl_command(users_to_apply_package, action, limits)
                     continue
                 if user in users_to_apply_package:
                     # Sets package limits only for a specific user
                     # if user for sync is specified
                     debug_log(f'Setting package limits for user: {user}')
-                    run_dbctl_command([user], action, limits)
-                    return
+                    exit_code += run_dbctl_command([user], action, limits)
+        sys.exit(exit_code)
 
 
 def byte_size_convertor(value: int, from_format: str, to_format: str):
@@ -701,53 +743,48 @@ def convert_io_rw_to_bb(cfg: dict):
     return cfg
 
 
-def trying_to_get_user_in_dbctl_list(individual_limits, user):
+def trying_to_get_user_in_dbctl_list(user: str, format: str) -> Dict:
     """
-    A new user appears in the dbctl list some time later,
-    not immediately. If the user is a system user, but
-    not present in the dbctl list yet - we can reboot
-    the db_governor service to add the user to
-    the dbctl list immediately.
-    Arts:
-        user -> system user for which we perform actions
-        individual_limits -> a dictionary with data contains dbctl limits
+    Extract user limits from dbctl list output
+    Make additional attempt in case of fail and fallback to default limits
+    Args:
+        user -> web panel user for which we perform actions
+        format -> formats that we use in dbctl (bb, kb, mb)
     Returns:
         specific user limits (cpu, read, write)
     """
-    if user != 'default':
-        try:
-            usr_info = pwd.getpwnam(user).pw_name
-        except KeyError:
-            print(f'The <{user}> user does not exist in the system.')
-            sys.exit(1)
 
-    data = individual_limits.get(user)
-
+    data = _get_dbctl_list_json(format).get(user)
+    # make one more attempt in case of new user that wasn't added to dbctl list yet
     if not data:
+        default_limits = {
+            "cpu": {"current": 0, "short": 0, "mid": 0, "long": 0},
+            "read": {"current": 0, "short": 0, "mid": 0, "long": 0},
+            "write": {"current": 0, "short": 0, "mid": 0, "long": 0}
+        }
+        # restart db_governor service to add the user to the dbctl list immediately
         os.system('/usr/share/lve/dbgovernor/mysqlgovernor.py --dbupdate')
         time.sleep(1)
         os.system('service db_governor restart &> /dev/null')
         time.sleep(1)
-        return None
-
+        # if user limits still unavailable - just return a structure with zero values
+        data = _get_dbctl_list_json(format).get(user) or default_limits
     return data
 
 
-def return_data(individual_limits, user):
-    """
-    If user's limits data still unavailable - just returns
-    a structure with zero values. Use case is the next:
-    we have a package but the users are not added yet ->
-    we should set the new package or default limits
-    and ignore individual limits
-    """
-    empty = {"cpu": {"current": 0, "short": 0, "mid": 0, "long": 0},
-             "read": {"current": 0, "short": 0, "mid": 0, "long": 0},
-             "write": {"current": 0, "short": 0, "mid": 0, "long": 0}
-            }
-    data = individual_limits.get(user)
-
-    return data or empty
+def _get_dbctl_list_json(format: str) -> Dict:
+    dbctl_limits = f'{DBCTL_BIN} list-json --{format}'
+    output = subprocess.run(dbctl_limits, shell=True,
+                            text=True, capture_output=True)
+    _data = output.stdout
+    try:
+        data = json.loads(_data)
+    except json.JSONDecodeError:
+        logging.debug(f"<{DBCTL_BIN} list-json --{format}> returns non json data!")
+        logging.debug(f"stdout -> {output.stdout}")
+        logging.debug(f"stderr -> {output.stderr}")
+        sys.exit(1)
+    return data
 
 
 def get_dbctl_limits(user: str = 'default', format: str = 'bb') -> Tuple:
@@ -765,28 +802,7 @@ def get_dbctl_limits(user: str = 'default', format: str = 'bb') -> Tuple:
     Returns: a tuple of lists ([cpu],[read],[write]),
              or blank tuple if user has not been found
     """
-    def request_data_from_dbctl():
-        dbctl_limits = f'{DBCTL_BIN} list-json --{format}'
-        output = subprocess.run(dbctl_limits, shell=True,
-                                text=True, capture_output=True)
-        _data = output.stdout
-        try:
-            data = json.loads(_data)
-        except json.JSONDecodeError:
-            logging.debug(f"<{DBCTL_BIN} list-json --{format}> returns non json data!")
-            logging.debug(f"stdout -> {output.stdout}")
-            logging.debug(f"stderr -> {output.stderr}")
-            sys.exit(1)
-        return data
-
-    individual_limits = trying_to_get_user_in_dbctl_list(
-        request_data_from_dbctl(), user
-    )
-
-    if not individual_limits:
-        individual_limits = return_data(
-            request_data_from_dbctl(), user
-        )
+    individual_limits = trying_to_get_user_in_dbctl_list(user, format)
 
     individual_cpu_limit = (
         individual_limits['cpu']['current'],
@@ -912,7 +928,7 @@ def prepare_limits(user: str, package_limit: Dict, individual_limit: Dict) -> Li
         debug_log(f'cpu: [{cpu}], read: [{io_read}], write: [{io_write}]')
         return cpu, io_read, io_write
     except TypeError as err:
-        print(f'Some limits are not given: {err}')
+        logging.error(f'Some limits are not given: {err}')
         sys.exit(1)
 
 
@@ -938,7 +954,7 @@ def sync_with_panel():
     for package in get_all_packages():
         if not get_package_limit(package, cfg=cfg):
             fill_gpl_json(
-                package=package
+                entity_name=package
             )
             cfg = read_config_file()
 
@@ -971,8 +987,6 @@ def main(argv):
     """
     Run main actions
     """
-    shadow_tracing(False)
-
     parser = build_parser()
     if not argv:
         parser.print_help()
@@ -982,7 +996,7 @@ def main(argv):
 
     turn_on_debug_if_user_enabled_debug_mode(opts)
     ensure_json_presence()
-    add_logs()
+    init_logging()
 
     if opts.command == 'set':
         fill_gpl_json(opts.package, opts.cpu, opts.read, opts.write)

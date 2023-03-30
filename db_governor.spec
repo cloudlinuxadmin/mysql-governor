@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   88
+%define g_release   89
 %define g_key_library 12
 
 %if %{undefined _unitdir}
@@ -151,9 +151,13 @@ install -m 644 var-lve-dbgovernor\\x2dshm.mount ${RPM_BUILD_ROOT}%{_unitdir}/
 mkdir -p ${RPM_BUILD_ROOT}%{_altunitdir}/mariadb.service.d
 mkdir -p ${RPM_BUILD_ROOT}%{_altunitdir}/mysql.service.d
 mkdir -p ${RPM_BUILD_ROOT}%{_altunitdir}/mysqld.service.d
-install -m 644 install/systemd/governor.conf ${RPM_BUILD_ROOT}%{_altunitdir}/mariadb.service.d/
-install -m 644 install/systemd/governor.conf ${RPM_BUILD_ROOT}%{_altunitdir}/mysql.service.d/
-install -m 644 install/systemd/governor.conf ${RPM_BUILD_ROOT}%{_altunitdir}/mysqld.service.d/
+%define gcsuffix conf
+%if 0%{?rhel} == 7
+%define gcsuffix conf.cl7
+%endif
+install -m 644 install/systemd/governor.%{gcsuffix} ${RPM_BUILD_ROOT}%{_altunitdir}/mariadb.service.d/governor.conf
+install -m 644 install/systemd/governor.%{gcsuffix} ${RPM_BUILD_ROOT}%{_altunitdir}/mysql.service.d/governor.conf
+install -m 644 install/systemd/governor.%{gcsuffix} ${RPM_BUILD_ROOT}%{_altunitdir}/mysqld.service.d/governor.conf
 install -m 755 install/systemd/governor.sh ${RPM_BUILD_ROOT}/usr/share/lve/dbgovernor/
 install -m 644 install/systemd/governor.env ${RPM_BUILD_ROOT}/usr/share/lve/dbgovernor/
 %else
@@ -480,6 +484,11 @@ fi
 %{_includedir}/libgovernor.h
 
 %changelog
+* Thu Mar 30 2023 Nikolay Petukhov <npetukhov@cloudlinux.com> 1.2-89, Aleksey Petryankin <apetryankin@cloudlinux.com>
+- MYSQLG-900: Fixes in systemd dropin-files on cl7 and ubuntu platforms
+- MYSQLG-820: Error reports have become more consistent in governor_package_limitting.py
+- MYSQLG-919: Fix checking plesk reseller existence in governor_package_limitting.py
+
 * Thu Mar 16 2023 Nikolay Petukhov <npetukhov@cloudlinux.com> 1.2-88
 - MYSQLG-853: Moving part of the LVE patch functionality to a shared library
 
