@@ -86,6 +86,8 @@ class InstallManager:
     ROLLBACK = False
     MYSQLUSER = ''
     MYSQLPASSWORD = ''
+    MY_CNF_BACKUP_PATH = "/etc/my.cnf.govprev"
+    MY_CNF_D_BACKUP_PATH = "/etc/my.cnf.d.govprev"
 
     @staticmethod
     def factory(cp_name):
@@ -125,8 +127,48 @@ class InstallManager:
         self.VAR_LIB_MYSQL = '/var/lib/mysql'
         self.my_cnf_datadir = get_section_from_all_cnfs('datadir')
 
-    @staticmethod
-    def my_cnf_manager(action, old_path=None):
+    def _backup_my_cnf_d(self, source_dir='/etc/my.cnf.d'):
+        """
+        Create a copy of configs in my.cnf.d to restore them after installation of CL-patched mysql package.
+
+        mysqlgovernor install should work like transaction,
+        so we need only one backup from current mysql installation
+        """
+        if os.path.exists(source_dir):
+            shutil.rmtree(self.MY_CNF_D_BACKUP_PATH, ignore_errors=True)
+            shutil.copytree(source_dir, self.MY_CNF_D_BACKUP_PATH)
+
+    def _restore_all_my_cnf(self, my_cnf_src=MY_CNF_BACKUP_PATH):
+        """
+        Move backups of /etc/my.cnf and /etc/my.cnf.d back to original locations.
+        """
+        my_cnf_dest = '/etc/my.cnf'
+        my_cnf_d_dest = '/etc/my.cnf.d'
+        shutil.copy2(my_cnf_src, my_cnf_dest)
+        # copy all files from backup dir to original destination, overwrite existing files
+        # can't use shutil.copytree(..., dirs_exist_ok=True) for python < 3.8
+        for src_dirpath, _, files in os.walk(self.MY_CNF_D_BACKUP_PATH):
+            dest_dirpath = src_dirpath.replace(self.MY_CNF_D_BACKUP_PATH, my_cnf_d_dest, 1)
+            if not os.path.exists(dest_dirpath):
+                os.makedirs(dest_dirpath)
+            for file in files:
+                src_path = os.path.join(src_dirpath, file)
+                dest_path = os.path.join(dest_dirpath, file)
+                shutil.copy2(src_path, dest_path)
+
+    def _cleanup_all_my_cnf(self, _):
+        """
+        Delete internal backups of /etc/my.cnf and /etc/my.cnf.d
+        """
+        try:
+            if os.path.exists(self.MY_CNF_BACKUP_PATH):
+                os.unlink(self.MY_CNF_BACKUP_PATH)
+            if os.path.exists(self.MY_CNF_D_BACKUP_PATH):
+                shutil.rmtree(self.MY_CNF_D_BACKUP_PATH)
+        except PermissionError as e:
+            print(f'Unable to delete internal /etc/my.cnf* backups:\n{e}')
+
+    def my_cnf_manager(self, action, old_path=None):
         """
         Allows to manage known manipulations with /etc/my.cnf file
         :param action: action to perform
@@ -139,13 +181,13 @@ class InstallManager:
             return
 
         actions = {
-            'backup': lambda x: shutil.copy2(x, "/etc/my.cnf.govprev"),
-            'restore': lambda x: shutil.move(x, "/etc/my.cnf"),
+            'backup': lambda x: shutil.copy2(x, self.MY_CNF_BACKUP_PATH),
+            'restore': self._restore_all_my_cnf,
             'restore_old': lambda x: shutil.copy(x, "/etc/my.cnf"),
             'restore_rpmsave': lambda x: shutil.copy2(x, "/etc/my.cnf"),
-            'cleanup': lambda x: os.unlink(x),
+            'cleanup': self._cleanup_all_my_cnf,
             'backup_old': '',
-            'backup_my_cnf_d': lambda x: shutil.copytree(x, "/etc/my.cnf.d.govprev")
+            'backup_my_cnf_d': self._backup_my_cnf_d,
         }
 
         if action not in actions.keys():
@@ -163,7 +205,7 @@ class InstallManager:
         elif action == 'restore_old':
             working_path = "%s/my.cnf" % old_path
         else:
-            working_path = "/etc/my.cnf.govprev"
+            working_path = self.MY_CNF_BACKUP_PATH
 
         if os.path.exists(working_path):
             try:
@@ -267,8 +309,6 @@ class InstallManager:
             self.cl8_enable_cached()
             return False
 
-        # if os.path.exists("/etc/my.cnf"):
-        #     shutil.copy2("/etc/my.cnf", "/etc/my.cnf.govprev")
         self.my_cnf_manager('backup_my_cnf_d')
         self.my_cnf_manager('backup')
 
@@ -282,8 +322,6 @@ class InstallManager:
         correct_remove_notowned_mysql_service_names_not_symlynks_cl7()
 
         # restore my.cnf, because before removing packages, we make backup of /etc/my.cnf and  /etc/my.cnf.d/* to *.govprev extension
-        # if os.path.exists("/etc/my.cnf.govprev"):
-        #     shutil.copy2("/etc/my.cnf.govprev", "/etc/my.cnf")
         self.my_cnf_manager('restore_rpmsave')
 
         self.set_fs_suid_dumpable()
@@ -390,9 +428,7 @@ class InstallManager:
         else:
             install_packages("old", beta)
 
-        # restore previous packages state
-        # if os.path.exists("/etc/my.cnf.govprev"):
-        #     shutil.move("/etc/my.cnf.govprev", "/etc/my.cnf")
+        # restore previous configs for affected mysql packages
         self.my_cnf_manager('restore')
 
         self._mysqlservice("restart")
@@ -476,9 +512,7 @@ class InstallManager:
             shutil.move("/etc/cron.d/dbgovernor-usermap-cron",
                         "/etc/cron.d/dbgovernor-usermap-cron.bak")
 
-        # backup my.cnf file for restore if uninstall will be failed
-        # if os.path.exists("/etc/my.cnf"):
-        #     shutil.copy2("/etc/my.cnf", "/etc/my.cnf.govprev")
+        # backup my.cnf* files for restoration in case of uninstall failure
         self.my_cnf_manager('backup')
 
         # run trigger before governor uninstal
@@ -576,8 +610,6 @@ class InstallManager:
         if os.path.exists("/etc/yum.repos.d/cl-mysql.repo.bak"):
             os.unlink("/etc/yum.repos.d/cl-mysql.repo.bak")
 
-        # if os.path.exists("/etc/my.cnf.govprev"):
-        #     os.unlink("/etc/my.cnf.govprev")
         self.my_cnf_manager('cleanup')
 
         if os.path.exists("/etc/cron.d/dbgovernor-usermap-cron.bak"):
