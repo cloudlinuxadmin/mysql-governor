@@ -45,6 +45,12 @@ int governor_put_in_lve(char *user);
 
 void governor_lve_thr_exit(void);
 
+//use to exclude forced unload from lve
+int governor_put_in_lve_nowraps(char *user);
+
+//use to exclude forced unload from lve
+void governor_lve_thr_exit_nowraps(void);
+
 void governor_reserve_slot(void);
 
 void governor_release_slot(void);

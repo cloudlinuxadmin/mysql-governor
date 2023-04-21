@@ -859,6 +859,16 @@ __attribute__((noinline)) void governor_lve_thr_exit(void)
 	governor_remove_mysql_thread_info();
 }
 
+__attribute__((noinline)) int governor_put_in_lve_nowraps(char *user)
+{
+	return governor_enter_lve(&lve_cookie, user);
+}
+
+__attribute__((noinline)) void governor_lve_thr_exit_nowraps(void)
+{
+	governor_lve_exit(&lve_cookie);
+}
+
 __attribute__((noinline)) int pthread_mutex_lock(pthread_mutex_t *mp)
 {
 	//printf("%s mutex:%p\n", __func__, (void *)mp);
