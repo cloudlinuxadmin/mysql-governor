@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   89
+%define g_release   90
 %define g_key_library 12
 
 %if %{undefined _unitdir}
@@ -497,7 +497,12 @@ fi
 %{_includedir}/libgovernor.h
 
 %changelog
-* Thu Mar 30 2023 Nikolay Petukhov <npetukhov@cloudlinux.com> 1.2-89, Aleksey Petryankin <apetryankin@cloudlinux.com>
+* Tue Apr 25 2023 Nikolay Petukhov <npetukhov@cloudlinux.com>, Aleksey Petryankin <apetryankin@cloudlinux.com> 1.2-90
+- MYSQLG-929: Fixed systemd warning 'The unit file changed on disk'
+- MYSQLG-935: Added _nowraps function to exclude forced unload from lve
+- MYSQLG-863: Fix error with existing /etc/my.cnf.d.govprev
+
+* Thu Mar 30 2023 Nikolay Petukhov <npetukhov@cloudlinux.com>, Aleksey Petryankin <apetryankin@cloudlinux.com> 1.2-89
 - MYSQLG-900: Fixes in systemd dropin-files on cl7 and ubuntu platforms
 - MYSQLG-820: Error reports have become more consistent in governor_package_limitting.py
 - MYSQLG-919: Fix checking plesk reseller existence in governor_package_limitting.py
