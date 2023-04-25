@@ -1,11 +1,10 @@
 %define g_version   1.2
-%define g_release   89
+%define g_release   90
 %define g_key_library 12
 
 %if %{undefined _unitdir}
 %define _unitdir /usr/lib/systemd/system
 %endif
-%define _altunitdir /etc/systemd/system
 
 %define pypath /opt/alt/python37/bin
 %define __python %{pypath}/python3
@@ -148,16 +147,11 @@ mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/history
 mkdir -p ${RPM_BUILD_ROOT}%{_unitdir}
 install -m 644 db_governor.service ${RPM_BUILD_ROOT}%{_unitdir}/
 install -m 644 var-lve-dbgovernor\\x2dshm.mount ${RPM_BUILD_ROOT}%{_unitdir}/
-mkdir -p ${RPM_BUILD_ROOT}%{_altunitdir}/mariadb.service.d
-mkdir -p ${RPM_BUILD_ROOT}%{_altunitdir}/mysql.service.d
-mkdir -p ${RPM_BUILD_ROOT}%{_altunitdir}/mysqld.service.d
 %define gcsuffix conf
 %if 0%{?rhel} == 7
 %define gcsuffix conf.cl7
 %endif
-install -m 644 install/systemd/governor.%{gcsuffix} ${RPM_BUILD_ROOT}%{_altunitdir}/mariadb.service.d/governor.conf
-install -m 644 install/systemd/governor.%{gcsuffix} ${RPM_BUILD_ROOT}%{_altunitdir}/mysql.service.d/governor.conf
-install -m 644 install/systemd/governor.%{gcsuffix} ${RPM_BUILD_ROOT}%{_altunitdir}/mysqld.service.d/governor.conf
+install -m 644 install/systemd/governor.%{gcsuffix} ${RPM_BUILD_ROOT}/usr/share/lve/dbgovernor/governor.conf
 install -m 755 install/systemd/governor.sh ${RPM_BUILD_ROOT}/usr/share/lve/dbgovernor/
 install -m 644 install/systemd/governor.env ${RPM_BUILD_ROOT}/usr/share/lve/dbgovernor/
 %else
@@ -183,6 +177,7 @@ install -D -m 755 install/db-select-mysql $RPM_BUILD_ROOT/usr/share/lve/dbgovern
 install -D -m 755 install/mysqlgovernor.py $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/mysqlgovernor.py
 install -D -m 755 install/governor_package_limitting.py $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/governor_package_limitting.py
 install -D -m 755 install/creates_individual_limits_vector_list.py $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/creates_individual_limits_vector_list.py
+install -D -m 755 install/governor_dropin_fix.py $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/governor_dropin_fix.py
 
 install -D -m 644 install/cl-mysql.repo.default $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cl-mysql.repo.default
 install -D -m 644 install/utilities.py $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utilities.py
@@ -304,6 +299,9 @@ fi
 %if 0%{?rhel} >= 7
 if [ $1 -gt 0 ]; then
     # Initial installation or upgrade
+    if [ -e "/usr/share/lve/dbgovernor/governor_dropin_fix.py" ]; then
+        /usr/share/lve/dbgovernor/governor_dropin_fix.py
+    fi
     systemctl daemon-reload >/dev/null 2>&1 || :
 fi
 if [ $1 = 1 ]; then
@@ -372,6 +370,9 @@ fi
 %if 0%{?rhel} >= 7
 if [ $1 -eq 0 ]; then
     # Package removal, not upgrade
+    if [ -e "/usr/share/lve/dbgovernor/governor_dropin_fix.py" ]; then
+        /usr/share/lve/dbgovernor/governor_dropin_fix.py "uninstall"
+    fi
     systemctl --no-reload disable db_governor.service >/dev/null 2>&1 || :
     systemctl stop db_governor.service >/dev/null 2>&1 || :
 fi
@@ -448,6 +449,20 @@ if [ -e /usr/sbin/cagefsctl ]; then
     fi
 fi
 
+%triggerin -- cl-MySQL55-server, cl-MySQL56-server, cl-MySQL57-server, cl-MySQL80-server, cl-Percona56-server, mysql-community-server
+%if 0%{?rhel} >= 7
+if [ -e "/usr/share/lve/dbgovernor/governor_dropin_fix.py" ]; then
+    /usr/share/lve/dbgovernor/governor_dropin_fix.py "mysql"
+fi
+%endif
+
+%triggerin -- cl-MariaDB55-server, cl-MariaDB100-server, cl-MariaDB101-server, cl-MariaDB102-server, cl-MariaDB103-server, cl-MariaDB104-server, cl-MariaDB105-server, cl-MariaDB106-server, mariadb-server
+%if 0%{?rhel} >= 7
+if [ -e "/usr/share/lve/dbgovernor/governor_dropin_fix.py" ]; then
+    /usr/share/lve/dbgovernor/governor_dropin_fix.py "mariadb"
+fi
+%endif
+
 %files
 %defattr(-,root,root)
 %doc LICENSE.TXT
@@ -466,9 +481,7 @@ fi
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
 %{_unitdir}/db_governor.service
 %{_unitdir}/var-lve-dbgovernor\x2dshm.mount
-%{_altunitdir}/mariadb.service.d/governor.conf
-%{_altunitdir}/mysql.service.d/governor.conf
-%{_altunitdir}/mysqld.service.d/governor.conf
+/usr/share/lve/dbgovernor/governor.conf
 /usr/share/lve/dbgovernor/governor.sh
 %config(noreplace) /usr/share/lve/dbgovernor/governor.env
 %else
@@ -484,7 +497,12 @@ fi
 %{_includedir}/libgovernor.h
 
 %changelog
-* Thu Mar 30 2023 Nikolay Petukhov <npetukhov@cloudlinux.com> 1.2-89, Aleksey Petryankin <apetryankin@cloudlinux.com>
+* Tue Apr 25 2023 Nikolay Petukhov <npetukhov@cloudlinux.com>, Aleksey Petryankin <apetryankin@cloudlinux.com> 1.2-90
+- MYSQLG-929: Fixed systemd warning 'The unit file changed on disk'
+- MYSQLG-935: Added _nowraps function to exclude forced unload from lve
+- MYSQLG-863: Fix error with existing /etc/my.cnf.d.govprev
+
+* Thu Mar 30 2023 Nikolay Petukhov <npetukhov@cloudlinux.com>, Aleksey Petryankin <apetryankin@cloudlinux.com> 1.2-89
 - MYSQLG-900: Fixes in systemd dropin-files on cl7 and ubuntu platforms
 - MYSQLG-820: Error reports have become more consistent in governor_package_limitting.py
 - MYSQLG-919: Fix checking plesk reseller existence in governor_package_limitting.py

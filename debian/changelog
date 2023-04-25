@@ -1,3 +1,10 @@
+governor-mysql (1.2-90) stable; urgency=medium
+  * MYSQLG-929: Fixed systemd warning 'The unit file changed on disk'
+  * MYSQLG-935: Added _nowraps function to exclude forced unload from lve
+  * MYSQLG-863: Fix error with existing /etc/my.cnf.d.govprev
+
+ -- Nikolay Petukhov <npetukhov@cloudlinux.com>  Tue, 25 apr 2023 10:00:00 +0000
+
 governor-mysql (1.2-89) stable; urgency=medium
 
   * MYSQLG-900: Fixes in systemd dropin-files on cl7 and ubuntu platforms

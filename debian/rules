@@ -45,6 +45,8 @@ override_dh_auto_install:
 	mkdir -p $(CURDIR)/debian/tmp/usr/share/lve/dbgovernor/
 	install -m 755 $(CURDIR)/install/systemd/governor.sh $(CURDIR)/debian/tmp/usr/share/lve/dbgovernor/
 	install -m 644 $(CURDIR)/install/systemd/governor.env $(CURDIR)/debian/tmp/usr/share/lve/dbgovernor/
+	install -m 644 $(CURDIR)/install/systemd/governor.conf $(CURDIR)/debian/tmp/usr/share/lve/dbgovernor/
+	install -m 755 $(CURDIR)/install/governor_dropin_fix.py $(CURDIR)/debian/tmp/usr/share/lve/dbgovernor/
 
 	mkdir -p $(CURDIR)/debian/tmp/var/lve/dbgovernor/
 	mkdir -p $(CURDIR)/debian/tmp/var/lve/dbgovernor-store/

@@ -455,17 +455,38 @@ pthread_mutex_func_t orig_pthread_mutex_lock_ptr = NULL;
 pthread_mutex_func_t orig_pthread_mutex_trylock_ptr = NULL;
 pthread_mutex_func_t orig_pthread_mutex_unlock_ptr = NULL;
 
+static int void_pthread_mutex_func(pthread_mutex_t *mutex)
+{
+	(void)mutex;
+	return 0;
+}
+
 void init_libgovernor(void)
 {
-	orig_pthread_mutex_lock_ptr = (pthread_mutex_func_t)(intptr_t)dlsym(RTLD_NEXT, "pthread_mutex_lock");
-	if (NULL == orig_pthread_mutex_lock_ptr)
-		fprintf(stderr, "%s dlerror:%s\n", __func__, dlerror());
-	orig_pthread_mutex_trylock_ptr = (pthread_mutex_func_t)(intptr_t)dlsym(RTLD_NEXT, "pthread_mutex_trylock");
-	if (NULL == orig_pthread_mutex_trylock_ptr)
-		fprintf(stderr, "%s dlerror:%s\n", __func__, dlerror());
-	orig_pthread_mutex_unlock_ptr = (pthread_mutex_func_t)(intptr_t)dlsym(RTLD_NEXT, "pthread_mutex_unlock");
-	if (NULL == orig_pthread_mutex_unlock_ptr)
-		fprintf(stderr, "%s dlerror:%s\n", __func__, dlerror());
+	if (!orig_pthread_mutex_lock_ptr && !orig_pthread_mutex_trylock_ptr && !orig_pthread_mutex_unlock_ptr) {
+
+		pthread_mutex_func_t orig_lock_ptr = NULL;
+		pthread_mutex_func_t orig_trylock_ptr = NULL;
+		pthread_mutex_func_t orig_unlock_ptr = NULL;
+
+		orig_pthread_mutex_lock_ptr = void_pthread_mutex_func;
+		orig_pthread_mutex_trylock_ptr = void_pthread_mutex_func;
+		orig_pthread_mutex_unlock_ptr = void_pthread_mutex_func;
+
+		orig_lock_ptr = (pthread_mutex_func_t)(intptr_t)dlsym(RTLD_NEXT, "pthread_mutex_lock");
+		orig_trylock_ptr = (pthread_mutex_func_t)(intptr_t)dlsym(RTLD_NEXT, "pthread_mutex_trylock");
+		orig_unlock_ptr = (pthread_mutex_func_t)(intptr_t)dlsym(RTLD_NEXT, "pthread_mutex_unlock");
+
+		if (!orig_lock_ptr || !orig_trylock_ptr || !orig_unlock_ptr) {
+
+			fprintf(stderr, "%s dlerror:%s\n", __func__, dlerror());
+			abort();
+		}
+
+		orig_pthread_mutex_lock_ptr = orig_lock_ptr;
+		orig_pthread_mutex_trylock_ptr = orig_trylock_ptr;
+		orig_pthread_mutex_unlock_ptr = orig_unlock_ptr;
+	}
 }
 
 static int orig_pthread_mutex_lock(pthread_mutex_t *mutex)
@@ -857,6 +878,16 @@ __attribute__((noinline)) void governor_lve_thr_exit(void)
 		mysql_mutex_ptr->is_in_lve = 0;
 	}
 	governor_remove_mysql_thread_info();
+}
+
+__attribute__((noinline)) int governor_put_in_lve_nowraps(char *user)
+{
+	return governor_enter_lve(&lve_cookie, user);
+}
+
+__attribute__((noinline)) void governor_lve_thr_exit_nowraps(void)
+{
+	governor_lve_exit(&lve_cookie);
 }
 
 __attribute__((noinline)) int pthread_mutex_lock(pthread_mutex_t *mp)

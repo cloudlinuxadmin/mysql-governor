@@ -51,3 +51,5 @@
  etc/systemd/system/mysqld.service.d/governor.conf
  usr/share/lve/dbgovernor/governor.sh
  usr/share/lve/dbgovernor/governor.env
+ usr/share/lve/dbgovernor/governor.conf
+ usr/share/lve/dbgovernor/governor_dropin_fix.py
