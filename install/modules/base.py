@@ -900,19 +900,17 @@ for native procedure restoring of MySQL packages"""))
                 packages += ["mysqlclient16", "mysqlclient15"]
             else:
                 packages += ['mysqlclient18']
-            if sql_version in ["mariadb55", "mariadb100", "mariadb101", "mariadb102", "mariadb103"] \
-                    and get_cl_num() >= 8:
-                # net-snmp-agent-libs on CL8 requires libmariadb.so.3() and libmariadb.so.3(libmysqlclient_18)
-                # Old versions of MariaDB up to 10.1 do not contain libmariadb at all.
-                # So we need to install mysqlclient18-compat for mariadb55, mariadb100 and mariadb101
-                # Currently our meta-client pkgs of MariaDB 10.2 and 10.3 don't declare
-                # that they provide libmariadb, though in fact their libs pkgs contain it.
-                # So we need to install mysqlclient18-compat for mariadb102 and mariadb103 also.
-                packages += ["mysqlclient18-compat"]
-            elif sql_version == "mariadb106":
-                packages += ["mysqlclient18"]
-            if self.cl_version >= 9 and sql_version == "mariadb104":
-                packages += ["mysqlclient18-compat"]
+            packages += ["mysqlclient18-compat"]
+            # Reasons for installation of mysqlclient18-compat:
+            # it provides libmysqlclient.so.18 which is needed for postfix on CL7 (not libmysqlclient.so provided by cl-MariaDB10*)
+            # it provides libmariadb.so.3() and libmariadb.so.3(libmysqlclient_18) for net-snmp-agent-libs on CL8
+            #
+            # Details about libmariadb:
+            # Old versions of MariaDB up to 10.1 do not contain libmariadb at all.
+            # So we need to install mysqlclient18-compat for mariadb55, mariadb100 and mariadb101.
+            # cl-MariaDB-102-libs and cl-MariaDB-103-libs pkgs contain libmariadb.so.3
+            # but don't declare that they provide libmariadb.so.3() or similar capabilities
+            # So we need to install mysqlclient18-compat for mariadb102 and mariadb103 also.
         elif sql_version.startswith("percona"):
             packages += ["mysqlclient18", "mysqlclient16", "mysqlclient15"]
 

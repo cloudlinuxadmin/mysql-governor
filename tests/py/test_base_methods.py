@@ -4,9 +4,9 @@ from modules import InstallManager
 
 
 @pytest.mark.parametrize("mocked_content, expected", [
-    (6, ["mysql.x86_64", "mysql-server.x86_64", "mysql-libs.x86_64", "mysql-devel.x86_64", 'mysql-bench.x86_64', 'libaio.x86_64']),
-    (7, ["mariadb.x86_64", "mariadb-server.x86_64", "mariadb-devel.x86_64", "mariadb-libs.x86_64", "mariadb-bench.x86_64", 'libaio.x86_64']),
-    (8, ["mysql.x86_64", "mysql-server.x86_64", "mysql-libs.x86_64", "mysql-devel.x86_64", 'libaio.x86_64']),
+    (6, ["mysql.x86_64", "mysql-server.x86_64", "mysql-libs.x86_64", "mysql-devel.x86_64", "mysql-bench.x86_64", "libaio.x86_64"]),
+    (7, ["mariadb.x86_64", "mariadb-server.x86_64", "mariadb-devel.x86_64", "mariadb-libs.x86_64", "mariadb-bench.x86_64", "libaio.x86_64"]),
+    (8, ["mysql.x86_64", "mysql-server.x86_64", "mysql-libs.x86_64", "mysql-devel.x86_64", "libaio.x86_64"]),
 ])
 @mock.patch("modules.base.exec_command", mock.MagicMock(return_value=''))
 @mock.patch("modules.base.exec_command_out", mock.MagicMock())
@@ -21,41 +21,45 @@ def test_load_new_packages_auto(mocked_content, expected):
         res = manager._load_new_packages(False, sql_version='auto')
         assert res == expected
 
+
 @pytest.mark.parametrize("mocked_content, expected", [
     ("mysql51", ["cl-MySQL-meta", "cl-MySQL-meta-client", "cl-MySQL-meta-devel", "mysqlclient18", "mysqlclient15",
-                 'libaio.x86_64']),
+                 "libaio.x86_64"]),
     ("mysql55", ["cl-MySQL-meta", "cl-MySQL-meta-client", "cl-MySQL-meta-devel", "mysqlclient16", "mysqlclient15", "mysqlclient18",
-                 'libaio.x86_64']),
+                 "libaio.x86_64"]),
     ("mysql56", ["cl-MySQL-meta", "cl-MySQL-meta-client", "cl-MySQL-meta-devel", "mysqlclient16", "mysqlclient15", "mysqlclient18",
-                 'libaio.x86_64']),
+                 "libaio.x86_64"]),
     ("mysql57", ["cl-MySQL-meta", "cl-MySQL-meta-client", "cl-MySQL-meta-devel", "mysqlclient16", "mysqlclient15", "mysqlclient18",
-                 "numactl-devel.x86_64", "numactl.x86_64", 'libaio.x86_64']),
+                 "numactl-devel.x86_64", "numactl.x86_64", "libaio.x86_64"]),
     ("mysql80", ["cl-MySQL-meta", "cl-MySQL-meta-client", "cl-MySQL-meta-devel", "mysqlclient16", "mysqlclient15", "mysqlclient18",
-                 "numactl-devel.x86_64", "numactl.x86_64", 'libaio.x86_64']),
+                 "numactl-devel.x86_64", "numactl.x86_64", "libaio.x86_64"]),
     ("mariadb55",
      ["cl-MariaDB-meta", "cl-MariaDB-meta-client", "cl-MariaDB-meta-devel", "mysqlclient16", "mysqlclient15",
-      'libaio.x86_64']),
+      "mysqlclient18-compat", "libaio.x86_64"]),
     ("mariadb100",
      ["cl-MariaDB-meta", "cl-MariaDB-meta-client", "cl-MariaDB-meta-devel", "mysqlclient16", "mysqlclient15",
-      'libaio.x86_64']),
+      "mysqlclient18-compat", "libaio.x86_64"]),
     ("mariadb101",
      ["cl-MariaDB-meta", "cl-MariaDB-meta-client", "cl-MariaDB-meta-devel", "mysqlclient16", "mysqlclient15",
-      'libaio.x86_64']),
+      "mysqlclient18-compat", "libaio.x86_64"]),
     ("mariadb102",
      ["cl-MariaDB-meta", "cl-MariaDB-meta-client", "cl-MariaDB-meta-devel", "mysqlclient16", "mysqlclient15",
-      'libaio.x86_64']),
+      "mysqlclient18-compat", "libaio.x86_64"]),
     ("mariadb103",
      ["cl-MariaDB-meta", "cl-MariaDB-meta-client", "cl-MariaDB-meta-devel", "mysqlclient16", "mysqlclient15",
-      'libaio.x86_64']),
+      "mysqlclient18-compat", "libaio.x86_64"]),
     ("mariadb104",
      ["cl-MariaDB-meta", "cl-MariaDB-meta-client", "cl-MariaDB-meta-devel", "mysqlclient16", "mysqlclient15",
-      'libaio.x86_64']),
+      "mysqlclient18-compat", "libaio.x86_64"]),
     ("mariadb105",
      ["cl-MariaDB-meta", "cl-MariaDB-meta-client", "cl-MariaDB-meta-devel", "mysqlclient16", "mysqlclient15",
-      'libaio.x86_64']),
+      "mysqlclient18-compat", "libaio.x86_64"]),
+    ("mariadb106",
+     ["cl-MariaDB-meta", "cl-MariaDB-meta-client", "cl-MariaDB-meta-devel", "mysqlclient16", "mysqlclient15",
+      "mysqlclient18-compat", "libaio.x86_64"]),
     ("percona56",
      ["cl-Percona-meta", "cl-Percona-meta-client", "cl-Percona-meta-devel", "mysqlclient18", "mysqlclient16",
-      "mysqlclient15", 'libaio.x86_64'])
+      "mysqlclient15", "libaio.x86_64"])
 ])
 @mock.patch("modules.base.get_cl_num", mock.MagicMock(return_value=7))
 @mock.patch("modules.base.exec_command", mock.MagicMock(return_value=''))
@@ -70,41 +74,45 @@ def test_load_new_packages_version(mocked_content, expected):
     res = manager._load_new_packages(False, sql_version=mocked_content)
     assert res == expected
 
+
 @pytest.mark.parametrize("mocked_content, expected", [
     ("mysql51", ["cl-MySQL-meta", "cl-MySQL-meta-client", "cl-MySQL-meta-devel", "mysqlclient18", "mysqlclient15",
-                 'libaio.x86_64']),
+                 "libaio.x86_64"]),
     ("mysql55", ["cl-MySQL-meta", "cl-MySQL-meta-client", "cl-MySQL-meta-devel", "mysqlclient16", "mysqlclient15", "mysqlclient18",
-                 'libaio.x86_64']),
+                 "libaio.x86_64"]),
     ("mysql56", ["cl-MySQL-meta", "cl-MySQL-meta-client", "cl-MySQL-meta-devel", "mysqlclient16", "mysqlclient15", "mysqlclient18",
-                 'libaio.x86_64']),
+                 "libaio.x86_64"]),
     ("mysql57", ["cl-MySQL-meta", "cl-MySQL-meta-client", "cl-MySQL-meta-devel", "mysqlclient16", "mysqlclient15", "mysqlclient18",
-                 "numactl-devel.x86_64", "numactl.x86_64", 'libaio.x86_64']),
+                 "numactl-devel.x86_64", "numactl.x86_64", "libaio.x86_64"]),
     ("mysql80", ["cl-MySQL-meta", "cl-MySQL-meta-client", "cl-MySQL-meta-devel", "mysqlclient16", "mysqlclient15", "mysqlclient18",
-                 "numactl-devel.x86_64", "numactl.x86_64", 'libaio.x86_64']),
+                 "numactl-devel.x86_64", "numactl.x86_64", "libaio.x86_64"]),
     ("mariadb55",
      ["cl-MariaDB-meta", "cl-MariaDB-meta-client", "cl-MariaDB-meta-devel", "mysqlclient16", "mysqlclient15",
-      "mysqlclient18-compat", 'libaio.x86_64']),
+      "mysqlclient18-compat", "libaio.x86_64"]),
     ("mariadb100",
      ["cl-MariaDB-meta", "cl-MariaDB-meta-client", "cl-MariaDB-meta-devel", "mysqlclient16", "mysqlclient15",
-      "mysqlclient18-compat", 'libaio.x86_64']),
+      "mysqlclient18-compat", "libaio.x86_64"]),
     ("mariadb101",
      ["cl-MariaDB-meta", "cl-MariaDB-meta-client", "cl-MariaDB-meta-devel", "mysqlclient16", "mysqlclient15",
-      "mysqlclient18-compat", 'libaio.x86_64']),
+      "mysqlclient18-compat", "libaio.x86_64"]),
     ("mariadb102",
      ["cl-MariaDB-meta", "cl-MariaDB-meta-client", "cl-MariaDB-meta-devel", "mysqlclient16", "mysqlclient15",
-      "mysqlclient18-compat", 'libaio.x86_64']),
+      "mysqlclient18-compat", "libaio.x86_64"]),
     ("mariadb103",
      ["cl-MariaDB-meta", "cl-MariaDB-meta-client", "cl-MariaDB-meta-devel", "mysqlclient16", "mysqlclient15",
-      "mysqlclient18-compat", 'libaio.x86_64']),
+      "mysqlclient18-compat", "libaio.x86_64"]),
     ("mariadb104",
      ["cl-MariaDB-meta", "cl-MariaDB-meta-client", "cl-MariaDB-meta-devel", "mysqlclient16", "mysqlclient15",
-      'libaio.x86_64']),
+      "mysqlclient18-compat", "libaio.x86_64"]),
     ("mariadb105",
      ["cl-MariaDB-meta", "cl-MariaDB-meta-client", "cl-MariaDB-meta-devel", "mysqlclient16", "mysqlclient15",
-      'libaio.x86_64']),
+      "mysqlclient18-compat", "libaio.x86_64"]),
+    ("mariadb106",
+     ["cl-MariaDB-meta", "cl-MariaDB-meta-client", "cl-MariaDB-meta-devel", "mysqlclient16", "mysqlclient15",
+      "mysqlclient18-compat", "libaio.x86_64"]),
     ("percona56",
      ["cl-Percona-meta", "cl-Percona-meta-client", "cl-Percona-meta-devel", "mysqlclient18", "mysqlclient16",
-      "mysqlclient15", 'libaio.x86_64'])
+      "mysqlclient15", "libaio.x86_64"])
 ])
 @mock.patch("modules.base.get_cl_num", mock.MagicMock(return_value=8))
 @mock.patch("modules.base.exec_command", mock.MagicMock(return_value=''))
@@ -118,6 +126,7 @@ def test_load_new_packages_version_CL8(mocked_content, expected):
     manager = InstallManager.factory('Unknown')
     res = manager._load_new_packages(False, sql_version=mocked_content)
     assert res == expected
+
 
 @pytest.mark.parametrize("mocked_content, expected", [
     ("mysql51", "cl-mysql-5.1-common.repo"),
@@ -147,6 +156,7 @@ def test_get_repo(mocked_content, expected):
     res = manager.get_repo_name(sql_version=mocked_content)
     assert res == expected
 
+
 @pytest.mark.parametrize("mocked_current_version, mocked_version", [
     ('mysql80', 'mariadb100'),
     ('mysql80', 'mariadb101'),
@@ -170,6 +180,7 @@ def test_for_unsupported_db_version(mocked_current_version, mocked_version):
                 manager = InstallManager.factory('Unknown')
                 manager.unsupported_db_version()
     exit_mock.assert_called_once_with(1)
+
 
 @pytest.mark.parametrize("mocked_current_version, mocked_version", [
     ('mysql80', 'mariadb100'),
