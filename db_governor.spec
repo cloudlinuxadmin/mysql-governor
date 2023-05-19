@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   90
+%define g_release   91
 %define g_key_library 12
 
 %if %{undefined _unitdir}
@@ -497,6 +497,9 @@ fi
 %{_includedir}/libgovernor.h
 
 %changelog
+* Fri May 19 2023 Aleksey Petryankin <apetryankin@cloudlinux.com> 1.2-91
+- MYSQLG-867: Prevent removing libmysqlclient.so.18 during mysqlgovernor.py --install
+
 * Tue Apr 25 2023 Nikolay Petukhov <npetukhov@cloudlinux.com>, Aleksey Petryankin <apetryankin@cloudlinux.com> 1.2-90
 - MYSQLG-929: Fixed systemd warning 'The unit file changed on disk'
 - MYSQLG-935: Added _nowraps function to exclude forced unload from lve
