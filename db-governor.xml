@@ -25,5 +25,6 @@
 <user mysql_name="pp" mode="ignore"></user>
 <user mysql_name="DELAYED" mode="ignore"></user>
 <user mysql_name="admin" mode="ignore"></user>
+<user mysql_name="da_admin" mode="ignore"></user>
 
 </governor>
