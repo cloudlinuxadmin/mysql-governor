@@ -900,17 +900,17 @@ for native procedure restoring of MySQL packages"""))
                 packages += ["mysqlclient16", "mysqlclient15"]
             else:
                 packages += ['mysqlclient18']
-            packages += ["mysqlclient18-compat"]
+            if sql_version in ["mariadb55", "mariadb100", "mariadb101"]:
+                packages += ["mysqlclient18-compat"]
             # Reasons for installation of mysqlclient18-compat:
-            # it provides libmysqlclient.so.18 which is needed for postfix on CL7 (not libmysqlclient.so provided by cl-MariaDB10*)
+            # it provides libmysqlclient.so.18 which is needed for postfix on CL7 (old versions of cl-MariaDB claim that they provide libmysqlclient.so.18 but doesn't actually install it)
             # it provides libmariadb.so.3() and libmariadb.so.3(libmysqlclient_18) for net-snmp-agent-libs on CL8
             #
             # Details about libmariadb:
             # Old versions of MariaDB up to 10.1 do not contain libmariadb at all.
             # So we need to install mysqlclient18-compat for mariadb55, mariadb100 and mariadb101.
-            # cl-MariaDB-102-libs and cl-MariaDB-103-libs pkgs contain libmariadb.so.3
-            # but don't declare that they provide libmariadb.so.3() or similar capabilities
-            # So we need to install mysqlclient18-compat for mariadb102 and mariadb103 also.
+            # cl-MariaDB-102-libs and cl-MariaDB-103-libs pkgs always contained libmariadb.so.3
+            # but started to declare that they provide libmariadb.so.3() only from 10.2.44-3 and 10.3.39-3
         elif sql_version.startswith("percona"):
             packages += ["mysqlclient18", "mysqlclient16", "mysqlclient15"]
 
