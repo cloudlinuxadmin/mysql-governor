@@ -52,6 +52,9 @@ static const char *mysqlclient_libs[] =
     "libmysqlclient_r.so",
     "libmysqlclient.so",
     "libmysqlclient.so.18",
+    "libmysqlclient.so.19",
+    "libmariadb.so",
+    "libmariadb.so.3",
     "libperconaserverclient.so.18"
 };
 

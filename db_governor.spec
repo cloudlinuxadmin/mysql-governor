@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   91
+%define g_release   92
 %define g_key_library 12
 
 %if %{undefined _unitdir}
@@ -497,6 +497,11 @@ fi
 %{_includedir}/libgovernor.h
 
 %changelog
+* Thu Jun 15 2023 Aleksey Petryankin <apetryankin@cloudlinux.com>, Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-92
+- MYSQLG-961: Loading mysql functions from libmariadb added
+- MYSQLG-941: Fix libmysqlclient.so.18 and libmariadb.so.3 Provides tags in mariadb102..106
+- MYSQLG-965: da_admin mysql account added into default ignore list
+
 * Fri May 19 2023 Aleksey Petryankin <apetryankin@cloudlinux.com> 1.2-91
 - MYSQLG-867: Prevent removing libmysqlclient.so.18 during mysqlgovernor.py --install
 

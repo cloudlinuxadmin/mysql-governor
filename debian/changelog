@@ -1,3 +1,10 @@
+governor-mysql (1.2-92) stable; urgency=medium
+  * MYSQLG-961: Loading mysql functions from libmariadb added
+  * MYSQLG-941: Fix libmysqlclient.so.18 and libmariadb.so.3 Provides tags in mariadb102..106
+  * MYSQLG-965: da_admin mysql account added into default ignore list
+
+ -- Aleksandr Demeshko <ademeshko@cloudlinux.com>  Thu, 15 Jun 2023 14:00:00 +0000
+
 governor-mysql (1.2-91) stable; urgency=medium
   * MYSQLG-867: Prevent removing libmysqlclient.so.18 during mysqlgovernor.py --install
 
