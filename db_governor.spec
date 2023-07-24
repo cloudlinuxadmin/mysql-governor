@@ -6,8 +6,8 @@
 %define _unitdir /usr/lib/systemd/system
 %endif
 
-%define pypath /opt/alt/python37/bin
-%define __python %{pypath}/python3
+%define cl_venv_path /opt/cloudlinux/venv
+%define __python %{cl_venv_path}/bin/python3
 %global __os_install_post %(echo '%{__os_install_post}' | sed -e 's!/usr/lib[^[:space:]]*/brp-python-bytecompile[[:space:]].*$!!g')
 
 
@@ -21,32 +21,29 @@ Group: System Environment/Base
 Source0: %{name}-%{version}.tar.bz2
 Requires: glib2
 Requires: ncurses
-Requires: lve-utils >= 1.1-3
+Requires: lve-utils >= 6.5.2-1
 Requires: lve-stats >= 0.9-27
-Requires: alt-python37
-Requires: alt-python37-MySQL-meta
 Requires: yum-utils
 Requires: tmpwatch
 Requires: wget
 Requires: libxml2
-Requires: alt-python27-cllib >= 3.2.34
+Requires: alt-python27-cllib >= 3.3.3-1
+Requires: cloudlinux-venv
 Requires(preun): /sbin/chkconfig
 BuildRequires: cmake
 BuildRequires: ncurses-devel
 BuildRequires: glib2-devel
 BuildRequires: autoconf
 BuildRequires: tar
-BuildRequires: alt-python37
 BuildRequires: libxml2-devel
 BuildRequires: pcre-devel
 BuildRequires: patch
-BuildRequires: alt-python27-cllib >= 3.2.34
+BuildRequires: alt-python27-cllib >= 3.3.3-1
+BuildRequires: cloudlinux-venv
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
 BuildRequires: systemd
 BuildRequires: systemd-devel
 %endif
-# for python tests
-BuildRequires: alt-python37-pytest alt-python37-mock alt-python37-MySQL-meta alt-python37-pyfakefs
 %if 0%{?rhel} == 7
 BuildRequires: mariadb-libs
 BuildRequires: mariadb
@@ -221,7 +218,7 @@ install -D -m 644 src/governor_write_data.h $RPM_BUILD_ROOT%{_includedir}/libgov
 ls -l /usr/bin/mysql
 /usr/bin/mysql -V
 echo "****Start unittests for python code"
-PYTHONPATH=install:install/scripts:. %{pypath}/py.test tests/py/
+PYTHONPATH=install:install/scripts:. %{cl_venv_path}/bin/pytest tests/py/
 
 %pre
 /sbin/service db_governor stop > /dev/null 2>&1 || :

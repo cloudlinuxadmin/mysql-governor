@@ -1,4 +1,4 @@
-#!/opt/alt/python37/bin/python3
+#!/opt/cloudlinux/venv/bin/python3
 # coding:utf-8
 
 # Copyright © Cloud Linux GmbH & Cloud Linux Software, Inc 2010-2019 All Rights Reserved

@@ -1,4 +1,4 @@
-#!/opt/alt/python37/bin/python3
+#!/opt/cloudlinux/venv/bin/python3
 # -*- coding: utf-8 -*-
 
 # Copyright © Cloud Linux GmbH & Cloud Linux Software, Inc 2010-2019 All Rights Reserved
@@ -8,12 +8,13 @@
 #
 import pwd
 import os
-import sys
+
+from clcommon import mysql_lib
 
 
-psa_conf = '/etc/psa/psa.conf'
-psa_shadow = '/etc/psa/.psa.shadow'
-db = 'psa'
+PSA_CONF = '/etc/psa/psa.conf'
+PSA_SHADOW = '/etc/psa/.psa.shadow'
+DB = 'psa'
 
 
 def read_mysql_conn_params():
@@ -24,9 +25,9 @@ def read_mysql_conn_params():
     """
     access = dict()
     access['login'] = 'admin'
-    with open(psa_shadow, 'r') as f:
+    with open(PSA_SHADOW, 'r') as f:
         access['pass'] = f.read().strip()
-    with open(psa_conf, 'r') as conf:
+    with open(PSA_CONF, 'r') as conf:
         mysql_sock = [l.strip() for l in conf.readlines() if 'MYSQL_SOCKET' in l]
     if mysql_sock:
         access['socket'] = mysql_sock[0].split(' ')[1]
@@ -43,30 +44,37 @@ def get_users_data():
              psa_mapped_users - dict {db_username: sys_username}
     """
     conn_params = read_mysql_conn_params()
-    dbhost = conn_params.get('host', 'localhost')
+
+    mysql_args = {
+        'user': conn_params['login'],
+        'passwd': conn_params['pass'],
+        'db': DB,
+    }
+    if 'socket' in conn_params:
+        mysql_args['unix_socket'] = conn_params['socket']
+    else:
+        mysql_args['host'] = conn_params.get('host', 'localhost')
 
     try:
-        import MySQLdb
-    except ImportError:
-        print('Error: package "alt-python37-MySQL-meta" is not installed.', file=sys.stderr)
-        return [], {}
+        connector = mysql_lib.MySQLConnector(**mysql_args)
+        with connector.connect() as db:
+            fetch_db_users_query = (
+                'select db.login from mysql.user as mysql, db_users as db '
+                'where mysql.user = db.login'
+            )
+            psa_db_users = [u[0] for u in db.execute_query(fetch_db_users_query)]
 
-    try:
-        if 'socket' in conn_params:
-            con = MySQLdb.connect(unix_socket=conn_params['socket'],
-                                  user=conn_params['login'],
-                                  passwd=conn_params['pass'], db=db)
-        else:
-            con = MySQLdb.connect(host=dbhost, user=conn_params['login'],
-                                  passwd=conn_params['pass'], db=db)
-        cur = con.cursor()
-        cur.execute('select db.login from mysql.user as mysql, db_users as db where mysql.user = db.login')
-        psa_db_users = [u[0] for u in cur.fetchall()]
-        # mapping db_users to sys_users on Plesk should be done using psa.hosting table!
-        cur.execute('select db_users.login, sys_users.login from mysql.user as mysql, db_users inner join hosting on db_users.dom_id=hosting.dom_id inner join sys_users on hosting.sys_user_id=sys_users.id where mysql.user=db_users.login')
-        psa_mapped_users = {u[0]: u[1] for u in cur.fetchall()}
-        con.close()
-    except MySQLdb.Error as e:
+            # mapping db_users to sys_users on Plesk should be done using psa.hosting table!
+            fetch_mapped_users_query = (
+                'select db_users.login, sys_users.login from mysql.user as mysql, db_users '
+                'inner join hosting on db_users.dom_id=hosting.dom_id '
+                'inner join sys_users on hosting.sys_user_id=sys_users.id '
+                'where mysql.user=db_users.login'
+            )
+            psa_mapped_users = {
+                u[0]: u[1] for u in db.execute_query(fetch_mapped_users_query)
+            }
+    except mysql_lib.pymysql.Error as e:
         print(e)
         return [], {}
 

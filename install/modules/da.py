@@ -105,8 +105,6 @@ class DirectAdminManager(InstallManager):
         """
         # call parent after_install
         InstallManager._after_install_new_packages(self)
-        # install MySQL-python module
-        exec_command("yum install -y alt-python37-MySQL-meta --disableexcludes=all")
         print("Rebuild php please... /usr/local/directadmin/custombuild/build php")
 
     def _detect_version_if_auto(self):
