@@ -58,16 +58,19 @@ enum mysql_option
 // MariaDB 10.4+ needs special sql for working with max_user_connections
 
 #define MARIADB104_USER_CONN_LIMIT \
-"SELECT JSON_SET(Priv, '$.max_user_connections', '%lu') FROM mysql.global_priv WHERE user='%s'"
+  "UPDATE mysql.global_priv SET Priv = JSON_SET(Priv, '$.max_user_connections', '%lu') WHERE user='%s'"
 
 #define MARIADB104_USER_CONN_LIMIT_UNFREEZE \
-"SELECT JSON_SET(Priv, '$.max_user_connections', '0') FROM mysql.global_priv WHERE CAST(IFNULL(JSON_VALUE(Priv, '$.max_user_connections'), 0) AS SIGNED)=%lu"
+  "UPDATE mysql.global_priv SET Priv = JSON_SET(Priv, '$.max_user_connections', '0')" \
+  "WHERE CAST(IFNULL(JSON_VALUE(Priv, '$.max_user_connections'), 0) AS SIGNED)=%lu"
 
 #define MARIADB104_USER_CONN_LIMIT_UNFREEZE_LVE \
-"SELECT JSON_SET(Priv, '$.max_user_connections', '0') FROM mysql.global_priv WHERE CAST(IFNULL(JSON_VALUE(Priv, '$.max_user_connections'), 0) AS SIGNED)<>0"
+  "UPDATE mysql.global_priv SET Priv = JSON_SET(Priv, '$.max_user_connections', '0')" \
+  "WHERE CAST(IFNULL(JSON_VALUE(Priv, '$.max_user_connections'), 0) AS SIGNED)<>0"
 
 #define MARIADB104_USER_CONN_LIMIT_UNFREEZE_DAILY \
-"SELECT JSON_SET(Priv, '$.max_user_connections', '0') FROM mysql.global_priv WHERE CAST(IFNULL(JSON_VALUE(Priv, '$.max_user_connections'), 0) AS SIGNED)=%lu"
+  "UPDATE mysql.global_priv SET Priv = JSON_SET(Priv, '$.max_user_connections', '0')" \
+  "WHERE CAST(IFNULL(JSON_VALUE(Priv, '$.max_user_connections'), 0) AS SIGNED)=%lu" \
 
 //Сброс userstat статистики
 #define QUERY_FLUSH_USER_STATISTICS "FLUSH USER_STATISTICS"

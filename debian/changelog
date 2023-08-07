@@ -1,3 +1,8 @@
+governor-mysql (1.2-93) stable; urgency=medium
+  * CLOS-1724: Fixed max_user_connection setup in mariadb104 and above
+
+ -- Sandro Kalatozishvili <skalatozishvili@cloudlinux.com>  Thu, Aug 3 2023 14:00:00 +0000
+
 governor-mysql (1.2-92) stable; urgency=medium
   * MYSQLG-961: Loading mysql functions from libmariadb added
   * MYSQLG-941: Fix libmysqlclient.so.18 and libmariadb.so.3 Provides tags in mariadb102..106

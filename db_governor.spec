@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   92
+%define g_release   93
 %define g_key_library 12
 
 %if %{undefined _unitdir}
@@ -497,6 +497,9 @@ fi
 %{_includedir}/libgovernor.h
 
 %changelog
+* Thu Aug 3 2023 Sandro Kalatozishvili <skalatozishvili@cloudlinux.com> 1.2-93
+- CLOS-1724: Fixed max_user_connection setup in mariadb104 and above
+
 * Thu Jun 15 2023 Aleksey Petryankin <apetryankin@cloudlinux.com>, Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-92
 - MYSQLG-961: Loading mysql functions from libmariadb added
 - MYSQLG-941: Fix libmysqlclient.so.18 and libmariadb.so.3 Provides tags in mariadb102..106
