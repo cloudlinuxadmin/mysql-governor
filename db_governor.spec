@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   94
+%define g_release   95
 %define g_key_library 12
 
 %if %{undefined _unitdir}
@@ -497,6 +497,9 @@ fi
 %{_includedir}/libgovernor.h
 
 %changelog
+* Tue Sep 19 2023 Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-95
+- CLOS-1737: MariaDB 10.11 support added
+
 * Wed Sep 13 2023 Sandro Kalatozishvili <skalatozishvili@cloudlinux.com> 1.2-94
 - CLOS-1797: Fixed package limitting synchronization for all users
 
