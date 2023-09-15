@@ -581,6 +581,9 @@ def run_dbctl_command(users: list, action: str, limits: dict = None) -> int:
         action (str): Set or delete. Set is used both for set and update.
         limits (dict): cpu, read, write in format [int]
     """
+
+    return_code = 0
+
     if action == 'set' and not limits:
         logging.error("Limits for dbctl have not been set")
         sys.exit(1)
@@ -591,10 +594,10 @@ def run_dbctl_command(users: list, action: str, limits: dict = None) -> int:
             debug_log(f'Running command: {command}')
             try:
                 command_result = subprocess.run(command, shell=True, text=True, check=True, capture_output=True)
-                return command_result.returncode
+                return_code += command_result.returncode
             except subprocess.CalledProcessError as call_err:
                 # we shouldn't do exit here because this function is called in loop in dbctl_sync
-                return _process_call_error(call_err)
+                return_code += _process_call_error(call_err)
 
     if action == 'set' and limits and users:
         for user in users:
@@ -610,10 +613,12 @@ def run_dbctl_command(users: list, action: str, limits: dict = None) -> int:
                 debug_log(f'Running command: {command}')
                 try:
                     command_result = subprocess.run(command, shell=True, text=True, check=True, capture_output=True)
-                    return command_result.returncode
+                    return_code += command_result.returncode
                 except subprocess.CalledProcessError as call_err:
                     # we shouldn't do exit here because this function is called in loop in dbctl_sync
-                    return _process_call_error(call_err)
+                    return_code += _process_call_error(call_err)
+
+    return return_code
 
 
 def dbctl_sync(action: str, package: str = None, user: str = None):

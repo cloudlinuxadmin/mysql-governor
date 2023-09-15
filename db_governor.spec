@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   93
+%define g_release   94
 %define g_key_library 12
 
 %if %{undefined _unitdir}
@@ -497,6 +497,9 @@ fi
 %{_includedir}/libgovernor.h
 
 %changelog
+* Wed Sep 13 2023 Sandro Kalatozishvili <skalatozishvili@cloudlinux.com> 1.2-94
+- CLOS-1797: Fixed package limitting synchronization for all users
+
 * Thu Aug 3 2023 Sandro Kalatozishvili <skalatozishvili@cloudlinux.com> 1.2-93
 - CLOS-1724: Fixed max_user_connection setup in mariadb104 and above
 
