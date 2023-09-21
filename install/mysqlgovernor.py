@@ -60,18 +60,32 @@ def build_parser():
                                                  "utility:")
     parser.add_argument("--verbose", help="switch verbose level on",
                         dest="verbose", action="store_true", default=False)
-    if get_cl_num() >= 9:
+    cl_num = get_cl_num()
+    if cl_num >= 9:
         parser.add_argument("--mysql-version",
                             help="select MySQL version for db-governor. "
                                  "Available mysql types: auto, "
-                                 "mysql57, mysql80,  "
-                                 "mariadb100, mariadb101, mariadb102, mariadb103, mariadb104, mariadb105, mariadb106",
+                                 "mysql57, mysql80, "
+                                 "mariadb100, mariadb101, mariadb102, mariadb103, mariadb104, mariadb105, mariadb106, mariadb1011",
                             dest="mysql_version", required=False,
                             choices=['auto',
                                      'mysql57', 'mysql80',
                                      'mariadb100', 'mariadb101', 'mariadb102',
-                                     'mariadb103', 'mariadb104', 'mariadb105', 'mariadb106'])
-    else:
+                                     'mariadb103', 'mariadb104', 'mariadb105', 'mariadb106', 'mariadb1011'])
+    elif cl_num == 8:
+        parser.add_argument("--mysql-version",
+                            help="select MySQL version for db-governor. "
+                                 "Available mysql types: auto, mysql51, "
+                                 "mysql55, mysql56, mysql57, mysql80, mariadb55, "
+                                 "mariadb100, mariadb101, mariadb102, mariadb103, mariadb104, mariadb105, mariadb106, mariadb1011, "
+                                 "percona56",
+                            dest="mysql_version", required=False,
+                            choices=['auto', 'mysql51', 'mysql55', 'mysql56',
+                                     'mysql57', 'mysql80', 'mariadb55',
+                                     'mariadb100', 'mariadb101', 'mariadb102',
+                                     'mariadb103', 'mariadb104', 'mariadb105', 'mariadb106', 'mariadb1011',
+                                     'percona56'])
+    elif cl_num == 7:
         parser.add_argument("--mysql-version",
                             help="select MySQL version for db-governor. "
                                  "Available mysql types: auto, mysql51, "
@@ -81,6 +95,18 @@ def build_parser():
                             dest="mysql_version", required=False,
                             choices=['auto', 'mysql51', 'mysql55', 'mysql56',
                                      'mysql57', 'mysql80', 'mariadb55',
+                                     'mariadb100', 'mariadb101', 'mariadb102',
+                                     'mariadb103', 'mariadb104', 'mariadb105', 'mariadb106', 'percona56'])
+    else:
+        parser.add_argument("--mysql-version",
+                            help="select MySQL version for db-governor. "
+                                 "Available mysql types: auto, mysql51, "
+                                 "mysql55, mysql56, mysql57, mariadb55, "
+                                 "mariadb100, mariadb101, mariadb102, mariadb103, mariadb104, mariadb105, mariadb106, "
+                                 "percona56",
+                            dest="mysql_version", required=False,
+                            choices=['auto', 'mysql51', 'mysql55', 'mysql56',
+                                     'mysql57', 'mariadb55',
                                      'mariadb100', 'mariadb101', 'mariadb102',
                                      'mariadb103', 'mariadb104', 'mariadb105', 'mariadb106', 'percona56'])
     parser.add_argument("-i", "--install", help="install MySQL for db-governor",
