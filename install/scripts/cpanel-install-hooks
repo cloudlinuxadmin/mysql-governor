@@ -25,7 +25,8 @@ postupcp_hook="$common_path_of_cpanel/upgrade-mysql-disabler.sh"
 map_hook="/usr/share/lve/dbgovernor/scripts/map_hook"
 mysql_hook="/usr/share/lve/dbgovernor/scripts/mysql_hook"
 old_map_hook="/usr/share/lve/dbgovernor/utils/dbgovernor_map"
-package_sync_hook="/usr/share/lve/dbgovernor/governor_package_limitting.py sync"
+pkg_sync_hook='/usr/share/lve/dbgovernor/scripts/sync_hook "$@"'
+old_sync_hook="/usr/share/lve/dbgovernor/governor_package_limitting.py sync"
 
 createHookHeader "$postupcp"
 checkHookString "$postupcp" "$postupcp_hook" "dbgovernor"
@@ -33,7 +34,8 @@ removeEmptyStringsFromFile "$postupcp"
 
 createHookHeader "$mysqlusercreate"
 checkHookString "$mysqlusercreate" "$postupcp_hook" "dbgovernor"
-checkHookString "$mysqlusercreate" "$package_sync_hook" "dbgovernor"
+checkHookString "$mysqlusercreate" "$pkg_sync_hook" "dbgovernor"
+removeHookString "$mysqlusercreate" "$old_sync_hook"
 removeEmptyStringsFromFile "$mysqlusercreate"
 
 createHookHeader "$mysqluserkill"

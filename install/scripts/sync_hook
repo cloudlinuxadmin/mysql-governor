@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# Detect username and plan from the postwwwacct script (whole account info is passed as arguments)
+new_user=$(echo "$@" | awk '{for(i=1;i<=NF;i++) if ($i=="user") print $(i+1)}')
+user_plan=$(echo "$@" | awk '{for(i=1;i<=NF;i++) if ($i=="plan") print $(i+1)}')
+
+if [[ -n $new_user && -n $user_plan ]]; then
+    # Sync governor limits only for this particular user and package
+    /usr/share/lve/dbgovernor/governor_package_limitting.py sync --user="$new_user" --package="$user_plan"
+fi

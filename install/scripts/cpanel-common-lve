@@ -83,3 +83,14 @@ function rewriteDBUserHook(){
 	fi
     fi
 }
+
+function removeHookString(){
+    #1 - hook name
+    #2 - pattern string
+    if [ -e "$1" ]; then
+		if grep -qF "$2" "$1"; then
+			# If found, use sed to delete the hook line from the file
+			sed -i "/$(echo "$2" | sed -e 's/[\/&]/\\&/g')/d" "$1"
+		fi
+    fi
+}
