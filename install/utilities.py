@@ -472,8 +472,13 @@ def retrieve_server_version(server_pkg):
         if 'cl-mysql' in server_pkg:
             # 'cl-mysql80-server_1%3a8.0.29-cl1.1.1653223485.105993.18_amd64.deb'
             # after split cl-mysql80-server
+            # package_name: [ 'cl', 'mysql80', 'server' ]
             package_name = server_pkg.split('_')[0].split('-')
-            parts = ['mysql', package_name[2], server_pkg.split('3a')[1].split('-')[0]]
+            # split with _: 1%3a8.0.29-cl1.1.1653223485.105993.18
+            # split with -: 1%3a8.0.29
+            # re.sub: 8.0.29
+            # parts: ['mysql', 'server', '8.0.29']
+            parts = ['mysql', package_name[2], re.sub('^1%3a', '', server_pkg.split('_')[1].split('-')[0])]
         else:
             # example output: mysql-server-8.0_1%3a8.0.27-0ubuntu0.20.04.1+cloudlinux1.1_amd64.deb
             # after split: ['mysql', 'server', '8.0']
