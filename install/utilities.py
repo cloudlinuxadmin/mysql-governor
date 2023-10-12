@@ -98,10 +98,16 @@ def set_path_environ():
     """
     Set PATH variable
     """
-    os.environ[
-        "PATH"] += os.pathsep + "/bin" + os.pathsep + "/sbin" + os.pathsep + \
-                   "/usr/bin" + os.pathsep + "/usr/sbin" + os.pathsep + \
-                   "/usr/local/bin" + os.pathsep + "/usr/local/sbin"
+    try:
+        os.environ[
+            "PATH"] += os.pathsep + "/bin" + os.pathsep + "/sbin" + os.pathsep + \
+                    "/usr/bin" + os.pathsep + "/usr/sbin" + os.pathsep + \
+                    "/usr/local/bin" + os.pathsep + "/usr/local/sbin"
+    except KeyError:
+        os.environ[
+            "PATH"] = os.pathsep + "/bin" + os.pathsep + "/sbin" + os.pathsep + \
+                    "/usr/bin" + os.pathsep + "/usr/sbin" + os.pathsep + \
+                    "/usr/local/bin" + os.pathsep + "/usr/local/sbin"
 
 
 def _trace_calls(frame, event, arg):

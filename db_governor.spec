@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   95
+%define g_release   96
 %define g_key_library 12
 
 %if %{undefined _unitdir}
@@ -203,6 +203,7 @@ install -D -m 755 install/scripts/cpanel-mysql-url-detect.pm $RPM_BUILD_ROOT/usr
 install -D -m 755 install/scripts/set_cpanel_mysql_version.pm $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/set_cpanel_mysql_version.pm
 install -D -m 755 install/scripts/mysql_hook $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/mysql_hook
 install -D -m 755 install/scripts/map_hook $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/map_hook
+install -D -m 755 install/scripts/sync_hook $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/scripts/sync_hook
 
 install -D -m 644 logrotate/mysql-governor $RPM_BUILD_ROOT/etc/logrotate.d/mysql-governor
 install -D -m 644 install/utils/cloudlinux.versions $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utils/cloudlinux.versions
@@ -497,6 +498,10 @@ fi
 %{_includedir}/libgovernor.h
 
 %changelog
+* Wed Oct 11 2023 Sandro Kalatozishvili <skalatozishvili@cloudlinux.com> 1.2-96
+- CLOS-2058: Fixed performance issue related to governor package limits synchronization
+- CLOS-2077: Fixed KeyError exception for dbgovernor set_path_environ function
+
 * Tue Sep 19 2023 Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-95
 - CLOS-1737: MariaDB 10.11 support added
 
