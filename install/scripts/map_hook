@@ -1,5 +1,29 @@
 #!/bin/bash
 
-/usr/share/lve/dbgovernor/utils/dbgovernor_map
-/usr/sbin/dbctl dbupdate
-/usr/bin/systemctl restart db_governor
+if [ -x /usr/share/lve/dbgovernor/utils/dbgovernor_map ]
+then
+    /usr/share/lve/dbgovernor/utils/dbgovernor_map
+else
+    echo "Failed to find dbgovernor_map script"
+fi
+
+if [ -x /usr/sbin/dbctl ]
+then
+    /usr/sbin/dbctl dbupdate
+else
+    echo "Failed to find dbctl utility"
+fi
+
+if [ -x /usr/bin/systemctl ]
+then
+    /usr/bin/systemctl restart db_governor
+elif [ -x /sbin/service ]
+then
+    /sbin/service db_governor restart | grep -v OK
+elif [ -x /usr/sbin/service ]
+then
+    /usr/sbin/service db_governor restart | grep -v OK
+else
+    echo "Failed to find 'systemctl' or 'service' binaries while attempting to restart 'db_governor' service"
+fi
+
