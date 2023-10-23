@@ -111,9 +111,9 @@ popd
 mkdir build_test
 pushd build_test
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
-cmake .. -DSYSTEMD_FLAG:BOOL=1 -DTEST:BOOL=1
+cmake .. -DSYSTEMD_FLAG:BOOL=1
 %else
-cmake .. -DTEST:BOOL=1
+cmake ..
 %endif
 make
 popd
