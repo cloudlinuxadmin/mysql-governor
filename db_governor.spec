@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   96
+%define g_release   97
 %define g_key_library 12
 
 %if %{undefined _unitdir}
@@ -498,6 +498,9 @@ fi
 %{_includedir}/libgovernor.h
 
 %changelog
+* Wed Oct 18 2023 Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-97
+- CLOS-2081: map_hook fixed for CL6
+
 * Wed Oct 11 2023 Sandro Kalatozishvili <skalatozishvili@cloudlinux.com> 1.2-96
 - CLOS-2058: Fixed performance issue related to governor package limits synchronization
 - CLOS-2077: Fixed KeyError exception for dbgovernor set_path_environ function
