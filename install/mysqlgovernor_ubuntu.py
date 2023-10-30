@@ -49,24 +49,27 @@ class Logger:
     def flush(self):
         self.terminal.flush()
 
+supported_mysqls=[ 'auto', 'mysql80', 'mariadb103' ]
 
 def build_parser():
     """
     Build CLI parser
     """
+    mysql_version_help = "select MySQL version for db-governor. Available mysql types: " + \
+                          ', '.join(supported_mysqls)
     parser = argparse.ArgumentParser(prog="install-mysql", add_help=True,
                                      description="Use following syntax to "
                                                  "manage DBGOVERNOR install "
                                                  "utility:")
     parser.add_argument("--verbose", help="switch verbose level on",
                         dest="verbose", action="store_true", default=False)
-    parser.add_argument("--mysql-version",
-                        help="select MySQL version for db-governor. "
-                             "Available mysql types: auto, mysql80, mariadb103",
-                        dest="mysql_version", required=False,
-                        choices=['auto', 'mysql80', 'mariadb103'])
+    parser.add_argument("--mysql-version", help=mysql_version_help,
+                        dest="mysql_version", required=False, choices=supported_mysqls)
+    parser.add_argument("--mysql-version-list",
+                        help="print list of the supported versions on mysql",
+                        dest="mysql_version_list", action="store_true", default=False)
     parser.add_argument("-i", "--install", help="install MySQL for db-governor",
-                        dest="install", action="store_true", default=False)
+                            dest="install", action="store_true", default=False)
     parser.add_argument("--install-beta",
                         help="install MySQL beta for governor or update beta "
                              "if exists newer beta version",
@@ -136,8 +139,13 @@ def main(argv):
     panel = exec_command("cldetect --detect-cp-name", as_string=True)
     manager = UbuntuInstallManager(panel)
 
+    if opts.mysql_version_list:
+        print(', '.join(supported_mysqls))
+        sys.exit(0)
+
     if opts.debug_flag:
         set_debug(True)
+
     if opts.mysql_version:
         manager.set_mysql_version(opts.mysql_version)
         print(bcolors.ok("Now set MySQL to type '%s'" % opts.mysql_version))

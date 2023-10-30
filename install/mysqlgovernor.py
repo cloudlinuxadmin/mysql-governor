@@ -16,8 +16,9 @@ import datetime
 import os
 from modules import InstallManager, Storage
 from utilities import exec_command, bcolors, query_yes_no, \
-    correct_mysqld_service_for_cl7, set_debug, shadow_tracing, set_path_environ, \
+    correct_mysqld_service_for_cl7, set_debug, set_path_environ, \
     check_mysqld_is_alive, fix_broken_governor_xml_config, get_status_info, get_cl_num
+# from utilities import shadow_tracing
 
 LOG_FILE_NAME = "/usr/share/lve/dbgovernor/governor_install.log"
 
@@ -49,67 +50,61 @@ class Logger:
     def flush(self):
         self.terminal.flush()
 
+AUTO_VER = ('auto',)
+
+MYSQL_VERS = (
+    'mysql51',
+    'mysql55',
+    'mysql56',
+    'mysql57',
+    'mysql80',
+)
+
+MARIADB_VERS = (
+    'mariadb100',
+    'mariadb101',
+    'mariadb102',
+    'mariadb103',
+    'mariadb104',
+    'mariadb105',
+    'mariadb106',
+    # temporary disabled
+    # 'mariadb1011
+)
+
+PERCONA_VERS = ('percona56',)
+
+DEFAULT_CL_VER = 'CL9'
+EXCL_MYSQL_VERS = {
+    'CL9' : ( 'mysql51', 'mysql55', 'mysql56', 'mariadb55', 'percona56', ),
+    'CL8' : ( ),
+    'CL7' : ( 'mariadb1011', ),
+    'CL6' : ( 'mysql80', 'mariadb1011', ),
+}
+
+supported_mysqls = list(filter(lambda x: x not in EXCL_MYSQL_VERS.get(get_cl_num(),
+                                                                      EXCL_MYSQL_VERS[DEFAULT_CL_VER]),
+                               AUTO_VER + MYSQL_VERS + MARIADB_VERS + PERCONA_VERS
+                              )
+                       )
 
 def build_parser():
     """
     Build CLI parser
     """
+    mysql_version_help = "select MySQL version for db-governor. Available mysql types: " + \
+                           ', '.join(supported_mysqls)
     parser = argparse.ArgumentParser(prog="install-mysql", add_help=True,
                                      description="Use following syntax to "
                                                  "manage DBGOVERNOR install "
                                                  "utility:")
     parser.add_argument("--verbose", help="switch verbose level on",
                         dest="verbose", action="store_true", default=False)
-    cl_num = get_cl_num()
-    if cl_num >= 9:
-        parser.add_argument("--mysql-version",
-                            help="select MySQL version for db-governor. "
-                                 "Available mysql types: auto, "
-                                 "mysql57, mysql80, "
-                                 "mariadb100, mariadb101, mariadb102, mariadb103, mariadb104, mariadb105, mariadb106",  # , mariadb1011",
-                            dest="mysql_version", required=False,
-                            choices=['auto',
-                                     'mysql57', 'mysql80',
-                                     'mariadb100', 'mariadb101', 'mariadb102',
-                                     'mariadb103', 'mariadb104', 'mariadb105', 'mariadb106'  # , 'mariadb1011'
-                                     ])
-    elif cl_num == 8:
-        parser.add_argument("--mysql-version",
-                            help="select MySQL version for db-governor. "
-                                 "Available mysql types: auto, mysql51, "
-                                 "mysql55, mysql56, mysql57, mysql80, mariadb55, "
-                                 "mariadb100, mariadb101, mariadb102, mariadb103, mariadb104, mariadb105, mariadb106, " # mariadb1011, "
-                                 "percona56",
-                            dest="mysql_version", required=False,
-                            choices=['auto', 'mysql51', 'mysql55', 'mysql56',
-                                     'mysql57', 'mysql80', 'mariadb55',
-                                     'mariadb100', 'mariadb101', 'mariadb102',
-                                     'mariadb103', 'mariadb104', 'mariadb105', 'mariadb106', # 'mariadb1011',
-                                     'percona56'])
-    elif cl_num == 7:
-        parser.add_argument("--mysql-version",
-                            help="select MySQL version for db-governor. "
-                                 "Available mysql types: auto, mysql51, "
-                                 "mysql55, mysql56, mysql57, mysql80, mariadb55, "
-                                 "mariadb100, mariadb101, mariadb102, mariadb103, mariadb104, mariadb105, mariadb106, "
-                                 "percona56",
-                            dest="mysql_version", required=False,
-                            choices=['auto', 'mysql51', 'mysql55', 'mysql56',
-                                     'mysql57', 'mysql80', 'mariadb55',
-                                     'mariadb100', 'mariadb101', 'mariadb102',
-                                     'mariadb103', 'mariadb104', 'mariadb105', 'mariadb106', 'percona56'])
-    else:
-        parser.add_argument("--mysql-version",
-                            help="select MySQL version for db-governor. "
-                                 "Available mysql types: auto, mysql51, "
-                                 "mysql55, mysql56, mysql57, mariadb55, "
-                                 "mariadb100, mariadb101, mariadb102, mariadb103, mariadb104, mariadb105, mariadb106, "
-                                 "percona56",
-                            dest="mysql_version", required=False,
-                            choices=['auto', 'mysql51', 'mysql55', 'mysql56',
-                                     'mysql57', 'mariadb55',
-                                     'mariadb100', 'mariadb101', 'mariadb102',
-                                     'mariadb103', 'mariadb104', 'mariadb105', 'mariadb106', 'percona56'])
+    parser.add_argument("--mysql-version", help=mysql_version_help,
+                        dest="mysql_version", required=False, choices=supported_mysqls)
+    parser.add_argument("--mysql-version-list",
+                        help="print list of the supported versions on mysql",
+                        dest="mysql_version_list", action="store_true", default=False)
     parser.add_argument("-i", "--install", help="install MySQL for db-governor",
                         dest="install", action="store_true", default=False)
     parser.add_argument("-d", "--delete", help="delete MySQL for db-governor",
@@ -236,6 +231,10 @@ def main(argv):
     panel = exec_command("cldetect --detect-cp-name", as_string=True)
     manager = InstallManager.factory(panel)
 
+    if opts.mysql_version_list:
+        print(', '.join(supported_mysqls))
+        sys.exit(0)
+
     if opts.debug_flag:
         set_debug(True)
 
@@ -346,11 +345,11 @@ def detect_percona(force, install_manager_instance):
     :param install_manager_instance:
     """
     if force:
-        return None
+        return
 
     packages = exec_command("""rpm -qa|grep -iE "^percona-" """, silent=True)
     if len(packages):
-        print("Percona packages deteced:" + ",".join(packages))
+        print("Percona packages detected:" + ",".join(packages))
         print("You are running Percona, which is not supported by " \
               "MySQL Governor. If you want to run MySQL governor, " \
               "we would have to uninstall Percona, and substitute it " \
