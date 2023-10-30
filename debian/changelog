@@ -1,4 +1,4 @@
-governor-mysql (1.2-97) stable; urgency=medium
+governor-mysql (1.2-98) stable; urgency=medium
   * CLOS-2092: Added one time transition job to deal with epoch mysql/mariadb packages
 
  -- Sandro Kalatozishvili <skalatozishvili@cloudlinux.com>  Tue, 24 Oct 2023 14:00:00 +0000
