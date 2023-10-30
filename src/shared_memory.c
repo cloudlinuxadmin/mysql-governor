@@ -442,16 +442,21 @@ int shm_fd_clents_global = 0;
 shm_structure *bad_list_clents_global = NULL;
 pthread_mutex_t mtx_shared = PTHREAD_MUTEX_INITIALIZER;
 
-int init_bad_users_list_client(void) {
+int init_bad_users_list_client(void)
+{
+	print_message_log("GOVERNOR: init_bad_users_list_client invoke");
+
 	mode_t old_umask = umask(0);
 	pthread_mutex_lock(&mtx_shared);
 	int first = 0, need_truncate = 0;
 	if ((shm_fd_clents_global = cl_shm_open((O_CREAT | O_EXCL | O_RDWR), 0600)) > 0)
 	{
+		print_message_log("GOVERNOR: init_bad_users_list_client: cl_shm_open(CREAT|EXCL) ret %d -- SUCCESS, first=1", shm_fd_clents_global);
 		first = 1;
 	}
 	else if ((shm_fd_clents_global = cl_shm_open(O_RDWR, 0600)) < 0)
 	{
+		print_message_log("GOVERNOR: init_bad_users_list_client: both cl_shm_open(CREAT|EXCL) and cl_shm_open() FAILED - FAIL");
 		pthread_mutex_unlock(&mtx_shared);
 		umask(old_umask);
 		return -1;
@@ -462,21 +467,27 @@ int init_bad_users_list_client(void) {
                 if (cl_stat_shared_memory_file(&file) == 0)
 		{
                         need_truncate = file.st_size < sizeof(shm_structure) ? 1 : need_truncate;
+			print_message_log("GOVERNOR: init_bad_users_list_client: cl_stat->size=%u; sizeof=%u; need_truncate=%d", file.st_size, sizeof(shm_structure), need_truncate);
+        	}
+        	else
+        	{
+			print_message_log("GOVERNOR: init_bad_users_list_client: cl_stat_shared_memory_file failed");
         	}
 	}
 
-	if ((bad_list_clents_global = (shm_structure *) cl_mmap (0,
-			sizeof
-			(shm_structure),
-			PROT_READ |
-			PROT_WRITE,
-			MAP_SHARED,
-			shm_fd_clents_global,
-			0)) == MAP_FAILED) {
+	bad_list_clents_global = (shm_structure *) cl_mmap (0, sizeof(shm_structure), PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd_clents_global, 0);
+
+	if (bad_list_clents_global == MAP_FAILED)
+	{
 		close(shm_fd_clents_global);
 		pthread_mutex_unlock(&mtx_shared);
 		umask(old_umask);
+		print_message_log("GOVERNOR: init_bad_users_list_client: cl_mmap ret MAP_FAILED - FAIL");
 		return -2;
+	}
+	else
+	{
+		print_message_log("XXX GOVERNOR: init_bad_users_list_client: cl_mmap ret pointer %p", bad_list_clents_global);
 	}
 
 	if (first || need_truncate) {

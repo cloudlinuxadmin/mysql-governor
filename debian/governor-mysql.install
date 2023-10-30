@@ -35,6 +35,7 @@
  usr/share/lve/dbgovernor/scripts/mysql_hook
  usr/share/lve/dbgovernor/scripts/map_hook
  usr/share/lve/dbgovernor/scripts/sync_hook
+ usr/share/lve/dbgovernor/scripts/cl-transition-job.sh
  etc/logrotate.d/mysql-governor
  usr/share/lve/dbgovernor/utils/cloudlinux.versions
  usr/share/lve/dbgovernor/utils/db_governor
