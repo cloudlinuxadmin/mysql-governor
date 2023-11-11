@@ -2,7 +2,7 @@
  usr/sbin/dbctl
  usr/share/lve/dbgovernor/utils/dbctl_orig
  usr/sbin/dbtop
- usr/sbin/mysql_unfreeze
+sr/sbin/mysql_unfreeze
  usr/lib/libgovernor.so
  usr/lib/systemd/system/db_governor.service
  usr/lib/systemd/system/var-lve-dbgovernor\\x2dshm.mount
@@ -35,7 +35,6 @@
  usr/share/lve/dbgovernor/scripts/mysql_hook
  usr/share/lve/dbgovernor/scripts/map_hook
  usr/share/lve/dbgovernor/scripts/sync_hook
- usr/share/lve/dbgovernor/scripts/cl-transition-job.sh
  etc/logrotate.d/mysql-governor
  usr/share/lve/dbgovernor/utils/cloudlinux.versions
  usr/share/lve/dbgovernor/utils/db_governor

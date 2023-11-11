@@ -913,6 +913,12 @@ for native procedure restoring of MySQL packages"""))
             # So we need to install mysqlclient18-compat for mariadb55, mariadb100 and mariadb101.
             # cl-MariaDB-102-libs and cl-MariaDB-103-libs pkgs always contained libmariadb.so.3
             # but started to declare that they provide libmariadb.so.3() only from 10.2.44-3 and 10.3.39-3
+
+            # Case from CLOS-2115: the customer with cl-MariaDB105 wants to install soci-mysql pkg
+            # which requires libmysqlclient.so.21. So we need to install mysqlclient21 with every clMariaDB
+            # for every CL version supported by mysqlclient21 package, that is on CL7+
+            if self.cl_version >= 7:
+                packages += ['mysqlclient21']
         elif sql_version.startswith("percona"):
             packages += ["mysqlclient18", "mysqlclient16", "mysqlclient15"]
 

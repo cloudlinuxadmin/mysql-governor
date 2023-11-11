@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   97
+%define g_release   99
 %define g_key_library 12
 
 %if %{undefined _unitdir}
@@ -498,6 +498,10 @@ fi
 %{_includedir}/libgovernor.h
 
 %changelog
+* Fri Nov 10 2023 Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-99
+- CLOS-2115: Added mysqlclient21 installation for clMariaDB
+- CLOS-2117 mysql-version-list option added
+
 * Wed Oct 18 2023 Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-97
 - CLOS-2081: map_hook fixed for CL6
 
