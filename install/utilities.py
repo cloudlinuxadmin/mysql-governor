@@ -691,8 +691,7 @@ def get_cl_num():
                 return int(float(word))
             except ValueError:
                 pass
-    else:
-        return 8
+    return 8
 
 
 def remove_lines(path, value):

@@ -12,8 +12,16 @@ import os
 import shutil
 from glob import glob
 
-from utilities import exec_command_out, check_file, grep, write_file, \
-    read_file, remove_packages, exec_command
+from utilities import (
+    check_file,
+    exec_command,
+    exec_command_out,
+    grep,
+    read_file,
+    remove_packages,
+    write_file,
+)
+
 from .base import InstallManager
 
 
@@ -47,7 +55,7 @@ class DirectAdminManager(InstallManager):
         if os.path.exists("/usr/share/lve/dbgovernor/da.tp.old"):
             param = read_file("/usr/share/lve/dbgovernor/da.tp.old")
 
-        exec_command_out("/usr/local/directadmin/custombuild/build set mysql_inst %s" % param)
+        exec_command_out(f"/usr/local/directadmin/custombuild/build set mysql_inst {param}")
         exec_command_out("/usr/local/directadmin/custombuild/build mysql update")
 
         print("Removing mysql for db_governor completed")
@@ -105,22 +113,25 @@ class DirectAdminManager(InstallManager):
         """
         Detect vesrion of MySQL if mysql.type is auto
         """
-        print("Detect MySQL version for AUTO")
+        print("Detecting MySQL version for AUTO")
 
         try:
             MYSQL_DA_VER = self.prev_version['full']
-            print('Detected successfully from installed mysql binary: {ver}'.format(ver=MYSQL_DA_VER))
+            print(f'Detected successfully from installed mysql binary: {MYSQL_DA_VER}')
         except KeyError:
             print('Failed to detect from mysql binary, trying to detect from custombuild options')
             check_file("/usr/local/directadmin/custombuild/build")
             check_file("/usr/local/directadmin/custombuild/options.conf")
             # MYSQL_DA_TYPE=`cat /usr/local/directadmin/custombuild/options.conf | grep mysql_inst= | cut -d= -f2`
             try:
-                MYSQL_DA_VER = grep("/usr/local/directadmin/custombuild/options.conf", "mysql=")[0].split("=")[1].strip()
-                MYSQL_DA_TYPE = grep("/usr/local/directadmin/custombuild/options.conf", "mysql_inst=")[0].split("=")[1].strip()
+                mysql_ver_grep = grep("/usr/local/directadmin/custombuild/options.conf", "mysql=")
+                MYSQL_DA_VER = mysql_ver_grep[0].split("=")[1].strip()
+                mysql_type_grep = grep("/usr/local/directadmin/custombuild/options.conf", "mysql_inst=")
+                MYSQL_DA_TYPE = mysql_type_grep[0].split("=")[1].strip()
             except IndexError:
                 MYSQL_DA_VER = ""
                 MYSQL_DA_TYPE = ""
+
             if MYSQL_DA_TYPE == "no":
                 if os.path.exists("/usr/share/lve/dbgovernor/da.tp.old"):
                     MYSQL_DA_TYPE = read_file("/usr/share/lve/dbgovernor/da.tp.old")
@@ -179,17 +190,17 @@ class DirectAdminManager(InstallManager):
             "/usr/local/directadmin/scripts/packages/*.rpm")
         for found_package in list_of_rpm:
             try:
-                result = exec_command("/bin/rpm -qp %s" % found_package, True)
+                result = exec_command(f"/bin/rpm -qp {found_package}", True)
                 if package_name in result:
                     pkg_name_real = found_package
                     if pkg_name_real != "" and os.path.exists(pkg_name_real):
-                        return "file:%s" % pkg_name_real
+                        return f"file:{pkg_name_real}"
             except RuntimeError as e:
-                print("Failed to query package %s: %s\n" % (found_package, e))
+                print(f"Failed to query package {found_package}: {e}\n")
                 bad_pkg = True
 
         if bad_pkg:
-            return "bad_file:%s" % package_name
+            return f"bad_file:{package_name}"
         else:
             return ""
 
@@ -201,7 +212,7 @@ class DirectAdminManager(InstallManager):
         :return:
         """
         if not indicator:
-            exec_command_out("/bin/rpm -ihv --force --nodeps %s" % package_name)
+            exec_command_out(f"/bin/rpm -ihv --force --nodeps {package_name}")
             return ""
         else:
             return "yes"
@@ -215,4 +226,4 @@ class DirectAdminManager(InstallManager):
                         '/usr/local/directadmin/custombuild/configure/systemd/mysqld.service')
             print('mysqld.service restored!')
         except Exception:
-            print('ERROR occurred while attempt to restore mysqld.service!')
+            print('ERROR occurred while attempting to restore mysqld.service!')

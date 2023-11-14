@@ -46,6 +46,7 @@ class UbuntuInstallManager(InstallManager):
         self.new_version_of_db = self._get_new_version()
         self.cp_name = cp_name
         self.panel_manager = InstallManager.factory(cp_name)
+        self.new_packages = []
 
     def install_mysql_beta_testing_hooks(self):
         """
@@ -70,6 +71,7 @@ class UbuntuInstallManager(InstallManager):
         This function is used to install some dependencies before governor install new download packages
         Some packages needs to be installed before
         """
+        needed_packages = []
         if 'mysql' in self.new_version_of_db or self.new_version_of_db == 'auto':
             needed_packages = ['mysql-common', 'mariadb-common']
         elif 'mariadb' in self.new_version_of_db:
@@ -80,7 +82,8 @@ class UbuntuInstallManager(InstallManager):
             if not is_package_installed(package):
                 must_be_installed.append(package)
         if must_be_installed:
-            exec_command(f'apt-get install -y -o Dpkg::Options::=--force-confnew {" ".join(str(package) for package in must_be_installed)}')
+            pkgs_to_install = " ".join(str(package) for package in must_be_installed)
+            exec_command(f'apt-get install -y -o Dpkg::Options::=--force-confnew {pkgs_to_install}')
 
     def install(self, beta, no_confirm, wizard_mode):
         """
@@ -266,7 +269,7 @@ class UbuntuInstallManager(InstallManager):
         pattern = r'MySQL-python|mysql(d_exporter|\d+-community-release)|mysql-common'
         packages = [x for x in packages if not re.match(pattern, x)]
 
-        if not len(packages):
+        if not packages:
             print("No installed DB packages found")
             return False
 
@@ -382,7 +385,7 @@ class UbuntuInstallManager(InstallManager):
         """
         Cleanup downloaded packages and remove backup repo file
         """
-        tmp_path = "%s/old" % DEB_TEMP_PATH
+        tmp_path = f"{DEB_TEMP_PATH}/old"
 
         if os.path.isdir(tmp_path):
             # first move previous downloaded packages to history folder
