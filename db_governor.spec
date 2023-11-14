@@ -147,13 +147,6 @@ mkdir -p $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/history
 mkdir -p ${RPM_BUILD_ROOT}%{_unitdir}
 install -m 644 db_governor.service ${RPM_BUILD_ROOT}%{_unitdir}/
 install -m 644 var-lve-dbgovernor\\x2dshm.mount ${RPM_BUILD_ROOT}%{_unitdir}/
-%define gcsuffix conf
-%if 0%{?rhel} == 7
-%define gcsuffix conf.cl7
-%endif
-install -m 644 install/systemd/governor.%{gcsuffix} ${RPM_BUILD_ROOT}/usr/share/lve/dbgovernor/governor.conf
-install -m 755 install/systemd/governor.sh ${RPM_BUILD_ROOT}/usr/share/lve/dbgovernor/
-install -m 644 install/systemd/governor.env ${RPM_BUILD_ROOT}/usr/share/lve/dbgovernor/
 %else
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/
 install -D -m 755 script/db_governor $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/
@@ -177,7 +170,6 @@ install -D -m 755 install/db-select-mysql $RPM_BUILD_ROOT/usr/share/lve/dbgovern
 install -D -m 755 install/mysqlgovernor.py $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/mysqlgovernor.py
 install -D -m 755 install/governor_package_limitting.py $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/governor_package_limitting.py
 install -D -m 755 install/creates_individual_limits_vector_list.py $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/creates_individual_limits_vector_list.py
-install -D -m 755 install/governor_dropin_fix.py $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/governor_dropin_fix.py
 
 install -D -m 644 install/cl-mysql.repo.default $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/cl-mysql.repo.default
 install -D -m 644 install/utilities.py $RPM_BUILD_ROOT/usr/share/lve/dbgovernor/utilities.py
@@ -230,9 +222,6 @@ ls -l /usr/bin/mysql
 /usr/bin/mysql -V
 echo "****Start unittests for python code"
 PYTHONPATH=install:install/scripts:. %{pypath}/py.test tests/py/
-
-%clean
-[ "$RPM_BUILD_ROOT" != "/" ] && rm -rf "$RPM_BUILD_ROOT"
 
 %pre
 /sbin/service db_governor stop > /dev/null 2>&1 || :
@@ -300,10 +289,28 @@ fi
 %if 0%{?rhel} >= 7
 if [ $1 -gt 0 ]; then
     # Initial installation or upgrade
-    if [ -e "/usr/share/lve/dbgovernor/governor_dropin_fix.py" ]; then
-        /usr/share/lve/dbgovernor/governor_dropin_fix.py
+
+    # Remove governor dropin introduced in MYSQL-853 because
+    # it does not need anymore after reverting
+    # and also can cause the troubles with libjemalloc
+    if [[ ! -a /usr/share/lve/dbgovernor/CLOS-2049 ]]; then
+        dropin_found="N"
+        for f in "/etc/systemd/system/mariadb.service.d/governor.conf" \
+                 "/etc/systemd/system/mysqld.service.d/governor.conf" \
+                 "/etc/systemd/system/mysql.service.d/governor.conf" \
+                 "/etc/systemd/system/mariadb.service.d/gov.conf" \
+                 "/etc/systemd/system/mysqld.service.d/gov.conf"
+        do
+            if [[ -a "$f" ]]; then
+                rm $f >/dev/null 2>&1 || :
+                dropin_found="Y"
+            fi
+        done
+        if [[ "$dropin_found" == "Y" ]]; then
+            systemctl daemon-reload >/dev/null 2>&1 || :
+        fi
+        touch /usr/share/lve/dbgovernor/CLOS-2049
     fi
-    systemctl daemon-reload >/dev/null 2>&1 || :
 fi
 if [ $1 = 1 ]; then
     # Ensure autostart for db_governor service (on install, not upgrade)
@@ -371,9 +378,6 @@ fi
 %if 0%{?rhel} >= 7
 if [ $1 -eq 0 ]; then
     # Package removal, not upgrade
-    if [ -e "/usr/share/lve/dbgovernor/governor_dropin_fix.py" ]; then
-        /usr/share/lve/dbgovernor/governor_dropin_fix.py "uninstall"
-    fi
     systemctl --no-reload disable db_governor.service >/dev/null 2>&1 || :
     systemctl stop db_governor.service >/dev/null 2>&1 || :
 fi
@@ -450,20 +454,6 @@ if [ -e /usr/sbin/cagefsctl ]; then
     fi
 fi
 
-%triggerin -- cl-MySQL55-server, cl-MySQL56-server, cl-MySQL57-server, cl-MySQL80-server, cl-Percona56-server, mysql-community-server
-%if 0%{?rhel} >= 7
-if [ -e "/usr/share/lve/dbgovernor/governor_dropin_fix.py" ]; then
-    /usr/share/lve/dbgovernor/governor_dropin_fix.py "mysql"
-fi
-%endif
-
-%triggerin -- cl-MariaDB55-server, cl-MariaDB100-server, cl-MariaDB101-server, cl-MariaDB102-server, cl-MariaDB103-server, cl-MariaDB104-server, cl-MariaDB105-server, cl-MariaDB106-server, mariadb-server
-%if 0%{?rhel} >= 7
-if [ -e "/usr/share/lve/dbgovernor/governor_dropin_fix.py" ]; then
-    /usr/share/lve/dbgovernor/governor_dropin_fix.py "mariadb"
-fi
-%endif
-
 %files
 %defattr(-,root,root)
 %doc LICENSE.TXT
@@ -482,9 +472,6 @@ fi
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
 %{_unitdir}/db_governor.service
 %{_unitdir}/var-lve-dbgovernor\x2dshm.mount
-/usr/share/lve/dbgovernor/governor.conf
-/usr/share/lve/dbgovernor/governor.sh
-%config(noreplace) /usr/share/lve/dbgovernor/governor.env
 %else
 %{_sysconfdir}/rc.d/init.d/*
 %endif
@@ -561,7 +548,7 @@ fi
 
 * Wed Dec 28 2022 Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-83.1
 - MYSQLG-849: Avoided killing slow queries in removing tmp table state
-- MYSQLG-842: moved mysqld restart to %post scriptlet
+- MYSQLG-842: moved mysqld restart to post scriptlet
 
 * Thu Dec 15 2022 Nikolay Petukhov <npetukhov@cloudlinux.com>, Sergey Kozhekin <skozhekin@cloudlinux.com>, Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-81
 - MYSQLG-843: Improper CL comercial license changed to GPL-2

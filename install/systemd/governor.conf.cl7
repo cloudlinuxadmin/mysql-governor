@@ -1,6 +1,0 @@
-[Service]
-PermissionsStartOnly=true
-ReadWriteDirectories=/usr/share/lve/dbgovernor
-ExecStartPre=/usr/share/lve/dbgovernor/governor.sh
-EnvironmentFile=/usr/share/lve/dbgovernor/governor.env
-

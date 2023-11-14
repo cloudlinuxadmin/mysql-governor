@@ -22,8 +22,33 @@ gKEY="$RET"
 # for details, see https://www.debian.org/doc/debian-policy/ or
 # the debian-policy package
 
+remove_governor_dropin() {
+    # Remove governor dropin introduced in MYSQL-853 because
+    # it does not need anymore after reverting
+    # and also can cause the troubles with libjemalloc
+    if [ ! -e /usr/share/lve/dbgovernor/CLOS-2049 ]; then
+        dropin_found="N"
+        for f in "/etc/systemd/system/mariadb.service.d/governor.conf" \
+                 "/etc/systemd/system/mysqld.service.d/governor.conf" \
+                 "/etc/systemd/system/mysql.service.d/governor.conf" \
+                 "/etc/systemd/system/mariadb.service.d/gov.conf" \
+                 "/etc/systemd/system/mysqld.service.d/gov.conf"
+        do
+            if [ -e "$f" ]; then
+                rm $f >/dev/null 2>&1 || :
+                dropin_found="Y"
+            fi
+        done
+        if [ "$dropin_found" = "Y" ]; then
+            systemctl daemon-reload >/dev/null 2>&1 || :
+        fi
+        touch /usr/share/lve/dbgovernor/CLOS-2049
+    fi
+}
 
 do_install_or_upgrade() {
+
+    remove_governor_dropin
 
     [ -d /var/lve/dbgovernor-shm ] || mkdir -p /var/lve/dbgovernor-shm
     mount | grep -q /var/lve/dbgovernor-shm || mount -t tmpfs none /var/lve/dbgovernor-shm -o 'rw,nosuid,nodev'
