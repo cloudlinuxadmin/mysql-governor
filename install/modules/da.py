@@ -116,9 +116,15 @@ class DirectAdminManager(InstallManager):
         print("Detecting MySQL version for AUTO")
 
         try:
+            # We can reach this section before calling _check_mysql_version in
+            # InstallManager.install by calling manager.unsupported_db_version
+            # from install\mysqlgovernor.py
+            # self.prev_version won't be assigned then, try it now
+            if not self.prev_version:
+                self.prev_version = self._check_mysql_version()
             MYSQL_DA_VER = self.prev_version['full']
             print(f'Detected successfully from installed mysql binary: {MYSQL_DA_VER}')
-        except KeyError:
+        except (KeyError, AttributeError):
             print('Failed to detect from mysql binary, trying to detect from custombuild options')
             check_file("/usr/local/directadmin/custombuild/build")
             check_file("/usr/local/directadmin/custombuild/options.conf")
