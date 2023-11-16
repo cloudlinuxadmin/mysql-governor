@@ -9,30 +9,34 @@
 This module contains base class for managing governor on all supported
 control panels
 """
+import grp
 import os
-import stat
+import pwd
+import re
 import shutil
+import stat
 import sys
 import time
-import urllib.request, urllib.error, urllib.parse
-import pwd
-import grp
-import re
+import urllib.error
+import urllib.parse
+import urllib.request
 from datetime import datetime
 
 sys.path.append("../")
 
-from utilities import get_cl_num, exec_command, exec_command_out, new_lve_ctl, \
-    num_proc, grep, add_line, service, install_packages, touch, \
-    remove_packages, read_file, download_packages, write_file, RPM_TEMP_PATH, \
-    is_package_installed, check_file, mysql_version, \
-    confirm_packages_installation, create_mysqld_link, \
-    correct_mysqld_service_for_cl7, \
-    correct_remove_notowned_mysql_service_names_cl7, \
-    correct_remove_notowned_mysql_service_names_not_symlynks_cl7, get_mysql_log_file, \
-    check_mysqld_is_alive, makedir_recursive, patch_governor_config, bcolors, force_update_cagefs, \
-    show_new_packages_info, wizard_install_confirm, rewrite_file, cl8_module_enable, debug_log, \
-    read_config_file, mycnf_writable, IS_UBUNTU, install_deb_packages, get_mysql_cnf_value, get_section_from_all_cnfs
+from utilities import (
+    IS_UBUNTU, RPM_TEMP_PATH, add_line, bcolors, check_file,
+    check_mysqld_is_alive, cl8_module_enable, confirm_packages_installation,
+    correct_mysqld_service_for_cl7,
+    correct_remove_notowned_mysql_service_names_cl7,
+    correct_remove_notowned_mysql_service_names_not_symlynks_cl7,
+    create_mysqld_link, debug_log, download_packages, exec_command,
+    exec_command_out, force_update_cagefs, get_cl_num, get_mysql_log_file,
+    get_section_from_all_cnfs, grep, install_deb_packages, install_packages,
+    is_package_installed, makedir_recursive, mycnf_writable, mysql_version,
+    patch_governor_config, read_config_file, read_file, remove_packages,
+    rewrite_file, service, show_new_packages_info, touch,
+    wizard_install_confirm, write_file)
 
 
 class InstallManager:
@@ -114,14 +118,12 @@ class InstallManager:
         else:
             return InstallManager(cp_name)
 
-    cl_version = None
-    cp_name = None
-    _old_packages = None
-    _new_packages = None
-
     def __init__(self, cp_name):
         self.cl_version = get_cl_num()
         self.cp_name = cp_name
+        self.prev_version = None
+        self._old_packages = []
+        self._new_packages = []
 
         # In case of custom database my.cnf file can be located in some nonstandard path.
         # That's why we try to get it from os environ
@@ -193,8 +195,7 @@ class InstallManager:
         }
 
         if action not in actions.keys():
-            raise RuntimeError('Cannot manage /etc/my.cnf: '
-                               'unknown action %s' % action)
+            raise RuntimeError(f'Cannot manage /etc/my.cnf: unknown action {action}')
 
         if action == 'backup_my_cnf_d':
             my_cnf_d_path = '/etc/my.cnf.d'
@@ -205,7 +206,7 @@ class InstallManager:
         if action == 'backup':
             working_path = "/etc/my.cnf"
         elif action == 'restore_old':
-            working_path = "%s/my.cnf" % old_path
+            working_path = f"{old_path}/my.cnf"
         else:
             working_path = self.MY_CNF_BACKUP_PATH
 
@@ -323,7 +324,8 @@ class InstallManager:
         correct_remove_notowned_mysql_service_names_cl7()
         correct_remove_notowned_mysql_service_names_not_symlynks_cl7()
 
-        # restore my.cnf, because before removing packages, we make backup of /etc/my.cnf and  /etc/my.cnf.d/* to *.govprev extension
+        # restore my.cnf, because before removing packages, we make backup of
+        # /etc/my.cnf and /etc/my.cnf.d/* to *.govprev extension
         self.my_cnf_manager('restore_rpmsave')
 
         self.set_fs_suid_dumpable()
@@ -487,13 +489,13 @@ class InstallManager:
         installed_packages = self._load_current_packages(download=False)
 
         installed_db_version = self._check_mysql_version().get('full')
-        
+
         if not installed_db_version:
             print(bcolors.info("Current installed database couldn't be found. Exiting..."))
             exit(1)
 
         previous_db_version = self._get_previous_version()
-        
+
         if previous_db_version == 'auto':
             previous_db_version = 'mysql80'
 
@@ -596,7 +598,7 @@ class InstallManager:
         # to enable previously enabled mysql module
         self.cl8_enable_cached()
 
-        tmp_path = "%s/old" % RPM_TEMP_PATH
+        tmp_path = f"{RPM_TEMP_PATH}/old"
         if os.path.isdir(tmp_path):
             # first move previous downloaded packages to history folder
             history_path = os.path.join(self.HISTORY_FOLDER, "old.%s" %
@@ -682,11 +684,11 @@ class InstallManager:
             mode = os.stat('/proc/{0}/task/{0}/io'.format(os.getpid())).st_mode
             return stat.S_IMODE(mode) == 0o444
         suid_dumpable_state = 'fs.suid_dumpable={0:d}'.format(not check_io_perms())
-        print("Setting FS suid_dumpable for governor to work correctly ({0})".format(suid_dumpable_state))
+        print("Setting FS suid_dumpable for the governor to work correctly ({0})".format(suid_dumpable_state))
         exec_command_out("sysctl -w {0}".format(suid_dumpable_state))
         if os.path.exists("/etc/sysctl.conf"):
             if not grep("/etc/sysctl.conf", 'fs.suid_dumpable='):
-                print("Adding suid_dumpable instruction to /etc/sysctl.conf for governor to work correctly")
+                print("Adding suid_dumpable instruction to /etc/sysctl.conf for the governor to work correctly")
                 shutil.copy("/etc/sysctl.conf", "/etc/sysctl.conf.bak")
                 add_line("/etc/sysctl.conf", suid_dumpable_state)
             else:
@@ -694,7 +696,7 @@ class InstallManager:
                 with open("/etc/sysctl.conf", 'r+') as f:
                     rewrite_file(f, re.sub(r'fs.suid_dumpable=\d{1}', suid_dumpable_state, f.read()))
         else:
-            print("Creating /etc/sysctl.conf for governor to work correctly")
+            print("Creating /etc/sysctl.conf for the governor to work correctly")
             add_line("/etc/sysctl.conf", suid_dumpable_state)
 
     def _load_packages(self, beta):
@@ -712,20 +714,20 @@ class InstallManager:
         Display warning in case of failed download of old packages
         """
         print(bcolors.fail(
-            """Restore of MySQL packages will not be completed because not \
+            """Restoration of MySQL packages will not be completed because not \
 all old packages were downloaded.\nCheck if all related repositories \
 are enabled and try again\nIf something went wrong during \
 or after installation process, execute \
 /usr/share/lve/dbgovernor/mysqlgovernor --delete \
-for native procedure restoring of MySQL packages"""))
+for the native restoration procedure of MySQL packages"""))
 
     @staticmethod
     def print_warning_about_not_complete_of_newpkg_saving():
         """
         Display warning in case of failed download of new packages
         """
-        print(bcolors.fail("Install of MySQL packages will not be completed " \
-                           "because not all new packages have been downloaded"))
+        print(bcolors.fail("Installation of MySQL packages will not be completed " \
+                           "because not all of the new packages have been downloaded"))
 
     def _load_current_packages(self, download=True, folder="old"):
         """
@@ -734,13 +736,13 @@ for native procedure restoring of MySQL packages"""))
                                 only return list of installed packages
         """
         if download:
-            print(bcolors.info("Start download current installed packages"))
+            print(bcolors.info("Start downloading current installed packages"))
         else:
-            print(bcolors.info("Get list of current installed packages"))
+            print(bcolors.info("Get the list of current installed packages"))
 
         PATTERNS = ["cl-mysql", "cl-mariadb", "cl-percona", "mysql", "mariadb",
                     "compat-mysql5", "Percona"]
-        
+
         mysqld_path = exec_command("which mysqld", True, silent=True)
         pkg_name = False
         if mysqld_path:
@@ -756,7 +758,7 @@ for native procedure restoring of MySQL packages"""))
                                                     return_code=True)
             if check_if_mysql_installed == "no":
                 print("No mysql packages installed, " \
-                      "but mysqld file presents on system")
+                      "but a mysqld file is present on system")
                 pkg_name = None
             else:
                 pkg_name = exec_command("""rpm -qf %s """ % mysqld_path, True,
@@ -775,7 +777,7 @@ for native procedure restoring of MySQL packages"""))
         pattern = r'MySQL-python|mysql(d_exporter|\d+-community-release)|mysql-common'
         packages = [x for x in packages if not re.match(pattern, x)]
 
-        if not len(packages):
+        if not packages:
             print("No installed DB packages found")
             return False
 
@@ -835,7 +837,7 @@ for native procedure restoring of MySQL packages"""))
         """
         detect and download packages for new installation
         """
-        print(bcolors.info("Start download packages for new installation"))
+        print(bcolors.info("Started downloading packages for the new installation"))
         # based on sql_version get packages names list and repo name
         packages, requires = [], []
         module = None
@@ -961,12 +963,12 @@ for native procedure restoring of MySQL packages"""))
             # We found specific repo for meta pkgs and installed it,
             # So let's try to find meta pkgs in it only
             for name in requires:
-                req_packages = exec_command("repoquery --repoid cl-mysql-meta --requires %s --quiet" % name)
+                req_packages = exec_command(f"repoquery --repoid cl-mysql-meta --requires {name} --quiet")
                 if len(req_packages):
                     packages += req_packages
                 else:
                     # in case of repos are already created but still empty - fallback to any repo case
-                    packages += exec_command("repoquery --requires %s --quiet" % name)
+                    packages += exec_command(f"repoquery --requires {name} --quiet")
 
         if not download_packages(packages, folder, beta):
             self.ALL_PACKAGES_NEW_NOT_DOWNLOADED = True
@@ -1318,13 +1320,17 @@ for native procedure restoring of MySQL packages"""))
             version = InstallManager._get_result_mysql_version(self)
             if version.startswith('mariadb10'):
                 print(bcolors.fail(
-                    """!!! WARNING !!!\nUpgrade from MySQL 8 to MariaDB 10.x \
-isn't supported due to compatibility\nissues and will likely lead to a \
-disaster / break your database server completely.\nIn order to save you, \
-we've disabled this upgrade in DB Governor.\n!!! WARNING !!!\n\n\
-A detailed explanation and workaround for CloudLinux can be found in this articles:\n\
-MariaDB info about compatibility issue: https://mariadb.com/kb/en/upgrading-from-mysql-to-mariadb/\n\
-Workaround for CloudLinux: https://cloudlinux.zendesk.com/hc/en-us/articles/360020599839"""))
+                    "!!! WARNING !!!\n"
+                    "Upgrade from MySQL 8 to MariaDB 10.x isn't supported due to compatibility\n"
+                    "issues and will likely lead to a disaster / break your database server completely.\n"
+                    "In order to save you, we've disabled this upgrade in DB Governor.\n"
+                    "!!! WARNING !!!\n\n"
+                    "A detailed explanation and workaround for CloudLinux can be found in these articles:\n"
+                    "MariaDB info about the compatibility issue: "
+                    "https://mariadb.com/kb/en/upgrading-from-mysql-to-mariadb/\n"
+                    "Workaround for CloudLinux: "
+                    "https://cloudlinux.zendesk.com/hc/en-us/articles/360020599839"
+                ))
                 if not force:
                     sys.exit(1)
 

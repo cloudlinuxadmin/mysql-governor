@@ -10,14 +10,18 @@
 Main mysql-governor installation script
 """
 import argparse
-import sys
-import time
 import datetime
 import os
+import sys
+import time
+
 from modules import InstallManager, Storage
-from utilities import exec_command, bcolors, query_yes_no, \
-    correct_mysqld_service_for_cl7, set_debug, set_path_environ, \
-    check_mysqld_is_alive, fix_broken_governor_xml_config, get_status_info, get_cl_num
+from utilities import (bcolors, check_mysqld_is_alive,
+                       correct_mysqld_service_for_cl7, exec_command,
+                       fix_broken_governor_xml_config, get_cl_num,
+                       get_status_info, query_yes_no, set_debug,
+                       set_path_environ)
+
 # from utilities import shadow_tracing
 
 LOG_FILE_NAME = "/usr/share/lve/dbgovernor/governor_install.log"
@@ -48,6 +52,9 @@ class Logger:
         self.log.write(message)
 
     def flush(self):
+        """
+        Flush the attached terminal.
+        """
         self.terminal.flush()
 
 AUTO_VER = ('auto',)
@@ -92,18 +99,18 @@ def build_parser():
     """
     Build CLI parser
     """
-    mysql_version_help = "select MySQL version for db-governor. Available mysql types: " + \
+    mysql_version_help = "select MySQL version for db-governor. Available MySQL types: " + \
                            ', '.join(supported_mysqls)
     parser = argparse.ArgumentParser(prog="install-mysql", add_help=True,
-                                     description="Use following syntax to "
-                                                 "manage DBGOVERNOR install "
+                                     description="Use the following syntax to "
+                                                 "manage the DBGOVERNOR install "
                                                  "utility:")
     parser.add_argument("--verbose", help="switch verbose level on",
                         dest="verbose", action="store_true", default=False)
     parser.add_argument("--mysql-version", help=mysql_version_help,
                         dest="mysql_version", required=False, choices=supported_mysqls)
     parser.add_argument("--mysql-version-list",
-                        help="print list of the supported versions on mysql",
+                        help="print list of the supported MySQL versions",
                         dest="mysql_version_list", action="store_true", default=False)
     parser.add_argument("-i", "--install", help="install MySQL for db-governor",
                         dest="install", action="store_true", default=False)
@@ -111,7 +118,7 @@ def build_parser():
                         dest="delete", action="store_true", default=False)
     parser.add_argument("--install-beta",
                         help="install MySQL beta for governor or update beta "
-                             "if exists newer beta version",
+                             "if a newer beta version exists",
                         dest="install_beta", action="store_true", default=False)
     parser.add_argument("-c", "--clean-mysql",
                         help="clean MySQL packages list "
@@ -133,7 +140,7 @@ def build_parser():
                         dest="update_cpanel_hooks", action="store_true",
                         default=False)
     parser.add_argument("--force",
-                        help="Force prohibited update, for example, upgrade from MySQL 8.0 to MariaDB 10.x",
+                        help="Force a prohibited update, for example, upgrade from MySQL 8.0 to MariaDB 10.x",
                         dest="force", action="store_true", default=False)
     parser.add_argument("-u", "--upgrade",
                         help="Option is deprecated. Use `yum update` instead",
@@ -144,7 +151,7 @@ def build_parser():
                         default=False)
     parser.add_argument("--fs-suid", help="Helper utility", dest="fs_suid",
                         action="store_true", default=False)
-    parser.add_argument("--yes", help="Install without confirm", dest="yes",
+    parser.add_argument("--yes", help="Install without confirmation", dest="yes",
                         action="store_true", default=False)
     parser.add_argument("--list-saved-files",
                         help="Show list of saved MySQL old files in storage",
@@ -155,7 +162,7 @@ def build_parser():
                         help="Restore file from storage",
                         dest="store_restore", required=False)
     parser.add_argument("--save-files-from-list",
-                        help="Save file to storage according to files list "
+                        help="Save file to storage according to the files list "
                              "/usr/share/lve/dbgovernor/list_problem_files.txt",
                         dest="store_list_files", action="store_true",
                         default=False)
@@ -167,7 +174,7 @@ def build_parser():
                         dest="store_clean", action="store_true", default=False)
     parser.add_argument("--correct-cl7-service-name",
                         help="Remove /etc/init.d/mysql(d) "
-                             "if exists for CloudLinux 7",
+                             "if it exists for CloudLinux 7",
                         dest="cl7_correct", action="store_true", default=False)
     parser.add_argument("--output-commands",
                         help="Echo all commands executed by "
@@ -189,7 +196,7 @@ def build_parser():
                         dest="clver_correct", action="store_true",
                         default=False)
     parser.add_argument("--fix-config",
-                        help="Fix unescaped xml and wrong limits in config file",
+                        help="Fix unescaped XML and wrong limits in the config file",
                         dest="fix_govervor_config", action="store_true",
                         default=False)
     parser.add_argument("--fix-mysqld-service",
@@ -197,7 +204,7 @@ def build_parser():
                         dest="fix_mysqld_service", action="store_true",
                         default=False)
     parser.add_argument("--update-config-auth",
-                        help="Update user login and password in config file",
+                        help="Update user login and password in the config file",
                         dest="update_config", action="store_true",
                         default=False)
     parser.add_argument("--wizard", help="Wizard mode on", dest="wizard", action="store_true", default=False)
@@ -213,9 +220,12 @@ def main(argv):
     sys.stdout = Logger(sys.stdout, LOG_FILE_NAME)
     sys.stderr = Logger(sys.stderr, LOG_FILE_NAME)
     time_now = datetime.datetime.now()
+    time_formatted = time_now.strftime("%Y-%m-%d %H:%M")
     sys.stdout.write_extended(
-        "\n####################################################Install process begin %s#####################################################\n" % time_now.strftime(
-            "%Y-%m-%d %H:%M"))
+        "\n####################################################"
+        f"Installation process starting at {time_formatted}"
+        "#####################################################\n"
+    )
 
     parser = build_parser()
     if not argv:
@@ -240,7 +250,7 @@ def main(argv):
 
     if opts.mysql_version:
         manager.set_mysql_version(opts.mysql_version)
-        print(bcolors.ok("Now set MySQL to type '%s'" % opts.mysql_version))
+        print(bcolors.ok(f"Set MySQL to type '{opts.mysql_version}'"))
 
     elif opts.install or opts.install_beta:
         manager.unsupported_db_version(opts.force)
@@ -255,7 +265,7 @@ def main(argv):
 
         # remove current packages and install new packages
         if manager.install(opts.install_beta, opts.yes, opts.wizard):
-            print("Give mysql service time to start before service checking(15 sec)")
+            print("Giving the MySQL service time to start before checking its status (15 sec)")
             time.sleep(15)
         else:
             sys.exit(0) if manager.DISABLED else sys.exit(1)
@@ -265,13 +275,13 @@ def main(argv):
             if check_mysqld_is_alive():
                 manager.save_installed_version()
                 manager.cl8_save_current()
-                print(bcolors.ok("Installation of mysql for db_governor completed"))
+                print(bcolors.ok("Installation of MySQL for db_governor completed"))
 
             # if sql server failed to start ask user to restore old packages
             elif opts.wizard or opts.yes or query_yes_no(
-                    "Installation failed. Restore previous version?"):
+                    "Installation failed. Restore the previous version?"):
                 print(bcolors.fail(
-                    "Installation of mysql for db_governor failed. Restore previous mysql version..."))
+                    "Installation of MySQL for db_governor failed. Restoring the previous MySQL version..."))
                 if not manager.install_rollback(opts.install_beta):
                     sys.exit(1)
 
@@ -348,12 +358,12 @@ def detect_percona(force, install_manager_instance):
         return
 
     packages = exec_command("""rpm -qa|grep -iE "^percona-" """, silent=True)
-    if len(packages):
+    if packages:
         print("Percona packages detected:" + ",".join(packages))
-        print("You are running Percona, which is not supported by " \
-              "MySQL Governor. If you want to run MySQL governor, " \
-              "we would have to uninstall Percona, and substitute it " \
-              "for MariaDB or MySQL. Run installator next commands for install:")
+        print("You are running Percona, which is not supported by "
+              "MySQL Governor. If you want to run MySQL governor, "
+              "we would have to uninstall Percona, and substitute it "
+              "by MariaDB or MySQL. Run the following commands to do so:")
         print(install_manager_instance.rel("mysqlgovernor.py") + \
               " --mysql-version=mysql56 (or mysql50, mysql51, mysql55, " \
               "mysql57, mariadb55, mariadb100, mariadb101)")
@@ -366,9 +376,16 @@ def warn_message():
     """
     Print warning message and sleep 10 sec (for user to make a decision)
     """
-    print(bcolors.warning("!!!Before making any changing with database make sure that you have reserve copy of users data!!!"))
-    print(bcolors.fail("!!!!!!!!!!!!!!!!!!!!!!!!!!Ctrl+C for cancellation of installation!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"))
-    print(bcolors.ok("Instruction: how to create whole database backup - " + bcolors.OKBLUE + "http://docs.cloudlinux.com/index.html?backing_up_mysql.html"))
+    print(bcolors.warning(
+        "!!!Before making any changing to the database, make sure that you have a reserve copy of users' data!!!"
+    ))
+    print(bcolors.fail(
+        "!!!!!!!!!!!!!!!!!!!!!!!!!!Ctrl+C for cancellation of installation!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+    ))
+    print(bcolors.ok(
+        "Instruction: how to create a whole-database backup - "
+        f"{bcolors.OKBLUE}http://docs.cloudlinux.com/index.html?backing_up_mysql.html"
+    ))
     time.sleep(10)
 
 
@@ -381,10 +398,12 @@ def protectbase_warning(beta, yes):
     :return: True or False, regarding user choice
     """
     if beta and os.path.exists('/etc/yum/pluginconf.d/protectbase.conf'):
-        print(bcolors.warning('''\nYou are trying to install database related packages from the BETA repo.
-But it appears that you have yum's protectbase plugin configured.
-In order to proceed with the installation, the plugin must be disabled.
-By confirming this action, the plugin will be disabled during packages installation process only.'''))
+        print(bcolors.warning(
+            "\nYou are trying to install database related packages from the BETA repo."
+            "However, it appears that you have yum's protectbase plugin configured."
+            "In order to proceed with the installation, the plugin must be disabled."
+            "The plugin will be disabled during the package installation process only."
+        ))
         if not yes:
             if not query_yes_no("Do you confirm this action?"):
                 return False
