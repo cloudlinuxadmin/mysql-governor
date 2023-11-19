@@ -486,11 +486,10 @@ fi
 
 %changelog
 * Wed Nov 15 2023 Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-99
-- CLOS-2170: Add additional safeguards for detecting MySQL AUTO version on DA
-- CLOS-2170: Governor install modules partial formatting pass
+- CLOS-2170: Add additional safeguards for detecting MySQL AUTO version with DirectAdmin
 - CLOS-2173: Added mysqlclient21 installation for clMariaDB
 - CLOS-2117: mysql-version-list option added
-- MariaDB 10.11 support temporary removed
+- MariaDB 10.11 support temporarily removed
 
 * Wed Oct 18 2023 Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-97
 - CLOS-2081: map_hook fixed for CL6
