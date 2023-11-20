@@ -1,5 +1,6 @@
 governor-mysql (1.2-99) stable; urgency=medium
 
+  * CLOS-2049: Governor dropin removed
   * CLOS-1926: Fixed potential issues in the governor shared memory segment
   * CLOS-2170: Add additional safeguards for detecting MySQL AUTO version on DirectAdmin
   * CLOS-2173: Added mysqlclient21 installation for clMariaDB

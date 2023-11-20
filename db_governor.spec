@@ -486,6 +486,7 @@ fi
 
 %changelog
 * Wed Nov 15 2023 Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-99
+- CLOS-2049: Governor dropin removed
 - CLOS-2170: Add additional safeguards for detecting MySQL AUTO version with DirectAdmin
 - CLOS-2173: Added mysqlclient21 installation for clMariaDB
 - CLOS-2117: mysql-version-list option added
