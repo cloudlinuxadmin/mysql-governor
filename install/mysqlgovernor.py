@@ -75,8 +75,7 @@ MARIADB_VERS = (
     'mariadb104',
     'mariadb105',
     'mariadb106',
-    # temporary disabled
-    # 'mariadb1011
+    'mariadb1011',
 )
 
 PERCONA_VERS = ('percona56',)
