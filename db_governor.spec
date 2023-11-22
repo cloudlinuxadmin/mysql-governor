@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   100
+%define g_release   101
 %define g_key_library 12
 
 %if %{undefined _unitdir}
@@ -482,6 +482,9 @@ fi
 %{_includedir}/libgovernor.h
 
 %changelog
+* Wed Nov 22 2023 Dmitry Shibut <dshibut@cloudlinux.com> 1.2-101
+- CLOS-1848: Migrate MySQL Governor on Python 3.11
+
 * Mon Nov 20 2023 Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-100
 - CLOS-2193: MariaDB 10.11 support restored
 

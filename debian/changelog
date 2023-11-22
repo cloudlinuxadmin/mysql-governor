@@ -1,3 +1,9 @@
+governor-mysql (1.2-101) stable; urgency=medium
+
+  * CLOS-1848: Migrate MySQL Governor on Python 3.11
+
+ -- Dmitry Shibut <dshibut@cloudlinux.com>  Wed, 22 Nov 2023 14:00:00 +0000
+
 governor-mysql (1.2-99) stable; urgency=medium
 
   * CLOS-2049: Governor dropin removed
