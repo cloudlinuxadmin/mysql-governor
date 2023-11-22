@@ -1,4 +1,4 @@
-#!/opt/alt/python37/bin/python3
+#!/opt/cloudlinux/venv/bin/python3
 # coding:utf-8
 
 # Copyright © Cloud Linux GmbH & Cloud Linux Software, Inc 2010-2019 All Rights Reserved
@@ -80,12 +80,12 @@ MARIADB_VERS = (
 
 PERCONA_VERS = ('percona56',)
 
-DEFAULT_CL_VER = 'CL9'
+DEFAULT_CL_VER = 9
 EXCL_MYSQL_VERS = {
-    'CL9' : ( 'mysql51', 'mysql55', 'mysql56', 'mariadb55', 'percona56', ),
-    'CL8' : ( ),
-    'CL7' : ( 'mariadb1011', ),
-    'CL6' : ( 'mysql80', 'mariadb1011', ),
+    9 : ( 'mysql51', 'mysql55', 'mysql56', 'mariadb55', 'percona56', ),
+    8 : ( ),
+    7 : ( 'mariadb1011', ),
+    6 : ( 'mysql80', 'mariadb1011', ),
 }
 
 supported_mysqls = list(filter(lambda x: x not in EXCL_MYSQL_VERS.get(get_cl_num(),

@@ -1,4 +1,4 @@
-#!/opt/alt/python37/bin/python3
+#!/opt/cloudlinux/venv/bin/python3
 # -*- coding: utf-8 -*-
 
 # Copyright © Cloud Linux GmbH & Cloud Linux Software, Inc 2010-2019 All Rights Reserved
@@ -9,7 +9,8 @@
 import glob
 import os
 import pwd
-import sys
+
+from clcommon import mysql_lib
 
 
 def get_dauser(path):
@@ -60,43 +61,39 @@ def get_account_list(conf_name='/usr/local/directadmin/conf/mysql.conf'):
     except IOError:
         print("No file " + conf_name)
 
-    try:
-        import MySQLdb
-    except ImportError:
-        print('Error: package "alt-python37-MySQL-meta" is not installed.', file=sys.stderr)
-        return accountList
-
-    if 'host' in params:
-        host_ = params['host']
-    else:
-        host_ = 'localhost'
     user_ = params['user']
     passwd_ = params['passwd']
 
     for ul in userList:
         accountList.append((ul, ul, userList[ul]))
 
+    mysql_args = {
+        'user': user_,
+        'passwd': passwd_,
+        'db': 'mysql',
+        'charset': 'utf8',
+    }
+    if 'socket' in params:
+        mysql_args['unix_socket'] = params['socket']
+    else:
+        mysql_args['host'] = params.get('host', 'localhost')
+
     try:
-        if 'socket' in params:
-            con = MySQLdb.connect(unix_socket=params['socket'], user=user_,
-                                  passwd=passwd_, db="mysql")
-        else:
-            con = MySQLdb.connect(host=host_, user=user_, passwd=passwd_,
-                                  db="mysql")
-        cur = con.cursor()
-        cur.execute('set names `utf8`')
-        cur.execute('select `user` from db group by `user` order by `user`')
-        result = cur.fetchall()
-        for row in result:
-            try:
-                username = row[0].split('_')[0].strip()
-                accountList.append((row[0], username, userList[username]))
-            except KeyError:
-                # db_user has no real user
-                pass
-        con.close()
-    except MySQLdb.Error as e:
+        connector = mysql_lib.MySQLConnector(**mysql_args)
+        with connector.connect() as db:
+            query = 'select `user` from db group by `user` order by `user`'
+            result = db.execute_query(query)
+    except mysql_lib.pymysql.Error as e:
         print(e)
+        result = []
+
+    for row in result:
+        try:
+            username = row[0].split('_')[0].strip()
+            accountList.append((row[0], username, userList[username]))
+        except KeyError:
+            # db_user has no real user
+            pass
 
     return accountList
 

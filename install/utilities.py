@@ -123,7 +123,7 @@ def _trace_calls(frame, event, arg):
         return
 
     filename = frame.f_code.co_filename
-    if filename.startswith("/opt/alt/python37/") or filename.startswith("<frozen"):
+    if filename.startswith("/opt/cloudlinux/venv/") or filename.startswith("<frozen"):
         # ignore system functions and frozen importlib calls
         return
 
