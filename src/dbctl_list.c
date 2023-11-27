@@ -488,6 +488,13 @@ list_restricted (void)
 void
 list_restricted_shm (void)
 {
-  init_bad_users_list_client ();
-  printf_bad_list_cleint_persistent ();
+	int rc = init_bad_users_list_client_without_init ();
+	if (rc != 0)
+	{
+		fprintf(stderr, "ERROR - Cannot get bad users list\n");
+	}
+	else
+	{
+		printf_bad_list_cleint_persistent ();
+	}
 }

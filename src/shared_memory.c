@@ -18,7 +18,10 @@
 #include <string.h>
 #include <semaphore.h>
 #include <pthread.h>
+#include <pwd.h>
+#include <grp.h>
 
+#include "log.h"
 #include "data.h"
 #include "dbgovernor_string_functions.h"
 #include "shared_memory.h"
@@ -78,7 +81,7 @@ int shm_fd = 0;
 
 int init_bad_users_list_utility(void) {
 
-	if ((shm_fd = cl_shm_open((O_RDWR), 0755)) < 0) {
+	if ((shm_fd = cl_shm_open((O_RDWR), 0600)) < 0) {
 		return -1;
 	}
 
@@ -106,21 +109,52 @@ int remove_bad_users_list_utility(void) {
 	return 0;
 }
 
+/*
+   uid/gid will not be changed by chown function with -1 value
+   But POSIX says that their types are integer, no mention of signed or unsigned
+   And on the Linux they are unsigned in fact
+*/
+#define UNINITED_UID ((uid_t)-1)
+#define UNINITED_GID ((gid_t)-1)
+static uid_t mysql_uid = UNINITED_UID;
+static gid_t mysql_gid = UNINITED_GID;
+
+static void init_mysql_uidgid(struct governor_config *cfg_ptr)
+{
+	struct passwd *passwd = getpwnam("mysql");
+	if (passwd)
+	{
+		mysql_uid = passwd->pw_uid;
+	}
+	struct group *group = getgrnam("mysql");
+	if (group)
+	{
+		mysql_gid = group->gr_gid;
+	}
+}
+
 int init_bad_users_list(void) {
 	//if(shared_memory_name) shm_unlink(shared_memory_name);
 	//sem_unlink(SHARED_MEMORY_SEM);
+	int rc;
 	mode_t old_umask = umask(0);
+	struct governor_config data_cfg;
+	get_config_data(&data_cfg);
 
+	if (mysql_uid == UNINITED_UID || mysql_gid == UNINITED_GID)
+	{
+		init_mysql_uidgid(&data_cfg);
+	}
 	int first = 0;
-	if ((shm_fd = cl_shm_open((O_CREAT | O_EXCL | O_RDWR),
-			0755)) > 0)
+	if ((shm_fd = cl_shm_open((O_CREAT | O_EXCL | O_RDWR), 0600)) > 0)
 	{
 		first = 1;
 	}
-	else if ((shm_fd = cl_shm_open(O_RDWR, 0755))
-			< 0)
+	else if ((shm_fd = cl_shm_open(O_RDWR, 0600)) < 0)
 	{
 		umask(old_umask);
+		WRITE_LOG (NULL, 0, "cl_shm_open(%s) failed with %d code - EXITING",
+				data_cfg.log_mode, shared_memory_name, errno);
 		return -1;
 	}
 	else
@@ -132,71 +166,30 @@ int init_bad_users_list(void) {
 		}
 	}
 
-	uid_t mysql_user_uid = 0;
-	gid_t mysql_user_gid = 0;
-
-	if (unix_socket_address)
+	/* Make chown even if file existed before open - to fix possible previous errors */
+	rc = fchown(shm_fd, mysql_uid, mysql_gid);
+	if (rc)
 	{
-		// change permissions only for governor executable files
-		struct stat socket_stat;
-		if (stat(unix_socket_address, &socket_stat) == 0)
-		{
-			// find socket change owner and permissions for shared memory
-			if (fchown(shm_fd, socket_stat.st_uid, socket_stat.st_gid) != 0)
-			{
-				// log error
-				fprintf(stderr, "chown error: %s\n", strerror(errno));
-			}
-			else if (fchmod(shm_fd, 0600) != 0)
-			{
-				// log error
-				fprintf(stderr, "chmod error: %s\n", strerror(errno));
-			}
-			mysql_user_uid = socket_stat.st_uid;
-			mysql_user_gid = socket_stat.st_gid;
-		}
-		else
-		{
-			// log error - can`t find
-			fprintf(stderr, "Use standard access to user's list\n");
-		}
-	}
-	else
-	{
-		// change permissions only for governor executable files
-		struct stat socket_stat;
-		if (stat("/var/lib/mysql/mysql.sock", &socket_stat) == 0)
-		{
-			// find socket change owner and permissions for shared memory
-			if (fchown(shm_fd, socket_stat.st_uid, socket_stat.st_gid) != 0)
-			{
-				// log error
-				fprintf(stderr, "chown error: %s\n", strerror(errno));
-			}
-			else if (fchmod(shm_fd, 0600) != 0)
-			{
-				// log error
-				fprintf(stderr, "chmod error: %s\n", strerror(errno));
-			}
-			mysql_user_uid = socket_stat.st_uid;
-			mysql_user_gid = socket_stat.st_gid;
-		}
-		else
-		{
-			// log error - can`t find
-			fprintf(stderr, "Use standard access to user's list\n");
-		}
+		WRITE_LOG (NULL, 0, "chown(%s, %d, %d) failed with %d code - IGNORING",
+				data_cfg.log_mode, shared_memory_name, (int)mysql_uid, (int)mysql_gid, errno);
 	}
 
 	if (first)
 	{
-		ftruncate(shm_fd, sizeof(shm_structure));
+		rc = ftruncate(shm_fd, sizeof(shm_structure));
+		if (rc)
+		{
+			WRITE_LOG (NULL, 0, "truncate(%s, %u) failed with %d code - IGNORING",
+					data_cfg.log_mode, shared_memory_name, (unsigned)sizeof(shm_structure), errno);
+		}
 	}
 
 	if ((bad_list = (shm_structure *) cl_mmap (0, sizeof (shm_structure),
 			(PROT_READ | PROT_WRITE), MAP_SHARED,
 			shm_fd, 0)) == MAP_FAILED)
 	{
+		WRITE_LOG (NULL, 0, "cl_map(%s) failed with %d code - EXITING",
+				data_cfg.log_mode, shared_memory_name, errno);
 		close(shm_fd);
 		umask(old_umask);
 		return -1;
@@ -206,6 +199,8 @@ int init_bad_users_list(void) {
 	{
 		if (sem_init(&bad_list->sem, 1, 1) < 0)
 		{
+			WRITE_LOG (NULL, 0, "sem_init(%s) failed with %d code - EXITING",
+					data_cfg.log_mode, shared_memory_name, errno);
 			cl_munmap ((void *) bad_list, sizeof (shm_structure));
 			close(shm_fd);
 			umask(old_umask);
@@ -345,7 +340,7 @@ int32_t is_user_in_bad_list_cleint(char *username) {
 	int shm_fd_clents = 0;
 	int32_t fnd = 0;
 	shm_structure *bad_list_clents;
-	if ((shm_fd_clents = cl_shm_open(O_RDWR, 0755)) < 0) {
+	if ((shm_fd_clents = cl_shm_open(O_RDWR, 0600)) < 0) {
 		return 0;
 	}
 	if ((bad_list_clents
@@ -396,7 +391,7 @@ int user_in_bad_list_cleint_show(void) {
 	int fnd = 0;
 	mode_t old_umask = umask(0);
 	shm_structure *bad_list_clents;
-	if ((shm_fd_clents = cl_shm_open(O_RDWR, 0755)) < 0) {
+	if ((shm_fd_clents = cl_shm_open(O_RDWR, 0600)) < 0) {
 		umask(old_umask);
 		return 0;
 	}
@@ -497,6 +492,32 @@ int init_bad_users_list_client(void) {
 
 	pthread_mutex_unlock(&mtx_shared);
 	umask(old_umask);
+	return 0;
+
+}
+
+/*
+   As init_bad_users_list_client, but without
+   creation, initiation and truncation
+*/
+int init_bad_users_list_client_without_init(void) {
+	pthread_mutex_lock(&mtx_shared);
+	if ((shm_fd_clents_global = cl_shm_open(O_RDWR, 0600)) < 0)
+	{
+		pthread_mutex_unlock(&mtx_shared);
+		return -1;
+	}
+
+	bad_list_clents_global = (shm_structure *) cl_mmap (0, sizeof(shm_structure), PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd_clents_global, 0);
+
+	if (bad_list_clents_global == MAP_FAILED)
+	{
+		close(shm_fd_clents_global);
+		pthread_mutex_unlock(&mtx_shared);
+		return -2;
+	}
+
+	pthread_mutex_unlock(&mtx_shared);
 	return 0;
 
 }

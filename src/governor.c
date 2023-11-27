@@ -463,6 +463,8 @@ int main(int argc, char *argv[]) {
 			if (trying_to_connect > 3) {
 				WRITE_LOG (NULL, 0, "Can't connect to mysql. Please check that mysql is running otherwise"
 				" check host, login and password in /etc/container/mysql-governor.xml file", data_cfg.log_mode);
+				/* To avoid too frequent service restart when mysql is not available */
+				sleep(60);
 				delete_mysql_function();
 				close_log();
 				close_restrict_log();
@@ -471,8 +473,9 @@ int main(int argc, char *argv[]) {
 				remove("/usr/share/lve/dbgovernor/governor_connected");
 				exit(EXIT_FAILURE);
 			} else {
-				WRITE_LOG (NULL, 0, "Can't connect to mysql. Try to reconnect",
-						data_cfg.log_mode);
+				WRITE_LOG (NULL, 0, "Can't connect to mysql. Try to reconnect", data_cfg.log_mode);
+				/* To avoid too frequent reconnect tries when mysql is not available */
+				sleep(20);
 			}
 		} else {
 			WRITE_LOG (NULL, 0, "Governor successfully connected to mysql", data_cfg.log_mode);

@@ -49,6 +49,9 @@ def get_users_data():
         'user': conn_params['login'],
         'passwd': conn_params['pass'],
         'db': DB,
+        # utf8mb4 is supported even on MySQL 5.5, though leads to warning only on MySQL 8.0
+        # So we can use utf8mb4 charset regardless of clMySQL/clMariaDB version
+        'charset': 'utf8mb4',
     }
     if 'socket' in conn_params:
         mysql_args['unix_socket'] = conn_params['socket']

@@ -879,48 +879,42 @@ db_connect (const char *host, const char *user_name,
 	    const char *user_password, const char *db_name, int argc,
 	    char *argv[], MODE_TYPE debug_mode)
 {
-  struct governor_config data_cfg;
-  get_config_data (&data_cfg);
+	struct governor_config data_cfg;
+	get_config_data (&data_cfg);
 
-  //Обнулим глобальные переменные доступа
-  strcpy (global_user_name, "");
-  strcpy (global_host, "");
-  strcpy (global_user_password, "");
-  strcpy (global_db_name, "");
+	strcpy (global_user_name, "");
+	strcpy (global_host, "");
+	strcpy (global_user_password, "");
+	strcpy (global_db_name, "");
 
-  WRITE_LOG (NULL, 0, "Open govern connection operation", data_cfg.log_mode);
-
-  if (db_connect_common (&mysql_send_governor, host, user_name, user_password,
+	WRITE_LOG (NULL, 0, "Open send_command connection operation", data_cfg.log_mode);
+	if (db_connect_common (&mysql_send_governor, host, user_name, user_password,
 			 db_name, debug_mode, argc, argv, 1) < 0)
-    {
-      WRITE_LOG (NULL, 0, "Send governor connection error", data_cfg.log_mode);
-
-      return -1;
-    }
-  else
-    {
-      WRITE_LOG (NULL, 0, "Open write connection operation", data_cfg.log_mode);
-      if (db_connect_common (&mysql_do_command, host, user_name,
-			     user_password, db_name, debug_mode, argc, argv,
-			     0) < 0)
 	{
-	  WRITE_LOG (NULL, 0, "Write connection error", data_cfg.log_mode);
-	  return -1;
-	}
-      else
-	{
-	  if (db_connect_common (&mysql_do_kill, host, user_name,
-				 user_password, db_name, debug_mode, argc,
-				 argv, 0) < 0)
-	    {
-	      WRITE_LOG (NULL, 0, "Kill connection error", data_cfg.log_mode);
-	      return -1;
-	    }
+		WRITE_LOG (NULL, 0, "send_command connection error", data_cfg.log_mode);
+		return -1;
 	}
 
-    }
-  return 0;
+	WRITE_LOG (NULL, 0, "Open write_connection operation", data_cfg.log_mode);
+	if (db_connect_common (&mysql_do_command, host, user_name,
+				user_password, db_name, debug_mode, argc, argv, 0) < 0)
+	{
+		WRITE_LOG (NULL, 0, "write_connection error", data_cfg.log_mode);
+		db_close_send();
+		return -1;
+	}
 
+	WRITE_LOG (NULL, 0, "Open do_kill connection operation", data_cfg.log_mode);
+	if (db_connect_common (&mysql_do_kill, host, user_name,
+				user_password, db_name, debug_mode, argc, argv, 0) < 0)
+	{
+		WRITE_LOG (NULL, 0, "do_kill connection error", data_cfg.log_mode);
+		db_close_command();
+		db_close_send();
+		return -1;
+	}
+
+	return 0;
 }
 
 static int find_mariadb104plus(char *buffer)
