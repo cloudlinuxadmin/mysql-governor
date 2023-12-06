@@ -29,6 +29,7 @@ int delete_allusers_from_list (void);
 
 int32_t is_user_in_bad_list_cleint (char *username);
 int init_bad_users_list_client (void);
+int init_bad_users_list_client_without_init (void);
 int remove_bad_users_list_client (void);
 int32_t is_user_in_bad_list_cleint_persistent (char *username);
 int user_in_bad_list_cleint_show (void);

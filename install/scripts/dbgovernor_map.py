@@ -71,7 +71,9 @@ def get_account_list(conf_name='/usr/local/directadmin/conf/mysql.conf'):
         'user': user_,
         'passwd': passwd_,
         'db': 'mysql',
-        'charset': 'utf8',
+        # utf8mb4 is supported even on MySQL 5.5, though leads to warning only on MySQL 8.0
+        # So we can use utf8mb4 charset regardless of clMySQL/clMariaDB version
+        'charset': 'utf8mb4',
     }
     if 'socket' in params:
         mysql_args['unix_socket'] = params['socket']

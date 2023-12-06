@@ -1,3 +1,11 @@
+governor-mysql (1.2-102) stable; urgency=medium
+
+  * CLOS-2215: bad_users_list ownership fixed;
+  * CLOS-1759: dbgovernor_map mysql charset changed to utf8mb;
+  * CLOS-1730: Timeouts added to avoid repetive log messages
+
+ -- Aleksandr Demeshko <ademeshko@cloudlinux.com>  Wed, 06 Dec 2023 18:00:00 +0000
+
 governor-mysql (1.2-101) stable; urgency=medium
 
   * CLOS-1848: Migrate MySQL Governor on Python 3.11

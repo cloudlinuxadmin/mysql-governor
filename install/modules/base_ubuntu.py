@@ -361,7 +361,7 @@ class UbuntuInstallManager(InstallManager):
             }
         """
         try:
-            version_string = exec_command('mysql --version')
+            version_string = exec_command('mysql --version', silent=True)
             version_info = re.findall(r'(?<=Distrib\s)[^,]+', version_string[0])
             if not version_info:
                 # for mysql 8.0
