@@ -98,3 +98,81 @@ def test_mycnf_read_only(fs):
     os_module = fake_filesystem.FakeOsModule(fs)
     os_module.chmod('/etc/my.cnf', 0o400)
     assert not utilities.mycnf_writable()
+
+
+nopanel_cl6_mysqls_types = ['auto',
+    'mysql51', 'mysql55', 'mysql56', 'mysql57',
+    'mariadb100', 'mariadb101', 'mariadb102', 
+    'mariadb103', 'mariadb104', 'mariadb105', 'mariadb106',
+    'percona56']
+
+nopanel_cl7_mysqls_types = ['auto',
+    'mysql51', 'mysql55', 'mysql56', 'mysql57', 'mysql80',
+    'mariadb100', 'mariadb101', 'mariadb102', 'mariadb103',
+    'mariadb104', 'mariadb105', 'mariadb106', 'mariadb1011',
+    'percona56']
+
+nopanel_cl8_mysqls_types = ['auto',
+    'mysql55', 'mysql56', 'mysql57', 'mysql80',
+    'mariadb100', 'mariadb101', 'mariadb102', 'mariadb103',
+    'mariadb104', 'mariadb105', 'mariadb106', 'mariadb1011',
+    'percona56']
+
+nopanel_cl9_mysqls_types = ['auto',
+    'mysql57', 'mysql80',
+    'mariadb100', 'mariadb101', 'mariadb102', 'mariadb103',
+    'mariadb104', 'mariadb105', 'mariadb106', 'mariadb1011']
+
+nopanel_ubuntu_mysqls_types = ['auto', 'mysql80', 'mariadb103' ]
+
+cpanel_cl6_mysqls_types = ['auto',
+    'mysql51', 'mysql55', 'mysql56', 'mysql57',
+    'mariadb100', 'mariadb101', 'mariadb102', 'mariadb103',
+    'mariadb105', 'mariadb106',
+    'percona56']
+
+cpanel_cl7_mysqls_types = ['auto',
+    'mysql51', 'mysql55', 'mysql56', 'mysql57', 'mysql80',
+    'mariadb100', 'mariadb101', 'mariadb102', 'mariadb103',
+    'mariadb105', 'mariadb106',
+    'percona56']
+
+cpanel_cl8_mysqls_types = ['auto',
+    'mysql55', 'mysql56', 'mysql57', 'mysql80',
+    'mariadb100', 'mariadb101', 'mariadb102', 'mariadb103',
+    'mariadb105', 'mariadb106', 'mariadb1011',
+    'percona56']
+
+cpanel_cl9_mysqls_types = ['auto',
+    'mysql57', 'mysql80',
+    'mariadb100', 'mariadb101', 'mariadb102', 'mariadb103',
+    'mariadb105', 'mariadb106', 'mariadb1011']
+
+cpanel_ubuntu_mysqls_types = ['auto', 'mysql80', 'mariadb103' ]
+
+@pytest.mark.parametrize("mocked_is_ubuntu, mocked_cl_num, mocked_panel, expected", [
+    (False, 6, 'Unknown', nopanel_cl6_mysqls_types),
+    (False, 7, 'Unknown', nopanel_cl7_mysqls_types),
+    (False, 8, 'Unknown', nopanel_cl8_mysqls_types),
+    (False, 9, 'Unknown', nopanel_cl9_mysqls_types),
+    (True, 8, 'Unknown', nopanel_ubuntu_mysqls_types),
+    (False, 6, 'cPanel', cpanel_cl6_mysqls_types),
+    (False, 7, 'cPanel', cpanel_cl7_mysqls_types),
+    (False, 8, 'cPanel', cpanel_cl8_mysqls_types),
+    (False, 9, 'cPanel', cpanel_cl9_mysqls_types),
+    (True, 8, 'cPanel', cpanel_ubuntu_mysqls_types),
+    (False, 6, 'DirectAdmin', nopanel_cl6_mysqls_types),
+    (False, 7, 'DirectAdmin', nopanel_cl7_mysqls_types),
+    (False, 8, 'DirectAdmin', nopanel_cl8_mysqls_types),
+    (False, 9, 'DirectAdmin', nopanel_cl9_mysqls_types),
+    (False, 6, 'Plesk', nopanel_cl6_mysqls_types),
+    (False, 7, 'Plesk', nopanel_cl7_mysqls_types),
+    (False, 8, 'Plesk', nopanel_cl8_mysqls_types),
+    (False, 9, 'Plesk', nopanel_cl9_mysqls_types),
+])
+def test_get_supported_mysqls(mocked_is_ubuntu, mocked_cl_num, mocked_panel, expected):
+    """
+    Check if supported mysql types lists are formed correctly
+    depending on panel and OS versions
+    """
+    assert utilities.get_supported_mysqls(mocked_is_ubuntu, mocked_cl_num, mocked_panel) == expected

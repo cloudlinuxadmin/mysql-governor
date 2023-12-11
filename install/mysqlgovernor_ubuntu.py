@@ -17,7 +17,7 @@ import os
 from modules import UbuntuInstallManager, Storage
 from utilities import exec_command, bcolors, query_yes_no, \
     correct_mysqld_service_for_cl7, set_debug, shadow_tracing, set_path_environ, \
-    check_mysqld_is_alive, fix_broken_governor_xml_config, get_status_info
+    check_mysqld_is_alive, fix_broken_governor_xml_config, get_status_info, get_supported_mysqls
 
 LOG_FILE_NAME = "/usr/share/lve/dbgovernor/governor_install.log"
 
@@ -49,9 +49,7 @@ class Logger:
     def flush(self):
         self.terminal.flush()
 
-supported_mysqls=[ 'auto', 'mysql80', 'mariadb103' ]
-
-def build_parser():
+def build_parser(supported_mysqls):
     """
     Build CLI parser
     """
@@ -125,7 +123,12 @@ def main(argv):
         "\n####################################################Install process begin %s#####################################################\n" % time_now.strftime(
             "%Y-%m-%d %H:%M"))
 
-    parser = build_parser()
+    panel = exec_command("cldetect --detect-cp-name", as_string=True)
+
+    # Instead of IS_UBUNTU and get_cl_num()
+    supported_mysqls = get_supported_mysqls(True, 8, panel)
+
+    parser = build_parser(supported_mysqls)
     if not argv:
         parser.print_help()
         sys.exit(1)
@@ -136,7 +139,6 @@ def main(argv):
     storage_holder.check_root_permissions()
 
     # create install manager instance for current cp
-    panel = exec_command("cldetect --detect-cp-name", as_string=True)
     manager = UbuntuInstallManager(panel)
 
     if opts.mysql_version_list:
