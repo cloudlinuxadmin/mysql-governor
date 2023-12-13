@@ -173,6 +173,12 @@ int init_bad_users_list(void) {
 		WRITE_LOG (NULL, 0, "chown(%s, %d, %d) failed with %d code - IGNORING",
 				data_cfg.log_mode, shared_memory_name, (int)mysql_uid, (int)mysql_gid, errno);
 	}
+	rc = fchmod(shm_fd, S_IRUSR | S_IWUSR)
+	if (rc)
+	{
+		WRITE_LOG (NULL, 0, "chmod(%s, %o) failed with %d code - IGNORING",
+				data_cfg.log_mode, shared_memory_name, S_IRUSR | S_IWUSR, errno);
+	}
 
 	if (first)
 	{
