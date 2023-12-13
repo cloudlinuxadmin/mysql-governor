@@ -44,7 +44,8 @@ __all__ = [
     "disable_and_remove_service",
     "disable_and_remove_service_if_notsymlynk", "check_mysqld_is_alive",
     "get_mysql_log_file", "get_mysql_cnf_value", "makedir_recursive", "is_ubuntu",
-    "download_apt_packages", "install_deb_packages", "Logger", "get_section_from_all_cnfs"
+    "download_apt_packages", "install_deb_packages", "Logger", "get_section_from_all_cnfs",
+    "get_supported_mysqls"
 ]
 
 RPM_TEMP_PATH = "/usr/share/lve/dbgovernor/tmp/governor-tmp"
@@ -1618,3 +1619,53 @@ def wait_for_governormysql_service_status(number_of_attempts: int = 5) -> bool:
             return _status
 
     return _status
+
+AUTO_VER = ('auto',)
+
+MYSQL_VERS = (
+    'mysql51',
+    'mysql55',
+    'mysql56',
+    'mysql57',
+    'mysql80',
+)
+
+MARIADB_VERS = (
+    'mariadb100',
+    'mariadb101',
+    'mariadb102',
+    'mariadb103',
+    'mariadb104',
+    'mariadb105',
+    'mariadb106',
+    'mariadb1011',
+)
+
+PERCONA_VERS = ('percona56',)
+
+DEFAULT_CL_VER = 9
+EXCL_MYSQL_VERS = {
+    9 : ( 'mysql51', 'mysql55', 'mysql56', 'percona56', ),
+    8 : ( 'mysql51', ),
+    7 : ( ),
+    6 : ( 'mysql80', 'mariadb1011', ),
+}
+
+def get_supported_mysqls(ubuntu, cl_num, panel):
+    """
+    Get list of supported versions of clMySQL/clMariaDB depending on panel and OS version
+    """
+    if ubuntu:
+        return [ 'auto', 'mysql80', 'mariadb103' ]
+
+    mysqls_list = list(filter(lambda x: x not in \
+                                   EXCL_MYSQL_VERS.get(cl_num, EXCL_MYSQL_VERS[DEFAULT_CL_VER]),
+                               AUTO_VER + MYSQL_VERS + MARIADB_VERS + PERCONA_VERS
+                             )
+                      )
+    if not ubuntu and panel == 'cPanel':
+        mysqls_list = list(filter(lambda x: x != 'mariadb104', mysqls_list))
+        if cl_num < 8:
+            mysqls_list = list(filter(lambda x: x != 'mariadb1011', mysqls_list))
+
+    return mysqls_list

@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   102
+%define g_release   103
 %define g_key_library 12
 
 %if %{undefined _unitdir}
@@ -482,6 +482,9 @@ fi
 %{_includedir}/libgovernor.h
 
 %changelog
+* Tue Dec 12 2023 Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-103
+- CLOS-2276: MariaDB 10.11 support added for CL7 except cPanel
+
 * Wed Dec 06 2023 Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-102
 - CLOS-2215: bad_users_list ownership fixed
 - CLOS-1759: dbgovernor_map mysql charset changed to utf8mb

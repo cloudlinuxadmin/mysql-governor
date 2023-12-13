@@ -20,7 +20,7 @@ from utilities import (bcolors, check_mysqld_is_alive,
                        correct_mysqld_service_for_cl7, exec_command,
                        fix_broken_governor_xml_config, get_cl_num,
                        get_status_info, query_yes_no, set_debug,
-                       set_path_environ)
+                       set_path_environ, get_supported_mysqls)
 
 # from utilities import shadow_tracing
 
@@ -57,44 +57,8 @@ class Logger:
         """
         self.terminal.flush()
 
-AUTO_VER = ('auto',)
 
-MYSQL_VERS = (
-    'mysql51',
-    'mysql55',
-    'mysql56',
-    'mysql57',
-    'mysql80',
-)
-
-MARIADB_VERS = (
-    'mariadb100',
-    'mariadb101',
-    'mariadb102',
-    'mariadb103',
-    'mariadb104',
-    'mariadb105',
-    'mariadb106',
-    'mariadb1011',
-)
-
-PERCONA_VERS = ('percona56',)
-
-DEFAULT_CL_VER = 9
-EXCL_MYSQL_VERS = {
-    9 : ( 'mysql51', 'mysql55', 'mysql56', 'mariadb55', 'percona56', ),
-    8 : ( ),
-    7 : ( 'mariadb1011', ),
-    6 : ( 'mysql80', 'mariadb1011', ),
-}
-
-supported_mysqls = list(filter(lambda x: x not in EXCL_MYSQL_VERS.get(get_cl_num(),
-                                                                      EXCL_MYSQL_VERS[DEFAULT_CL_VER]),
-                               AUTO_VER + MYSQL_VERS + MARIADB_VERS + PERCONA_VERS
-                              )
-                       )
-
-def build_parser():
+def build_parser(supported_mysqls):
     """
     Build CLI parser
     """
@@ -226,7 +190,11 @@ def main(argv):
         "#####################################################\n"
     )
 
-    parser = build_parser()
+    # get panel name
+    panel = exec_command("cldetect --detect-cp-name", as_string=True)
+    supported_mysqls = get_supported_mysqls(False, get_cl_num(), panel)
+
+    parser = build_parser(supported_mysqls)
     if not argv:
         parser.print_help()
         sys.exit(1)
@@ -237,7 +205,6 @@ def main(argv):
     storage_holder.check_root_permissions()
 
     # create install manager instance for current cp
-    panel = exec_command("cldetect --detect-cp-name", as_string=True)
     manager = InstallManager.factory(panel)
 
     if opts.mysql_version_list:
