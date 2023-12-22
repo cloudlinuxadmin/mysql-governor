@@ -233,7 +233,6 @@ get_data_from_client (void *data)
   sigprocmask (SIG_BLOCK, &newset, 0);
   sa.sa_handler = term_handler;
   sigaction (SIGTERM, &sa, 0);
-  sigaction (SIGKILL, &sa, 0);
   int sync = 1;
 
   for (;;)

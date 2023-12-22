@@ -19,18 +19,17 @@
 #include "dbgovernor_string_functions.h"
 
 int restrict_user(char *user, char *level) {
-	FILE *in = NULL;
-	FILE *out = NULL;
+	FILE *inout = NULL;
 	int _socket = -1;
 
 	if (!strncmp(user, "default", sizeof(username_t) - 1)) {
 		return 1;
 	}
 
-	if (opensock(&_socket, &in, &out)) {
+	if (opensock_to_server_dbctl(&_socket, &inout)) {
 		client_type_t ctt = DBCTL;
-		fwrite(&ctt, sizeof(client_type_t), 1, out);
-		fflush(out);
+		fwrite(&ctt, sizeof(client_type_t), 1, inout);
+		fflush(inout);
 
 		DbCtlCommand command;
 		command.command = RESTRICT;
@@ -44,13 +43,13 @@ int restrict_user(char *user, char *level) {
 		command.options.timeout = 0;
 		command.options.user_max_connections = 0;
 
-		fwrite_wrapper(&command, sizeof(DbCtlCommand), 1, out);
-		fflush(out);
+		fwrite_wrapper(&command, sizeof(DbCtlCommand), 1, inout);
+		fflush(inout);
 
-		closesock(_socket, in, out);
+		closesock_to_server_dbctl(_socket, inout);
 	} else {
 
-		closesock(_socket, in, out);
+		closesock_to_server_dbctl(_socket, inout);
 		return 0;
 	}
 
@@ -58,18 +57,17 @@ int restrict_user(char *user, char *level) {
 }
 
 int unrestrict(char *user) {
-	FILE *in = NULL;
-	FILE *out = NULL;
+	FILE *inout = NULL;
 	int _socket = -1;
 
 	if (!strncmp(user, "default", sizeof(username_t) - 1)) {
 		return 1;
 	}
 
-	if (opensock(&_socket, &in, &out)) {
+	if (opensock_to_server_dbctl(&_socket, &inout)) {
 		client_type_t ctt = DBCTL;
-		fwrite(&ctt, sizeof(client_type_t), 1, out);
-		fflush(out);
+		fwrite(&ctt, sizeof(client_type_t), 1, inout);
+		fflush(inout);
 
 		DbCtlCommand command;
 		command.command = UNRESTRICT;
@@ -83,12 +81,12 @@ int unrestrict(char *user) {
 		command.options.timeout = 0;
 		command.options.user_max_connections = 0;
 
-		fwrite_wrapper(&command, sizeof(DbCtlCommand), 1, out);
-		fflush(out);
+		fwrite_wrapper(&command, sizeof(DbCtlCommand), 1, inout);
+		fflush(inout);
 
-		closesock(_socket, in, out);
+		closesock_to_server_dbctl(_socket, inout);
 	} else {
-		closesock(_socket, in, out);
+		closesock_to_server_dbctl(_socket, inout);
 		return 0;
 	}
 
@@ -96,14 +94,13 @@ int unrestrict(char *user) {
 }
 
 int dbupdatecmd(void) {
-	FILE *in = NULL;
-	FILE *out = NULL;
+	FILE *inout = NULL;
 	int _socket = -1;
 
-	if (opensock(&_socket, &in, &out)) {
+	if (opensock_to_server_dbctl(&_socket, &inout)) {
 		client_type_t ctt = DBCTL;
-		fwrite(&ctt, sizeof(client_type_t), 1, out);
-		fflush(out);
+		fwrite(&ctt, sizeof(client_type_t), 1, inout);
+		fflush(inout);
 
 		DbCtlCommand command;
 		command.command = DBUSER_MAP_CMD;
@@ -116,12 +113,12 @@ int dbupdatecmd(void) {
 		command.options.timeout = 0;
 		command.options.user_max_connections = 0;
 
-		fwrite_wrapper(&command, sizeof(DbCtlCommand), 1, out);
-		fflush(out);
+		fwrite_wrapper(&command, sizeof(DbCtlCommand), 1, inout);
+		fflush(inout);
 
-		closesock(_socket, in, out);
+		closesock_to_server_dbctl(_socket, inout);
 	} else {
-		closesock(_socket, in, out);
+		closesock_to_server_dbctl(_socket, inout);
 		return 0;
 	}
 
@@ -129,14 +126,13 @@ int dbupdatecmd(void) {
 }
 
 int unrestrict_all(void) {
-	FILE *in = NULL;
-	FILE *out = NULL;
+	FILE *inout = NULL;
 	int _socket = -1;
 
-	if (opensock(&_socket, &in, &out)) {
+	if (opensock_to_server_dbctl(&_socket, &inout)) {
 		client_type_t ctt = DBCTL;
-		fwrite(&ctt, sizeof(client_type_t), 1, out);
-		fflush(out);
+		fwrite(&ctt, sizeof(client_type_t), 1, inout);
+		fflush(inout);
 
 		DbCtlCommand command;
 		command.command = UNRESTRICT_A;
@@ -149,12 +145,12 @@ int unrestrict_all(void) {
 		command.options.timeout = 0;
 		command.options.user_max_connections = 0;
 
-		fwrite_wrapper(&command, sizeof(DbCtlCommand), 1, out);
-		fflush(out);
+		fwrite_wrapper(&command, sizeof(DbCtlCommand), 1, inout);
+		fflush(inout);
 
-		closesock(_socket, in, out);
+		closesock_to_server_dbctl(_socket, inout);
 	} else {
-		closesock(_socket, in, out);
+		closesock_to_server_dbctl(_socket, inout);
 		return 0;
 	}
 

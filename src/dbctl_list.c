@@ -373,14 +373,13 @@ print_list_rest (FILE * in)
 int
 list_all (int flag, int non_priv, int raw)
 {
-  FILE *in = NULL;
-  FILE *out = NULL;
+  FILE *inout = NULL;
   int socket = -1;
-  if (opensock (&socket, &in, &out))
+  if (opensock_to_server_dbctl (&socket, &inout))
     {
       client_type_t ctt = DBCTL;
-      fwrite (&ctt, sizeof (client_type_t), 1, out);
-      fflush (out);
+      fwrite (&ctt, sizeof (client_type_t), 1, inout);
+      fflush (inout);
 
       DbCtlCommand command = { 0 };
       command.command = LIST;
@@ -393,16 +392,16 @@ list_all (int flag, int non_priv, int raw)
       command.options.timeout = 0;
       command.options.user_max_connections = 0;
 
-      fwrite_wrapper (&command, sizeof (DbCtlCommand), 1, out);
-      fflush (out);
+      fwrite_wrapper (&command, sizeof (DbCtlCommand), 1, inout);
+      fflush (inout);
 
-      print_list (in, flag, non_priv, raw);
-      closesock (socket, in, out);
+      print_list (inout, flag, non_priv, raw);
+      closesock_to_server_dbctl (socket, inout);
     }
   else
     {
 
-      closesock (socket, in, out);
+      closesock_to_server_dbctl (socket, inout);
       return 0;
     }
   return 1;
@@ -411,14 +410,13 @@ list_all (int flag, int non_priv, int raw)
 int
 list_all_json (int flag)
 {
-  FILE *in = NULL;
-  FILE *out = NULL;
+  FILE *inout = NULL;
   int socket = -1;
-  if (opensock (&socket, &in, &out))
+  if (opensock_to_server_dbctl (&socket, &inout))
     {
       client_type_t ctt = DBCTL;
-      fwrite (&ctt, sizeof (client_type_t), 1, out);
-      fflush (out);
+      fwrite (&ctt, sizeof (client_type_t), 1, inout);
+      fflush (inout);
 
       DbCtlCommand command = { 0 };
       command.command = LIST;
@@ -431,16 +429,16 @@ list_all_json (int flag)
       command.options.timeout = 0;
       command.options.user_max_connections = 0;
 
-      fwrite_wrapper (&command, sizeof (DbCtlCommand), 1, out);
-      fflush (out);
+      fwrite_wrapper (&command, sizeof (DbCtlCommand), 1, inout);
+      fflush (inout);
 
-      print_json (in, flag);
-      closesock (socket, in, out);
+      print_json (inout, flag);
+      closesock_to_server_dbctl (socket, inout);
     }
   else
     {
 
-      closesock (socket, in, out);
+      closesock_to_server_dbctl (socket, inout);
       return 0;
     }
   return 1;
@@ -449,15 +447,14 @@ list_all_json (int flag)
 int
 list_restricted (void)
 {
-  FILE *in = NULL;
-  FILE *out = NULL;
+  FILE *inout = NULL;
   int _socket = -1;
 
-  if (opensock (&_socket, &in, &out))
+  if (opensock_to_server_dbctl (&_socket, &inout))
     {
       client_type_t ctt = DBCTL;
-      fwrite (&ctt, sizeof (client_type_t), 1, out);
-      fflush (out);
+      fwrite (&ctt, sizeof (client_type_t), 1, inout);
+      fflush (inout);
 
       DbCtlCommand command;
       command.command = LIST_R;
@@ -470,16 +467,16 @@ list_restricted (void)
       command.options.timeout = 0;
       command.options.user_max_connections = 0;
 
-      fwrite_wrapper (&command, sizeof (DbCtlCommand), 1, out);
-      fflush (out);
+      fwrite_wrapper (&command, sizeof (DbCtlCommand), 1, inout);
+      fflush (inout);
 
-      print_list_rest (in);
-      closesock (_socket, in, out);
+      print_list_rest (inout);
+      closesock_to_server_dbctl (_socket, inout);
     }
   else
     {
 
-      closesock (_socket, in, out);
+      closesock_to_server_dbctl (_socket, inout);
       return 0;
     }
   return 1;

@@ -68,47 +68,43 @@ get_signal (int signo)
   exit (0);
 }
 
-int
+static int
 connect_to_server_dbtop (void)
 {
-  int s, len;
-  struct sockaddr_un saun;
+	int s;
+	struct sockaddr_un saun;
 
-  /*
-   * Get a socket to work with.  This socket will
-   * be in the UNIX domain, and will be a
-   * stream socket.
-   */
-  if ((s = socket (AF_UNIX, SOCK_STREAM, 0)) < 0)
-    {
-      return -1;
-    }
+	/*
+	 * Get a socket to work with.  This socket will
+	 * be in the UNIX domain, and will be a
+	 * stream socket.
+	 */
+	if ((s = socket (AF_UNIX, SOCK_STREAM, 0)) < 0)
+	{
+		return -1;
+	}
 
-  /*
-   * Create the address we will be connecting to.
-   */
-  saun.sun_family = AF_UNIX;
-  strcpy (saun.sun_path, SOCK_ADDRESS);
+	/*
+	 * Create the address we will be connecting to.
+	*/
+	saun.sun_family = AF_UNIX;
+	strcpy (saun.sun_path, SOCK_ADDRESS);
 
-  /*
-   * Try to connect to the address.  For this to
-   * succeed, the server must already have bound
-   * this address, and must have issued a listen()
-   * request.
-   *
-   * The third argument indicates the "length" of
-   * the structure, not just the length of the
-   * socket name.
-   */
-  len = sizeof (saun.sun_family) + strlen (saun.sun_path);
+	/*
+	 * Try to connect to the address.  For this to
+	 * succeed, the server must already have bound
+	 * this address, and must have issued a listen()
+	 * request.
+	*/
+	if (connect (s, (struct sockaddr *) &saun, sizeof saun) < 0)
+	{
+		int save_errno = errno;
+		close (s);
+		errno = save_errno;
+		return -2;
+	}
 
-  if (connect (s, (struct sockaddr *) &saun, len) < 0)
-    {
-      close (s);
-      return -2;
-    }
-
-  return s;
+	return s;
 }
 
 #define init_screen() int screen_height, screen_weight; \
@@ -121,7 +117,7 @@ connect_to_server_dbtop (void)
 #define NONEWLINE 0
 
 #define GINT_COMPARE_FUNCTION_NAME(x) gint_compare_by_## x
-#define GINT_COMPARE_FUNCTION(x) gint \
+#define GINT_COMPARE_FUNCTION(x) static gint \
 gint_compare_by_## x(gconstpointer ptr_a, gconstpointer ptr_b) \
 { \
   Account *a, *b; \
@@ -140,9 +136,8 @@ gint_compare_by_## x(gconstpointer ptr_a, gconstpointer ptr_b) \
 
 #define CTRLC 3
 
-FILE *in;
-FILE *out;
-int _socket;
+static FILE *inout_socket;
+static int _socket;
 
 int sort_type = 0, screen_view = 1, is_colorize = 1;
 volatile int refresh_time = 1;
@@ -150,46 +145,44 @@ volatile int refresh_time = 1;
 GList *accounts = NULL;
 GList *recv_accounts = NULL;
 
-void
+static void
 closesock (void)
 {
-  if (in)
-    {
-      fclose (in);
-      in = NULL;
-    }
-  if (out)
-    {
-      fclose (out);
-      out = NULL;
-    }
-  if (_socket > 0)
-    {
-      close (_socket);
-      _socket = 0;
-    }
+	if (inout_socket)
+	{
+		fclose (inout_socket);
+		inout_socket = NULL;
+	}
+	else
+	{
+		if (_socket > 0)
+		{
+			close (_socket);
+		}
+	}
+	_socket = 0;
 }
 
-GINT_COMPARE_FUNCTION (cpu);
-GINT_COMPARE_FUNCTION (read);
+GINT_COMPARE_FUNCTION (cpu)
+GINT_COMPARE_FUNCTION (read)
 GINT_COMPARE_FUNCTION (write)
-     gint gint_compare_by_restrict (gconstpointer ptr_a, gconstpointer ptr_b)
-{
-  Account *a, *b;
-  a = (Account *) ptr_a;
-  b = (Account *) ptr_b;
-  if (a->timeout > b->timeout)
-    {
-      return (-1);
-    }
-  if (a->timeout == b->timeout)
-    {
-      return 0;
-    }
-  return (1);
-}
 
-;
+gint
+gint_compare_by_restrict (gconstpointer ptr_a, gconstpointer ptr_b)
+{
+	Account *a, *b;
+	a = (Account *) ptr_a;
+	b = (Account *) ptr_b;
+	if (a->timeout > b->timeout)
+	{
+		return (-1);
+	}
+	if (a->timeout == b->timeout)
+	{
+		return 0;
+	}
+	return (1);
+}
 
 static int
 getTimeToEnd (Account * ac)
@@ -198,81 +191,87 @@ getTimeToEnd (Account * ac)
     : ((ac->start_count + ac->timeout) - time (NULL));
 }
 
-gint
+static gint
 gint_compare_by_tte (gconstpointer ptr_a, gconstpointer ptr_b)
 {
-  Account *a, *b;
-  a = (Account *) ptr_a;
-  b = (Account *) ptr_b;
-  int tte_a = getTimeToEnd (a);
-  int tte_b = getTimeToEnd (b);
-  if (tte_a > tte_b)
-    {
-      return (-1);
-    }
-  if (tte_a == tte_b)
-    {
-      return 0;
-    }
-  return (1);
+	Account *a, *b;
+	a = (Account *) ptr_a;
+	b = (Account *) ptr_b;
+	int tte_a = getTimeToEnd (a);
+	int tte_b = getTimeToEnd (b);
+	if (tte_a > tte_b)
+	{
+		return (-1);
+	}
+	if (tte_a == tte_b)
+	{
+		return 0;
+	}
+	return (1);
 }
 
-;
-
-gint
+static gint
 gint_compare_by_username (gconstpointer ptr_a, gconstpointer ptr_b)
 {
-  Account *a, *b;
-  a = (Account *) ptr_a;
-  b = (Account *) ptr_b;
-  return strncmp (a->id, b->id, USERNAMEMAXLEN);
+	Account *a, *b;
+	a = (Account *) ptr_a;
+	b = (Account *) ptr_b;
+	return strncmp (a->id, b->id, USERNAMEMAXLEN);
 }
 
-char *
-getRestrictInfo (Account * ac, char *buffer)
+static void
+getRestrictInfo (Account * ac, char *buffer, size_t bufsize)
 {
-  char ch;
-  if (ac->info.field_restrict == NO_PERIOD)
-    {
-      strcpy (buffer, "");
-      return buffer;
-    }
-  else
-    {
-      switch (ac->info.field_restrict)
-	{
-	case CURRENT_PERIOD:
-	  ch = 'c';
-	  break;
-	case SHORT_PERIOD:
-	  ch = 's';
-	  break;
-	case MID_PERIOD:
-	  ch = 'm';
-	  break;
-	case LONG_PERIOD:
-	  ch = 'l';
-	  break;
-	default:
-	  ch = 'u';
-	};
+	char period;
+	const char *param;
 
-      switch (ac->info.field_level_restrict)
+	if (ac->info.field_restrict == NO_PERIOD)
 	{
-	case CPU_PARAM:
-	  sprintf (buffer, "%c:%s/", ch, "cpu");
-	  break;
-	case READ_PARAM:
-	  sprintf (buffer, "%c:%s/", ch, "read");
-	  break;
-	case WRITE_PARAM:
-	  sprintf (buffer, "%c:%s/", ch, "write");
-	  break;
-	default:
-	  sprintf (buffer, "%c:%s/", ch, "unk");
+		buffer[0] = '\0';
+		return;
 	}
-      return buffer;
-    }
+
+	switch (ac->info.field_restrict)
+	{
+		case CURRENT_PERIOD:
+			period = 'c';
+		break;
+
+		case SHORT_PERIOD:
+			period = 's';
+		break;
+
+		case MID_PERIOD:
+			period = 'm';
+		break;
+
+		case LONG_PERIOD:
+			period = 'l';
+		break;
+
+		default:
+			period = 'u';
+	}
+
+	switch (ac->info.field_level_restrict)
+	{
+		case CPU_PARAM:
+			param = "cpu";
+		break;
+
+		case READ_PARAM:
+			param = "read";
+		break;
+
+		case WRITE_PARAM:
+			param = "write";
+		break;
+
+		default:
+			param = "unk";
+	}
+
+	snprintf (buffer, bufsize, "%c:%s/", period, param);
 }
 
 int
@@ -540,7 +539,7 @@ print_account_screen1 (Account * ac)
 
   memset (buf, 0, sizeof (buf));
   memset (stringBuf, 0, sizeof (stringBuf));
-  getRestrictInfo (ac, stringBuf);
+  getRestrictInfo (ac, stringBuf, sizeof stringBuf);
   if (ac->info.field_restrict != NO_PERIOD)
     {
       sprintf (buf, "%c/%s%d", getRestrictChar (ac->restricted), stringBuf,
@@ -612,12 +611,12 @@ read_info (void)
   Account *ac;
   int new_record;
   int tester = 1;
-  while (fread_wrapper (&new_record, sizeof (int), 1, in))
+  while (fread_wrapper (&new_record, sizeof (int), 1, inout_socket))
     {
       if (new_record == 1)
 	{
 	  reset_recv_accounts ();
-	  fwrite_wrapper (&tester, sizeof (int), 1, in);
+	  fwrite_wrapper (&tester, sizeof (int), 1, inout_socket);
 	}
       else if (new_record == 0)
 	{
@@ -625,7 +624,7 @@ read_info (void)
 	  ac->id = malloc (sizeof (username_t));
 	  ac->users = NULL;
 	  dbtop_exch dt;
-	  if (fread_wrapper (&dt, sizeof (dbtop_exch), 1, in))
+	  if (fread_wrapper (&dt, sizeof (dbtop_exch), 1, inout_socket))
 	    {
 	      strncpy (ac->id, dt.id, sizeof (username_t));
 	      memcpy (&ac->current, &dt.current, sizeof (Stats));
@@ -782,7 +781,7 @@ print_account_screen1_no_curses (Account * ac)
   formatIntString (stringBuf, 3, "/", ac->current.write,
 		   ac->mid_average.write, ac->long_average.write);
   printf ("%-18s ", stringBuf);
-  getRestrictInfo (ac, stringBuf);
+  getRestrictInfo (ac, stringBuf, sizeof stringBuf);
   if (ac->info.field_restrict != NO_PERIOD)
     {
       sprintf (buf, "%c/%s%d", getRestrictChar (ac->restricted), stringBuf,
@@ -908,18 +907,16 @@ void *
 screen_regenerate (void)
 {
   client_type_t ctt = DBTOPCL;
-  fwrite (&ctt, sizeof (client_type_t), 1, out);
-  fflush (out);
+  fwrite (&ctt, sizeof (client_type_t), 1, inout_socket);
+  fflush (inout_socket);
   read_info ();
   printOneScreen ();
 
-  fclose (in);
-  fclose (out);
+  fclose (inout_socket);
   _socket = connect_to_server_dbtop ();
   if (_socket >= 0)
     {
-      in = fdopen (_socket, "r+");
-      out = fdopen (_socket, "w");
+      inout_socket = fdopen (_socket, "r+");
     }
   return NULL;
 }
@@ -976,10 +973,9 @@ main (int argc, char *argv[])
   _socket = connect_to_server_dbtop ();
   if (_socket >= 0)
     {
-      in = fdopen (_socket, "r+");
-      out = fdopen (_socket, "w");
+      inout_socket = fdopen (_socket, "r+");
     }
-  if (!in || !out)
+  if (!inout_socket)
     {
       printf ("Can't connect to socket. Maybe governor is not started\n");
       exit (-1);
@@ -987,8 +983,8 @@ main (int argc, char *argv[])
   if (no_curses)
     {
       client_type_t ctt = DBTOPCL;
-      fwrite (&ctt, sizeof (client_type_t), 1, out);
-      fflush (out);
+      fwrite (&ctt, sizeof (client_type_t), 1, inout_socket);
+      fflush (inout_socket);
       accounts = NULL;
       recv_accounts = NULL;
       read_info ();
@@ -998,8 +994,8 @@ main (int argc, char *argv[])
 
 ///    
   /*client_type_t ctt = DBTOP;
-     fwrite(&ctt, sizeof(client_type_t), 1, out);
-     fflush(out); */
+     fwrite(&ctt, sizeof(client_type_t), 1, inout_socket);
+     fflush(inout_socket); */
   accounts = NULL;
   recv_accounts = NULL;
   initscr ();
