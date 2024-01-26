@@ -1,9 +1,8 @@
 import json
-import pytest
 from unittest import mock
+
+import pytest
 from pyfakefs.fake_filesystem_unittest import Patcher
-import subprocess
-import yaml
 
 import governor_package_limitting
 import creates_individual_limits_vector_list
@@ -648,3 +647,52 @@ def test_dbctl_sync___nonexistent_user__set():
     with pytest.raises(SystemExit):
         governor_package_limitting.dbctl_sync(action='set', user='user100')
     assert run_dbctl_command_mock_1_6.call_count == 0
+
+
+#################################################################################################################
+
+
+run_dbctl_command_mock_2 = mock.MagicMock()
+@mock.patch("governor_package_limitting.fill_gpl_json",
+            mock.MagicMock())
+@mock.patch("governor_package_limitting.cp_packages",
+            mock.MagicMock(return_value=cp_packages_mock))
+@mock.patch("governor_package_limitting.get_package_limit",
+            mock.MagicMock(return_value=get_package_limit_mock_pack_1_only))
+@mock.patch("governor_package_limitting.run_dbctl_command",
+            run_dbctl_command_mock_2)
+def test_gpl_set__specify_certain_package(fs):
+    fs.create_file(governor_package_limitting.PACKAGE_LIMIT_CONFIG,
+                   contents=json.dumps(empty_config)
+    )
+    with pytest.raises(SystemExit):
+        governor_package_limitting.main(["set", "--package", "pack_1"])
+    assert run_dbctl_command_mock_2.call_count == 1
+
+
+#################################################################################################################
+
+
+@pytest.mark.parametrize('resellers_packages, expected_result', [
+    (
+        {},
+        ['pack1', 'pack2'],
+    ),
+    (
+        {'res1': ['res1_pack1', 'res1_pack2']},
+        ['pack1', 'pack2', 'res1_pack1', 'res1_pack2'],
+    ),
+    (
+        {'res1': ['res1_pack1', 'res1_pack2'],
+         'res2': ['res2_pack1', 'res2_pack2']},
+        ['pack1', 'pack2', 'res1_pack1', 'res1_pack2', 'res2_pack1', 'res2_pack2'],
+    ),
+])
+@mock.patch("governor_package_limitting.admin_packages",
+            mock.MagicMock(return_value=['pack1', 'pack2']))
+def test_get_all_packages(resellers_packages, expected_result):
+    with mock.patch("governor_package_limitting.resellers_packages",
+                    mock.MagicMock(return_value=resellers_packages)):
+        governor_package_limitting.get_all_packages.cache_clear()
+        result = governor_package_limitting.get_all_packages()
+    assert set(result) == set(expected_result)

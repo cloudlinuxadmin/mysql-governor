@@ -1,25 +1,24 @@
 #!/opt/cloudlinux/venv/bin/python3
 # coding:utf-8
 
-# Copyright © Cloud Linux GmbH & Cloud Linux Software, Inc 2010-2019 All Rights Reserved
+# Copyright © Cloud Linux GmbH & Cloud Linux Software, Inc 2010-2024 All Rights Reserved
 #
 # Licensed under CLOUD LINUX LICENSE AGREEMENT
 # http://cloudlinux.com/docs/LICENSE.TXT
 #
 
-import pwd
-import time
 import argparse
-from distutils.log import debug
-import os
-import sys
-from os.path import exists
-from clcommon.cpapi import cpinfo, admin_packages, resellers_packages, cpusers, getCPName
-from typing import Dict, List, Tuple
-import subprocess
+import functools
+import itertools
 import json
 import logging
+import os
+import subprocess
+import sys
+import time
+from typing import Dict, List, Tuple
 
+from clcommon.cpapi import cpinfo, admin_packages, resellers_packages, cpusers, getCPName
 from utilities import acquire_lock, LockFailedException
 
 
@@ -196,7 +195,7 @@ def cp_packages() -> Dict[str, list]:
     # user's packages
     for i in __cpinfo:
         update_list_in_a_dict_item(i[1], i[0])
-    # receller's packages
+    # reseller's packages
     for usr, pkgs in resellers_packages().items():
         for pkg in pkgs:
             update_list_in_a_dict_item(pkg, usr)
@@ -226,11 +225,11 @@ def limits_serializer(args: List, set_vector=False):
         sys.exit(1)
 
     if len(__limits) > 4:
-        logging.error(f'Some parameters are incorrect. Provided options is more than 4')
+        logging.error('Some parameters are incorrect. Provided options is more than 4')
         sys.exit(1)
 
     if __limits and set_vector and len(__limits) != 4:
-        logging.error(f'Some parameters are incorrect. Provided options must be equal 4 when you set the vector!')
+        logging.error('Some parameters are incorrect. Provided options must be equal 4 when you set the vector!')
         sys.exit(1)
 
     if not __limits and set_vector:
@@ -410,7 +409,6 @@ def delete_package_limit(package: str):
         logging.error(f'Package name {package} not found')
         debug_log(err)
         sys.exit(1)
-        return
 
 
 def reset_individual(username: str, certain_limits: str = None):
@@ -432,7 +430,6 @@ def reset_individual(username: str, certain_limits: str = None):
             logging.error(help_msg)
             debug_log(err)
             sys.exit(1)
-            return
 
     if not certain_limits or certain_limits.lower() == 'all':
         reset_all()
@@ -626,8 +623,6 @@ def dbctl_sync(action: str, package: str = None, user: str = None):
     Args:
         action (str): Set or Delete
         package (str): Package name is used with action delete.
-                       We can also synchronise for a specific
-                       package only with action 'set'
         package (str): User name is used with action 'set'
                        to synchronise for a specific user only
     """
@@ -937,17 +932,16 @@ def prepare_limits(user: str, package_limit: Dict, individual_limit: Dict) -> Li
         sys.exit(1)
 
 
+@functools.cache
 def get_all_packages():
     """
     Gets all packages: admin packages and resellers packages either.
     """
-    all_packages = admin_packages()
-    for i in resellers_packages().values():
-        for n in i:
-            if n not in all_packages:
-                all_packages.append(n)
+    all_packages = set(admin_packages())
+    reseller_packages_iter = itertools.chain.from_iterable(resellers_packages().values())
+    all_packages.update(reseller_packages_iter)
 
-    return all_packages
+    return list(all_packages)
 
 
 def sync_with_panel():
@@ -977,7 +971,7 @@ def ensure_json_presence():
     """
     content = {"package_limits": {}, "individual_limits": {}}
 
-    if not exists(PACKAGE_LIMIT_CONFIG):
+    if not os.path.exists(PACKAGE_LIMIT_CONFIG):
         write_config_to_json_file(content)
         return
 
@@ -1005,7 +999,7 @@ def main(argv):
 
     if opts.command == 'set':
         fill_gpl_json(opts.package, opts.cpu, opts.read, opts.write)
-        dbctl_sync('set')
+        dbctl_sync('set', package=opts.package)
     elif opts.command == 'get':
         sync_with_panel()
         update_default_limits()
@@ -1018,17 +1012,19 @@ def main(argv):
         try:
             with acquire_lock(DBCTL_SYNC_LOCK_FILE, exclusive=True, attempts=1):
                 dbctl_sync('set', opts.package, opts.user)
-        except LockFailedException as err:
-            debug_log(f'Excessive sync call ignored')
-            pass
+        except LockFailedException:
+            debug_log('Excessive sync call ignored')
     elif opts.command == 'get_individual':
         get_individual(opts.user, print_to_stdout=True)
     elif opts.command == 'set_individual':
         fill_gpl_json(opts.user, opts.cpu, opts.read, opts.write,
                       serialize=True, set_vector=True)
+        # There is no call to 'sync' after this, since in the main case of using this command,
+        # 'dbctl set' is called immediately after it
+        # https://docs.google.com/document/d/1KH3MiHVcqJduvw6Vid8UiOvv9-6-CHDAtwkaUQh8_vU
     elif opts.command == 'reset_individual':
         reset_individual(opts.user, opts.limits)
-        dbctl_sync('set')
+        dbctl_sync('set', user=opts.user)
     else:
         parser.print_help()
         sys.exit(1)
