@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   103
+%define g_release   104
 %define g_key_library 12
 
 %if %{undefined _unitdir}
@@ -482,6 +482,9 @@ fi
 %{_includedir}/libgovernor.h
 
 %changelog
+* Thu Feb 01 2024 Dmitry Shibut <dshibut@cloudlinux.com> 1.2-104
+- CLOS-2253: Optimize governor_package_limitting.py for case 1 user - 1 package
+
 * Tue Dec 12 2023 Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-103
 - CLOS-2276: MariaDB 10.11 support added for CL7 except cPanel
 
