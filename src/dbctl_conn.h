@@ -11,7 +11,7 @@
 #ifndef __DBCTL_CONN__
 #define __DBCTL_CONN__
 
-int opensock_to_server_dbctl (int *_socket, FILE ** inout);
-void closesock_to_server_dbctl (int _socket, FILE * inout);
+int opensock (int *_socket, FILE ** in, FILE ** out);
+void closesock (int _socket, FILE * in, FILE * out);
 
 #endif /* __DBCTL_CONN__ */

@@ -77,7 +77,7 @@ typedef struct __shm_structure {
 } shm_structure;
 
 shm_structure *bad_list = NULL;
-int shm_fd = -1;
+int shm_fd = 0;
 
 int init_bad_users_list_utility(void) {
 
@@ -89,7 +89,6 @@ int init_bad_users_list_utility(void) {
 			(PROT_READ | PROT_WRITE), MAP_SHARED,
 			shm_fd, 0)) == MAP_FAILED) {
 		close(shm_fd);
-		shm_fd = -1;
 		return -1;
 	}
 
@@ -106,12 +105,7 @@ int remove_bad_users_list_utility(void) {
 	{
 		cl_munmap ((void *) bad_list, sizeof (shm_structure));
 	}
-
-	if (shm_fd >= 0)
-	{
-		close(shm_fd);
-		shm_fd = -1;
-	}
+	close(shm_fd);
 	return 0;
 }
 
@@ -188,13 +182,11 @@ int init_bad_users_list(void) {
 
 	if (first)
 	{
-		if (ftruncate(shm_fd, sizeof(shm_structure)) == -1) {
-			WRITE_LOG (NULL, 0, "truncate(%s, %u) failed with %d code - EXITING",
+		rc = ftruncate(shm_fd, sizeof(shm_structure));
+		if (rc)
+		{
+			WRITE_LOG (NULL, 0, "truncate(%s, %u) failed with %d code - IGNORING",
 					data_cfg.log_mode, shared_memory_name, (unsigned)sizeof(shm_structure), errno);
-			close(shm_fd);
-			shm_fd = -1;
-			umask(old_umask);
-			return -1;
 		}
 	}
 
@@ -205,7 +197,6 @@ int init_bad_users_list(void) {
 		WRITE_LOG (NULL, 0, "cl_map(%s) failed with %d code - EXITING",
 				data_cfg.log_mode, shared_memory_name, errno);
 		close(shm_fd);
-		shm_fd = -1;
 		umask(old_umask);
 		return -1;
 	}
@@ -218,7 +209,6 @@ int init_bad_users_list(void) {
 					data_cfg.log_mode, shared_memory_name, errno);
 			cl_munmap ((void *) bad_list, sizeof (shm_structure));
 			close(shm_fd);
-			shm_fd = -1;
 			umask(old_umask);
 			return -1;
 		}
@@ -254,14 +244,7 @@ int remove_bad_users_list(void) {
 	{
 		cl_munmap ((void *) bad_list, sizeof (shm_structure));
 	}
-
-	if (shm_fd >= 0)
-	{
-		close(shm_fd);
-		shm_fd = -1;
-	}
-
-	bad_list = NULL;
+	close(shm_fd);
 	return 0;
 }
 
@@ -270,7 +253,7 @@ int is_user_in_list(const char *username) {
 		return -1;
 	long index;
 	for (index = 0; index < bad_list->numbers; index++) {
-		if (!strncmp(bad_list->items[index].username, username, USERNAMEMAXLEN - 1))
+		if (!strncmp(bad_list->items[index].username, username, USERNAMEMAXLEN))
 			return 1;
 	}
 	return 0;
@@ -280,30 +263,24 @@ int is_user_in_list(const char *username) {
 int add_user_to_list(const char *username, int is_all) {
 	if (!bad_list || (bad_list == MAP_FAILED))
 		return -1;
-
-	// First check if the user is already in the list
-	// before any locks and heavy operation on the map
-	if (is_user_in_list(username)) return 0;
-
 	int uid = BAD_LVE;
 	if (lock_read_map() == 0) {
 		uid = get_uid(username);
 		unlock_rdwr_map();
 	}
-
 	if (is_all && uid == BAD_LVE) {
 		uid = 0;
 	}
-
-	if ((bad_list->numbers + 1) == MAX_ITEMS_IN_TABLE)
-		return -2;
-
-	if (sem_wait(&bad_list->sem) == 0) {
-		strlcpy(bad_list->items[bad_list->numbers].username, username, USERNAMEMAXLEN);
-		bad_list->items[bad_list->numbers++].uid = uid;
-		sem_post(&bad_list->sem);
+	if (!is_user_in_list(username)) {
+		if ((bad_list->numbers + 1) == MAX_ITEMS_IN_TABLE)
+			return -2;
+		if (sem_wait(&bad_list->sem) == 0) {
+			strlcpy(bad_list->items[bad_list->numbers].username, username,
+			USERNAMEMAXLEN);
+			bad_list->items[bad_list->numbers++].uid = uid;
+			sem_post(&bad_list->sem);
+		}
 	}
-
 	return 0;
 }
 #endif
@@ -313,7 +290,7 @@ int delete_user_from_list(char *username) {
 		return -1;
 	long index;
 	for (index = 0; index < bad_list->numbers; index++) {
-		if (!strncmp(bad_list->items[index].username, username, USERNAMEMAXLEN - 1)) {
+		if (!strncmp(bad_list->items[index].username, username, USERNAMEMAXLEN)) {
 			if (sem_wait(&bad_list->sem) == 0) {
 				if (index == (bad_list->numbers - 1)) {
 					bad_list->numbers--;
@@ -449,10 +426,6 @@ int user_in_bad_list_cleint_show(void) {
 			} else {
 				if (errno == EAGAIN) {
 					trys++;
-
-					if (trys == 400) {
-						break;
-					}
 				} else {
 					trys = 0;
 				}
@@ -466,7 +439,7 @@ int user_in_bad_list_cleint_show(void) {
 	return fnd;
 }
 
-int shm_fd_clents_global = -1;
+int shm_fd_clents_global = 0;
 shm_structure *bad_list_clents_global = NULL;
 pthread_mutex_t mtx_shared = PTHREAD_MUTEX_INITIALIZER;
 
@@ -498,7 +471,6 @@ int init_bad_users_list_client(void) {
 	if (bad_list_clents_global == MAP_FAILED)
 	{
 		close(shm_fd_clents_global);
-		shm_fd_clents_global = -1;
 		pthread_mutex_unlock(&mtx_shared);
 		umask(old_umask);
 		return -2;
@@ -512,7 +484,6 @@ int init_bad_users_list_client(void) {
 			cl_munmap ((void *) bad_list_clents_global, sizeof (shm_structure));
 			bad_list_clents_global = NULL;
 			close(shm_fd_clents_global);
-			shm_fd_clents_global = -1;
 			pthread_mutex_unlock(&mtx_shared);
 			return -2;
 		}
@@ -561,13 +532,7 @@ int remove_bad_users_list_client(void) {
 	pthread_mutex_lock(&mtx_shared);
 	if (bad_list_clents_global && (bad_list_clents_global != MAP_FAILED))
 		cl_munmap ((void *) bad_list_clents_global, sizeof (shm_structure));
-
-	if (shm_fd_clents_global >= 0)
-	{
-		close(shm_fd_clents_global);
-		shm_fd_clents_global = -1;
-	}
-
+	close(shm_fd_clents_global);
 	pthread_mutex_unlock(&mtx_shared);
 	return 0;
 }

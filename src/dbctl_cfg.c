@@ -530,13 +530,14 @@ void rewrite_cfg(xml_data *xml) {
 static const struct timespec ts_10ms = { 0, 10000000 };
 
 void reread_cfg_cmd(void) {
-	FILE *inout = NULL;
+	FILE *in = NULL;
+	FILE *out = NULL;
 	int _socket = -1;
 
-	if (opensock_to_server_dbctl(&_socket, &inout)) {
+	if (opensock(&_socket, &in, &out)) {
 		client_type_t ctt = DBCTL;
-		fwrite(&ctt, sizeof(client_type_t), 1, inout);
-		fflush(inout);
+		fwrite(&ctt, sizeof(client_type_t), 1, out);
+		fflush(out);
 
 		DbCtlCommand command;
 		command.command = REREAD_CFG;
@@ -549,28 +550,29 @@ void reread_cfg_cmd(void) {
 		command.options.timeout = 0;
 		command.options.user_max_connections = 0;
 
-		fwrite_wrapper(&command, sizeof(DbCtlCommand), 1, inout);
-		fflush(inout);
+		fwrite_wrapper(&command, sizeof(DbCtlCommand), 1, out);
+		fflush(out);
 
 		//until the governor closes the socket
-		inputAvailable(inout, 5);
+		inputAvailable(in, 5);
 		//delay 10ms
 		nanosleep(&ts_10ms, NULL);
 
-		closesock_to_server_dbctl(_socket, inout);
+		closesock(_socket, in, out);
 	} else {
-		closesock_to_server_dbctl(_socket, inout);
+		closesock(_socket, in, out);
 	}
 }
 
 void reinit_users_list_cmd(void) {
-	FILE *inout = NULL;
+	FILE *in = NULL;
+	FILE *out = NULL;
 	int _socket = -1;
 
-	if (opensock_to_server_dbctl(&_socket, &inout)) {
+	if (opensock(&_socket, &in, &out)) {
 		client_type_t ctt = DBCTL;
-		fwrite(&ctt, sizeof(client_type_t), 1, inout);
-		fflush(inout);
+		fwrite(&ctt, sizeof(client_type_t), 1, out);
+		fflush(out);
 
 		DbCtlCommand command;
 		command.command = REINIT_USERS_LIST;
@@ -583,17 +585,17 @@ void reinit_users_list_cmd(void) {
 		command.options.timeout = 0;
 		command.options.user_max_connections = 0;
 
-		fwrite_wrapper(&command, sizeof(DbCtlCommand), 1, inout);
-		fflush(inout);
+		fwrite_wrapper(&command, sizeof(DbCtlCommand), 1, out);
+		fflush(out);
 
 		//until the governor closes the socket
-		inputAvailable(inout, 5);
+		inputAvailable(in, 5);
 		//delay 10ms
 		nanosleep(&ts_10ms, NULL);
 
-		closesock_to_server_dbctl(_socket, inout);
+		closesock(_socket, in, out);
 	} else {
 
-		closesock_to_server_dbctl(_socket, inout);
+		closesock(_socket, in, out);
 	}
 }
