@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   104
+%define g_release   105
 %define g_key_library 12
 
 %if %{undefined _unitdir}
@@ -482,6 +482,10 @@ fi
 %{_includedir}/libgovernor.h
 
 %changelog
+* Mon Feb 12 2024 Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-105
+- CLOS-2322: Fixed DB limits not applying to users after a MySQL Governor service restart
+- CLOS-2418: MySQL 8.0 community edition repo url changed
+
 * Thu Feb 01 2024 Dmitry Shibut <dshibut@cloudlinux.com> 1.2-104
 - CLOS-2253: Optimize governor_package_limitting.py for case 1 user - 1 package
 

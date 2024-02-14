@@ -266,12 +266,13 @@ gpgcheck=1
         Download mysql80-community-release repository and install it locally
         """
         # download repo file
-        url = 'https://dev.mysql.com/get/mysql80-community-release-el{v}-1.noarch.rpm'.format(v=self.cl_version)
+        url = 'https://dev.mysql.com/get/mysql80-community-release-el{v}.noarch.rpm'.format(v=self.cl_version)
         repo_file = os.path.join(self.SOURCE, 'mysql-community-release.rpm')
         repo_md5 = {
-            6: 'f2befc44a4b8416864987b1686c4a72b',
-            7: '739dc44566d739c5d7b893de96ee6848',
-            8: '7166fed89332ab92fb3ec666e95d6ad1'
+            6: 'ec5978dc1c9b79ef570e3bc08ba3d531',
+            7: '42048ccae58835e40e37b68a3f8b91fb',
+            8: 'e436076fe27a60ea88024cc3db4b1bb0',
+            9: '4fa11545b76db63df0efe852e28c4d6b'
         }
         opener = urllib.request.build_opener()
         opener.addheaders = [('User-agent', 'Mozilla/5.0')]
