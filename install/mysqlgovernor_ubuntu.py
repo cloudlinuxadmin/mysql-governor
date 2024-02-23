@@ -154,7 +154,8 @@ def main(argv):
 
     elif opts.install or opts.install_beta:
         manager.unsupported_db_version(opts.force)
-        warn_message()
+        if not backup_warning(opts.yes):
+            sys.exit(0)
         manager.cleanup()
 
         # remove current packages and install new packages
@@ -242,38 +243,29 @@ def main(argv):
         sys.exit(1)
 
 
-def detect_percona(force, install_manager_instance):
+def backup_warning(yes):
     """
-    Detect unsupported Percona packages
-    :param force:
-    :param install_manager_instance:
+    :param yes: --yes flag, choose, if mode is interactive or no.
+    In non-interactive mode print warning message and sleep 10 sec (for user to make a decision)
+    In interactive mode print warning message and ask confirmation
     """
-    if force:
-        return None
-
-    packages = exec_command("""rpm -qa|grep -iE "^percona-" """, silent=True)
-    if len(packages):
-        print("Percona packages deteced:" + ",".join(packages))
-        print("You are running Percona, which is not supported by " \
-              "MySQL Governor. If you want to run MySQL governor, " \
-              "we would have to uninstall Percona, and substitute it " \
-              "for MariaDB or MySQL. Run installator next commands for install:")
-        print(install_manager_instance.rel("mysqlgovernor.py") + \
-              " --mysql-version=mysql56 (or mysql50, mysql51, mysql55, " \
-              "mysql57, mariadb55, mariadb100, mariadb101)")
-        print(install_manager_instance.rel("mysqlgovernor.py") + \
-              " --install --force")
-        sys.exit(1)
-
-
-def warn_message():
-    """
-    Print warning message and sleep 10 sec (for user to make a decision)
-    """
-    print(bcolors.warning("!!!Before making any changing with database make sure that you have reserve copy of users data!!!"))
-    print(bcolors.fail("!!!!!!!!!!!!!!!!!!!!!!!!!!Ctrl+C for cancellation of installation!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"))
-    print(bcolors.ok("Instruction: how to create whole database backup - " + bcolors.OKBLUE + "http://docs.cloudlinux.com/index.html?backing_up_mysql.html"))
-    time.sleep(10)
+    print(bcolors.warning(
+        "!!!Before making any changes to the database, make sure that you have a backup copy of users' data!!!"
+    ))
+    if yes:
+        print(bcolors.fail(
+            "!!!!!!!!!!!!!!!!!!!!!!!!!!Ctrl+C to cancel the installation!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+        ))
+    print(bcolors.ok(
+        "Instruction: how to create a whole-database backup - "
+        f"{bcolors.OKBLUE}http://docs.cloudlinux.com/index.html?backing_up_mysql.html"
+    ))
+    if yes:
+        time.sleep(10)
+        return True
+    if not query_yes_no("Do you confirm that you've made a full backup of your MySQL databases?"):
+        return False
+    return True
 
 
 if "__main__" == __name__:
