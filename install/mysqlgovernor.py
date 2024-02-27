@@ -220,7 +220,8 @@ def main(argv):
 
     elif opts.install or opts.install_beta:
         manager.unsupported_db_version(opts.force)
-        warn_message()
+        if not backup_warning(opts.yes):
+            sys.exit(0)
         manager.cl8_save_current()
         manager.cleanup()
         # detect_percona(opts.force, manager)
@@ -338,21 +339,29 @@ def detect_percona(force, install_manager_instance):
         sys.exit(1)
 
 
-def warn_message():
+def backup_warning(yes):
     """
-    Print warning message and sleep 10 sec (for user to make a decision)
+    :param yes: --yes flag, choose, if mode is interactive or no.
+    In non-interactive mode print warning message and sleep 10 sec (for user to make a decision)
+    In interactive mode print warning message and ask confirmation
     """
     print(bcolors.warning(
-        "!!!Before making any changing to the database, make sure that you have a reserve copy of users' data!!!"
+        "!!!Before making any changes to the database, make sure that you have a backup copy of users' data!!!"
     ))
-    print(bcolors.fail(
-        "!!!!!!!!!!!!!!!!!!!!!!!!!!Ctrl+C for cancellation of installation!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-    ))
+    if yes:
+        print(bcolors.fail(
+            "!!!!!!!!!!!!!!!!!!!!!!!!!!Ctrl+C to cancel the installation!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+        ))
     print(bcolors.ok(
         "Instruction: how to create a whole-database backup - "
         f"{bcolors.OKBLUE}http://docs.cloudlinux.com/index.html?backing_up_mysql.html"
     ))
-    time.sleep(10)
+    if yes:
+        time.sleep(10)
+        return True
+    if not query_yes_no("Do you confirm that you've made a full backup of your MySQL databases?"):
+        return False
+    return True
 
 
 def protectbase_warning(beta, yes):

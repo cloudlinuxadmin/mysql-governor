@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   105
+%define g_release   106
 %define g_key_library 12
 
 %if %{undefined _unitdir}
@@ -482,7 +482,9 @@ fi
 %{_includedir}/libgovernor.h
 
 %changelog
-* Mon Feb 12 2024 Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-105
+* Tue Feb 27 2024 Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-106
+- CLOS-2373: Backup confirmation added to governor script
+
 - CLOS-2322: Fixed DB limits not applying to users after a MySQL Governor service restart
 - CLOS-2418: MySQL 8.0 community edition repo url changed
 
