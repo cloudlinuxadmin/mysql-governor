@@ -12,6 +12,7 @@ import os
 import re
 import shutil
 import sys
+import textwrap
 import urllib.request, urllib.error, urllib.parse
 import hashlib
 
@@ -191,19 +192,19 @@ class cPanelManager(InstallManager):
         if not self.install_from_existing_repo(cpanel_alter_repo, pkgs):
             # prepare repo data
             print('Preparing official MariaDB repository...')
-            repo_data = """[mariadb]
-name = MariaDB
-baseurl = http://yum.mariadb.org/{maria_ver}/centos{cl_ver}-{arch}
-gpgkey=https://yum.mariadb.org/RPM-GPG-KEY-MariaDB
-gpgcheck=1
-"""
-            mariadb_version = '{base}.{suffix}'.format(base=num[:-1],
-                                                       suffix=num[-1])
-            arch = 'amd64' if os.uname()[-1] == 'x86_64' else 'x86'
+            dot_version = f'{num[:2]}.{num[2:]}'
+            repo_data = f"""
+                [mariadb]
+                name = MariaDB
+                baseurl = https://archive.mariadb.org/yum/{dot_version}/rhel/$releasever/$basearch
+                gpgkey = https://archive.mariadb.org/PublicKey
+                         https://yum.mariadb.org/RPM-GPG-KEY-MariaDB
+                module_hotfixes = 1
+                enabled = 1
+                gpgcheck = 1
+                """
             with open('/etc/yum.repos.d/MariaDB.repo', 'w') as repo_file:
-                repo_file.write(
-                    repo_data.format(maria_ver=mariadb_version,
-                                     cl_ver=self.cl_version, arch=arch))
+                repo_file.write(textwrap.dedent(repo_data))
 
             # install MariaDB packages
             print('Installing packages')
