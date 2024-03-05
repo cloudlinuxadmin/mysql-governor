@@ -1,5 +1,5 @@
 %define g_version   1.2
-%define g_release   106
+%define g_release   107
 %define g_key_library 12
 
 %if %{undefined _unitdir}
@@ -482,6 +482,10 @@ fi
 %{_includedir}/libgovernor.h
 
 %changelog
+* Tue Mar 05 2024 Dmitry Shibut <dshibut@cloudlinux.com> Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-107
+- CLOS-2319: EOLed cl-MariaDB 10.3 removal result to server down
+- CLOS-2471: Fixed wizzard installation
+
 * Tue Feb 27 2024 Alexandr Demeshko <ademeshko@cloudlinux.com> 1.2-106
 - CLOS-2373: Backup confirmation added to governor script
 

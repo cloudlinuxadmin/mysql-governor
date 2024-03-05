@@ -1,3 +1,10 @@
+governor-mysql (1.2-107) stable; urgency=medium
+
+  * CLOS-2319: EOLed cl-MariaDB 10.3 removal result to server down
+  * CLOS-2471: Fixed wizzard installation
+
+ -- Aleksandr Demeshko <ademeshko@cloudlinux.com>  Tue, 05 Mar 2024 10:00:00 +0000
+
 governor-mysql (1.2-106) stable; urgency=medium
 
   * CLOS-2373: Backup confirmation added to governor script

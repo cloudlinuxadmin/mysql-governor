@@ -154,7 +154,7 @@ def main(argv):
 
     elif opts.install or opts.install_beta:
         manager.unsupported_db_version(opts.force)
-        if not backup_warning(opts.yes):
+        if not backup_warning(opts.yes or opts.wizard):
             sys.exit(0)
         manager.cleanup()
 
@@ -245,7 +245,7 @@ def main(argv):
 
 def backup_warning(yes):
     """
-    :param yes: --yes flag, choose, if mode is interactive or no.
+    :param yes: --yes flag or --wizard flag entered. Choose, if mode is interactive or no.
     In non-interactive mode print warning message and sleep 10 sec (for user to make a decision)
     In interactive mode print warning message and ask confirmation
     """
