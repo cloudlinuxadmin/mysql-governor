@@ -220,14 +220,14 @@ def main(argv):
 
     elif opts.install or opts.install_beta:
         manager.unsupported_db_version(opts.force)
-        if not backup_warning(opts.yes):
+        if not backup_warning(opts.yes or opts.wizard):
             sys.exit(0)
         manager.cl8_save_current()
         manager.cleanup()
         # detect_percona(opts.force, manager)
 
         # ask user to confirm protectbase plugin disable while beta install
-        if not protectbase_warning(opts.install_beta, opts.yes):
+        if not protectbase_warning(opts.install_beta, opts.yes or opts.wizard):
             sys.exit(0)
 
         # remove current packages and install new packages
@@ -341,7 +341,7 @@ def detect_percona(force, install_manager_instance):
 
 def backup_warning(yes):
     """
-    :param yes: --yes flag, choose, if mode is interactive or no.
+    :param yes: --yes flag or --wizard flag entered. Choose, if mode is interactive or no.
     In non-interactive mode print warning message and sleep 10 sec (for user to make a decision)
     In interactive mode print warning message and ask confirmation
     """
@@ -369,7 +369,7 @@ def protectbase_warning(beta, yes):
     If protectbase config detected, warn user about protectbase plugin disable in case of --install-beta flag
     and wait for confirmation
     :param beta: --install-beta flag
-    :param yes: --yes flag
+    :param yes: --yes flag or --wizard flag entered
     :return: True or False, regarding user choice
     """
     if beta and os.path.exists('/etc/yum/pluginconf.d/protectbase.conf'):
