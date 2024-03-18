@@ -148,6 +148,15 @@ def main(argv):
     if opts.debug_flag:
         set_debug(True)
 
+    # Imply --yes option if stdin is not connected to tty
+    try:
+        if not os.isatty(sys.stdin.fileno()):
+            opts.yes = True
+    except OSError:
+        # It is known that sys.stdin.fileno() can raise io.UnsupportedOperation
+        # but it is a subclass of OSError, so OSError would be enough
+        opts.yes = True
+
     if opts.mysql_version:
         manager.set_mysql_version(opts.mysql_version)
         print(bcolors.ok("Now set MySQL to type '%s'" % opts.mysql_version))
